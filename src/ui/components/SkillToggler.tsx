@@ -10,9 +10,9 @@ interface Props {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  skill: "Skill",
-  agent: "Agent",
-  command: "Command",
+  skill: "Skills",
+  agent: "Agents",
+  command: "Commands",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -43,12 +43,33 @@ function resolveAllDeps(
   return result;
 }
 
+// A custom checkbox that matches the design system
+function ItemCheckbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <div
+      className={`item-checkbox${checked ? " checked" : ""}`}
+      onClick={(e) => {
+        e.preventDefault();
+        onChange();
+      }}
+      role="checkbox"
+      aria-checked={checked}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          onChange();
+        }
+      }}
+    />
+  );
+}
+
 export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, onToggle }: Props) {
   if (items.length === 0) {
     return <div className="skill-toggler-empty">No items found</div>;
   }
 
-  // Pre-compute full dependency chains
   const depMap = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const item of items) {
@@ -70,22 +91,39 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
       {(["skill", "agent", "command"] as const).map((type) => {
         const group = grouped[type];
         if (group.length === 0) return null;
+
         return (
           <div key={type} className="skill-group">
             <div className="skill-group-label" style={{ color: TYPE_COLORS[type] }}>
-              {TYPE_LABELS[type]}s ({group.length})
+              <span className="skill-group-label-dot" />
+              {TYPE_LABELS[type]}
+              <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+                &nbsp;{group.length}
+              </span>
             </div>
+
             {group.map((item) => {
               const enabled = pluginEnabled && !excludedNames.includes(item.name);
+              const isCommand = item.type === "command";
+
               return (
-                <label key={item.name} className="skill-item">
-                  <input
-                    type="checkbox"
+                <div
+                  key={item.name}
+                  className="skill-item"
+                  onClick={() => onToggle(item.name, !enabled)}
+                >
+                  <ItemCheckbox
                     checked={enabled}
-                    onChange={(e) => onToggle(item.name, e.target.checked)}
+                    onChange={() => onToggle(item.name, !enabled)}
                   />
-                  <span className="skill-name">
-                    {item.type === "command" ? `/${item.name}` : item.name}
+                  <span
+                    className={
+                      "skill-name" +
+                      (isCommand ? " command-name" : "") +
+                      (!enabled ? " muted" : "")
+                    }
+                  >
+                    {isCommand ? `/${item.name}` : item.name}
                   </span>
                   {!item.userInvocable && (
                     <span className="skill-badge internal">internal</span>
@@ -98,7 +136,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                       has deps
                     </span>
                   )}
-                </label>
+                </div>
               );
             })}
           </div>

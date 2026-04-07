@@ -12,6 +12,21 @@ interface Props {
   onEnablePluginWithOnly: (pluginName: string, itemName: string) => void;
 }
 
+// Chevron icon — rotates when expanded
+function ChevronIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path
+        d="M3 3.5L5 5.5L7 3.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function PluginPicker({
   plugins,
   selectedPlugins,
@@ -38,10 +53,7 @@ export function PluginPicker({
   );
 
   const localPlugins = useMemo(
-    () =>
-      plugins.filter(
-        (p) => p.scope === "project" && p.projectPath === directory
-      ),
+    () => plugins.filter((p) => p.scope === "project" && p.projectPath === directory),
     [plugins, directory]
   );
 
@@ -52,7 +64,6 @@ export function PluginPicker({
 
     const handleItemToggle = (itemName: string, itemEnabled: boolean) => {
       if (!enabled && itemEnabled) {
-        // Plugin not enabled yet — enable it with only this item
         onEnablePluginWithOnly(plugin.name, itemName);
       } else {
         onToggleItem(plugin.name, itemName, itemEnabled);
@@ -60,18 +71,31 @@ export function PluginPicker({
     };
 
     return (
-      <div key={plugin.name} className={`plugin-row ${enabled ? "enabled" : ""}`}>
+      <div key={plugin.name} className={`plugin-row${enabled ? " enabled" : ""}`}>
         <div className="plugin-header" onClick={() => toggleExpand(plugin.name)}>
-          <label className="plugin-checkbox" onClick={(e) => e.stopPropagation()}>
+          {/* Toggle switch — stop propagation so it doesn't also expand/collapse */}
+          <label
+            className="toggle-switch"
+            onClick={(e) => e.stopPropagation()}
+            title={enabled ? "Disable plugin" : "Enable plugin"}
+          >
             <input
               type="checkbox"
               checked={enabled}
               onChange={(e) => onTogglePlugin(plugin.name, e.target.checked)}
             />
+            <span className="toggle-track">
+              <span className="toggle-thumb" />
+            </span>
           </label>
-          <span className="plugin-expand">{isExpanded ? "\u25BC" : "\u25B6"}</span>
+
+          {/* Expand arrow */}
+          <span className={`plugin-expand${isExpanded ? " is-expanded" : ""}`}>
+            <ChevronIcon />
+          </span>
+
           <span className="plugin-name">{plugin.pluginName}</span>
-          <span className="plugin-badge scope">{plugin.scope}</span>
+
           <span className="plugin-badge version">v{plugin.version}</span>
           <span className="plugin-badge count">
             {plugin.items.length} item{plugin.items.length !== 1 ? "s" : ""}
@@ -82,10 +106,11 @@ export function PluginPicker({
             </span>
           )}
         </div>
+
         {isExpanded && (
           <div className="plugin-items">
             {plugin.items.length === 0 ? (
-              <div className="empty-state">No configurable items</div>
+              <div className="empty-state-inline">No configurable items</div>
             ) : (
               <SkillToggler
                 items={plugin.items}
@@ -104,20 +129,34 @@ export function PluginPicker({
   return (
     <div className="plugin-picker">
       <div className="plugin-section">
-        <h3>Global Plugins</h3>
+        <div className="plugin-section-header">
+          <h3>Global Plugins</h3>
+          {globalPlugins.length > 0 && (
+            <span className="plugin-section-count">{globalPlugins.length}</span>
+          )}
+        </div>
         {globalPlugins.length === 0 ? (
-          <div className="empty-state">No global plugins installed</div>
+          <div className="empty-state-inline">No global plugins installed</div>
         ) : (
           globalPlugins.map(renderPlugin)
         )}
       </div>
 
       <div className="plugin-section">
-        <h3>Local Plugins</h3>
+        <div className="plugin-section-header">
+          <h3>Local Plugins</h3>
+          {localPlugins.length > 0 && (
+            <span className="plugin-section-count">{localPlugins.length}</span>
+          )}
+        </div>
         {!directory ? (
-          <div className="empty-state">Set a default directory above to see project plugins</div>
+          <div className="empty-state-inline">
+            Set a default directory above to see project plugins
+          </div>
         ) : localPlugins.length === 0 ? (
-          <div className="empty-state">No plugins installed for {directory}</div>
+          <div className="empty-state-inline">
+            No plugins installed for {directory}
+          </div>
         ) : (
           localPlugins.map(renderPlugin)
         )}

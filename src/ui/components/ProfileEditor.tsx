@@ -45,7 +45,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       enabled ? [...prev, pluginName] : prev.filter((n) => n !== pluginName)
     );
     if (!enabled) {
-      // Clear exclusions when plugin is removed
       setExcludedItems((prev) => {
         const next = { ...prev };
         delete next[pluginName];
@@ -55,10 +54,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     markDirty();
   };
 
-  // Resolve dependencies: given a "plugin:item" ref, find the plugin and item
   const resolveRef = (ref: string) => {
     const [refPlugin, refItem] = ref.split(":");
-    // Find the plugin whose pluginName matches the ref prefix
     const plugin = plugins.find(
       (p) => p.pluginName === refPlugin || p.name.startsWith(refPlugin + "@")
     );
@@ -68,7 +65,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     return { plugin, item };
   };
 
-  // Auto-enable dependencies for a given item (with cycle detection)
   const enableDependencies = (
     item: { dependencies: string[] },
     newSelectedPlugins: string[],
@@ -84,22 +80,18 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
 
       const { plugin: depPlugin, item: depItem } = resolved;
 
-      // Enable the plugin if not already
       if (!newSelectedPlugins.includes(depPlugin.name)) {
         newSelectedPlugins.push(depPlugin.name);
-        // Exclude all items by default — only enable what's needed
         newExcludedItems[depPlugin.name] = depPlugin.items
           .map((i) => i.name)
           .filter((n) => n !== depItem.name);
       } else {
-        // Plugin already enabled — just un-exclude the dependency item
         const excluded = newExcludedItems[depPlugin.name] ?? [];
         newExcludedItems[depPlugin.name] = excluded.filter(
           (n) => n !== depItem.name
         );
       }
 
-      // Recursively enable this item's dependencies
       if (depItem.dependencies.length > 0) {
         enableDependencies(depItem, newSelectedPlugins, newExcludedItems, visited);
       }
@@ -114,7 +106,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     if (enabled) {
       newExcluded[pluginName] = current.filter((n) => n !== itemName);
 
-      // Auto-enable dependencies
       const plugin = plugins.find((p) => p.name === pluginName);
       const item = plugin?.items.find((i) => i.name === itemName);
       if (item && item.dependencies.length > 0) {
@@ -133,14 +124,12 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     const newSelected = [...selectedPlugins, pluginName];
     const newExcluded = { ...excludedItems };
 
-    // Exclude all items except the one that was clicked
     const plugin = plugins.find((p) => p.name === pluginName);
     if (plugin) {
       newExcluded[pluginName] = plugin.items
         .map((i) => i.name)
         .filter((n) => n !== itemName);
 
-      // Auto-enable dependencies for the clicked item
       const item = plugin.items.find((i) => i.name === itemName);
       if (item && item.dependencies.length > 0) {
         enableDependencies(item, newSelected, newExcluded);
@@ -175,17 +164,37 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   if (!profile && !isNew) {
     return (
       <div className="profile-editor empty">
-        <div className="empty-state">Select a profile or create a new one</div>
+        <div className="empty-state">
+          <div className="empty-state-icon">&#9671;</div>
+          <div className="empty-state-title">No profile selected</div>
+          <div className="empty-state-body">
+            Choose a profile from the sidebar, or create a new one to get started.
+          </div>
+        </div>
       </div>
     );
   }
 
+  const enabledCount = selectedPlugins.length;
+  const subtitle = isNew
+    ? "Configure plugins and skills for this profile"
+    : enabledCount === 0
+    ? "No plugins enabled"
+    : `${enabledCount} plugin${enabledCount !== 1 ? "s" : ""} enabled`;
+
   return (
     <div className="profile-editor">
       <div className="editor-header">
-        <h2>{isNew ? "New Profile" : `Edit: ${profile?.name}`}</h2>
-        <button className="btn-primary" disabled={!name.trim() || !dirty} onClick={handleSave}>
-          {isNew ? "Create" : "Save"}
+        <div className="editor-header-left">
+          <h2>{isNew ? "New Profile" : profile?.name}</h2>
+          <div className="editor-header-subtitle">{subtitle}</div>
+        </div>
+        <button
+          className="btn-primary"
+          disabled={!name.trim() || !dirty}
+          onClick={handleSave}
+        >
+          {isNew ? "Create Profile" : "Save Changes"}
         </button>
       </div>
 
@@ -203,6 +212,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
             disabled={!isNew}
           />
         </div>
+
+        <div className="field-divider" />
+
         <div className="field">
           <label>Description</label>
           <input
@@ -215,6 +227,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
             placeholder="What this profile is for"
           />
         </div>
+
+        <div className="field-divider" />
+
         <div className="field">
           <label>Default Directory</label>
           <div className="field-with-button">
