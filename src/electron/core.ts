@@ -85,7 +85,7 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
     }
   }
 
-  // Agents
+  // Agents — in agents/ subdirectory
   const agentsDir = path.join(base, "agents");
   if (fs.existsSync(agentsDir)) {
     for (const file of fs.readdirSync(agentsDir)) {
@@ -97,6 +97,25 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
         path: path.join(agentsDir, file),
         userInvocable: true,
       });
+    }
+  }
+
+  // Agents — root-level .md files (e.g. voltagent pattern)
+  if (items.length === 0) {
+    const hasSubdirs = ["skills", "agents", "commands"].some(
+      (d) => fs.existsSync(path.join(base, d))
+    );
+    if (!hasSubdirs) {
+      for (const file of fs.readdirSync(base)) {
+        if (!file.endsWith(".md") || file === "README.md") continue;
+        items.push({
+          name: path.basename(file, ".md"),
+          type: "agent",
+          plugin: plugin.name,
+          path: path.join(base, file),
+          userInvocable: true,
+        });
+      }
     }
   }
 

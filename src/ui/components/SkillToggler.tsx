@@ -3,6 +3,7 @@ import type { PluginItem } from "../../../src/electron/types";
 
 interface Props {
   items: PluginItem[];
+  pluginEnabled: boolean;
   excludedNames: string[];
   onToggle: (itemName: string, enabled: boolean) => void;
 }
@@ -19,7 +20,7 @@ const TYPE_COLORS: Record<string, string> = {
   command: "var(--color-command)",
 };
 
-export function SkillToggler({ items, excludedNames, onToggle }: Props) {
+export function SkillToggler({ items, pluginEnabled, excludedNames, onToggle }: Props) {
   if (items.length === 0) {
     return <div className="skill-toggler-empty">No items found</div>;
   }
@@ -41,7 +42,7 @@ export function SkillToggler({ items, excludedNames, onToggle }: Props) {
               {TYPE_LABELS[type]}s ({group.length})
             </div>
             {group.map((item) => {
-              const enabled = !excludedNames.includes(item.name);
+              const enabled = pluginEnabled && !excludedNames.includes(item.name);
               return (
                 <label key={item.name} className="skill-item">
                   <input

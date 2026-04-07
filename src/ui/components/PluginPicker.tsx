@@ -9,6 +9,7 @@ interface Props {
   directory: string;
   onTogglePlugin: (pluginName: string, enabled: boolean) => void;
   onToggleItem: (pluginName: string, itemName: string, enabled: boolean) => void;
+  onEnablePluginWithOnly: (pluginName: string, itemName: string) => void;
 }
 
 export function PluginPicker({
@@ -18,6 +19,7 @@ export function PluginPicker({
   directory,
   onTogglePlugin,
   onToggleItem,
+  onEnablePluginWithOnly,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -48,8 +50,17 @@ export function PluginPicker({
     const isExpanded = expanded.has(plugin.name);
     const excludedCount = (excludedItems[plugin.name] ?? []).length;
 
+    const handleItemToggle = (itemName: string, itemEnabled: boolean) => {
+      if (!enabled && itemEnabled) {
+        // Plugin not enabled yet — enable it with only this item
+        onEnablePluginWithOnly(plugin.name, itemName);
+      } else {
+        onToggleItem(plugin.name, itemName, itemEnabled);
+      }
+    };
+
     return (
-      <div key={plugin.name} className={`plugin-row ${enabled ? "enabled" : "disabled"}`}>
+      <div key={plugin.name} className={`plugin-row ${enabled ? "enabled" : ""}`}>
         <div className="plugin-header" onClick={() => toggleExpand(plugin.name)}>
           <label className="plugin-checkbox" onClick={(e) => e.stopPropagation()}>
             <input
@@ -71,15 +82,18 @@ export function PluginPicker({
             </span>
           )}
         </div>
-        {isExpanded && enabled && (
+        {isExpanded && (
           <div className="plugin-items">
-            <SkillToggler
-              items={plugin.items}
-              excludedNames={excludedItems[plugin.name] ?? []}
-              onToggle={(itemName, itemEnabled) =>
-                onToggleItem(plugin.name, itemName, itemEnabled)
-              }
-            />
+            {plugin.items.length === 0 ? (
+              <div className="empty-state">No configurable items</div>
+            ) : (
+              <SkillToggler
+                items={plugin.items}
+                pluginEnabled={enabled}
+                excludedNames={excludedItems[plugin.name] ?? []}
+                onToggle={handleItemToggle}
+              />
+            )}
           </div>
         )}
       </div>

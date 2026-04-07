@@ -66,6 +66,20 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     markDirty();
   };
 
+  const handleEnablePluginWithOnly = (pluginName: string, itemName: string) => {
+    // Enable the plugin
+    setSelectedPlugins((prev) => [...prev, pluginName]);
+    // Exclude all items except the one that was clicked
+    const plugin = plugins.find((p) => p.name === pluginName);
+    if (plugin) {
+      const allOtherItems = plugin.items
+        .map((i) => i.name)
+        .filter((n) => n !== itemName);
+      setExcludedItems((prev) => ({ ...prev, [pluginName]: allOtherItems }));
+    }
+    markDirty();
+  };
+
   const handleSave = () => {
     if (!name.trim()) return;
     onSave({
@@ -155,6 +169,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         directory={directory}
         onTogglePlugin={handleTogglePlugin}
         onToggleItem={handleToggleItem}
+        onEnablePluginWithOnly={handleEnablePluginWithOnly}
       />
 
       {!isNew && profile && (
