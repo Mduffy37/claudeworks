@@ -475,6 +475,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [launchDir, setLaunchDir] = useState("");
   const [binInPath, setBinInPath] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [disabledMcpServers, setDisabledMcpServers] = useState<Record<string, string[]>>({});
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) return;
@@ -490,9 +491,10 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
       voiceEnabled,
       customClaudeMd: customClaudeMd || undefined,
+      disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
     });
     onDirtyChange(false);
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, onSave, onDirtyChange]);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, onSave, onDirtyChange]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -509,6 +511,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setEffortLevel(profile.effortLevel ?? "");
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
+      setDisabledMcpServers(profile.disabledMcpServers ?? {});
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
     } else if (isNew) {
@@ -524,6 +527,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setEffortLevel("");
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
+      setDisabledMcpServers({});
       setLaunchDir("");
       onDirtyChange(false);
     }
@@ -558,6 +562,17 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   }, [name, dirty, handleSave]);
 
   const markDirty = () => onDirtyChange(true);
+
+  const handleToggleMcp = (dir: string, mcpName: string, enabled: boolean) => {
+    setDisabledMcpServers((prev) => {
+      const currentDisabled = prev[dir] ?? [];
+      const newDisabled = enabled
+        ? currentDisabled.filter((n) => n !== mcpName)  // remove from disabled
+        : [...currentDisabled, mcpName];                 // add to disabled
+      return { ...prev, [dir]: newDisabled };
+    });
+    markDirty();
+  };
 
   // ─── Plugin/item toggle logic (unchanged) ──────────────────────────────────
 
@@ -893,8 +908,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               mcpServers={mcpServers}
               onTogglePlugin={handleTogglePlugin}
               launchDir={launchDir || directory}
-              disabledMcpServers={{}}
-              onToggleMcp={() => {}}
+              disabledMcpServers={disabledMcpServers}
+              onToggleMcp={handleToggleMcp}
             />
           )}
 
