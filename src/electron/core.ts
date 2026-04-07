@@ -255,6 +255,58 @@ export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
   }
 }
 
+/**
+ * Generate {configDir}/mcp.json for --mcp-config --strict-mcp-config launch.
+ * Includes plugin MCPs (always) + project MCPs (filtered by disabled list).
+ */
+export function writeMcpConfig(
+  profile: Profile,
+  directory: string,
+  configDir: string
+): void {
+  const mcpServers: Record<string, any> = {};
+
+  // 1. Plugin MCPs — read raw .mcp.json for each enabled plugin
+  const allPlugins = scanInstalledPlugins();
+  for (const pluginName of profile.plugins) {
+    const plugin = allPlugins.find((p) => p.name === pluginName);
+    if (!plugin) continue;
+    const mcpJsonPath = path.join(plugin.installPath, ".mcp.json");
+    if (!fs.existsSync(mcpJsonPath)) continue;
+    try {
+      const raw = JSON.parse(fs.readFileSync(mcpJsonPath, "utf-8"));
+      // Plugin .mcp.json is a flat object: { serverName: { type, command, args, url, ... } }
+      for (const [name, config] of Object.entries(raw)) {
+        mcpServers[name] = config;
+      }
+    } catch {
+      // Skip unreadable plugin mcp.json
+    }
+  }
+
+  // 2. Project MCPs — read from ~/.claude.json, filter disabled
+  const claudeJson = path.join(os.homedir(), ".claude.json");
+  if (fs.existsSync(claudeJson)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(claudeJson, "utf-8"));
+      const projectMcps: Record<string, any> =
+        data.projects?.[directory]?.mcpServers ?? {};
+      const disabled = profile.disabledMcpServers?.[directory] ?? [];
+      for (const [name, config] of Object.entries(projectMcps)) {
+        if (!disabled.includes(name)) {
+          mcpServers[name] = config;
+        }
+      }
+    } catch {
+      // Skip unreadable ~/.claude.json
+    }
+  }
+
+  // Write mcp.json — always write, even if empty (valid for --strict-mcp-config)
+  const outPath = path.join(configDir, "mcp.json");
+  fs.writeFileSync(outPath, JSON.stringify({ mcpServers }, null, 2) + "\n");
+}
+
 export function getPluginsWithItems(): PluginWithItems[] {
   const plugins = scanInstalledPlugins();
   return plugins.map((p) => ({
