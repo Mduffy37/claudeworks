@@ -315,7 +315,7 @@ function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, launchDi
 
       {projectMcps.length > 0 && (
         <div className="pe-mcp-section">
-          <div className="pe-mcp-section-label">Project ({launchDir.split("/").pop() ?? launchDir})</div>
+          <div className="pe-mcp-section-label">Project ({launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default"})</div>
           {projectMcps.map((mcp) => {
             const isEnabled = !launchDir || !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
             return (
@@ -796,12 +796,13 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
           {/* Launch — only for existing profiles */}
           {!isNew && profile && (
             <div className="pe-launch-group">
-              {directories.length > 1 && (
+              {directories.length >= 1 && (
                 <select
                   className="pe-launch-dir-select"
                   value={launchDir}
                   onChange={(e) => setLaunchDir(e.target.value)}
                 >
+                  <option value="">None (choose at launch)</option>
                   {directories.map((dir) => (
                     <option key={dir} value={dir}>{shortPath(dir)}</option>
                   ))}
