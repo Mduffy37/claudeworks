@@ -832,6 +832,37 @@ body {
   cursor: help;
 }
 
+/* ─── Local items ────────────────────────────────────────────────────────── */
+
+.local-items-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 0 0 8px;
+}
+
+.local-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 4px;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.local-item.enabled {
+  opacity: 1;
+}
+
+.local-item-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* ─── Launch bar ──────────────────────────────────────────────────────────── */
 
 .launch-bar {

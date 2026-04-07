@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
 import {
   getPluginsWithItems,
+  scanLocalItems,
   loadProfiles,
   saveProfile,
   deleteProfileByName,
@@ -45,6 +46,10 @@ function createWindow(): void {
 
 ipcMain.handle("get-plugins", () => {
   return getPluginsWithItems();
+});
+
+ipcMain.handle("get-local-items", (_event, directory: string) => {
+  return scanLocalItems(directory);
 });
 
 ipcMain.handle("get-profiles", () => {

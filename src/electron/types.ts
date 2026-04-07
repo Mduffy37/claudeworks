@@ -36,6 +36,13 @@ export interface PluginWithItems extends PluginEntry {
   hooks: PluginHook[];
 }
 
+/** A local skill/agent/command from the working directory's .claude/ folder. */
+export interface LocalItem {
+  name: string;
+  type: "skill" | "agent" | "command";
+  path: string; // absolute path to the .md file
+}
+
 /** A named Claude Code profile. */
 export interface Profile {
   name: string;
@@ -53,6 +60,7 @@ export interface ProfilesStore {
 /** IPC API exposed to the renderer via contextBridge. */
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
+  getLocalItems: (directory: string) => Promise<LocalItem[]>;
   getProfiles: () => Promise<Profile[]>;
   createProfile: (profile: Profile) => Promise<Profile>;
   updateProfile: (profile: Profile) => Promise<Profile>;

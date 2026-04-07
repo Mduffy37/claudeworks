@@ -3,6 +3,7 @@ import React, { useState } from "react";
 interface Props {
   profileName: string | null;
   defaultDirectory?: string;
+  dirty?: boolean;
   onLaunch: (directory?: string) => void;
 }
 
@@ -19,7 +20,7 @@ function FolderIcon() {
   );
 }
 
-export function LaunchBar({ profileName, defaultDirectory, onLaunch }: Props) {
+export function LaunchBar({ profileName, defaultDirectory, dirty, onLaunch }: Props) {
   const [dirOverride, setDirOverride] = useState("");
   const [launching, setLaunching] = useState(false);
 
@@ -80,7 +81,7 @@ export function LaunchBar({ profileName, defaultDirectory, onLaunch }: Props) {
             </svg>
           )}
         </span>
-        {launching ? "Launching…" : "Launch in iTerm2"}
+        {launching ? "Launching…" : dirty ? "Save & Launch" : "Launch in iTerm2"}
       </button>
 
       <style>{`

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Profile, PluginWithItems } from "../../../src/electron/types";
+import type { Profile, PluginWithItems, LocalItem } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
 import { LaunchBar } from "./LaunchBar";
 
@@ -17,6 +17,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [directory, setDirectory] = useState("");
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
   const [excludedItems, setExcludedItems] = useState<Record<string, string[]>>({});
+  const [localItems, setLocalItems] = useState<LocalItem[]>([]);
   const [dirty, setDirty] = useState(false);
 
   // Sync state when profile prop changes
@@ -34,9 +35,19 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       setDirectory("");
       setSelectedPlugins([]);
       setExcludedItems({});
+      setLocalItems([]);
       setDirty(false);
     }
   }, [profile, isNew]);
+
+  // Scan local items when directory or profile changes
+  useEffect(() => {
+    if (directory) {
+      window.api.getLocalItems(directory).then(setLocalItems);
+    } else {
+      setLocalItems([]);
+    }
+  }, [directory, profile]);
 
   const markDirty = () => setDirty(true);
 
@@ -259,11 +270,33 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         onEnablePluginWithOnly={handleEnablePluginWithOnly}
       />
 
+      {localItems.length > 0 && (
+        <div className="plugin-section">
+          <div className="plugin-section-header">
+            <h3>Local Items</h3>
+            <span className="plugin-section-count">{localItems.length}</span>
+          </div>
+          <div className="local-items-note">
+            From {directory}/.claude/ — always loaded in this directory, not managed by profile
+          </div>
+          {localItems.map((item) => (
+            <div key={item.path} className="local-item enabled">
+              <span className="local-item-name">{item.name}</span>
+              <span className="plugin-badge">{item.type}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {!isNew && profile && (
         <LaunchBar
           profileName={profile.name}
           defaultDirectory={profile.directory}
-          onLaunch={(dir) => onLaunch(profile.name, dir)}
+          dirty={dirty}
+          onLaunch={(dir) => {
+            if (dirty) handleSave();
+            onLaunch(profile.name, dir);
+          }}
         />
       )}
     </div>

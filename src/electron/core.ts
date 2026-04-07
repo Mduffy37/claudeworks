@@ -11,6 +11,7 @@ import type {
   PluginItem,
   PluginHook,
   PluginWithItems,
+  LocalItem,
   Profile,
   ProfilesStore,
 } from "./types";
@@ -205,6 +206,69 @@ export function getPluginsWithItems(): PluginWithItems[] {
     items: scanPluginItems(p),
     hooks: scanPluginHooks(p),
   }));
+}
+
+export function scanLocalItems(directory: string): LocalItem[] {
+  const claudeDir = path.join(directory, ".claude");
+  if (!fs.existsSync(claudeDir)) return [];
+
+  const items: LocalItem[] = [];
+
+  // Skills
+  const skillsDir = path.join(claudeDir, "skills");
+  if (fs.existsSync(skillsDir)) {
+    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
+      if (!fs.existsSync(skillMd)) continue;
+      const fm = readFrontmatter(skillMd);
+      items.push({
+        name: fm.name ?? entry.name,
+        type: "skill",
+        path: skillMd,
+      });
+    }
+  }
+
+  // Commands (including subdirectories for namespaced commands)
+  const cmdsDir = path.join(claudeDir, "commands");
+  if (fs.existsSync(cmdsDir)) {
+    for (const entry of fs.readdirSync(cmdsDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        // Namespaced commands: commands/vault/get-overview.md -> vault:get-overview
+        const subDir = path.join(cmdsDir, entry.name);
+        for (const file of fs.readdirSync(subDir)) {
+          if (!file.endsWith(".md")) continue;
+          items.push({
+            name: `${entry.name}:${path.basename(file, ".md")}`,
+            type: "command",
+            path: path.join(subDir, file),
+          });
+        }
+      } else if (entry.name.endsWith(".md")) {
+        items.push({
+          name: path.basename(entry.name, ".md"),
+          type: "command",
+          path: path.join(cmdsDir, entry.name),
+        });
+      }
+    }
+  }
+
+  // Agents
+  const agentsDir = path.join(claudeDir, "agents");
+  if (fs.existsSync(agentsDir)) {
+    for (const file of fs.readdirSync(agentsDir)) {
+      if (!file.endsWith(".md") || file === "README.md") continue;
+      items.push({
+        name: path.basename(file, ".md"),
+        type: "agent",
+        path: path.join(agentsDir, file),
+      });
+    }
+  }
+
+  return items;
 }
 
 // ---------------------------------------------------------------------------
@@ -598,7 +662,6 @@ export function copyCredentials(profile: Profile): boolean {
 export async function launchProfile(profile: Profile, directory?: string): Promise<void> {
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
   const workDir = directory ?? profile.directory ?? os.homedir();
-
   const script = [
     'tell application "iTerm2"',
     "  activate",
@@ -616,6 +679,7 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
   ].join("\n");
 
   await execFileAsync("osascript", ["-e", script]);
+
 }
 
 // ---------------------------------------------------------------------------
