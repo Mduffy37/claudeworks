@@ -101,6 +101,11 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
+function shortPath(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+}
+
 // ─── Tab bar ─────────────────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string }[] = [
@@ -736,7 +741,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
                   onChange={(e) => setLaunchDir(e.target.value)}
                 >
                   {directories.map((dir) => (
-                    <option key={dir} value={dir}>{dir.split("/").pop()}</option>
+                    <option key={dir} value={dir}>{shortPath(dir)}</option>
                   ))}
                 </select>
               )}

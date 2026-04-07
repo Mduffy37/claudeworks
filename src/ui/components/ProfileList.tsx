@@ -14,6 +14,11 @@ function profileInitial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "P";
 }
 
+function shortPath(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+}
+
 function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (name: string, directory?: string) => void }) {
   const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const [selectedDir, setSelectedDir] = useState(dirs[0] ?? "");
@@ -44,7 +49,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
         onChange={(e) => setSelectedDir(e.target.value)}
       >
         {dirs.map((dir) => (
-          <option key={dir} value={dir}>{dir.split("/").pop()}</option>
+          <option key={dir} value={dir}>{shortPath(dir)}</option>
         ))}
       </select>
       <button
