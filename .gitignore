@@ -4,9 +4,11 @@ dist/
 *.log
 .DS_Store
 __pycache__/
+CLAUDE.md
 VAULT_LINKS.md
 HANDOVER.md
 FEATURES.md
+ROADMAP.md
 docs/
 .superpowers/
 release/
