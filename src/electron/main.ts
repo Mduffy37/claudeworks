@@ -3,6 +3,7 @@ import * as path from "path";
 import {
   getPluginsWithItems,
   scanLocalItems,
+  scanMcpServers,
   loadProfiles,
   saveProfile,
   deleteProfileByName,
@@ -50,6 +51,10 @@ ipcMain.handle("get-plugins", () => {
 
 ipcMain.handle("get-local-items", (_event, directory: string) => {
   return scanLocalItems(directory);
+});
+
+ipcMain.handle("get-mcp-servers", (_event, directory?: string) => {
+  return scanMcpServers(directory);
 });
 
 ipcMain.handle("get-profiles", () => {

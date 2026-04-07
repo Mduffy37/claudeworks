@@ -30,10 +30,30 @@ export interface DependencyMap {
   [itemId: string]: string[]; // "plugin:item" -> ["plugin:otherItem", ...]
 }
 
+/** An MCP server provided by a plugin. */
+export interface PluginMcp {
+  name: string; // server name (e.g. "context7", "github")
+  type: "stdio" | "http" | "unknown";
+  command?: string; // for stdio: the command to run
+  url?: string; // for http: the endpoint
+  plugin: string; // parent plugin name
+}
+
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
   hooks: PluginHook[];
+  mcpServers: PluginMcp[];
+}
+
+/** A standalone MCP server from ~/.claude.json (user or project level). */
+export interface StandaloneMcp {
+  name: string;
+  type: "stdio" | "http" | "unknown";
+  command?: string;
+  url?: string;
+  scope: "user" | "project";
+  projectPath?: string;
 }
 
 /** A local skill/agent/command from the working directory's .claude/ folder. */
@@ -61,6 +81,7 @@ export interface ProfilesStore {
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
   getLocalItems: (directory: string) => Promise<LocalItem[]>;
+  getMcpServers: (directory?: string) => Promise<StandaloneMcp[]>;
   getProfiles: () => Promise<Profile[]>;
   createProfile: (profile: Profile) => Promise<Profile>;
   updateProfile: (profile: Profile) => Promise<Profile>;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Profile, PluginWithItems, LocalItem } from "../../../src/electron/types";
+import type { Profile, PluginWithItems, LocalItem, StandaloneMcp } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
 import { LaunchBar } from "./LaunchBar";
 
@@ -18,6 +18,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
   const [excludedItems, setExcludedItems] = useState<Record<string, string[]>>({});
   const [localItems, setLocalItems] = useState<LocalItem[]>([]);
+  const [mcpServers, setMcpServers] = useState<StandaloneMcp[]>([]);
   const [dirty, setDirty] = useState(false);
 
   // Sync state when profile prop changes
@@ -40,12 +41,14 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     }
   }, [profile, isNew]);
 
-  // Scan local items when directory or profile changes
+  // Scan local items and MCP servers when directory or profile changes
   useEffect(() => {
     if (directory) {
       window.api.getLocalItems(directory).then(setLocalItems);
+      window.api.getMcpServers(directory).then(setMcpServers);
     } else {
       setLocalItems([]);
+      window.api.getMcpServers().then(setMcpServers);
     }
   }, [directory, profile]);
 
@@ -285,6 +288,40 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
               <span className="plugin-badge">{item.type}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {mcpServers.length > 0 && (
+        <div className="plugin-section">
+          <div className="plugin-section-header">
+            <h3>MCP Servers</h3>
+            <span className="plugin-section-count">{mcpServers.length}</span>
+          </div>
+          <div className="local-items-note">
+            From ~/.claude.json — always available, not managed by profile
+          </div>
+          {mcpServers.filter((m) => m.scope === "user").length > 0 && (
+            <div className="mcp-scope-group">
+              <div className="mcp-scope-label">User</div>
+              {mcpServers.filter((m) => m.scope === "user").map((mcp) => (
+                <div key={mcp.name} className="local-item enabled">
+                  <span className="local-item-name">{mcp.name}</span>
+                  <span className="plugin-badge">{mcp.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {mcpServers.filter((m) => m.scope === "project").length > 0 && (
+            <div className="mcp-scope-group">
+              <div className="mcp-scope-label">Project</div>
+              {mcpServers.filter((m) => m.scope === "project").map((mcp) => (
+                <div key={mcp.name} className="local-item enabled">
+                  <span className="local-item-name">{mcp.name}</span>
+                  <span className="plugin-badge">{mcp.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

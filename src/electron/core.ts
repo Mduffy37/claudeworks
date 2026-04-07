@@ -10,7 +10,9 @@ import type {
   PluginEntry,
   PluginItem,
   PluginHook,
+  PluginMcp,
   PluginWithItems,
+  StandaloneMcp,
   LocalItem,
   Profile,
   ProfilesStore,
@@ -199,12 +201,46 @@ function _getKnownPluginNames(): Set<string> {
   return _knownPluginNamesCache;
 }
 
+export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
+  const mcpJson = path.join(plugin.installPath, ".mcp.json");
+  if (!fs.existsSync(mcpJson)) return [];
+
+  try {
+    const data = JSON.parse(fs.readFileSync(mcpJson, "utf-8"));
+    const servers: PluginMcp[] = [];
+    for (const [name, config] of Object.entries(data)) {
+      const cfg = config as any;
+      if (cfg.type === "http" || cfg.url) {
+        servers.push({
+          name,
+          type: "http",
+          url: cfg.url,
+          plugin: plugin.name,
+        });
+      } else if (cfg.command) {
+        servers.push({
+          name,
+          type: "stdio",
+          command: `${cfg.command} ${(cfg.args ?? []).join(" ")}`,
+          plugin: plugin.name,
+        });
+      } else {
+        servers.push({ name, type: "unknown", plugin: plugin.name });
+      }
+    }
+    return servers;
+  } catch {
+    return [];
+  }
+}
+
 export function getPluginsWithItems(): PluginWithItems[] {
   const plugins = scanInstalledPlugins();
   return plugins.map((p) => ({
     ...p,
     items: scanPluginItems(p),
     hooks: scanPluginHooks(p),
+    mcpServers: scanPluginMcpServers(p),
   }));
 }
 
@@ -269,6 +305,48 @@ export function scanLocalItems(directory: string): LocalItem[] {
   }
 
   return items;
+}
+
+export function scanMcpServers(directory?: string): StandaloneMcp[] {
+  const claudeJson = path.join(os.homedir(), ".claude.json");
+  if (!fs.existsSync(claudeJson)) return [];
+
+  try {
+    const data = JSON.parse(fs.readFileSync(claudeJson, "utf-8"));
+    const servers: StandaloneMcp[] = [];
+
+    // User-level MCPs
+    for (const [name, config] of Object.entries(data.mcpServers ?? {})) {
+      const cfg = config as any;
+      servers.push({
+        name,
+        type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
+        command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
+        url: cfg.url,
+        scope: "user",
+      });
+    }
+
+    // Project-level MCPs
+    if (directory) {
+      const projectMcps = data.projects?.[directory]?.mcpServers ?? {};
+      for (const [name, config] of Object.entries(projectMcps)) {
+        const cfg = config as any;
+        servers.push({
+          name,
+          type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
+          command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
+          url: cfg.url,
+          scope: "project",
+          projectPath: directory,
+        });
+      }
+    }
+
+    return servers;
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------

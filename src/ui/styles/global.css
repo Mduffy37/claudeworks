@@ -832,6 +832,44 @@ body {
   cursor: help;
 }
 
+/* ─── MCP servers ────────────────────────────────────────────────────────── */
+
+.plugin-badge.mcp {
+  color: var(--color-command);
+  background: var(--color-command-dim);
+}
+
+.mcp-servers {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.mcp-server-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.mcp-server-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mcp-scope-group {
+  margin-bottom: 8px;
+}
+
+.mcp-scope-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
 /* ─── Local items ────────────────────────────────────────────────────────── */
 
 .local-items-note {

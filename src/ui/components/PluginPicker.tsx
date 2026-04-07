@@ -100,6 +100,11 @@ export function PluginPicker({
           <span className="plugin-badge count">
             {plugin.items.length} item{plugin.items.length !== 1 ? "s" : ""}
           </span>
+          {plugin.mcpServers.length > 0 && (
+            <span className="plugin-badge mcp">
+              {plugin.mcpServers.length} MCP
+            </span>
+          )}
           {excludedCount > 0 && enabled && (
             <span className="plugin-badge excluded">
               {excludedCount} excluded
@@ -119,6 +124,23 @@ export function PluginPicker({
                 excludedNames={excludedItems[plugin.name] ?? []}
                 onToggle={handleItemToggle}
               />
+            )}
+            {plugin.mcpServers.length > 0 && (
+              <div className="mcp-servers">
+                <div className="skill-group-label" style={{ color: "var(--color-command)" }}>
+                  <span className="skill-group-label-dot" />
+                  MCP Servers
+                  <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+                    &nbsp;{plugin.mcpServers.length}
+                  </span>
+                </div>
+                {plugin.mcpServers.map((mcp) => (
+                  <div key={mcp.name} className="mcp-server-item">
+                    <span className="mcp-server-name">{mcp.name}</span>
+                    <span className="plugin-badge">{mcp.type}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}

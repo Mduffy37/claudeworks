@@ -4,6 +4,7 @@ import type { ElectronAPI } from "./types";
 const api: ElectronAPI = {
   getPlugins: () => ipcRenderer.invoke("get-plugins"),
   getLocalItems: (directory) => ipcRenderer.invoke("get-local-items", directory),
+  getMcpServers: (directory) => ipcRenderer.invoke("get-mcp-servers", directory),
   getProfiles: () => ipcRenderer.invoke("get-profiles"),
   createProfile: (profile) => ipcRenderer.invoke("create-profile", profile),
   updateProfile: (profile) => ipcRenderer.invoke("update-profile", profile),
