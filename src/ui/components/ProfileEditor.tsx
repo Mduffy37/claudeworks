@@ -504,7 +504,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setLaunchDir("");
       onDirtyChange(false);
     }
-  }, [profile, isNew]);
+  }, [profile, isNew, onDirtyChange]);
 
   // Check if bin dir is in PATH
   useEffect(() => {
