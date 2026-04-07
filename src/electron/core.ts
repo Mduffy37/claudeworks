@@ -287,6 +287,8 @@ export function writeMcpConfig(
     }
   }
 
+  const disabled = profile.disabledMcpServers?.[directory] ?? [];
+
   // 2. User-level and project MCPs — read from ~/.claude.json
   const claudeJson = path.join(os.homedir(), ".claude.json");
   if (fs.existsSync(claudeJson)) {
@@ -299,16 +301,30 @@ export function writeMcpConfig(
         mcpServers[name] = config;
       }
 
-      // Project MCPs — filtered by disabled list
-      const projectMcps: Record<string, any> = data.projects?.[directory]?.mcpServers ?? {};
-      const disabled = profile.disabledMcpServers?.[directory] ?? [];
-      for (const [name, config] of Object.entries(projectMcps)) {
+      // Project MCPs from ~/.claude.json — filtered by disabled list
+      const claudeJsonProjectMcps: Record<string, any> = data.projects?.[directory]?.mcpServers ?? {};
+      for (const [name, config] of Object.entries(claudeJsonProjectMcps)) {
         if (!disabled.includes(name)) {
           mcpServers[name] = config;
         }
       }
     } catch {
       // Skip unreadable ~/.claude.json
+    }
+  }
+
+  // 3. Local .mcp.json in the project directory — filtered by disabled list
+  const localMcpPath = path.join(directory, ".mcp.json");
+  if (fs.existsSync(localMcpPath)) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(localMcpPath, "utf-8"));
+      for (const [name, config] of Object.entries(raw)) {
+        if (!disabled.includes(name)) {
+          mcpServers[name] = config;
+        }
+      }
+    } catch {
+      // Skip unreadable .mcp.json
     }
   }
 
@@ -392,45 +408,77 @@ export function scanLocalItems(directory: string): LocalItem[] {
 }
 
 export function scanMcpServers(directory?: string): StandaloneMcp[] {
-  const claudeJson = path.join(os.homedir(), ".claude.json");
-  if (!fs.existsSync(claudeJson)) return [];
+  const servers: StandaloneMcp[] = [];
+  const seenNames = new Set<string>();
 
-  try {
-    const data = JSON.parse(fs.readFileSync(claudeJson, "utf-8"));
-    const servers: StandaloneMcp[] = [];
-
-    // User-level MCPs
-    for (const [name, config] of Object.entries(data.mcpServers ?? {})) {
-      const cfg = config as any;
-      servers.push({
-        name,
-        type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
-        command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
-        url: cfg.url,
-        scope: "user",
-      });
+  // Helper to push without duplicating names (claude.json entries win over local .mcp.json)
+  function push(s: StandaloneMcp) {
+    if (!seenNames.has(s.name)) {
+      seenNames.add(s.name);
+      servers.push(s);
     }
+  }
 
-    // Project-level MCPs
-    if (directory) {
-      const projectMcps = data.projects?.[directory]?.mcpServers ?? {};
-      for (const [name, config] of Object.entries(projectMcps)) {
+  // 1. ~/.claude.json — user-level and project-level MCPs
+  const claudeJson = path.join(os.homedir(), ".claude.json");
+  if (fs.existsSync(claudeJson)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(claudeJson, "utf-8"));
+
+      for (const [name, config] of Object.entries(data.mcpServers ?? {})) {
         const cfg = config as any;
-        servers.push({
+        push({
           name,
           type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
           command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
           url: cfg.url,
-          scope: "project",
-          projectPath: directory,
+          scope: "user",
         });
       }
-    }
 
-    return servers;
-  } catch {
-    return [];
+      if (directory) {
+        const projectMcps = data.projects?.[directory]?.mcpServers ?? {};
+        for (const [name, config] of Object.entries(projectMcps)) {
+          const cfg = config as any;
+          push({
+            name,
+            type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
+            command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
+            url: cfg.url,
+            scope: "project",
+            projectPath: directory,
+          });
+        }
+      }
+    } catch {
+      // Skip unreadable ~/.claude.json
+    }
   }
+
+  // 2. Local .mcp.json in the project directory (flat format: { name: { type, command, args, url } })
+  if (directory) {
+    const localMcpPath = path.join(directory, ".mcp.json");
+    if (fs.existsSync(localMcpPath)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(localMcpPath, "utf-8"));
+        for (const [name, config] of Object.entries(raw)) {
+          const cfg = config as any;
+          push({
+            name,
+            type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
+            command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
+            url: cfg.url,
+            scope: "project",
+            projectPath: directory,
+          });
+        }
+      } catch {
+        // Skip unreadable .mcp.json
+      }
+    }
+  }
+
+  return servers;
 }
 
 // ---------------------------------------------------------------------------
