@@ -89,6 +89,7 @@ export function PluginPicker({
             ) : (
               <SkillToggler
                 items={plugin.items}
+                allPlugins={plugins}
                 pluginEnabled={enabled}
                 excludedNames={excludedItems[plugin.name] ?? []}
                 onToggle={handleItemToggle}

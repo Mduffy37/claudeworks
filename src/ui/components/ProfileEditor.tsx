@@ -55,28 +55,100 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     markDirty();
   };
 
+  // Resolve dependencies: given a "plugin:item" ref, find the plugin and item
+  const resolveRef = (ref: string) => {
+    const [refPlugin, refItem] = ref.split(":");
+    // Find the plugin whose pluginName matches the ref prefix
+    const plugin = plugins.find(
+      (p) => p.pluginName === refPlugin || p.name.startsWith(refPlugin + "@")
+    );
+    if (!plugin) return null;
+    const item = plugin.items.find((i) => i.name === refItem);
+    if (!item) return null;
+    return { plugin, item };
+  };
+
+  // Auto-enable dependencies for a given item (with cycle detection)
+  const enableDependencies = (
+    item: { dependencies: string[] },
+    newSelectedPlugins: string[],
+    newExcludedItems: Record<string, string[]>,
+    visited: Set<string> = new Set()
+  ) => {
+    for (const dep of item.dependencies) {
+      if (visited.has(dep)) continue;
+      visited.add(dep);
+
+      const resolved = resolveRef(dep);
+      if (!resolved) continue;
+
+      const { plugin: depPlugin, item: depItem } = resolved;
+
+      // Enable the plugin if not already
+      if (!newSelectedPlugins.includes(depPlugin.name)) {
+        newSelectedPlugins.push(depPlugin.name);
+        // Exclude all items by default — only enable what's needed
+        newExcludedItems[depPlugin.name] = depPlugin.items
+          .map((i) => i.name)
+          .filter((n) => n !== depItem.name);
+      } else {
+        // Plugin already enabled — just un-exclude the dependency item
+        const excluded = newExcludedItems[depPlugin.name] ?? [];
+        newExcludedItems[depPlugin.name] = excluded.filter(
+          (n) => n !== depItem.name
+        );
+      }
+
+      // Recursively enable this item's dependencies
+      if (depItem.dependencies.length > 0) {
+        enableDependencies(depItem, newSelectedPlugins, newExcludedItems, visited);
+      }
+    }
+  };
+
   const handleToggleItem = (pluginName: string, itemName: string, enabled: boolean) => {
-    setExcludedItems((prev) => {
-      const current = prev[pluginName] ?? [];
-      const next = enabled
-        ? current.filter((n) => n !== itemName)
-        : [...current, itemName];
-      return { ...prev, [pluginName]: next };
-    });
+    const newExcluded = { ...excludedItems };
+    const newSelected = [...selectedPlugins];
+    const current = newExcluded[pluginName] ?? [];
+
+    if (enabled) {
+      newExcluded[pluginName] = current.filter((n) => n !== itemName);
+
+      // Auto-enable dependencies
+      const plugin = plugins.find((p) => p.name === pluginName);
+      const item = plugin?.items.find((i) => i.name === itemName);
+      if (item && item.dependencies.length > 0) {
+        enableDependencies(item, newSelected, newExcluded);
+        setSelectedPlugins(newSelected);
+      }
+    } else {
+      newExcluded[pluginName] = [...current, itemName];
+    }
+
+    setExcludedItems(newExcluded);
     markDirty();
   };
 
   const handleEnablePluginWithOnly = (pluginName: string, itemName: string) => {
-    // Enable the plugin
-    setSelectedPlugins((prev) => [...prev, pluginName]);
+    const newSelected = [...selectedPlugins, pluginName];
+    const newExcluded = { ...excludedItems };
+
     // Exclude all items except the one that was clicked
     const plugin = plugins.find((p) => p.name === pluginName);
     if (plugin) {
-      const allOtherItems = plugin.items
+      newExcluded[pluginName] = plugin.items
         .map((i) => i.name)
         .filter((n) => n !== itemName);
-      setExcludedItems((prev) => ({ ...prev, [pluginName]: allOtherItems }));
+
+      // Auto-enable dependencies for the clicked item
+      const item = plugin.items.find((i) => i.name === itemName);
+      if (item && item.dependencies.length > 0) {
+        enableDependencies(item, newSelected, newExcluded);
+      }
     }
+
+    setSelectedPlugins(newSelected);
+    setExcludedItems(newExcluded);
     markDirty();
   };
 

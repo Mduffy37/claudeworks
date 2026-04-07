@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile);
 import type {
   PluginEntry,
   PluginItem,
+  PluginHook,
   PluginWithItems,
   Profile,
   ProfilesStore,
@@ -66,6 +67,7 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
         plugin: plugin.name,
         path: skillMd,
         userInvocable: (fm["user-invocable"] ?? "true").toLowerCase() !== "false",
+        dependencies: scanDependencies(skillMd),
       });
     }
   }
@@ -75,12 +77,14 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   if (fs.existsSync(cmdsDir)) {
     for (const file of fs.readdirSync(cmdsDir)) {
       if (!file.endsWith(".md")) continue;
+      const cmdPath = path.join(cmdsDir, file);
       items.push({
         name: path.basename(file, ".md"),
         type: "command",
         plugin: plugin.name,
-        path: path.join(cmdsDir, file),
+        path: cmdPath,
         userInvocable: true,
+        dependencies: scanDependencies(cmdPath),
       });
     }
   }
@@ -90,12 +94,14 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   if (fs.existsSync(agentsDir)) {
     for (const file of fs.readdirSync(agentsDir)) {
       if (!file.endsWith(".md") || file === "README.md") continue;
+      const agentPath = path.join(agentsDir, file);
       items.push({
         name: path.basename(file, ".md"),
         type: "agent",
         plugin: plugin.name,
-        path: path.join(agentsDir, file),
+        path: agentPath,
         userInvocable: true,
+        dependencies: scanDependencies(agentPath),
       });
     }
   }
@@ -108,12 +114,14 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
     if (!hasSubdirs) {
       for (const file of fs.readdirSync(base)) {
         if (!file.endsWith(".md") || file === "README.md") continue;
+        const rootAgentPath = path.join(base, file);
         items.push({
           name: path.basename(file, ".md"),
           type: "agent",
           plugin: plugin.name,
-          path: path.join(base, file),
+          path: rootAgentPath,
           userInvocable: true,
+          dependencies: scanDependencies(rootAgentPath),
         });
       }
     }
@@ -122,9 +130,81 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   return items;
 }
 
+export function scanPluginHooks(plugin: PluginEntry): PluginHook[] {
+  const hooksJson = path.join(plugin.installPath, "hooks", "hooks.json");
+  if (!fs.existsSync(hooksJson)) return [];
+
+  try {
+    const data = JSON.parse(fs.readFileSync(hooksJson, "utf-8"));
+    const hooks: PluginHook[] = [];
+    for (const [event, entries] of Object.entries(data.hooks ?? {})) {
+      for (const entry of entries as any[]) {
+        for (const hook of entry.hooks ?? []) {
+          if (hook.command) {
+            hooks.push({ event, command: hook.command });
+          }
+        }
+      }
+    }
+    return hooks;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Scan a .md file for references to other skills/agents.
+ * Looks for patterns like "pluginName:skillName" — only matches known plugin names.
+ */
+function scanDependencies(mdPath: string): string[] {
+  try {
+    const content = fs.readFileSync(mdPath, "utf-8");
+    const deps = new Set<string>();
+
+    // Only match refs where the prefix is a known plugin name
+    const knownPlugins = _getKnownPluginNames();
+    if (knownPlugins.size === 0) return [];
+
+    // Match "pluginname:skill-name" references (e.g. "superpowers:writing-plans")
+    const refPattern = /\b([a-z][\w-]*):([a-z][\w-]*(?:-[\w-]+)*)\b/g;
+    let match;
+    while ((match = refPattern.exec(content)) !== null) {
+      const pluginPrefix = match[1];
+      if (!knownPlugins.has(pluginPrefix)) continue;
+      deps.add(`${match[1]}:${match[2]}`);
+    }
+
+    // Remove self-references
+    const selfName = path.basename(mdPath, ".md").toLowerCase();
+    const selfSkillDir = path.basename(path.dirname(mdPath)).toLowerCase();
+    for (const dep of deps) {
+      const depItem = dep.split(":")[1];
+      if (depItem === selfName || depItem === selfSkillDir) {
+        deps.delete(dep);
+      }
+    }
+
+    return Array.from(deps);
+  } catch {
+    return [];
+  }
+}
+
+let _knownPluginNamesCache: Set<string> | null = null;
+function _getKnownPluginNames(): Set<string> {
+  if (_knownPluginNamesCache) return _knownPluginNamesCache;
+  const plugins = scanInstalledPlugins();
+  _knownPluginNamesCache = new Set(plugins.map((p) => p.pluginName));
+  return _knownPluginNamesCache;
+}
+
 export function getPluginsWithItems(): PluginWithItems[] {
   const plugins = scanInstalledPlugins();
-  return plugins.map((p) => ({ ...p, items: scanPluginItems(p) }));
+  return plugins.map((p) => ({
+    ...p,
+    items: scanPluginItems(p),
+    hooks: scanPluginHooks(p),
+  }));
 }
 
 // ---------------------------------------------------------------------------

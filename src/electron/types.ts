@@ -16,11 +16,24 @@ export interface PluginItem {
   plugin: string; // parent plugin name
   path: string; // path to the .md file
   userInvocable: boolean;
+  dependencies: string[]; // names of items this depends on (e.g. "superpowers:writing-plans")
+}
+
+/** A plugin's hook definitions. */
+export interface PluginHook {
+  event: string; // e.g. "SessionStart", "PreToolUse"
+  command: string;
+}
+
+/** Resolved dependency: which items are needed if a given item is enabled. */
+export interface DependencyMap {
+  [itemId: string]: string[]; // "plugin:item" -> ["plugin:otherItem", ...]
 }
 
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
+  hooks: PluginHook[];
 }
 
 /** A named Claude Code profile. */

@@ -435,6 +435,12 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.skill-badge.deps {
+  color: var(--color-agent);
+  background: rgba(94, 168, 240, 0.12);
+  cursor: help;
+}
+
 /* Launch Bar */
 .launch-bar {
   display: flex;
