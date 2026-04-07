@@ -4,3 +4,4 @@ dist/
 *.log
 .DS_Store
 __pycache__/
+VAULT_LINKS.md
