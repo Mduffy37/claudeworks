@@ -1063,9 +1063,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 11px 14px;
   cursor: pointer;
   transition: background var(--transition-fast);
+  /* Allow the body column to shrink below its content size */
+  min-width: 0;
 }
 
 .plugin-header:hover {
@@ -1144,15 +1146,48 @@ body {
   color: var(--text-secondary);
 }
 
-.plugin-name {
+/* Wrapper that stacks name + badge row vertically */
+.plugin-header-body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.plugin-name {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* Version — deemphasised, reads as metadata attached to the name */
+.plugin-version {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Badge row — wraps freely so badges never overflow */
+.plugin-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  /* Push the excluded badge to the right via auto-margin on the last item when it's excluded */
+}
+
+/* Visually separate the excluded badge from the type badges */
+.plugin-badge-row .excluded {
+  margin-left: 4px;
 }
 
 /* ─── Plugin badges ───────────────────────────────────────────────────────── */
@@ -1163,7 +1198,7 @@ body {
   padding: 2px 7px;
   border-radius: 20px;
   white-space: nowrap;
-  flex-shrink: 0;
+  line-height: 1.4;
 }
 
 .plugin-badge.scope {
@@ -1188,9 +1223,10 @@ body {
 }
 
 .plugin-badge.excluded {
-  color: var(--color-command);
-  background: var(--color-command-dim);
-  border: 1px solid rgba(212, 160, 90, 0.2);
+  color: var(--color-danger);
+  background: var(--color-danger-dim);
+  border: 1px solid rgba(245, 91, 91, 0.22);
+  font-weight: 600;
 }
 
 /* ─── Plugin items panel ──────────────────────────────────────────────────── */
@@ -1335,9 +1371,35 @@ body {
 
 /* ─── MCP servers ────────────────────────────────────────────────────────── */
 
-.plugin-badge.mcp {
+.plugin-badge.skill-badge {
+  color: var(--color-skill);
+  background: var(--color-skill-dim);
+  border: 1px solid rgba(82, 201, 122, 0.2);
+}
+
+.plugin-badge.agent-badge {
+  color: var(--color-agent);
+  background: var(--color-agent-dim);
+  border: 1px solid rgba(94, 168, 240, 0.2);
+}
+
+.plugin-badge.cmd-badge {
   color: var(--color-command);
   background: var(--color-command-dim);
+  border: 1px solid rgba(212, 160, 90, 0.2);
+}
+
+.plugin-badge.hook-badge {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+}
+
+/* MCP — purple to distinguish it from cmd and excluded which share amber */
+.plugin-badge.mcp {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.2);
 }
 
 .mcp-servers {

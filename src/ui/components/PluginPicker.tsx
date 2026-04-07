@@ -102,22 +102,35 @@ export function PluginPicker({
             <ChevronIcon />
           </span>
 
-          <span className="plugin-name">{plugin.pluginName}</span>
+          <div className="plugin-header-body">
+            <span className="plugin-name">
+              {plugin.pluginName}
+              <span className="plugin-version">v{plugin.version}</span>
+            </span>
 
-          <span className="plugin-badge version">v{plugin.version}</span>
-          <span className="plugin-badge count">
-            {plugin.items.length} item{plugin.items.length !== 1 ? "s" : ""}
-          </span>
-          {plugin.mcpServers.length > 0 && (
-            <span className="plugin-badge mcp">
-              {plugin.mcpServers.length} MCP
-            </span>
-          )}
-          {excludedCount > 0 && enabled && (
-            <span className="plugin-badge excluded">
-              {excludedCount} excluded
-            </span>
-          )}
+            {/* Badge row — sits below the name and wraps freely */}
+            {(() => {
+              const skills = plugin.items.filter((i) => i.type === "skill").length;
+              const agents = plugin.items.filter((i) => i.type === "agent").length;
+              const commands = plugin.items.filter((i) => i.type === "command").length;
+              const hooks = plugin.hooks.length;
+              const mcps = plugin.mcpServers.length;
+              const hasNothing = !skills && !agents && !commands && !hooks && !mcps;
+              return (
+                <span className="plugin-badge-row">
+                  {skills > 0 && <span className="plugin-badge skill-badge">{skills} skill{skills !== 1 ? "s" : ""}</span>}
+                  {agents > 0 && <span className="plugin-badge agent-badge">{agents} agent{agents !== 1 ? "s" : ""}</span>}
+                  {commands > 0 && <span className="plugin-badge cmd-badge">{commands} cmd{commands !== 1 ? "s" : ""}</span>}
+                  {hooks > 0 && <span className="plugin-badge hook-badge">{hooks} hook{hooks !== 1 ? "s" : ""}</span>}
+                  {mcps > 0 && <span className="plugin-badge mcp">{mcps} MCP</span>}
+                  {hasNothing && <span className="plugin-badge">LSP</span>}
+                  {excludedCount > 0 && enabled && (
+                    <span className="plugin-badge excluded">{excludedCount} excluded</span>
+                  )}
+                </span>
+              );
+            })()}
+          </div>
         </div>
 
         {isExpanded && (

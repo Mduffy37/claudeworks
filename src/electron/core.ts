@@ -36,16 +36,30 @@ export function scanInstalledPlugins(): PluginEntry[] {
   for (const [name, installs] of Object.entries(data.plugins ?? {})) {
     const [pluginName, marketplace = "unknown"] = name.split("@", 2);
 
-    for (const install of installs as any[]) {
-      entries.push({
-        name,
-        scope: install.scope ?? "user",
-        installPath: install.installPath ?? "",
-        version: install.version ?? "unknown",
-        marketplace,
-        pluginName,
-        projectPath: install.projectPath,
-      });
+    // Deduplicate: prefer user scope, then pick latest by installPath
+    const allInstalls = (installs as any[]).map((install) => ({
+      name,
+      scope: (install.scope ?? "user") as "user" | "project",
+      installPath: install.installPath ?? "",
+      version: install.version ?? "unknown",
+      marketplace,
+      pluginName,
+      projectPath: install.projectPath,
+    }));
+
+    // Keep user-scoped if available, otherwise first project-scoped
+    const userInstall = allInstalls.find((i) => i.scope === "user");
+    const projectInstalls = allInstalls.filter((i) => i.scope === "project");
+
+    if (userInstall) entries.push(userInstall);
+    // For project-scoped, deduplicate by projectPath
+    const seenPaths = new Set<string>();
+    for (const pi of projectInstalls) {
+      const key = pi.projectPath ?? pi.installPath;
+      if (!seenPaths.has(key)) {
+        seenPaths.add(key);
+        entries.push(pi);
+      }
     }
   }
   return entries;
