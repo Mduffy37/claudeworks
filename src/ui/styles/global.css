@@ -914,6 +914,9 @@ body {
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 460px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.3);
   animation: modal-slide-in 160ms cubic-bezier(0.34, 1.3, 0.64, 1);
   outline: none;
@@ -964,6 +967,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-description {
@@ -1097,6 +1102,12 @@ body {
 .field-toggle-label {
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.flag-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .claude-md-editor {

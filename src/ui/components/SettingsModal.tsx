@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
+import type { Profile } from "../../electron/types";
+
 interface Props {
   model: string;
   effortLevel: string;
@@ -7,11 +9,15 @@ interface Props {
   customClaudeMd: string;
   alias: string;
   isInPath: boolean;
+  launchFlags: NonNullable<Profile["launchFlags"]>;
+  customFlags: string;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
   onChangeClaudeMd: (v: string) => void;
   onChangeAlias: (v: string) => void;
+  onChangeLaunchFlags: (v: NonNullable<Profile["launchFlags"]>) => void;
+  onChangeCustomFlags: (v: string) => void;
   onAddToPath: () => void;
   onClose: () => void;
 }
@@ -23,11 +29,15 @@ export function SettingsModal({
   customClaudeMd,
   alias,
   isInPath,
+  launchFlags,
+  customFlags,
   onChangeModel,
   onChangeEffort,
   onChangeVoice,
   onChangeClaudeMd,
   onChangeAlias,
+  onChangeLaunchFlags,
+  onChangeCustomFlags,
   onAddToPath,
   onClose,
 }: Props) {
@@ -169,6 +179,54 @@ export function SettingsModal({
                   }
                 </div>
               )}
+            </div>
+            <div className="field-divider" />
+
+            {/* Launch Flags */}
+            <div className="field">
+              <label>Launch Flags</label>
+              <div className="flag-toggles">
+                <div className="field-toggle">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={launchFlags.dangerouslySkipPermissions ?? false}
+                      onChange={(e) =>
+                        onChangeLaunchFlags({ ...launchFlags, dangerouslySkipPermissions: e.target.checked || undefined })
+                      }
+                    />
+                    <span className="toggle-track">
+                      <span className="toggle-thumb" />
+                    </span>
+                  </label>
+                  <span className="field-toggle-label"><code>--dangerously-skip-permissions</code></span>
+                </div>
+                <div className="field-toggle">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={launchFlags.verbose ?? false}
+                      onChange={(e) =>
+                        onChangeLaunchFlags({ ...launchFlags, verbose: e.target.checked || undefined })
+                      }
+                    />
+                    <span className="toggle-track">
+                      <span className="toggle-thumb" />
+                    </span>
+                  </label>
+                  <span className="field-toggle-label"><code>--verbose</code></span>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={customFlags}
+                onChange={(e) => onChangeCustomFlags(e.target.value)}
+                placeholder="Additional flags, e.g. --max-turns 10"
+                style={{ marginTop: "8px" }}
+              />
+              <div className="field-hint">
+                Flags passed to <code>claude</code> when launching this profile
+              </div>
             </div>
           </div>
 

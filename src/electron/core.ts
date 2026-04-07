@@ -989,6 +989,14 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
   writeMcpConfig(profile, workDir, configDir);
 
   const mcpConfigPath = path.join(configDir, "mcp.json");
+
+  // Build launch flags
+  const flagParts: string[] = [];
+  if (profile.launchFlags?.dangerouslySkipPermissions) flagParts.push("--dangerously-skip-permissions");
+  if (profile.launchFlags?.verbose) flagParts.push("--verbose");
+  if (profile.customFlags?.trim()) flagParts.push(profile.customFlags.trim());
+  const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
+
   const script = [
     'tell application "iTerm2"',
     "  activate",
@@ -1000,7 +1008,7 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
     "    end tell",
     "  end if",
     "  tell current session of current window",
-    `    write text "cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' claude --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config"`,
+    `    write text "cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' claude --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr}"`,
     "  end tell",
     "end tell",
   ].join("\n");

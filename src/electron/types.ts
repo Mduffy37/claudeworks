@@ -84,6 +84,11 @@ export interface Profile {
   // key:   directory path (e.g. "/Users/me/Documents/The Vault")
   // value: array of disabled MCP server names for that directory
   // absent key = all MCPs enabled for that directory
+  launchFlags?: {
+    dangerouslySkipPermissions?: boolean;
+    verbose?: boolean;
+  };
+  customFlags?: string; // additional CLI flags as raw text
 }
 
 /** Stored profiles file format. */

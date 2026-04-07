@@ -473,6 +473,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [binInPath, setBinInPath] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [disabledMcpServers, setDisabledMcpServers] = useState<Record<string, string[]>>({});
+  const [launchFlags, setLaunchFlags] = useState<NonNullable<Profile["launchFlags"]>>({});
+  const [customFlags, setCustomFlags] = useState("");
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) return;
@@ -489,9 +491,11 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       voiceEnabled,
       customClaudeMd: customClaudeMd || undefined,
       disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
+      launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
+      customFlags: customFlags.trim() || undefined,
     });
     onDirtyChange(false);
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, onSave, onDirtyChange]);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, onSave, onDirtyChange]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -508,6 +512,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
       setDisabledMcpServers(profile.disabledMcpServers ?? {});
+      setLaunchFlags(profile.launchFlags ?? {});
+      setCustomFlags(profile.customFlags ?? "");
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
     } else if (isNew) {
@@ -523,6 +529,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
       setDisabledMcpServers({});
+      setLaunchFlags({});
+      setCustomFlags("");
       setLaunchDir("");
       onDirtyChange(false);
     }
@@ -1015,11 +1023,15 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
           customClaudeMd={customClaudeMd}
           alias={alias}
           isInPath={binInPath}
+          launchFlags={launchFlags}
+          customFlags={customFlags}
           onChangeModel={(v) => { setModel(v); markDirty(); }}
           onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
           onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
           onChangeClaudeMd={(v) => { setCustomClaudeMd(v); markDirty(); }}
           onChangeAlias={(v) => { setAlias(v); markDirty(); }}
+          onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
+          onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
           onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
           onClose={() => setSettingsOpen(false)}
         />
