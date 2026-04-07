@@ -569,7 +569,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       const newDisabled = enabled
         ? currentDisabled.filter((n) => n !== mcpName)  // remove from disabled
         : [...currentDisabled, mcpName];                 // add to disabled
-      return { ...prev, [dir]: newDisabled };
+      const result = { ...prev, [dir]: newDisabled };
+      if (newDisabled.length === 0) delete result[dir];
+      return result;
     });
     markDirty();
   };
