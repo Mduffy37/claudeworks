@@ -1860,6 +1860,88 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Overview modal ─────────────────────────────────────────────────────── */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.overview-stat {
+  text-align: center;
+  padding: 10px 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.overview-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.overview-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overview-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overview-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.overview-list-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.overview-instructions-preview {
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
 .pe-duplicate-btn {
   display: flex;
   align-items: center;

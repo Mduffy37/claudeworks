@@ -469,6 +469,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
   const [customClaudeMd, setCustomClaudeMd] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launchDir, setLaunchDir] = useState("");
@@ -720,6 +721,28 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
     };
   }, [plugins, mcpServers, localItems]);
 
+  // ─── Overview data ─────────────────────────────────────────────────────────
+
+  const overview = useMemo(() => {
+    const enabledPlugins = plugins.filter((p) => selectedPlugins.includes(p.name));
+    const allItems = enabledPlugins.flatMap((p) =>
+      p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name))
+    );
+    const skills = allItems.filter((i) => i.type === "skill");
+    const agents = allItems.filter((i) => i.type === "agent");
+    const commands = allItems.filter((i) => i.type === "command");
+    const pluginMcps = enabledPlugins.flatMap((p) => p.mcpServers);
+    const standaloneMcps = mcpServers.filter(
+      (m) => !(disabledMcpServers[launchDir || directories[0] || ""] ?? []).includes(m.name)
+    );
+    const flags: string[] = [];
+    if (launchFlags.dangerouslySkipPermissions) flags.push("--dangerously-skip-permissions");
+    if (launchFlags.verbose) flags.push("--verbose");
+    if (customFlags.trim()) flags.push(customFlags.trim());
+
+    return { enabledPlugins, skills, agents, commands, pluginMcps, standaloneMcps, flags };
+  }, [plugins, selectedPlugins, excludedItems, mcpServers, disabledMcpServers, launchDir, directories, launchFlags, customFlags]);
+
   // ─── Settings badge ────────────────────────────────────────────────────────
 
 
@@ -785,6 +808,22 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
                 <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M2 10V2.8A.8.8 0 0 1 2.8 2H10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
+            </button>
+          )}
+
+          {/* Overview */}
+          {!isNew && profile && (
+            <button
+              className="pe-settings-btn"
+              onClick={() => setOverviewOpen(true)}
+              title="Profile overview"
+              aria-label="Open profile overview"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M4.5 6h7M4.5 8.5h5M4.5 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
+              <span>Overview</span>
             </button>
           )}
 
@@ -1063,6 +1102,106 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
           onClose={() => setSettingsOpen(false)}
         />
+      )}
+
+      {/* Overview modal */}
+      {overviewOpen && (
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOverviewOpen(false); }}>
+          <div className="modal-dialog" role="dialog" aria-modal="true" aria-label="Profile Overview">
+            <div className="modal-header">
+              <span className="modal-title">Profile Overview</span>
+              <button className="modal-close" onClick={() => setOverviewOpen(false)} aria-label="Close overview">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-description">
+                Summary of what this profile will load when launched.
+              </p>
+              <div className="overview-grid">
+                <div className="overview-stat">
+                  <div className="overview-stat-value">{overview.enabledPlugins.length}</div>
+                  <div className="overview-stat-label">Plugins</div>
+                </div>
+                <div className="overview-stat">
+                  <div className="overview-stat-value">{overview.skills.length}</div>
+                  <div className="overview-stat-label">Skills</div>
+                </div>
+                <div className="overview-stat">
+                  <div className="overview-stat-value">{overview.agents.length}</div>
+                  <div className="overview-stat-label">Agents</div>
+                </div>
+                <div className="overview-stat">
+                  <div className="overview-stat-value">{overview.commands.length}</div>
+                  <div className="overview-stat-label">Commands</div>
+                </div>
+                <div className="overview-stat">
+                  <div className="overview-stat-value">{overview.pluginMcps.length + overview.standaloneMcps.length}</div>
+                  <div className="overview-stat-label">MCP Servers</div>
+                </div>
+              </div>
+
+              {overview.enabledPlugins.length > 0 && (
+                <div className="overview-section">
+                  <div className="overview-section-label">Plugins</div>
+                  <div className="overview-list">
+                    {overview.enabledPlugins.map((p) => (
+                      <div key={p.name} className="overview-list-item">
+                        <span>{p.pluginName}</span>
+                        <span className="overview-list-meta">
+                          {p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name)).length} items
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(overview.pluginMcps.length + overview.standaloneMcps.length) > 0 && (
+                <div className="overview-section">
+                  <div className="overview-section-label">MCP Servers</div>
+                  <div className="overview-list">
+                    {[...overview.pluginMcps, ...overview.standaloneMcps].map((m) => (
+                      <div key={m.name} className="overview-list-item">
+                        <span>{m.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {model && (
+                <div className="overview-section">
+                  <div className="overview-section-label">Settings</div>
+                  <div className="overview-list">
+                    {model && <div className="overview-list-item"><span>Model: {model}</span></div>}
+                    {effortLevel && <div className="overview-list-item"><span>Effort: {effortLevel}</span></div>}
+                  </div>
+                </div>
+              )}
+
+              {overview.flags.length > 0 && (
+                <div className="overview-section">
+                  <div className="overview-section-label">Launch Flags</div>
+                  <div className="overview-list">
+                    {overview.flags.map((f) => (
+                      <div key={f} className="overview-list-item"><code>{f}</code></div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {customClaudeMd && (
+                <div className="overview-section">
+                  <div className="overview-section-label">Instructions</div>
+                  <div className="overview-instructions-preview">{customClaudeMd}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`
