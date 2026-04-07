@@ -511,16 +511,17 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     window.api.isBinInPath().then(setBinInPath);
   }, []);
 
-  // Scan local items and MCP servers when directory or profile changes
+  // Scan local items and MCP servers when selected launch directory or profile changes
   useEffect(() => {
-    if (directory) {
-      window.api.getLocalItems(directory).then(setLocalItems);
-      window.api.getMcpServers(directory).then(setMcpServers);
+    const activeDir = launchDir || directory;
+    if (activeDir) {
+      window.api.getLocalItems(activeDir).then(setLocalItems);
+      window.api.getMcpServers(activeDir).then(setMcpServers);
     } else {
       setLocalItems([]);
       window.api.getMcpServers().then(setMcpServers);
     }
-  }, [directory, profile]);
+  }, [launchDir, directory, profile]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
