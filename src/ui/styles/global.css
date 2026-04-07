@@ -224,6 +224,9 @@ body {
 }
 
 .profile-item-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
@@ -236,6 +239,12 @@ body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 1px;
+}
+
+.health-badge {
+  color: #eab308;
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .btn-delete {
@@ -1826,6 +1835,22 @@ body {
 
 .pe-launch-error-dismiss:hover {
   opacity: 1;
+}
+
+.pe-health-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(234, 179, 8, 0.12);
+  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+  color: #eab308;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pe-health-warning svg {
+  flex-shrink: 0;
 }
 
 .pe-duplicate-btn {

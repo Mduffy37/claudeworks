@@ -354,6 +354,23 @@ export function getPluginsWithItems(): PluginWithItems[] {
   }));
 }
 
+/** Check which plugins in a profile are no longer installed globally. */
+export function checkProfileHealth(profile: Profile): string[] {
+  const installed = new Set(scanInstalledPlugins().map((p) => p.name));
+  return profile.plugins.filter((name) => !installed.has(name));
+}
+
+/** Check health for all profiles at once (avoids repeated plugin scans). */
+export function checkAllProfileHealth(profiles: Profile[]): Record<string, string[]> {
+  const installed = new Set(scanInstalledPlugins().map((p) => p.name));
+  const result: Record<string, string[]> = {};
+  for (const profile of profiles) {
+    const broken = profile.plugins.filter((name) => !installed.has(name));
+    if (broken.length > 0) result[profile.name] = broken;
+  }
+  return result;
+}
+
 export function scanLocalItems(directory: string): LocalItem[] {
   const claudeDir = path.join(directory, ".claude");
   if (!fs.existsSync(claudeDir)) return [];
@@ -628,7 +645,7 @@ export function assembleProfile(profile: Profile): string {
   // Read source manifest
   const sourceManifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
   if (!fs.existsSync(sourceManifestPath)) {
-    throw new Error("No installed_plugins.json found");
+    throw new Error("No plugins installed. Install at least one plugin in Claude Code before launching a profile.");
   }
   const manifest = JSON.parse(fs.readFileSync(sourceManifestPath, "utf-8"));
 
@@ -1013,8 +1030,18 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
     "end tell",
   ].join("\n");
 
-  await execFileAsync("osascript", ["-e", script]);
-
+  try {
+    await execFileAsync("osascript", ["-e", script]);
+  } catch (err: any) {
+    const msg = String(err?.stderr ?? err?.message ?? "");
+    if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
+      throw new Error("iTerm2 is not running. Open iTerm2 and try again.");
+    }
+    if (msg.includes("Not authorized")) {
+      throw new Error("macOS denied AppleScript access to iTerm2. Grant permission in System Settings > Privacy & Security > Automation.");
+    }
+    throw new Error(`Launch failed: ${msg || "Unknown AppleScript error"}`);
+  }
 }
 
 // ---------------------------------------------------------------------------

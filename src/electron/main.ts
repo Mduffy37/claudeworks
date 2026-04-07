@@ -11,6 +11,7 @@ import {
   assembleProfile,
   copyCredentials,
   launchProfile,
+  checkAllProfileHealth,
 } from "./core";
 import type { Profile } from "./types";
 
@@ -62,6 +63,10 @@ ipcMain.handle("get-profiles", () => {
   return loadProfiles();
 });
 
+ipcMain.handle("check-profile-health", () => {
+  return checkAllProfileHealth(loadProfiles());
+});
+
 ipcMain.handle("create-profile", (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
@@ -110,7 +115,11 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   const profiles = loadProfiles();
   const profile = profiles.find((p) => p.name === name);
   if (!profile) throw new Error(`Profile "${name}" not found`);
-  assembleProfile(profile);
+  try {
+    assembleProfile(profile);
+  } catch (err: any) {
+    throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
+  }
   await launchProfile(profile, directory);
 });
 

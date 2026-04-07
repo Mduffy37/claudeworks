@@ -4,6 +4,7 @@ import type { Profile } from "../../../src/electron/types";
 interface Props {
   profiles: Profile[];
   selectedName: string | null;
+  profileHealth: Record<string, string[]>;
   onSelect: (name: string) => void;
   onNew: () => void;
   onLaunch: (name: string, directory?: string) => void;
@@ -66,7 +67,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
   );
 }
 
-export function ProfileList({ profiles, selectedName, onSelect, onNew, onLaunch }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch }: Props) {
   return (
     <div className="profile-list">
       <div className="profile-list-header">
@@ -101,7 +102,21 @@ export function ProfileList({ profiles, selectedName, onSelect, onNew, onLaunch 
                 {profileInitial(p.name)}
               </div>
               <div className="profile-item-body">
-                <div className="profile-item-name">{p.name}</div>
+                <div className="profile-item-name">
+                  {p.name}
+                  {profileHealth[p.name] && (
+                    <span
+                      className="health-badge"
+                      title={`${profileHealth[p.name].length} missing plugin${profileHealth[p.name].length !== 1 ? "s" : ""}`}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                        <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        <circle cx="8" cy="11" r="0.7" fill="currentColor" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
                 <div className="profile-item-meta">
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
                 </div>

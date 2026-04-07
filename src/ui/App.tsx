@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
@@ -13,6 +13,16 @@ export function App() {
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | null>(null);
+  const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
+
+  const refreshHealth = useCallback(() => {
+    window.api.checkProfileHealth().then(setProfileHealth);
+  }, []);
+
+  // Refresh health when profiles change
+  useEffect(() => {
+    if (!profilesLoading) refreshHealth();
+  }, [profiles, profilesLoading, refreshHealth]);
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.name === selectedName) ?? null,
@@ -111,6 +121,7 @@ export function App() {
         <ProfileList
           profiles={profiles}
           selectedName={selectedName}
+          profileHealth={profileHealth}
           onSelect={handleSelect}
           onNew={handleNew}
           onLaunch={handleLaunch}
@@ -121,6 +132,7 @@ export function App() {
           profile={selectedProfile}
           plugins={plugins}
           isNew={isCreating}
+          brokenPlugins={selectedProfile ? (profileHealth[selectedProfile.name] ?? []) : []}
           onSave={handleSave}
           onLaunch={handleLaunch}
           onDelete={handleDelete}

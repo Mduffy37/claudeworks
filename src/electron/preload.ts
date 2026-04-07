@@ -13,6 +13,7 @@ const api: ElectronAPI = {
   duplicateProfile: (name) => ipcRenderer.invoke("duplicate-profile", name),
   launchProfile: (name, directory) =>
     ipcRenderer.invoke("launch-profile", name, directory),
+  checkProfileHealth: () => ipcRenderer.invoke("check-profile-health"),
   selectDirectory: () => ipcRenderer.invoke("select-directory"),
   isBinInPath: () => ipcRenderer.invoke("is-bin-in-path"),
   addBinToPath: () => ipcRenderer.invoke("add-bin-to-path"),

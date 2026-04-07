@@ -17,6 +17,7 @@ interface Props {
   profile: Profile | null;
   plugins: PluginWithItems[];
   isNew: boolean;
+  brokenPlugins: string[];
   onSave: (profile: Profile) => void;
   onLaunch: (name: string, directory?: string) => void;
   onDelete: (name: string) => void;
@@ -452,7 +453,7 @@ function InfoCard({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directories, setDirectories] = useState<string[]>([]);
@@ -845,6 +846,20 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {brokenPlugins.length > 0 && (
+        <div className="pe-health-warning">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+            <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            <circle cx="8" cy="11" r="0.7" fill="currentColor" />
+          </svg>
+          <span>
+            {brokenPlugins.length} missing plugin{brokenPlugins.length !== 1 ? "s" : ""}:{" "}
+            {brokenPlugins.map((n) => n.split("@")[0]).join(", ")}
+          </span>
         </div>
       )}
 
