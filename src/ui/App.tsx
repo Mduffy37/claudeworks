@@ -64,6 +64,7 @@ export function App() {
   const handleDuplicate = async (name: string) => {
     const copy = await window.api.duplicateProfile(name);
     await refresh();
+    setDirty(false);
     setSelectedName(copy.name);
     setIsCreating(false);
   };

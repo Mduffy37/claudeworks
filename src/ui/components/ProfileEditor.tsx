@@ -453,9 +453,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [binInPath, setBinInPath] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!name.trim()) return;
-    onSave({
+    await onSave({
       name: name.trim(),
       description,
       directory: directories[0] || undefined,
@@ -635,7 +635,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     setLaunchError(null);
     setLaunching(true);
     try {
-      if (dirty) handleSave();
+      if (dirty) await handleSave();
       await onLaunch(profile.name, launchDir || undefined);
     } catch (err: any) {
       setLaunchError(err?.message ?? "Unknown error");
