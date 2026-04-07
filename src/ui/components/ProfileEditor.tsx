@@ -358,7 +358,6 @@ interface InfoCardProps {
   onChangeName: (v: string) => void;
   onChangeDescription: (v: string) => void;
   onChangeDirectories: (dirs: string[]) => void;
-  onBrowse: () => void;
 }
 
 function InfoCard({
@@ -369,7 +368,6 @@ function InfoCard({
   onChangeName,
   onChangeDescription,
   onChangeDirectories,
-  onBrowse,
 }: InfoCardProps) {
   const [open, setOpen] = useState(isNew);
 
@@ -457,7 +455,6 @@ function InfoCard({
 export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [directory, setDirectory] = useState("");
   const [directories, setDirectories] = useState<string[]>([]);
   const [alias, setAlias] = useState("");
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
@@ -503,7 +500,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setDescription(profile.description);
       const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
       setDirectories(dirs);
-      setDirectory(dirs[0] ?? "");
       setAlias(profile.alias ?? "");
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
@@ -517,7 +513,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     } else if (isNew) {
       setName("");
       setDescription("");
-      setDirectory("");
       setDirectories([]);
       setAlias("");
       setSelectedPlugins([]);
@@ -540,7 +535,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
 
   // Scan local items and MCP servers when selected launch directory or profile changes
   useEffect(() => {
-    const activeDir = launchDir || directory;
+    const activeDir = launchDir || directories[0] || "";
     if (activeDir) {
       window.api.getLocalItems(activeDir).then(setLocalItems);
       window.api.getMcpServers(activeDir).then(setMcpServers);
@@ -548,7 +543,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setLocalItems([]);
       window.api.getMcpServers().then(setMcpServers);
     }
-  }, [launchDir, directory, profile]);
+  }, [launchDir, directories, profile]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -685,23 +680,12 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     }
   };
 
-  const handleBrowseDir = async () => {
-    const dir = await window.api.selectDirectory();
-    if (dir) {
-      setDirectory(dir);
-      markDirty();
-    }
-  };
-
   // ─── Tab counts ────────────────────────────────────────────────────────────
 
   const tabCounts = useMemo<Partial<Record<TabId, number>>>(() => {
     const countType = (type: "skill" | "agent" | "command") =>
       plugins.reduce((sum, p) => sum + p.items.filter((i) => i.type === type).length, 0);
 
-    const mcpOnlyPlugins = plugins.filter(
-      (p) => p.items.length === 0 && p.mcpServers.length > 0
-    );
     const pluginMcpCount = plugins.reduce((s, p) => s + p.mcpServers.length, 0);
     const standaloneMcpCount = mcpServers.length;
 
@@ -865,7 +849,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
             });
             markDirty();
           }}
-          onBrowse={handleBrowseDir}
         />
 
         {/* Tab strip */}
@@ -919,7 +902,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               selectedPlugins={selectedPlugins}
               mcpServers={mcpServers}
               onTogglePlugin={handleTogglePlugin}
-              launchDir={launchDir || directory}
+              launchDir={launchDir || directories[0] || ""}
               disabledMcpServers={disabledMcpServers}
               onToggleMcp={handleToggleMcp}
             />
@@ -927,18 +910,18 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
 
           {activeTab === "local" && (
             <div className="pe-local-tab">
-              {!directory ? (
+              {!directories[0] ? (
                 <div className="pe-tab-empty">
                   Set a default directory to see local items.
                 </div>
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">
-                  No local items found in {directory}/.claude/
+                  No local items found in {directories[0]}/.claude/
                 </div>
               ) : (
                 <>
                   <div className="local-items-note">
-                    From {directory}/.claude/ — always loaded in this directory, not managed by profile
+                    From {directories[0]}/.claude/ — always loaded in this directory, not managed by profile
                   </div>
                   {(["skill", "agent", "command"] as const).map((type) => {
                     const items = localItems.filter((i) => i.type === type);
@@ -967,7 +950,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               plugins={plugins}
               selectedPlugins={selectedPlugins}
               excludedItems={excludedItems}
-              directory={directory}
+              directory={directories[0] ?? ""}
               onTogglePlugin={handleTogglePlugin}
               onToggleItem={handleToggleItem}
               onEnablePluginWithOnly={handleEnablePluginWithOnly}

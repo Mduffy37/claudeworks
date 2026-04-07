@@ -222,12 +222,30 @@ function _getKnownPluginNames(): Set<string> {
   return _knownPluginNamesCache;
 }
 
+/**
+ * Read a .mcp.json file and return its server entries as a flat Record.
+ * Handles both formats:
+ *   - Flat:    { "serverName": { command, args, ... } }
+ *   - Wrapped: { "mcpServers": { "serverName": { command, args, ... } } }
+ */
+function readMcpJsonFile(filePath: string): Record<string, any> {
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    if (raw && typeof raw === "object" && raw.mcpServers && typeof raw.mcpServers === "object") {
+      return raw.mcpServers;
+    }
+    return raw ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
   const mcpJson = path.join(plugin.installPath, ".mcp.json");
   if (!fs.existsSync(mcpJson)) return [];
 
   try {
-    const data = JSON.parse(fs.readFileSync(mcpJson, "utf-8"));
+    const data = readMcpJsonFile(mcpJson);
     const servers: PluginMcp[] = [];
     for (const [name, config] of Object.entries(data)) {
       const cfg = config as any;
@@ -252,24 +270,6 @@ export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
     return servers;
   } catch {
     return [];
-  }
-}
-
-/**
- * Read a .mcp.json file and return its server entries as a flat Record.
- * Handles both formats:
- *   - Flat:    { "serverName": { command, args, ... } }
- *   - Wrapped: { "mcpServers": { "serverName": { command, args, ... } } }
- */
-function readMcpJsonFile(filePath: string): Record<string, any> {
-  try {
-    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    if (raw && typeof raw === "object" && raw.mcpServers && typeof raw.mcpServers === "object") {
-      return raw.mcpServers;
-    }
-    return raw ?? {};
-  } catch {
-    return {};
   }
 }
 
