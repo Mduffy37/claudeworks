@@ -20,9 +20,9 @@
   --border-focus: rgba(99, 179, 237, 0.6);
 
   /* Accent — the single action color */
-  --accent: #e08e3a;
-  --accent-dim: rgba(224, 142, 58, 0.15);
-  --accent-hover: #e99f52;
+  --accent: #DE7356;
+  --accent-dim: rgba(222, 115, 86, 0.15);
+  --accent-hover: #e5856b;
 
   /* Semantic type colors */
   --color-skill: #52c97a;
@@ -130,7 +130,7 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent) 0%, #c8733d 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, #b85a40 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +213,7 @@ body {
 
 .profile-item.selected .profile-item-icon {
   background: var(--accent-dim);
-  border-color: rgba(224, 142, 58, 0.3);
+  border-color: rgba(222, 115, 86, 0.3);
   color: var(--accent);
 }
 
@@ -387,30 +387,30 @@ body {
 
 .main {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   padding-top: 38px;
   height: 100vh;
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ─── Profile editor ──────────────────────────────────────────────────────── */
 
 .profile-editor {
-  padding: 20px 28px 48px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 780px;
+  height: 100%;
+  overflow: hidden;
 }
 
 .profile-editor.empty {
-  max-width: none;
   height: 100%;
   align-items: center;
   justify-content: center;
 }
 
+/* legacy — kept for any existing references */
 .editor-header {
   display: flex;
   align-items: center;
@@ -434,6 +434,453 @@ body {
 .editor-header-subtitle {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ─── Profile editor — top bar ────────────────────────────────────────────── */
+
+.pe-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.pe-topbar-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pe-topbar-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-topbar-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pe-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Settings button ─────────────────────────────────────────────────────── */
+
+.pe-settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  position: relative;
+}
+
+.pe-settings-btn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.pe-settings-btn.has-overrides {
+  border-color: rgba(222, 115, 86, 0.35);
+  color: var(--accent);
+}
+
+.pe-settings-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ─── Profile editor — content area ──────────────────────────────────────── */
+
+.pe-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ─── Info card ───────────────────────────────────────────────────────────── */
+
+.pe-info-card {
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pe-info-card-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.pe-info-card-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pe-info-card-toggle-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.pe-info-card-toggle-dir {
+  flex: 1;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-info-card-toggle-chevron {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.pe-info-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 24px 18px;
+}
+
+/* ─── Tab bar ─────────────────────────────────────────────────────────────── */
+
+.pe-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 24px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-primary);
+}
+
+.pe-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.pe-tab:hover {
+  color: var(--text-secondary);
+}
+
+.pe-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+.pe-tab-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.pe-tab.active .pe-tab-count {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(222, 115, 86, 0.2);
+}
+
+/* ─── Tab content panel ───────────────────────────────────────────────────── */
+
+.pe-tab-content {
+  flex: 1;
+  padding: 20px 24px 48px;
+  overflow: visible;
+}
+
+.pe-tab-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 32px 0;
+  text-align: center;
+  font-style: italic;
+  max-width: 340px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ─── Items-by-type tab ───────────────────────────────────────────────────── */
+
+.pe-items-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.pe-plugin-group {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.pe-plugin-group:hover {
+  border-color: var(--border-strong);
+}
+
+.pe-plugin-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.pe-plugin-group-header.enabled .pe-plugin-group-name {
+  color: var(--text-primary);
+}
+
+.pe-plugin-group-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-plugin-group-version {
+  font-size: 10px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--text-muted);
+}
+
+.pe-plugin-group-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+
+.pe-plugin-group-badge.disabled {
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+.pe-plugin-group-items {
+  padding: 8px 14px 12px;
+}
+
+/* ─── MCP tab ─────────────────────────────────────────────────────────────── */
+
+.pe-mcp-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+}
+
+.pe-mcp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pe-mcp-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.pe-mcp-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+/* ─── Settings modal ──────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: modal-fade-in 140ms ease;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.3);
+  animation: modal-slide-in 160ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  outline: none;
+}
+
+@keyframes modal-slide-in {
+  from { transform: translateY(8px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.modal-close {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-description {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.modal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.modal-claudemd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-claudemd-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modal-claudemd-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.modal-claudemd-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ─── Plugins tab — uses existing PluginPicker styles ────────────────────── */
+
+.pe-tab-content .plugin-picker {
+  max-width: 720px;
 }
 
 /* ─── Fields ──────────────────────────────────────────────────────────────── */
