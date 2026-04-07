@@ -11,6 +11,8 @@ export function App() {
   const { plugins, loading: pluginsLoading } = usePlugins();
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | null>(null);
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.name === selectedName) ?? null,
@@ -18,13 +20,38 @@ export function App() {
   );
 
   const handleNew = () => {
+    if (dirty) {
+      setPendingNav({ type: "new" });
+      return;
+    }
     setSelectedName(null);
     setIsCreating(true);
   };
 
   const handleSelect = (name: string) => {
+    if (dirty) {
+      setPendingNav({ type: "select", name });
+      return;
+    }
     setSelectedName(name);
     setIsCreating(false);
+  };
+
+  const handleDiscardAndProceed = () => {
+    setDirty(false);
+    if (!pendingNav) return;
+    if (pendingNav.type === "select") {
+      setSelectedName(pendingNav.name);
+      setIsCreating(false);
+    } else {
+      setSelectedName(null);
+      setIsCreating(true);
+    }
+    setPendingNav(null);
+  };
+
+  const handleCancelNav = () => {
+    setPendingNav(null);
   };
 
   const handleDelete = async (name: string) => {
@@ -93,8 +120,37 @@ export function App() {
           onLaunch={handleLaunch}
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
+          dirty={dirty}
+          onDirtyChange={setDirty}
         />
       </div>
+      {pendingNav && (
+        <div className="modal-backdrop" onClick={handleCancelNav}>
+          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Unsaved Changes</span>
+              <button className="modal-close" onClick={handleCancelNav}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-description">
+                Changes to <strong>{selectedProfile?.name ?? "this profile"}</strong> will be lost if you switch now.
+              </p>
+              <div className="modal-confirm-actions">
+                <button className="btn-secondary" onClick={handleCancelNav}>
+                  Cancel
+                </button>
+                <button className="btn-danger" onClick={handleDiscardAndProceed}>
+                  Discard & Switch
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

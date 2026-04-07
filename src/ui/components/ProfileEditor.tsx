@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import type {
   Profile,
   PluginWithItems,
@@ -21,6 +21,8 @@ interface Props {
   onLaunch: (name: string, directory?: string) => void;
   onDelete: (name: string) => void;
   onDuplicate?: (name: string) => void;
+  dirty: boolean;
+  onDirtyChange: (v: boolean) => void;
 }
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
@@ -429,7 +431,7 @@ function InfoCard({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete, onDuplicate }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directory, setDirectory] = useState("");
@@ -443,7 +445,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [effortLevel, setEffortLevel] = useState<string>("");
   const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
   const [customClaudeMd, setCustomClaudeMd] = useState("");
-  const [dirty, setDirty] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -451,6 +452,24 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [launchDir, setLaunchDir] = useState("");
   const [binInPath, setBinInPath] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleSave = useCallback(() => {
+    if (!name.trim()) return;
+    onSave({
+      name: name.trim(),
+      description,
+      directory: directories[0] || undefined,
+      directories: directories.length > 0 ? directories : undefined,
+      alias: alias.trim() || undefined,
+      plugins: selectedPlugins,
+      excludedItems,
+      model: (model || undefined) as Profile["model"],
+      effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
+      voiceEnabled,
+      customClaudeMd: customClaudeMd || undefined,
+    });
+    onDirtyChange(false);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, onSave, onDirtyChange]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -468,7 +487,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
       setLaunchDir(dirs[0] ?? "");
-      setDirty(false);
+      onDirtyChange(false);
     } else if (isNew) {
       setName("");
       setDescription("");
@@ -483,7 +502,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
       setLaunchDir("");
-      setDirty(false);
+      onDirtyChange(false);
     }
   }, [profile, isNew]);
 
@@ -503,7 +522,18 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     }
   }, [directory, profile]);
 
-  const markDirty = () => setDirty(true);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === "s") {
+        e.preventDefault();
+        if (name.trim() && dirty) handleSave();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [name, dirty, handleSave]);
+
+  const markDirty = () => onDirtyChange(true);
 
   // ─── Plugin/item toggle logic (unchanged) ──────────────────────────────────
 
@@ -599,24 +629,6 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   };
 
   // ─── Save / Launch ─────────────────────────────────────────────────────────
-
-  const handleSave = () => {
-    if (!name.trim()) return;
-    onSave({
-      name: name.trim(),
-      description,
-      directory: directories[0] || undefined,
-      directories: directories.length > 0 ? directories : undefined,
-      alias: alias.trim() || undefined,
-      plugins: selectedPlugins,
-      excludedItems,
-      model: (model || undefined) as Profile["model"],
-      effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
-      voiceEnabled,
-      customClaudeMd: customClaudeMd || undefined,
-    });
-    setDirty(false);
-  };
 
   const handleLaunch = async () => {
     if (!profile) return;
