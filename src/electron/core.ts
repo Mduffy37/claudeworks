@@ -256,11 +256,30 @@ export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
 }
 
 /**
+ * Read a .mcp.json file and return its server entries as a flat Record.
+ * Handles both formats:
+ *   - Flat:    { "serverName": { command, args, ... } }
+ *   - Wrapped: { "mcpServers": { "serverName": { command, args, ... } } }
+ */
+function readMcpJsonFile(filePath: string): Record<string, any> {
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    if (raw && typeof raw === "object" && raw.mcpServers && typeof raw.mcpServers === "object") {
+      return raw.mcpServers;
+    }
+    return raw ?? {};
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Generate {configDir}/mcp.json for --mcp-config --strict-mcp-config launch.
  * Merge order (later entries win on name collision):
  *   1. Plugin MCPs — from each enabled plugin's .mcp.json (always included)
  *   2. User-level MCPs — from ~/.claude.json mcpServers (always included)
  *   3. Project MCPs — from ~/.claude.json projects[directory].mcpServers, filtered by disabled list
+ *   4. Local .mcp.json in project directory, filtered by disabled list
  */
 export function writeMcpConfig(
   profile: Profile,
@@ -269,21 +288,16 @@ export function writeMcpConfig(
 ): void {
   const mcpServers: Record<string, any> = {};
 
-  // 1. Plugin MCPs — read raw .mcp.json for each enabled plugin
+  // 1. Plugin MCPs — read .mcp.json for each enabled plugin (flat or wrapped format)
   const allPlugins = scanInstalledPlugins();
   for (const pluginName of profile.plugins) {
     const plugin = allPlugins.find((p) => p.name === pluginName);
     if (!plugin) continue;
     const mcpJsonPath = path.join(plugin.installPath, ".mcp.json");
     if (!fs.existsSync(mcpJsonPath)) continue;
-    try {
-      const raw = JSON.parse(fs.readFileSync(mcpJsonPath, "utf-8"));
-      // Plugin .mcp.json is a flat object: { serverName: { type, command, args, url, ... } }
-      for (const [name, config] of Object.entries(raw)) {
-        mcpServers[name] = config;
-      }
-    } catch {
-      // Skip unreadable plugin mcp.json
+    const entries = readMcpJsonFile(mcpJsonPath);
+    for (const [name, config] of Object.entries(entries)) {
+      mcpServers[name] = config;
     }
   }
 
@@ -313,18 +327,14 @@ export function writeMcpConfig(
     }
   }
 
-  // 3. Local .mcp.json in the project directory — filtered by disabled list
+  // 3. Local .mcp.json in the project directory — filtered by disabled list (flat or wrapped format)
   const localMcpPath = path.join(directory, ".mcp.json");
   if (fs.existsSync(localMcpPath)) {
-    try {
-      const raw = JSON.parse(fs.readFileSync(localMcpPath, "utf-8"));
-      for (const [name, config] of Object.entries(raw)) {
-        if (!disabled.includes(name)) {
-          mcpServers[name] = config;
-        }
+    const entries = readMcpJsonFile(localMcpPath);
+    for (const [name, config] of Object.entries(entries)) {
+      if (!disabled.includes(name)) {
+        mcpServers[name] = config;
       }
-    } catch {
-      // Skip unreadable .mcp.json
     }
   }
 
@@ -455,25 +465,21 @@ export function scanMcpServers(directory?: string): StandaloneMcp[] {
     }
   }
 
-  // 2. Local .mcp.json in the project directory (flat format: { name: { type, command, args, url } })
+  // 2. Local .mcp.json in the project directory (flat or wrapped format)
   if (directory) {
     const localMcpPath = path.join(directory, ".mcp.json");
     if (fs.existsSync(localMcpPath)) {
-      try {
-        const raw = JSON.parse(fs.readFileSync(localMcpPath, "utf-8"));
-        for (const [name, config] of Object.entries(raw)) {
-          const cfg = config as any;
-          push({
-            name,
-            type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
-            command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
-            url: cfg.url,
-            scope: "project",
-            projectPath: directory,
-          });
-        }
-      } catch {
-        // Skip unreadable .mcp.json
+      const entries = readMcpJsonFile(localMcpPath);
+      for (const [name, config] of Object.entries(entries)) {
+        const cfg = config as any;
+        push({
+          name,
+          type: cfg.type === "http" || cfg.url ? "http" : cfg.command ? "stdio" : "unknown",
+          command: cfg.command ? `${cfg.command} ${(cfg.args ?? []).join(" ")}` : undefined,
+          url: cfg.url,
+          scope: "project",
+          projectPath: directory,
+        });
       }
     }
   }
