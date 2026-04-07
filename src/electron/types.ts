@@ -80,6 +80,10 @@ export interface Profile {
   env?: Record<string, string>;
   statusLine?: { type: "command"; command: string } | null;
   customClaudeMd?: string; // per-profile CLAUDE.md content (appended to global)
+  disabledMcpServers?: Record<string, string[]>;
+  // key:   directory path (e.g. "/Users/me/Documents/The Vault")
+  // value: array of disabled MCP server names for that directory
+  // absent key = all MCPs enabled for that directory
 }
 
 /** Stored profiles file format. */
