@@ -672,7 +672,13 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
     setLaunching(true);
     try {
       if (dirty) await handleSave();
-      await onLaunch(profile.name, launchDir || undefined);
+      let dir = launchDir || undefined;
+      if (!dir) {
+        const picked = await window.api.selectDirectory();
+        if (!picked) return;
+        dir = picked;
+      }
+      await onLaunch(profile.name, dir);
     } catch (err: any) {
       setLaunchError(err?.message ?? "Unknown error");
     } finally {
