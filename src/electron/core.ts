@@ -448,6 +448,7 @@ export function assembleProfile(profile: Profile): string {
     ? JSON.parse(fs.readFileSync(sourceSettingsPath, "utf-8"))
     : {};
 
+  // Start with safe keys from global settings
   const SAFE_KEYS = new Set(["env", "hooks", "statusLine", "voiceEnabled"]);
   const settings: Record<string, any> = {};
   for (const [k, v] of Object.entries(source)) {
@@ -457,6 +458,27 @@ export function assembleProfile(profile: Profile): string {
     profile.plugins.map((name) => [name, true])
   );
 
+  // Apply profile-specific overrides
+  if (profile.model) {
+    settings.model = profile.model;
+  }
+  if (profile.effortLevel) {
+    settings.effortLevel = profile.effortLevel;
+  }
+  if (profile.voiceEnabled !== undefined) {
+    settings.voiceEnabled = profile.voiceEnabled;
+  }
+  if (profile.env) {
+    settings.env = { ...(settings.env ?? {}), ...profile.env };
+  }
+  if (profile.statusLine !== undefined) {
+    if (profile.statusLine === null) {
+      delete settings.statusLine;
+    } else {
+      settings.statusLine = profile.statusLine;
+    }
+  }
+
   // Copy permissions — keep plugin MCP permissions, strip standalone MCP permissions
   const sourcePerms = source.permissions;
   if (sourcePerms) {
@@ -465,7 +487,6 @@ export function assembleProfile(profile: Profile): string {
       ...sourcePerms,
       allow: allowed.filter((t: string) => {
         if (!t.startsWith("mcp__")) return true;
-        // Keep permissions for plugin-provided MCPs (mcp__plugin_*)
         if (t.startsWith("mcp__plugin_")) return true;
         return false;
       }),
@@ -476,6 +497,21 @@ export function assembleProfile(profile: Profile): string {
     path.join(configDir, "settings.json"),
     JSON.stringify(settings, null, 2) + "\n"
   );
+
+  // Handle per-profile CLAUDE.md
+  const claudeMdTarget = path.join(configDir, "CLAUDE.md");
+  if (profile.customClaudeMd) {
+    // Write profile-specific CLAUDE.md (includes global via symlink reference)
+    const globalClaudeMd = path.join(CLAUDE_HOME, "CLAUDE.md");
+    let content = "";
+    if (fs.existsSync(globalClaudeMd)) {
+      content = fs.readFileSync(globalClaudeMd, "utf-8") + "\n\n";
+    }
+    content += "# Profile: " + profile.name + "\n\n" + profile.customClaudeMd;
+    // Remove existing symlink if present
+    try { fs.unlinkSync(claudeMdTarget); } catch {}
+    fs.writeFileSync(claudeMdTarget, content);
+  }
 
   // Symlink plugin caches
   symlinkSelectedCaches(profile, configDir);

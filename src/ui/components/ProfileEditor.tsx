@@ -19,6 +19,10 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [excludedItems, setExcludedItems] = useState<Record<string, string[]>>({});
   const [localItems, setLocalItems] = useState<LocalItem[]>([]);
   const [mcpServers, setMcpServers] = useState<StandaloneMcp[]>([]);
+  const [model, setModel] = useState<string>("");
+  const [effortLevel, setEffortLevel] = useState<string>("");
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
+  const [customClaudeMd, setCustomClaudeMd] = useState("");
   const [dirty, setDirty] = useState(false);
 
   // Sync state when profile prop changes
@@ -29,6 +33,10 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       setDirectory(profile.directory ?? "");
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
+      setModel(profile.model ?? "");
+      setEffortLevel(profile.effortLevel ?? "");
+      setVoiceEnabled(profile.voiceEnabled);
+      setCustomClaudeMd(profile.customClaudeMd ?? "");
       setDirty(false);
     } else if (isNew) {
       setName("");
@@ -37,6 +45,10 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       setSelectedPlugins([]);
       setExcludedItems({});
       setLocalItems([]);
+      setModel("");
+      setEffortLevel("");
+      setVoiceEnabled(undefined);
+      setCustomClaudeMd("");
       setDirty(false);
     }
   }, [profile, isNew]);
@@ -163,6 +175,10 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       directory: directory || undefined,
       plugins: selectedPlugins,
       excludedItems,
+      model: (model || undefined) as Profile["model"],
+      effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
+      voiceEnabled,
+      customClaudeMd: customClaudeMd || undefined,
     });
     setDirty(false);
   };
@@ -263,6 +279,75 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         </div>
       </div>
 
+      <div className="plugin-section">
+        <div className="plugin-section-header">
+          <h3>Session Settings</h3>
+        </div>
+        <div className="editor-fields">
+          <div className="field">
+            <label>Model</label>
+            <select
+              value={model}
+              onChange={(e) => { setModel(e.target.value); markDirty(); }}
+            >
+              <option value="">Default (inherit global)</option>
+              <option value="opus">Opus</option>
+              <option value="sonnet">Sonnet</option>
+              <option value="haiku">Haiku</option>
+            </select>
+          </div>
+          <div className="field-divider" />
+          <div className="field">
+            <label>Effort Level</label>
+            <select
+              value={effortLevel}
+              onChange={(e) => { setEffortLevel(e.target.value); markDirty(); }}
+            >
+              <option value="">Default (inherit global)</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="max">Max</option>
+            </select>
+          </div>
+          <div className="field-divider" />
+          <div className="field">
+            <label>Voice</label>
+            <div className="field-toggle">
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={voiceEnabled ?? true}
+                  onChange={(e) => { setVoiceEnabled(e.target.checked); markDirty(); }}
+                />
+                <span className="toggle-track">
+                  <span className="toggle-thumb" />
+                </span>
+              </label>
+              <span className="field-toggle-label">
+                {voiceEnabled === undefined ? "Default" : voiceEnabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="plugin-section">
+        <div className="plugin-section-header">
+          <h3>Profile CLAUDE.md</h3>
+        </div>
+        <div className="local-items-note">
+          Appended to your global CLAUDE.md for sessions using this profile
+        </div>
+        <textarea
+          className="claude-md-editor"
+          value={customClaudeMd}
+          onChange={(e) => { setCustomClaudeMd(e.target.value); markDirty(); }}
+          placeholder="Additional instructions for this profile..."
+          rows={4}
+        />
+      </div>
+
       <PluginPicker
         plugins={plugins}
         selectedPlugins={selectedPlugins}
@@ -291,39 +376,77 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         </div>
       )}
 
-      {mcpServers.length > 0 && (
-        <div className="plugin-section">
-          <div className="plugin-section-header">
-            <h3>MCP Servers</h3>
-            <span className="plugin-section-count">{mcpServers.length}</span>
-          </div>
-          <div className="local-items-note">
-            From ~/.claude.json — always available, not managed by profile
-          </div>
-          {mcpServers.filter((m) => m.scope === "user").length > 0 && (
-            <div className="mcp-scope-group">
-              <div className="mcp-scope-label">User</div>
-              {mcpServers.filter((m) => m.scope === "user").map((mcp) => (
-                <div key={mcp.name} className="local-item enabled">
-                  <span className="local-item-name">{mcp.name}</span>
-                  <span className="plugin-badge">{mcp.type}</span>
-                </div>
-              ))}
+      {(() => {
+        const mcpOnlyPlugins = plugins.filter(
+          (p) => p.items.length === 0 && p.mcpServers.length > 0
+        );
+        const pluginMcps = mcpOnlyPlugins.flatMap((p) =>
+          p.mcpServers.map((m) => ({
+            ...m,
+            enabled: selectedPlugins.includes(p.name),
+            pluginFullName: p.name,
+          }))
+        );
+        const userMcps = mcpServers.filter((m) => m.scope === "user");
+        const projectMcps = mcpServers.filter((m) => m.scope === "project");
+        const total = pluginMcps.length + userMcps.length + projectMcps.length;
+        if (total === 0) return null;
+
+        return (
+          <div className="plugin-section">
+            <div className="plugin-section-header">
+              <h3>MCP Servers</h3>
+              <span className="plugin-section-count">{total}</span>
             </div>
-          )}
-          {mcpServers.filter((m) => m.scope === "project").length > 0 && (
-            <div className="mcp-scope-group">
-              <div className="mcp-scope-label">Project</div>
-              {mcpServers.filter((m) => m.scope === "project").map((mcp) => (
-                <div key={mcp.name} className="local-item enabled">
-                  <span className="local-item-name">{mcp.name}</span>
-                  <span className="plugin-badge">{mcp.type}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
+            {pluginMcps.length > 0 && (
+              <div className="mcp-scope-group">
+                <div className="mcp-scope-label">Plugin</div>
+                {pluginMcps.map((mcp) => (
+                  <div key={mcp.name} className={`local-item${mcp.enabled ? " enabled" : ""}`}>
+                    <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={mcp.enabled}
+                        onChange={(e) => handleTogglePlugin(mcp.pluginFullName, e.target.checked)}
+                      />
+                      <span className="toggle-track">
+                        <span className="toggle-thumb" />
+                      </span>
+                    </label>
+                    <span className="local-item-name">{mcp.name}</span>
+                    <span className="plugin-badge">{mcp.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {userMcps.length > 0 && (
+              <div className="mcp-scope-group">
+                <div className="mcp-scope-label">User</div>
+                {userMcps.map((mcp) => (
+                  <div key={mcp.name} className="local-item enabled">
+                    <span className="local-item-name">{mcp.name}</span>
+                    <span className="plugin-badge">{mcp.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {projectMcps.length > 0 && (
+              <div className="mcp-scope-group">
+                <div className="mcp-scope-label">Project</div>
+                {projectMcps.map((mcp) => (
+                  <div key={mcp.name} className="local-item enabled">
+                    <span className="local-item-name">{mcp.name}</span>
+                    <span className="plugin-badge">{mcp.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {!isNew && profile && (
         <LaunchBar

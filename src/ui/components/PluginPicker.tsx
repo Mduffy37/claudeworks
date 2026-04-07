@@ -47,14 +47,22 @@ export function PluginPicker({
     });
   };
 
+  const isMcpOnly = (p: PluginWithItems) =>
+    p.items.length === 0 && p.mcpServers.length > 0;
+
   const globalPlugins = useMemo(
-    () => plugins.filter((p) => p.scope === "user"),
+    () => plugins.filter((p) => p.scope === "user" && !isMcpOnly(p)),
     [plugins]
   );
 
   const localPlugins = useMemo(
-    () => plugins.filter((p) => p.scope === "project" && p.projectPath === directory),
+    () => plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p)),
     [plugins, directory]
+  );
+
+  const mcpOnlyPlugins = useMemo(
+    () => plugins.filter(isMcpOnly),
+    [plugins]
   );
 
   const renderPlugin = (plugin: PluginWithItems) => {

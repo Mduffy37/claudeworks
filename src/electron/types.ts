@@ -66,10 +66,17 @@ export interface LocalItem {
 /** A named Claude Code profile. */
 export interface Profile {
   name: string;
-  plugins: string[]; // plugin names to include
-  excludedItems: Record<string, string[]>; // pluginName -> excluded item names
-  directory?: string; // default working directory
+  plugins: string[];
+  excludedItems: Record<string, string[]>;
+  directory?: string;
   description: string;
+  // Session settings
+  model?: "opus" | "sonnet" | "haiku";
+  effortLevel?: "low" | "medium" | "high" | "max";
+  voiceEnabled?: boolean;
+  env?: Record<string, string>;
+  statusLine?: { type: "command"; command: string } | null;
+  customClaudeMd?: string; // per-profile CLAUDE.md content (appended to global)
 }
 
 /** Stored profiles file format. */
