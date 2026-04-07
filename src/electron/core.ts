@@ -257,7 +257,10 @@ export function scanPluginMcpServers(plugin: PluginEntry): PluginMcp[] {
 
 /**
  * Generate {configDir}/mcp.json for --mcp-config --strict-mcp-config launch.
- * Includes plugin MCPs (always) + project MCPs (filtered by disabled list).
+ * Merge order (later entries win on name collision):
+ *   1. Plugin MCPs — from each enabled plugin's .mcp.json (always included)
+ *   2. User-level MCPs — from ~/.claude.json mcpServers (always included)
+ *   3. Project MCPs — from ~/.claude.json projects[directory].mcpServers, filtered by disabled list
  */
 export function writeMcpConfig(
   profile: Profile,
