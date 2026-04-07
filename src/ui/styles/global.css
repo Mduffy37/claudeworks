@@ -1816,3 +1816,22 @@ body {
 .pe-launch-error-dismiss:hover {
   opacity: 1;
 }
+
+.pe-duplicate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.pe-duplicate-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+}

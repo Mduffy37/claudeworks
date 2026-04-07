@@ -6,7 +6,7 @@ import { ProfileEditor } from "./components/ProfileEditor";
 import type { Profile } from "../electron/types";
 
 export function App() {
-  const { profiles, loading: profilesLoading, createProfile, updateProfile, deleteProfile } =
+  const { profiles, loading: profilesLoading, createProfile, updateProfile, deleteProfile, refresh } =
     useProfiles();
   const { plugins, loading: pluginsLoading } = usePlugins();
   const [selectedName, setSelectedName] = useState<string | null>(null);
@@ -32,6 +32,13 @@ export function App() {
     if (selectedName === name) {
       setSelectedName(null);
     }
+  };
+
+  const handleDuplicate = async (name: string) => {
+    const copy = await window.api.duplicateProfile(name);
+    await refresh();
+    setSelectedName(copy.name);
+    setIsCreating(false);
   };
 
   const handleSave = async (profile: Profile) => {
@@ -85,6 +92,7 @@ export function App() {
           onSave={handleSave}
           onLaunch={handleLaunch}
           onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
         />
       </div>
     </div>

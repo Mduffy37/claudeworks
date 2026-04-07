@@ -78,6 +78,27 @@ ipcMain.handle("delete-profile", (_event, name: string) => {
   deleteProfileByName(name);
 });
 
+ipcMain.handle("duplicate-profile", (_event, name: string) => {
+  const profiles = loadProfiles();
+  const source = profiles.find((p) => p.name === name);
+  if (!source) throw new Error(`Profile "${name}" not found`);
+
+  // Generate a unique copy name
+  const existingNames = new Set(profiles.map((p) => p.name));
+  let copyName = `${source.name}-copy`;
+  let attempt = 2;
+  while (existingNames.has(copyName)) {
+    copyName = `${source.name}-copy-${attempt}`;
+    attempt++;
+  }
+
+  const copy: Profile = { ...source, name: copyName };
+  const saved = saveProfile(copy);
+  assembleProfile(saved);
+  copyCredentials(saved);
+  return saved;
+});
+
 ipcMain.handle("launch-profile", async (_event, name: string, directory?: string) => {
   const profiles = loadProfiles();
   const profile = profiles.find((p) => p.name === name);

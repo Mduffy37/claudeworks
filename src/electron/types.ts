@@ -96,6 +96,7 @@ export interface ElectronAPI {
   createProfile: (profile: Profile) => Promise<Profile>;
   updateProfile: (profile: Profile) => Promise<Profile>;
   deleteProfile: (name: string) => Promise<void>;
+  duplicateProfile: (name: string) => Promise<Profile>;
   launchProfile: (name: string, directory?: string) => Promise<void>;
   selectDirectory: () => Promise<string | null>;
   isBinInPath: () => Promise<boolean>;

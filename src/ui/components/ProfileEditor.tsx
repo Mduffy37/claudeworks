@@ -20,6 +20,7 @@ interface Props {
   onSave: (profile: Profile) => void;
   onLaunch: (name: string, directory?: string) => void;
   onDelete: (name: string) => void;
+  onDuplicate?: (name: string) => void;
 }
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
@@ -428,7 +429,7 @@ function InfoCard({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete, onDuplicate }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directory, setDirectory] = useState("");
@@ -711,6 +712,20 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
                 <path d="M4.5 3V2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                 <path d="M2 3l.7 7.3A.8.8 0 0 0 2.7 11h6.6a.8.8 0 0 0 .8-.7L10.8 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M4.5 5.5v3M7.5 5.5v3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+
+          {/* Duplicate — only for existing profiles */}
+          {!isNew && profile && onDuplicate && (
+            <button
+              className="pe-duplicate-btn"
+              onClick={() => onDuplicate(profile.name)}
+              title="Duplicate profile"
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M2 10V2.8A.8.8 0 0 1 2.8 2H10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
             </button>
           )}
