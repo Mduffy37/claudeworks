@@ -996,35 +996,42 @@ body {
   padding: 14px;
 }
 
-.modal-claudemd {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.modal-claudemd-header {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.modal-claudemd-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.modal-claudemd-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
 /* ─── Plugins tab — uses existing PluginPicker styles ────────────────────── */
 
 .pe-tab-content .plugin-picker {
   max-width: 720px;
+}
+
+.pe-instructions-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.pe-instructions-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.pe-instructions-editor {
+  width: 100%;
+  min-height: 240px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.pe-instructions-editor:focus {
+  outline: none;
+  border-color: var(--border-focus);
 }
 
 /* ─── Fields ──────────────────────────────────────────────────────────────── */

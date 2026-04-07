@@ -6,7 +6,6 @@ interface Props {
   model: string;
   effortLevel: string;
   voiceEnabled: boolean | undefined;
-  customClaudeMd: string;
   alias: string;
   isInPath: boolean;
   launchFlags: NonNullable<Profile["launchFlags"]>;
@@ -14,7 +13,6 @@ interface Props {
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
-  onChangeClaudeMd: (v: string) => void;
   onChangeAlias: (v: string) => void;
   onChangeLaunchFlags: (v: NonNullable<Profile["launchFlags"]>) => void;
   onChangeCustomFlags: (v: string) => void;
@@ -26,7 +24,6 @@ export function SettingsModal({
   model,
   effortLevel,
   voiceEnabled,
-  customClaudeMd,
   alias,
   isInPath,
   launchFlags,
@@ -34,7 +31,6 @@ export function SettingsModal({
   onChangeModel,
   onChangeEffort,
   onChangeVoice,
-  onChangeClaudeMd,
   onChangeAlias,
   onChangeLaunchFlags,
   onChangeCustomFlags,
@@ -230,22 +226,6 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* CLAUDE.md — full-width section */}
-          <div className="modal-claudemd">
-            <div className="modal-claudemd-header">
-              <span className="modal-claudemd-label">Profile CLAUDE.md</span>
-              <span className="modal-claudemd-hint">
-                Appended to your global CLAUDE.md for sessions using this profile
-              </span>
-            </div>
-            <textarea
-              className="claude-md-editor"
-              value={customClaudeMd}
-              onChange={(e) => onChangeClaudeMd(e.target.value)}
-              placeholder="Additional instructions for this profile..."
-              rows={6}
-            />
-          </div>
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { SettingsModal } from "./SettingsModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type TabId = "skills" | "agents" | "commands" | "mcp" | "local" | "plugins";
+type TabId = "skills" | "agents" | "commands" | "mcp" | "local" | "plugins" | "instructions";
 
 interface Props {
   profile: Profile | null;
@@ -119,6 +119,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "commands", label: "Commands" },
   { id: "mcp", label: "MCP Servers" },
   { id: "local", label: "Local" },
+  { id: "instructions", label: "Instructions" },
 ];
 
 function TabBar({
@@ -991,6 +992,20 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
               onEnablePluginWithOnly={handleEnablePluginWithOnly}
             />
           )}
+
+          {activeTab === "instructions" && (
+            <div className="pe-instructions-tab">
+              <div className="pe-instructions-hint">
+                Appended to your global CLAUDE.md for sessions using this profile
+              </div>
+              <textarea
+                className="pe-instructions-editor"
+                value={customClaudeMd}
+                onChange={(e) => { setCustomClaudeMd(e.target.value); markDirty(); }}
+                placeholder="Additional instructions for this profile..."
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1035,7 +1050,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           model={model}
           effortLevel={effortLevel}
           voiceEnabled={voiceEnabled}
-          customClaudeMd={customClaudeMd}
           alias={alias}
           isInPath={binInPath}
           launchFlags={launchFlags}
@@ -1043,7 +1057,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           onChangeModel={(v) => { setModel(v); markDirty(); }}
           onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
           onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
-          onChangeClaudeMd={(v) => { setCustomClaudeMd(v); markDirty(); }}
           onChangeAlias={(v) => { setAlias(v); markDirty(); }}
           onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
           onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}

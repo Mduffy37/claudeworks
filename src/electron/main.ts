@@ -132,8 +132,16 @@ ipcMain.handle("select-directory", async () => {
 });
 
 ipcMain.handle("is-bin-in-path", () => {
-  const binDir = require("path").join(require("os").homedir(), ".claude-profiles", "bin");
-  return (process.env.PATH ?? "").split(":").includes(binDir);
+  const os = require("os");
+  const fs = require("fs");
+  const path = require("path");
+  const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
+  const shell = process.env.SHELL ?? "/bin/zsh";
+  const rcFile = shell.includes("zsh")
+    ? path.join(os.homedir(), ".zshrc")
+    : path.join(os.homedir(), ".bashrc");
+  if (!fs.existsSync(rcFile)) return false;
+  return fs.readFileSync(rcFile, "utf-8").includes(binDir);
 });
 
 ipcMain.handle("add-bin-to-path", () => {
