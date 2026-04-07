@@ -892,7 +892,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               selectedPlugins={selectedPlugins}
               mcpServers={mcpServers}
               onTogglePlugin={handleTogglePlugin}
-              launchDir=""
+              launchDir={launchDir || directory}
               disabledMcpServers={{}}
               onToggleMcp={() => {}}
             />
