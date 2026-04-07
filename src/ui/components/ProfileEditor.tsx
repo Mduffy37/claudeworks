@@ -446,6 +446,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const [launchDir, setLaunchDir] = useState("");
   const [binInPath, setBinInPath] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -618,10 +619,13 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
 
   const handleLaunch = async () => {
     if (!profile) return;
+    setLaunchError(null);
     setLaunching(true);
     try {
       if (dirty) handleSave();
       await onLaunch(profile.name, launchDir || undefined);
+    } catch (err: any) {
+      setLaunchError(err?.message ?? "Unknown error");
     } finally {
       setLaunching(false);
     }
@@ -760,6 +764,17 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
           )}
         </div>
       </div>
+
+      {launchError && (
+        <div className="pe-launch-error">
+          <span>Launch failed: {launchError}</span>
+          <button className="pe-launch-error-dismiss" onClick={() => setLaunchError(null)}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* ── Scrollable content area ── */}
       <div className="pe-content">

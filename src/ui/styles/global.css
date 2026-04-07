@@ -1787,3 +1787,32 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ─── Launch error banner ──────────────────────────────────────────────────── */
+
+.pe-launch-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(220, 60, 60, 0.15);
+  border-bottom: 1px solid rgba(220, 60, 60, 0.3);
+  color: #f87171;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pe-launch-error-dismiss {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #f87171;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.pe-launch-error-dismiss:hover {
+  opacity: 1;
+}
