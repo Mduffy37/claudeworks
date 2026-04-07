@@ -290,7 +290,7 @@ export function assembleProfile(profile: Profile): string {
     }
   }
 
-  // Write filtered installed_plugins.json
+  // Write filtered installed_plugins.json (debug plugin added after cache setup)
   const profileManifest = {
     version: manifest.version ?? 2,
     plugins: filteredPlugins,
@@ -343,6 +343,9 @@ export function assembleProfile(profile: Profile): string {
 
   // Symlink shared resources
   symlinkShared(configDir);
+
+  // Copy auto-skills (commands/skills/agents that ship with every profile)
+  installAutoSkills(configDir);
 
   return configDir;
 }
@@ -457,6 +460,39 @@ function copyDirRecursive(src: string, dest: string): void {
   }
 }
 
+function installAutoSkills(configDir: string): void {
+  // Auto-skills source: check dev path first, then production path
+  const devPath = path.join(__dirname, "..", "..", "src", "auto-skills");
+  const prodPath = path.join(__dirname, "..", "auto-skills");
+  const autoSkillsSrc = fs.existsSync(devPath) ? devPath : prodPath;
+  if (!fs.existsSync(autoSkillsSrc)) return;
+
+  // Copy each subdirectory (commands/, skills/, agents/) into the config dir
+  for (const subdir of ["commands", "skills", "agents"]) {
+    const srcDir = path.join(autoSkillsSrc, subdir);
+    if (!fs.existsSync(srcDir)) continue;
+
+    const tgtDir = path.join(configDir, subdir);
+    fs.mkdirSync(tgtDir, { recursive: true });
+
+    for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+      const srcPath = path.join(srcDir, entry.name);
+      const tgtPath = path.join(tgtDir, entry.name);
+
+      // Remove existing so we always get the latest version
+      if (fs.existsSync(tgtPath)) {
+        fs.rmSync(tgtPath, { recursive: true, force: true });
+      }
+
+      if (entry.isDirectory()) {
+        copyDirRecursive(srcPath, tgtPath);
+      } else {
+        fs.copyFileSync(srcPath, tgtPath);
+      }
+    }
+  }
+}
+
 function symlinkShared(configDir: string): void {
   const shared: [string, string][] = [
     ["CLAUDE.md", "CLAUDE.md"],
@@ -471,9 +507,18 @@ function symlinkShared(configDir: string): void {
     }
   }
 
-  // Symlink plugin state files (known_marketplaces.json, blocklist.json, etc.)
-  const pluginStateFiles = ["known_marketplaces.json", "blocklist.json", "install-counts-cache.json"];
-  for (const file of pluginStateFiles) {
+  // Symlink plugin state files
+  for (const file of ["known_marketplaces.json"]) {
+    const src = path.join(CLAUDE_HOME, "plugins", file);
+    const tgt = path.join(configDir, "plugins", file);
+    if (fs.existsSync(src)) {
+      if (fs.existsSync(tgt)) fs.unlinkSync(tgt);
+      fs.symlinkSync(src, tgt);
+    }
+  }
+
+  // Symlink other plugin state files
+  for (const file of ["blocklist.json", "install-counts-cache.json"]) {
     const src = path.join(CLAUDE_HOME, "plugins", file);
     const tgt = path.join(configDir, "plugins", file);
     if (fs.existsSync(src)) {
