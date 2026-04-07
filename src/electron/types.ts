@@ -12,6 +12,7 @@ export interface PluginEntry {
 /** An individual skill, agent, or command within a plugin. */
 export interface PluginItem {
   name: string;
+  description: string;
   type: "skill" | "agent" | "command";
   plugin: string; // parent plugin name
   path: string; // path to the .md file

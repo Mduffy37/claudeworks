@@ -110,6 +110,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                 <div
                   key={item.name}
                   className="skill-item"
+                  title={item.description || undefined}
                   onClick={() => onToggle(item.name, !enabled)}
                 >
                   <ItemCheckbox

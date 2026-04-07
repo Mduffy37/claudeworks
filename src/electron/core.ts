@@ -80,6 +80,7 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
       const fm = readFrontmatter(skillMd);
       items.push({
         name: fm.name ?? entry.name,
+        description: cleanDescription(fm.description ?? ""),
         type: "skill",
         plugin: plugin.name,
         path: skillMd,
@@ -95,8 +96,10 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
     for (const file of fs.readdirSync(cmdsDir)) {
       if (!file.endsWith(".md")) continue;
       const cmdPath = path.join(cmdsDir, file);
+      const cmdFm = readFrontmatter(cmdPath);
       items.push({
         name: path.basename(file, ".md"),
+        description: cleanDescription(cmdFm.description ?? ""),
         type: "command",
         plugin: plugin.name,
         path: cmdPath,
@@ -112,8 +115,10 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
     for (const file of fs.readdirSync(agentsDir)) {
       if (!file.endsWith(".md") || file === "README.md") continue;
       const agentPath = path.join(agentsDir, file);
+      const agentFm = readFrontmatter(agentPath);
       items.push({
         name: path.basename(file, ".md"),
+        description: cleanDescription(agentFm.description ?? ""),
         type: "agent",
         plugin: plugin.name,
         path: agentPath,
@@ -132,8 +137,10 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
       for (const file of fs.readdirSync(base)) {
         if (!file.endsWith(".md") || file === "README.md") continue;
         const rootAgentPath = path.join(base, file);
+        const rootFm = readFrontmatter(rootAgentPath);
         items.push({
           name: path.basename(file, ".md"),
+          description: cleanDescription(rootFm.description ?? ""),
           type: "agent",
           plugin: plugin.name,
           path: rootAgentPath,
@@ -813,6 +820,19 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
 // ---------------------------------------------------------------------------
 // Frontmatter parser
 // ---------------------------------------------------------------------------
+
+function cleanDescription(desc: string): string {
+  // Remove surrounding quotes and trim
+  let d = desc.trim();
+  if ((d.startsWith('"') && d.endsWith('"')) || (d.startsWith("'") && d.endsWith("'"))) {
+    d = d.slice(1, -1);
+  }
+  // Collapse multiline YAML (pipe format leaves newlines)
+  d = d.replace(/\s+/g, " ").trim();
+  // Truncate very long descriptions
+  if (d.length > 200) d = d.slice(0, 197) + "...";
+  return d;
+}
 
 function readFrontmatter(filePath: string): Record<string, string> {
   const result: Record<string, string> = {};
