@@ -535,12 +535,17 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
 
   // Scan local items and MCP servers when selected launch directory or profile changes
   useEffect(() => {
-    const activeDir = launchDir || directories[0] || "";
-    if (activeDir) {
-      window.api.getLocalItems(activeDir).then(setLocalItems);
-      window.api.getMcpServers(activeDir).then(setMcpServers);
+    // Local items: only when a directory is explicitly selected (None = empty)
+    if (launchDir) {
+      window.api.getLocalItems(launchDir).then(setLocalItems);
     } else {
       setLocalItems([]);
+    }
+    // MCP servers: fall back to first directory so the MCP tab stays useful for customisation
+    const mcpDir = launchDir || directories[0] || "";
+    if (mcpDir) {
+      window.api.getMcpServers(mcpDir).then(setMcpServers);
+    } else {
       window.api.getMcpServers().then(setMcpServers);
     }
   }, [launchDir, directories, profile]);
@@ -917,18 +922,18 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
 
           {activeTab === "local" && (
             <div className="pe-local-tab">
-              {!directories[0] ? (
+              {!launchDir ? (
                 <div className="pe-tab-empty">
-                  Set a default directory to see local items.
+                  Select a directory to see local items.
                 </div>
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">
-                  No local items found in {directories[0]}/.claude/
+                  No local items found in {launchDir}/.claude/
                 </div>
               ) : (
                 <>
                   <div className="local-items-note">
-                    From {directories[0]}/.claude/ — always loaded in this directory, not managed by profile
+                    From {launchDir}/.claude/ — always loaded in this directory, not managed by profile
                   </div>
                   {(["skill", "agent", "command"] as const).map((type) => {
                     const items = localItems.filter((i) => i.type === type);
