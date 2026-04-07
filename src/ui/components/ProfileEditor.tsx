@@ -317,7 +317,7 @@ function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, launchDi
         <div className="pe-mcp-section">
           <div className="pe-mcp-section-label">Project ({launchDir.split("/").pop() ?? launchDir})</div>
           {projectMcps.map((mcp) => {
-            const isEnabled = !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
+            const isEnabled = !launchDir || !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
             return (
               <div
                 key={mcp.name}
@@ -852,7 +852,17 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
           isNew={isNew}
           onChangeName={(v) => { setName(v); markDirty(); }}
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
-          onChangeDirectories={(dirs) => { setDirectories(dirs); setDirectory(dirs[0] ?? ""); markDirty(); }}
+          onChangeDirectories={(dirs) => {
+            setDirectories(dirs);
+            setDirectory(dirs[0] ?? "");
+            setDisabledMcpServers((prev) => {
+              const pruned = Object.fromEntries(
+                Object.entries(prev).filter(([k]) => dirs.includes(k))
+              );
+              return pruned;
+            });
+            markDirty();
+          }}
           onBrowse={handleBrowseDir}
         />
 
