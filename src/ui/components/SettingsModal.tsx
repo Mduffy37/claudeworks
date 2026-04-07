@@ -5,10 +5,14 @@ interface Props {
   effortLevel: string;
   voiceEnabled: boolean | undefined;
   customClaudeMd: string;
+  alias: string;
+  isInPath: boolean;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
   onChangeClaudeMd: (v: string) => void;
+  onChangeAlias: (v: string) => void;
+  onAddToPath: () => void;
   onClose: () => void;
 }
 
@@ -17,10 +21,14 @@ export function SettingsModal({
   effortLevel,
   voiceEnabled,
   customClaudeMd,
+  alias,
+  isInPath,
   onChangeModel,
   onChangeEffort,
   onChangeVoice,
   onChangeClaudeMd,
+  onChangeAlias,
+  onAddToPath,
   onClose,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -133,6 +141,34 @@ export function SettingsModal({
                     : "Disabled"}
                 </span>
               </div>
+            </div>
+
+            <div className="field-divider" />
+
+            {/* CLI Alias */}
+            <div className="field">
+              <label>CLI Alias</label>
+              <div className="field-with-button">
+                <input
+                  type="text"
+                  value={alias}
+                  onChange={(e) => onChangeAlias(e.target.value.replace(/[^a-z0-9-]/g, ""))}
+                  placeholder="e.g. claude-research"
+                />
+                {!isInPath && (
+                  <button className="btn-secondary" onClick={onAddToPath}>
+                    Add to PATH
+                  </button>
+                )}
+              </div>
+              {alias && (
+                <div className="field-hint">
+                  {isInPath
+                    ? <>Run <code>{alias}</code> from any terminal to launch this profile</>
+                    : <>Saves to ~/.claude-profiles/bin/ — add to PATH to use</>
+                  }
+                </div>
+              )}
             </div>
           </div>
 

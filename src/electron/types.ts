@@ -69,8 +69,10 @@ export interface Profile {
   name: string;
   plugins: string[];
   excludedItems: Record<string, string[]>;
-  directory?: string;
+  directory?: string; // primary directory (first in directories list)
+  directories?: string[]; // all configured directories
   description: string;
+  alias?: string; // CLI alias (e.g. "claude-research")
   // Session settings
   model?: "opus" | "sonnet" | "haiku";
   effortLevel?: "low" | "medium" | "high" | "max";
@@ -96,6 +98,8 @@ export interface ElectronAPI {
   deleteProfile: (name: string) => Promise<void>;
   launchProfile: (name: string, directory?: string) => Promise<void>;
   selectDirectory: () => Promise<string | null>;
+  isBinInPath: () => Promise<boolean>;
+  addBinToPath: () => Promise<void>;
 }
 
 declare global {

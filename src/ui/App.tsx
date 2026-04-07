@@ -75,6 +75,7 @@ export function App() {
           onSelect={handleSelect}
           onNew={handleNew}
           onDelete={handleDelete}
+          onLaunch={handleLaunch}
         />
       </div>
       <div className="main">

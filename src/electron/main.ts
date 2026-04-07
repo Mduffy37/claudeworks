@@ -94,6 +94,31 @@ ipcMain.handle("select-directory", async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
+ipcMain.handle("is-bin-in-path", () => {
+  const binDir = require("path").join(require("os").homedir(), ".claude-profiles", "bin");
+  return (process.env.PATH ?? "").split(":").includes(binDir);
+});
+
+ipcMain.handle("add-bin-to-path", () => {
+  const os = require("os");
+  const fs = require("fs");
+  const path = require("path");
+  const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
+  fs.mkdirSync(binDir, { recursive: true });
+
+  // Detect shell config file
+  const shell = process.env.SHELL ?? "/bin/zsh";
+  const rcFile = shell.includes("zsh")
+    ? path.join(os.homedir(), ".zshrc")
+    : path.join(os.homedir(), ".bashrc");
+
+  const exportLine = `\nexport PATH="$PATH:${binDir}"\n`;
+  const existing = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, "utf-8") : "";
+  if (!existing.includes(binDir)) {
+    fs.appendFileSync(rcFile, exportLine);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------

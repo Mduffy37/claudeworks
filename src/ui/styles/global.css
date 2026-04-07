@@ -177,6 +177,7 @@ body {
 
 .profile-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
@@ -261,6 +262,84 @@ body {
 .btn-delete:hover {
   background: var(--color-danger-dim);
   color: var(--color-danger);
+}
+
+.btn-launch-sidebar {
+  display: none;
+  width: 100%;
+  padding: 4px 8px;
+  margin-top: 6px;
+  background: rgba(61, 186, 110, 0.1);
+  border: 1px solid rgba(61, 186, 110, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--color-launch);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.profile-item:hover .btn-launch-sidebar {
+  display: flex;
+}
+
+.btn-launch-sidebar:hover {
+  background: rgba(61, 186, 110, 0.2);
+  border-color: rgba(61, 186, 110, 0.45);
+}
+
+.sidebar-launch-group {
+  display: none;
+  width: 100%;
+  gap: 5px;
+  margin-top: 6px;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.profile-item:hover .sidebar-launch-group {
+  display: flex;
+}
+
+.sidebar-launch-select {
+  /* take remaining space but cap so the button always has room */
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: calc(100% - 72px); /* 72px ≈ launch button minimum width */
+  padding: 4px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  cursor: pointer;
+  /* strip default OS select chrome */
+  appearance: none;
+  -webkit-appearance: none;
+  /* simple chevron via background */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.sidebar-launch-group .btn-launch-sidebar {
+  display: flex;
+  flex-shrink: 0;
+  width: auto;
+  min-width: 64px;
+  margin-top: 0; /* group already handles vertical spacing */
 }
 
 /* ─── Sidebar footer ──────────────────────────────────────────────────────── */
@@ -1001,6 +1080,85 @@ body {
   flex: 1;
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 12px;
+}
+
+/* ─── Directory list ──────────────────────────────────────────────────────── */
+
+.dir-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dir-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.dir-list-path {
+  flex: 1;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dir-list-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  border-radius: 3px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.dir-list-remove:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-dim);
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.field-hint code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ─── Launch group ────────────────────────────────────────────────────────── */
+
+.pe-launch-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pe-launch-dir-select {
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  cursor: pointer;
+  max-width: 140px;
 }
 
 /* ─── Plugin picker ───────────────────────────────────────────────────────── */

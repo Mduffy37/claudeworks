@@ -12,6 +12,8 @@ const api: ElectronAPI = {
   launchProfile: (name, directory) =>
     ipcRenderer.invoke("launch-profile", name, directory),
   selectDirectory: () => ipcRenderer.invoke("select-directory"),
+  isBinInPath: () => ipcRenderer.invoke("is-bin-in-path"),
+  addBinToPath: () => ipcRenderer.invoke("add-bin-to-path"),
 };
 
 contextBridge.exposeInMainWorld("api", api);

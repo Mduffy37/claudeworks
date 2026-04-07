@@ -321,25 +321,32 @@ function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin }: McpTab
 interface InfoCardProps {
   name: string;
   description: string;
-  directory: string;
+  directories: string[];
   isNew: boolean;
   onChangeName: (v: string) => void;
   onChangeDescription: (v: string) => void;
-  onChangeDirectory: (v: string) => void;
+  onChangeDirectories: (dirs: string[]) => void;
   onBrowse: () => void;
 }
 
 function InfoCard({
   name,
   description,
-  directory,
+  directories,
   isNew,
   onChangeName,
   onChangeDescription,
-  onChangeDirectory,
+  onChangeDirectories,
   onBrowse,
 }: InfoCardProps) {
   const [open, setOpen] = useState(isNew);
+
+  const addDirectory = async () => {
+    const dir = await window.api.selectDirectory();
+    if (dir && !directories.includes(dir)) {
+      onChangeDirectories([...directories, dir]);
+    }
+  };
 
   return (
     <div className="pe-info-card">
@@ -349,8 +356,8 @@ function InfoCard({
         aria-expanded={open}
       >
         <span className="pe-info-card-toggle-label">Profile Info</span>
-        {!open && directory && (
-          <span className="pe-info-card-toggle-dir">{directory}</span>
+        {!open && directories.length > 0 && (
+          <span className="pe-info-card-toggle-dir">{directories[0]}{directories.length > 1 ? ` +${directories.length - 1}` : ""}</span>
         )}
         <span className="pe-info-card-toggle-chevron">
           <ChevronIcon open={open} />
@@ -385,19 +392,28 @@ function InfoCard({
           <div className="field-divider" />
 
           <div className="field">
-            <label>Default Directory</label>
-            <div className="field-with-button">
-              <input
-                type="text"
-                value={directory}
-                onChange={(e) => onChangeDirectory(e.target.value)}
-                placeholder="~/projects/my-app"
-              />
-              <button className="btn-secondary" onClick={onBrowse}>
-                Browse
-              </button>
+            <label>Directories</label>
+            <div className="dir-list">
+              {directories.map((dir, i) => (
+                <div key={dir} className="dir-list-item">
+                  <span className="dir-list-path">{dir}</span>
+                  <button
+                    className="dir-list-remove"
+                    onClick={() => onChangeDirectories(directories.filter((_, j) => j !== i))}
+                    title="Remove"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              <div className="field-with-button">
+                <button className="btn-secondary" onClick={addDirectory} style={{ width: "100%" }}>
+                  + Add Directory
+                </button>
+              </div>
             </div>
           </div>
+
         </div>
       )}
     </div>
@@ -410,6 +426,8 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directory, setDirectory] = useState("");
+  const [directories, setDirectories] = useState<string[]>([]);
+  const [alias, setAlias] = useState("");
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
   const [excludedItems, setExcludedItems] = useState<Record<string, string[]>>({});
   const [localItems, setLocalItems] = useState<LocalItem[]>([]);
@@ -422,24 +440,32 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [launchDir, setLaunchDir] = useState("");
+  const [binInPath, setBinInPath] = useState(false);
 
   // Sync state when profile prop changes
   useEffect(() => {
     if (profile) {
       setName(profile.name);
       setDescription(profile.description);
-      setDirectory(profile.directory ?? "");
+      const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
+      setDirectories(dirs);
+      setDirectory(dirs[0] ?? "");
+      setAlias(profile.alias ?? "");
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
       setModel(profile.model ?? "");
       setEffortLevel(profile.effortLevel ?? "");
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
+      setLaunchDir(dirs[0] ?? "");
       setDirty(false);
     } else if (isNew) {
       setName("");
       setDescription("");
       setDirectory("");
+      setDirectories([]);
+      setAlias("");
       setSelectedPlugins([]);
       setExcludedItems({});
       setLocalItems([]);
@@ -447,9 +473,15 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
       setEffortLevel("");
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
+      setLaunchDir("");
       setDirty(false);
     }
   }, [profile, isNew]);
+
+  // Check if bin dir is in PATH
+  useEffect(() => {
+    window.api.isBinInPath().then(setBinInPath);
+  }, []);
 
   // Scan local items and MCP servers when directory or profile changes
   useEffect(() => {
@@ -564,7 +596,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     onSave({
       name: name.trim(),
       description,
-      directory: directory || undefined,
+      directory: directories[0] || undefined,
+      directories: directories.length > 0 ? directories : undefined,
+      alias: alias.trim() || undefined,
       plugins: selectedPlugins,
       excludedItems,
       model: (model || undefined) as Profile["model"],
@@ -580,7 +614,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
     setLaunching(true);
     try {
       if (dirty) handleSave();
-      await onLaunch(profile.name);
+      await onLaunch(profile.name, launchDir || undefined);
     } finally {
       setLaunching(false);
     }
@@ -676,17 +710,30 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
 
           {/* Launch — only for existing profiles */}
           {!isNew && profile && (
-            <button
-              className={`btn-launch${launching ? " launching" : ""}`}
-              disabled={launching}
-              onClick={handleLaunch}
-              aria-label="Launch profile in iTerm2"
-            >
-              <span className="btn-launch-icon">
-                <LaunchIcon spinning={launching} />
-              </span>
-              {launching ? "Launching…" : "Launch"}
-            </button>
+            <div className="pe-launch-group">
+              {directories.length > 1 && (
+                <select
+                  className="pe-launch-dir-select"
+                  value={launchDir}
+                  onChange={(e) => setLaunchDir(e.target.value)}
+                >
+                  {directories.map((dir) => (
+                    <option key={dir} value={dir}>{dir.split("/").pop()}</option>
+                  ))}
+                </select>
+              )}
+              <button
+                className={`btn-launch${launching ? " launching" : ""}`}
+                disabled={launching}
+                onClick={handleLaunch}
+                aria-label="Launch profile in iTerm2"
+              >
+                <span className="btn-launch-icon">
+                  <LaunchIcon spinning={launching} />
+                </span>
+                {launching ? "Launching…" : "Launch"}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -697,11 +744,11 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         <InfoCard
           name={name}
           description={description}
-          directory={directory}
+          directories={directories}
           isNew={isNew}
           onChangeName={(v) => { setName(v); markDirty(); }}
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
-          onChangeDirectory={(v) => { setDirectory(v); markDirty(); }}
+          onChangeDirectories={(dirs) => { setDirectories(dirs); setDirectory(dirs[0] ?? ""); markDirty(); }}
           onBrowse={handleBrowseDir}
         />
 
@@ -817,10 +864,14 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
           effortLevel={effortLevel}
           voiceEnabled={voiceEnabled}
           customClaudeMd={customClaudeMd}
+          alias={alias}
+          isInPath={binInPath}
           onChangeModel={(v) => { setModel(v); markDirty(); }}
           onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
           onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
           onChangeClaudeMd={(v) => { setCustomClaudeMd(v); markDirty(); }}
+          onChangeAlias={(v) => { setAlias(v); markDirty(); }}
+          onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
           onClose={() => setSettingsOpen(false)}
         />
       )}
