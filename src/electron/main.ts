@@ -6,6 +6,7 @@ import {
   scanMcpServers,
   loadProfiles,
   saveProfile,
+  renameProfile,
   deleteProfileByName,
   assembleProfile,
   copyCredentials,
@@ -70,6 +71,12 @@ ipcMain.handle("create-profile", (_event, profile: Profile) => {
 
 ipcMain.handle("update-profile", (_event, profile: Profile) => {
   const saved = saveProfile(profile);
+  assembleProfile(saved);
+  return saved;
+});
+
+ipcMain.handle("rename-profile", (_event, oldName: string, profile: Profile) => {
+  const saved = renameProfile(oldName, profile);
   assembleProfile(saved);
   return saved;
 });

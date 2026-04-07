@@ -510,6 +510,30 @@ export function loadProfiles(): Profile[] {
   return Object.values(store.profiles);
 }
 
+export function renameProfile(oldName: string, profile: Profile): Profile {
+  const store = readProfilesStore();
+  if (!store.profiles[oldName]) throw new Error(`Profile "${oldName}" not found`);
+  if (profile.name !== oldName && store.profiles[profile.name]) {
+    throw new Error(`A profile named "${profile.name}" already exists`);
+  }
+
+  const old = store.profiles[oldName];
+  if (old.alias) removeAlias(old.alias);
+
+  if (profile.name !== oldName) {
+    const oldDir = path.join(PROFILES_DIR, oldName);
+    const newDir = path.join(PROFILES_DIR, profile.name);
+    if (fs.existsSync(oldDir)) fs.renameSync(oldDir, newDir);
+    delete store.profiles[oldName];
+  }
+
+  store.profiles[profile.name] = profile;
+  writeProfilesStore(store);
+  if (profile.alias) generateAlias(profile);
+
+  return profile;
+}
+
 export function saveProfile(profile: Profile): Profile {
   // Clean up old alias if name changed
   const store = readProfilesStore();

@@ -99,6 +99,7 @@ export interface ElectronAPI {
   getProfiles: () => Promise<Profile[]>;
   createProfile: (profile: Profile) => Promise<Profile>;
   updateProfile: (profile: Profile) => Promise<Profile>;
+  renameProfile: (oldName: string, profile: Profile) => Promise<Profile>;
   deleteProfile: (name: string) => Promise<void>;
   duplicateProfile: (name: string) => Promise<Profile>;
   launchProfile: (name: string, directory?: string) => Promise<void>;

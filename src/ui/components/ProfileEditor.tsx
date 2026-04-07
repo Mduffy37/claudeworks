@@ -403,7 +403,7 @@ function InfoCard({
               value={name}
               onChange={(e) => onChangeName(e.target.value)}
               placeholder="e.g. frontend, research, devops"
-              disabled={!isNew}
+              disabled={false}
             />
           </div>
 

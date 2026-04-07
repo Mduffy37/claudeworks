@@ -74,6 +74,10 @@ export function App() {
       await createProfile(profile);
       setSelectedName(profile.name);
       setIsCreating(false);
+    } else if (selectedName && selectedName !== profile.name) {
+      await window.api.renameProfile(selectedName, profile);
+      await refresh();
+      setSelectedName(profile.name);
     } else {
       await updateProfile(profile);
     }
