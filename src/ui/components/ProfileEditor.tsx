@@ -239,9 +239,12 @@ interface McpTabProps {
   selectedPlugins: string[];
   mcpServers: StandaloneMcp[];
   onTogglePlugin: (pluginName: string, enabled: boolean) => void;
+  launchDir: string;
+  disabledMcpServers: Record<string, string[]>;
+  onToggleMcp: (dir: string, mcpName: string, enabled: boolean) => void;
 }
 
-function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin }: McpTabProps) {
+function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, launchDir, disabledMcpServers, onToggleMcp }: McpTabProps) {
   const pluginMcps = plugins
     .filter((p) => p.mcpServers.length > 0)
     .flatMap((p) =>
@@ -312,13 +315,33 @@ function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin }: McpTab
 
       {projectMcps.length > 0 && (
         <div className="pe-mcp-section">
-          <div className="pe-mcp-section-label">Project (.claude.json)</div>
-          {projectMcps.map((mcp) => (
-            <div key={mcp.name} className="local-item enabled">
-              <span className="local-item-name">{mcp.name}</span>
-              <span className="plugin-badge">{mcp.type}</span>
-            </div>
-          ))}
+          <div className="pe-mcp-section-label">Project ({launchDir.split("/").pop() ?? launchDir})</div>
+          {projectMcps.map((mcp) => {
+            const isEnabled = !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
+            return (
+              <div
+                key={mcp.name}
+                className={`local-item${isEnabled ? " enabled" : ""}`}
+              >
+                <label
+                  className="toggle-switch"
+                  onClick={(e) => e.stopPropagation()}
+                  title={isEnabled ? "Disable MCP server" : "Enable MCP server"}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={(e) => onToggleMcp(launchDir, mcp.name, e.target.checked)}
+                  />
+                  <span className="toggle-track">
+                    <span className="toggle-thumb" />
+                  </span>
+                </label>
+                <span className="local-item-name">{mcp.name}</span>
+                <span className="plugin-badge">{mcp.type}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -869,6 +892,9 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDel
               selectedPlugins={selectedPlugins}
               mcpServers={mcpServers}
               onTogglePlugin={handleTogglePlugin}
+              launchDir=""
+              disabledMcpServers={{}}
+              onToggleMcp={() => {}}
             />
           )}
 
