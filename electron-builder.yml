@@ -1,0 +1,10 @@
+appId: com.claude-profiles.app
+productName: Claude Profiles
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+mac:
+  category: public.app-category.developer-tools
+  target: dmg

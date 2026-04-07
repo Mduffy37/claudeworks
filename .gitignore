@@ -5,3 +5,7 @@ dist/
 .DS_Store
 __pycache__/
 VAULT_LINKS.md
+HANDOVER.md
+release/
+.build/
+app/.build/

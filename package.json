@@ -1,0 +1,29 @@
+{
+  "name": "claude-profiles",
+  "version": "0.1.0",
+  "description": "Desktop app for managing Claude Code profiles",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev:renderer": "vite --config vite.config.ts",
+    "dev:electron": "tsc -p tsconfig.electron.json && NODE_ENV=development electron .",
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "start": "electron .",
+    "package": "npm run build && electron-builder"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  }
+}

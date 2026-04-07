@@ -187,14 +187,13 @@ def assemble_profile(profile: Profile) -> Path:
     settings = {k: v for k, v in source.items() if k in SAFE_KEYS}
     settings["enabledPlugins"] = {name: True for name in profile.plugins}
 
-    # Copy permissions but strip MCP-specific tool permissions —
-    # MCP servers may not be configured in this profile
+    # Copy permissions — keep plugin MCP permissions, strip standalone MCP permissions
     source_perms = source.get("permissions", {})
     if source_perms:
         allowed = source_perms.get("allow", [])
         settings["permissions"] = {
             **source_perms,
-            "allow": [t for t in allowed if not t.startswith("mcp__")],
+            "allow": [t for t in allowed if not t.startswith("mcp__") or t.startswith("mcp__plugin_")],
         }
 
     settings_path = config_dir / "settings.json"
@@ -248,6 +247,15 @@ def _symlink_shared(config_dir: Path):
         source = CLAUDE_HOME / source_name
         target = config_dir / target_name
         if source.exists() and not target.exists():
+            target.symlink_to(source)
+
+    # Symlink plugin state files
+    for state_file in ["known_marketplaces.json", "blocklist.json", "install-counts-cache.json"]:
+        source = CLAUDE_HOME / "plugins" / state_file
+        target = config_dir / "plugins" / state_file
+        if source.exists():
+            if target.exists() or target.is_symlink():
+                target.unlink()
             target.symlink_to(source)
 
     # Symlink all marketplaces
