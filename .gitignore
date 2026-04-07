@@ -6,6 +6,9 @@ dist/
 __pycache__/
 VAULT_LINKS.md
 HANDOVER.md
+FEATURES.md
+docs/
+.superpowers/
 release/
 .build/
 app/.build/
