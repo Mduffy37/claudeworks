@@ -6,7 +6,6 @@ interface Props {
   selectedName: string | null;
   onSelect: (name: string) => void;
   onNew: () => void;
-  onDelete: (name: string) => void;
   onLaunch: (name: string, directory?: string) => void;
 }
 
@@ -62,7 +61,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
   );
 }
 
-export function ProfileList({ profiles, selectedName, onSelect, onNew, onDelete, onLaunch }: Props) {
+export function ProfileList({ profiles, selectedName, onSelect, onNew, onLaunch }: Props) {
   return (
     <div className="profile-list">
       <div className="profile-list-header">
@@ -102,26 +101,6 @@ export function ProfileList({ profiles, selectedName, onSelect, onNew, onDelete,
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
                 </div>
               </div>
-              <button
-                className="btn-delete"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(p.name);
-                }}
-                title={`Delete "${p.name}"`}
-                aria-label={`Delete profile ${p.name}`}
-              >
-                <svg width="11" height="11" viewBox="0 0 12 13" fill="none">
-                  {/* lid */}
-                  <path d="M1 3h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  {/* handle */}
-                  <path d="M4.5 3V2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  {/* body */}
-                  <path d="M2 3l.7 7.3A.8.8 0 0 0 2.7 11h6.6a.8.8 0 0 0 .8-.7L10.8 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  {/* inner lines */}
-                  <path d="M4.5 5.5v3M7.5 5.5v3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                </svg>
-              </button>
               <SidebarLaunch profile={p} onLaunch={onLaunch} />
             </div>
           ))

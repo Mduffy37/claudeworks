@@ -74,7 +74,6 @@ export function App() {
           selectedName={selectedName}
           onSelect={handleSelect}
           onNew={handleNew}
-          onDelete={handleDelete}
           onLaunch={handleLaunch}
         />
       </div>
@@ -85,6 +84,7 @@ export function App() {
           isNew={isCreating}
           onSave={handleSave}
           onLaunch={handleLaunch}
+          onDelete={handleDelete}
         />
       </div>
     </div>

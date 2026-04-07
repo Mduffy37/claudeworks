@@ -19,6 +19,7 @@ interface Props {
   isNew: boolean;
   onSave: (profile: Profile) => void;
   onLaunch: (name: string, directory?: string) => void;
+  onDelete: (name: string) => void;
 }
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
@@ -422,7 +423,7 @@ function InfoCard({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch, onDelete }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directory, setDirectory] = useState("");
@@ -442,6 +443,7 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
   const [launching, setLaunching] = useState(false);
   const [launchDir, setLaunchDir] = useState("");
   const [binInPath, setBinInPath] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -688,6 +690,22 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
         </div>
 
         <div className="pe-topbar-actions">
+          {/* Delete — only for existing profiles */}
+          {!isNew && profile && (
+            <button
+              className="pe-delete-btn"
+              onClick={() => setConfirmDelete(true)}
+              title="Delete profile"
+            >
+              <svg width="13" height="13" viewBox="0 0 12 13" fill="none">
+                <path d="M1 3h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M4.5 3V2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M2 3l.7 7.3A.8.8 0 0 0 2.7 11h6.6a.8.8 0 0 0 .8-.7L10.8 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4.5 5.5v3M7.5 5.5v3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+
           {/* Settings gear */}
           <button
             className="pe-settings-btn"
@@ -856,6 +874,41 @@ export function ProfileEditor({ profile, plugins, isNew, onSave, onLaunch }: Pro
           )}
         </div>
       </div>
+
+      {/* Delete confirmation */}
+      {confirmDelete && profile && (
+        <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
+          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Delete Profile</span>
+              <button className="modal-close" onClick={() => setConfirmDelete(false)}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-description">
+                Are you sure you want to delete <strong>{profile.name}</strong>? This will remove the profile configuration and its assembled config directory. This cannot be undone.
+              </p>
+              <div className="modal-confirm-actions">
+                <button className="btn-secondary" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-danger"
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    onDelete(profile.name);
+                  }}
+                >
+                  Delete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings modal */}
       {settingsOpen && (

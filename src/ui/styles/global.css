@@ -557,6 +557,57 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Delete button ───────────────────────────────────────────────────────── */
+
+.pe-delete-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.pe-delete-btn:hover {
+  background: var(--color-danger-dim);
+  border-color: rgba(245, 91, 91, 0.3);
+  color: var(--color-danger);
+}
+
+/* ─── Confirm modal ──────────────────────────────────────────────────────── */
+
+.modal-confirm {
+  max-width: 400px;
+}
+
+.modal-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
 /* ─── Settings button ─────────────────────────────────────────────────────── */
 
 .pe-settings-btn {
