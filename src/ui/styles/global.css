@@ -120,26 +120,29 @@ body {
 /* ─── App title / wordmark ────────────────────────────────────────────────── */
 
 .app-title {
-  padding: 14px 16px 10px;
+  padding: 16px 16px 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
 .app-title-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent) 0%, #b85a40 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+  width: 240px;
+  height: 240px;
+  border-radius: 14px;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
+.app-title-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .app-title-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.01em;
