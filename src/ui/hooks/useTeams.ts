@@ -32,5 +32,14 @@ export function useTeams() {
     [refresh]
   );
 
-  return { teams, loading, refresh, saveTeam, deleteTeam };
+  const renameTeam = useCallback(
+    async (oldName: string, team: Team) => {
+      const saved = await window.api.renameTeam(oldName, team);
+      await refresh();
+      return saved;
+    },
+    [refresh]
+  );
+
+  return { teams, loading, refresh, saveTeam, deleteTeam, renameTeam };
 }

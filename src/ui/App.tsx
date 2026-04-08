@@ -24,7 +24,7 @@ export function App() {
   const [showManageDialog, setShowManageDialog] = useState(false);
   const [importedProjects, setImportedProjects] = useState<string[]>([]);
   const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
-  const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook } =
+  const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook, renameTeam: renameTeamHook } =
     useTeams();
   const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
@@ -161,8 +161,7 @@ export function App() {
       setSelectedTeamName(team.name);
       setIsCreatingTeam(false);
     } else if (selectedTeamName && selectedTeamName !== team.name) {
-      await window.api.renameTeam(selectedTeamName, team);
-      await refreshTeams();
+      await renameTeamHook(selectedTeamName, team);
       setSelectedTeamName(team.name);
     } else {
       await saveTeamHook(team);

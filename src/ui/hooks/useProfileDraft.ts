@@ -39,6 +39,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [launchFlags, setLaunchFlags] = useState<NonNullable<Profile["launchFlags"]>>({});
   const [customFlags, setCustomFlags] = useState("");
   const [useDefaultAuth, setUseDefaultAuth] = useState(true);
+  const [env, setEnv] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
@@ -62,6 +63,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
         customFlags: customFlags.trim() || undefined,
         useDefaultAuth,
+        env: Object.keys(env).length > 0 ? env : undefined,
       });
       onDirtyChange(false);
       setSaveStatus("saved");
@@ -69,7 +71,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -89,6 +91,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setLaunchFlags(profile.launchFlags ?? {});
       setCustomFlags(profile.customFlags ?? "");
       setUseDefaultAuth(profile.useDefaultAuth !== false);
+      setEnv(profile.env ?? {});
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -109,6 +112,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setLaunchFlags({});
       setCustomFlags("");
       setUseDefaultAuth(true);
+      setEnv({});
       setLaunchDir("");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -189,6 +193,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
     useDefaultAuth, setUseDefaultAuth,
+    env, setEnv,
     saving,
     saveStatus,
     // Callbacks

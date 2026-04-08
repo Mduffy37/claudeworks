@@ -921,6 +921,7 @@ body {
   color: var(--text-muted);
 }
 
+
 /* pe-topbar-actions removed — replaced by pe-topbar-action-cluster */
 
 .pe-topbar-secondary {
@@ -3306,3 +3307,4 @@ body {
   color: var(--text-muted);
   margin-bottom: 10px;
 }
+

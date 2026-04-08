@@ -292,6 +292,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
     useDefaultAuth, setUseDefaultAuth,
+    env, setEnv,
     saving,
     saveStatus,
     handleSave,
@@ -652,6 +653,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
               onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
               onChangeUseDefaultAuth={(v) => { setUseDefaultAuth(v); markDirty(); }}
+              env={env}
+              onChangeEnv={(v) => { setEnv(v); markDirty(); }}
               onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
             />
           )}

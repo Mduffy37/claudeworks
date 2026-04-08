@@ -19,6 +19,7 @@ import {
 import type { Team, TeamMember, Profile, MergePreview as MergePreviewType } from "../../electron/types";
 import { MergePreview } from "./MergePreview";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
+import { InfoCard } from "./profile/InfoCard";
 import { DraggableProfile } from "./team/DraggableProfile";
 import { SortableMember } from "./team/SortableMember";
 
@@ -273,6 +274,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           </div>
         </div>
       </div>
+
+      {/* Description — collapsible, matches profile InfoCard */}
+      <InfoCard
+        description={draft.description}
+        isNew={isNew}
+        onChangeDescription={(v) => updateDraft({ description: v })}
+      />
 
       {/* Drag-and-drop split view */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>

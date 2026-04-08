@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Profile } from "../../../electron/types";
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   launchFlags: NonNullable<Profile["launchFlags"]>;
   customFlags: string;
   useDefaultAuth: boolean;
+  env: Record<string, string>;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
@@ -17,16 +18,40 @@ interface Props {
   onChangeLaunchFlags: (v: NonNullable<Profile["launchFlags"]>) => void;
   onChangeCustomFlags: (v: string) => void;
   onChangeUseDefaultAuth: (v: boolean) => void;
+  onChangeEnv: (v: Record<string, string>) => void;
   onAddToPath: () => void;
 }
 
 export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
-    launchFlags, customFlags, useDefaultAuth,
+    launchFlags, customFlags, useDefaultAuth, env,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
-    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onAddToPath,
+    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onAddToPath,
   } = props;
+
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+
+  const envEntries = Object.entries(env);
+
+  const handleAddEnv = () => {
+    const key = newKey.trim();
+    if (!key) return;
+    onChangeEnv({ ...env, [key]: newValue });
+    setNewKey("");
+    setNewValue("");
+  };
+
+  const handleRemoveEnv = (key: string) => {
+    const next = { ...env };
+    delete next[key];
+    onChangeEnv(next);
+  };
+
+  const handleUpdateEnvValue = (key: string, value: string) => {
+    onChangeEnv({ ...env, [key]: value });
+  };
 
   return (
     <div className="pe-settings-tab">
@@ -86,6 +111,50 @@ export function SettingsTab(props: Props) {
                 : "This profile will use its own credentials. You'll need to authenticate separately on first launch."}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="pe-settings-section">
+        <div className="pe-settings-section-label">Environment Variables</div>
+        <div className="modal-fields">
+          {envEntries.map(([key, value]) => (
+            <div className="field" key={key}>
+              <label>{key}</label>
+              <div className="field-with-button">
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => handleUpdateEnvValue(key, e.target.value)}
+                  placeholder="value"
+                />
+                <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
+              </div>
+            </div>
+          ))}
+          {envEntries.length > 0 && <div className="field-divider" />}
+          <div className="field">
+            <label>Add Variable</label>
+            <div className="field-with-button">
+              <input
+                type="text"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))}
+                placeholder="e.g. CLAUDE_CODE_MAX_OUTPUT_TOKENS"
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
+              />
+              <input
+                type="text"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="value"
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
+              />
+              <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
+            </div>
+          </div>
+          {envEntries.length === 0 && (
+            <div className="field-hint">Environment variables set when this profile launches.</div>
+          )}
         </div>
       </div>
 

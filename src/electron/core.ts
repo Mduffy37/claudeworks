@@ -565,6 +565,21 @@ export function renameProfile(oldName: string, profile: Profile): Profile {
   writeProfilesStore(store);
   if (profile.alias) generateAlias(profile);
 
+  // Cascade rename to team member references
+  if (profile.name !== oldName) {
+    const teamsStore = readTeamsStore();
+    let teamsChanged = false;
+    for (const team of Object.values(teamsStore.teams)) {
+      for (const member of team.members) {
+        if (member.profile === oldName) {
+          member.profile = profile.name;
+          teamsChanged = true;
+        }
+      }
+    }
+    if (teamsChanged) writeTeamsStore(teamsStore);
+  }
+
   return profile;
 }
 
@@ -700,12 +715,17 @@ export function assembleProfile(profile: Profile): string {
     profile.plugins.map((name) => [name, true])
   );
 
-  // Apply profile-specific overrides
+  // Apply profile-specific overrides, falling back to global defaults
+  const globalDefaults = getGlobalDefaults();
   if (profile.model) {
     settings.model = profile.model;
+  } else if (globalDefaults.model) {
+    settings.model = globalDefaults.model;
   }
   if (profile.effortLevel) {
     settings.effortLevel = profile.effortLevel;
+  } else if (globalDefaults.effortLevel) {
+    settings.effortLevel = globalDefaults.effortLevel;
   }
   if (profile.voiceEnabled !== undefined) {
     settings.voiceEnabled = profile.voiceEnabled;
