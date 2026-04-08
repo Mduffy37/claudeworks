@@ -5,7 +5,10 @@ import { ProfileList } from "./components/ProfileList";
 import { ProfileEditor } from "./components/ProfileEditor";
 import { PluginList } from "./components/PluginList";
 import { PluginManager } from "./components/PluginManager";
-import type { Profile } from "../electron/types";
+import { TeamList } from "./components/TeamList";
+import { TeamEditor } from "./components/TeamEditor";
+import { useTeams } from "./hooks/useTeams";
+import type { Profile, Team } from "../electron/types";
 
 export function App() {
   const { profiles, loading: profilesLoading, createProfile, updateProfile, deleteProfile, refresh } =
@@ -15,19 +18,32 @@ export function App() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" } | null>(null);
+  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" | "teams" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
-  const [activeTab, setActiveTab] = useState<"profiles" | "plugins">("profiles");
+  const [activeTab, setActiveTab] = useState<"profiles" | "plugins" | "teams">("profiles");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
+  const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook } =
+    useTeams();
+  const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [teamHealth, setTeamHealth] = useState<Record<string, string[]>>({});
 
   const refreshHealth = useCallback(() => {
     window.api.checkProfileHealth().then(setProfileHealth);
+  }, []);
+
+  const refreshTeamHealth = useCallback(() => {
+    window.api.checkTeamHealth().then(setTeamHealth);
   }, []);
 
   // Refresh health when profiles change
   useEffect(() => {
     if (!profilesLoading) refreshHealth();
   }, [profiles, profilesLoading, refreshHealth]);
+
+  useEffect(() => {
+    if (!teamsLoading) refreshTeamHealth();
+  }, [teams, teamsLoading, refreshTeamHealth]);
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.name === selectedName) ?? null,
@@ -72,7 +88,7 @@ export function App() {
     setPendingNav(null);
   };
 
-  const handleTabSwitch = (tab: "profiles" | "plugins") => {
+  const handleTabSwitch = (tab: "profiles" | "plugins" | "teams") => {
     if (tab === activeTab) return;
     if (dirty) {
       setPendingNav({ type: "tab", tab });
@@ -102,6 +118,48 @@ export function App() {
     setSelectedName(profileName);
     setIsCreating(false);
   };
+
+  const handleNewTeam = () => {
+    if (dirty) {
+      setPendingNav({ type: "new" });
+      return;
+    }
+    setSelectedTeamName(null);
+    setIsCreatingTeam(true);
+  };
+
+  const handleSelectTeam = (name: string) => {
+    if (dirty) {
+      setPendingNav({ type: "select", name });
+      return;
+    }
+    setSelectedTeamName(name);
+    setIsCreatingTeam(false);
+  };
+
+  const handleSaveTeam = async (team: Team) => {
+    if (isCreatingTeam) {
+      await saveTeamHook(team);
+      setSelectedTeamName(team.name);
+      setIsCreatingTeam(false);
+    } else if (selectedTeamName && selectedTeamName !== team.name) {
+      await window.api.renameTeam(selectedTeamName, team);
+      await refreshTeams();
+      setSelectedTeamName(team.name);
+    } else {
+      await saveTeamHook(team);
+    }
+  };
+
+  const handleDeleteTeam = async (name: string) => {
+    await deleteTeamHook(name);
+    if (selectedTeamName === name) setSelectedTeamName(null);
+  };
+
+  const selectedTeam = useMemo(
+    () => teams.find((t) => t.name === selectedTeamName) ?? null,
+    [teams, selectedTeamName]
+  );
 
   const selectedPluginData = plugins.find((p) => p.name === selectedPlugin) ?? null;
 
@@ -138,7 +196,7 @@ export function App() {
     await window.api.launchProfile(name, directory);
   };
 
-  if (profilesLoading || pluginsLoading) {
+  if (profilesLoading || pluginsLoading || teamsLoading) {
     return (
       <div className="app loading">
         <div className="loading-text">Loading plugins…</div>
@@ -164,6 +222,12 @@ export function App() {
           >
             Plugins
           </button>
+          <button
+            className={`sidebar-tab${activeTab === "teams" ? " active" : ""}`}
+            onClick={() => handleTabSwitch("teams")}
+          >
+            Teams
+          </button>
         </div>
         <div className="app-title">
           <div className="app-title-icon">
@@ -180,12 +244,20 @@ export function App() {
             onNew={handleNew}
             onLaunch={handleLaunch}
           />
-        ) : (
+        ) : activeTab === "plugins" ? (
           <PluginList
             plugins={plugins}
             selectedPlugin={selectedPlugin}
             availableUpdates={availableUpdates}
             onSelect={setSelectedPlugin}
+          />
+        ) : (
+          <TeamList
+            teams={teams}
+            selectedTeam={selectedTeamName}
+            teamHealth={teamHealth}
+            onSelect={handleSelectTeam}
+            onNew={handleNewTeam}
           />
         )}
       </div>
@@ -203,7 +275,7 @@ export function App() {
             dirty={dirty}
             onDirtyChange={setDirty}
           />
-        ) : (
+        ) : activeTab === "plugins" ? (
           <PluginManager
             plugin={selectedPluginData}
             profiles={profiles}
@@ -211,6 +283,17 @@ export function App() {
             onUpdate={handlePluginUpdate}
             onUninstall={handlePluginUninstall}
             onNavigateToProfile={handleNavigateToProfile}
+          />
+        ) : (
+          <TeamEditor
+            team={selectedTeam}
+            profiles={profiles}
+            isNew={isCreatingTeam}
+            brokenMembers={selectedTeam ? (teamHealth[selectedTeam.name] ?? []) : []}
+            onSave={handleSaveTeam}
+            onDelete={handleDeleteTeam}
+            dirty={dirty}
+            onDirtyChange={setDirty}
           />
         )}
       </div>
