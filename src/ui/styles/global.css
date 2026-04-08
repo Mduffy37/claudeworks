@@ -1288,6 +1288,11 @@ body {
   max-width: 600px;
 }
 
+.modal-dialog--overview {
+  max-width: 500px;
+  height: 70vh;
+}
+
 @keyframes modal-slide-in {
   from { transform: translateY(8px) scale(0.97); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }
@@ -2252,6 +2257,18 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.overview-stat:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.overview-stat.expanded {
+  border-color: var(--accent);
+  background: var(--accent-dim);
 }
 
 .overview-stat-value {

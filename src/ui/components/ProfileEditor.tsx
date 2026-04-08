@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import type {
   Profile,
   PluginWithItems,
+  PluginItem,
+  StandaloneMcp,
 } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
@@ -26,6 +28,185 @@ interface Props {
   onDuplicate?: (name: string) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
+}
+
+// ─── Overview modal ──────────────────────────────────────────────────────────
+
+type OverviewCategory = "plugins" | "skills" | "agents" | "commands" | "mcps" | null;
+
+function OverviewModal({
+  overview,
+  excludedItems,
+  model,
+  effortLevel,
+  customClaudeMd,
+  onClose,
+}: {
+  overview: {
+    enabledPlugins: PluginWithItems[];
+    skills: PluginItem[];
+    agents: PluginItem[];
+    commands: PluginItem[];
+    pluginMcps: { name: string }[];
+    standaloneMcps: StandaloneMcp[];
+    flags: string[];
+  };
+  excludedItems: Record<string, string[]>;
+  model: string;
+  effortLevel: string;
+  customClaudeMd: string;
+  onClose: () => void;
+}) {
+  const [expanded, setExpanded] = useState<OverviewCategory>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.focus();
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const toggle = (cat: OverviewCategory) => setExpanded((prev) => prev === cat ? null : cat);
+
+  const stats: { key: OverviewCategory; label: string; count: number }[] = [
+    { key: "plugins", label: "Plugins", count: overview.enabledPlugins.length },
+    { key: "skills", label: "Skills", count: overview.skills.length },
+    { key: "agents", label: "Agents", count: overview.agents.length },
+    { key: "commands", label: "Commands", count: overview.commands.length },
+    { key: "mcps", label: "MCP Servers", count: overview.pluginMcps.length + overview.standaloneMcps.length },
+  ];
+
+  return (
+    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal-dialog modal-dialog--overview" role="dialog" aria-modal="true" aria-label="Profile Overview" ref={dialogRef} tabIndex={-1}>
+        <div className="modal-header">
+          <span className="modal-title">Profile Overview</span>
+          <button className="modal-close" onClick={onClose} aria-label="Close overview">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="modal-body">
+          <p className="modal-description">
+            Summary of what this profile will load when launched. Click a category to see details.
+          </p>
+          <div className="overview-grid">
+            {stats.map((s) => (
+              <button
+                key={s.key}
+                className={`overview-stat${expanded === s.key ? " expanded" : ""}`}
+                onClick={() => toggle(s.key)}
+              >
+                <div className="overview-stat-value">{s.count}</div>
+                <div className="overview-stat-label">{s.label}</div>
+              </button>
+            ))}
+          </div>
+
+          {expanded === "plugins" && overview.enabledPlugins.length > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Enabled Plugins</div>
+              <div className="overview-list">
+                {overview.enabledPlugins.map((p) => (
+                  <div key={p.name} className="overview-list-item">
+                    <span>{p.pluginName}</span>
+                    <span className="overview-list-meta">
+                      {p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name)).length} items
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {expanded === "skills" && overview.skills.length > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Enabled Skills</div>
+              <div className="overview-list">
+                {overview.skills.map((i) => (
+                  <div key={i.name} className="overview-list-item">
+                    <span>{i.name}</span>
+                    <span className="overview-list-meta">{i.plugin.split("@")[0]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {expanded === "agents" && overview.agents.length > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Enabled Agents</div>
+              <div className="overview-list">
+                {overview.agents.map((i) => (
+                  <div key={i.name} className="overview-list-item">
+                    <span>{i.name}</span>
+                    <span className="overview-list-meta">{i.plugin.split("@")[0]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {expanded === "commands" && overview.commands.length > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Enabled Commands</div>
+              <div className="overview-list">
+                {overview.commands.map((i) => (
+                  <div key={i.name} className="overview-list-item">
+                    <span>/{i.name}</span>
+                    <span className="overview-list-meta">{i.plugin.split("@")[0]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {expanded === "mcps" && (overview.pluginMcps.length + overview.standaloneMcps.length) > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Enabled MCP Servers</div>
+              <div className="overview-list">
+                {[...overview.pluginMcps, ...overview.standaloneMcps].map((m) => (
+                  <div key={m.name} className="overview-list-item">
+                    <span>{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {model && (
+            <div className="overview-section">
+              <div className="overview-section-label">Settings</div>
+              <div className="overview-list">
+                {model && <div className="overview-list-item"><span>Model: {model}</span></div>}
+                {effortLevel && <div className="overview-list-item"><span>Effort: {effortLevel}</span></div>}
+              </div>
+            </div>
+          )}
+
+          {overview.flags.length > 0 && (
+            <div className="overview-section">
+              <div className="overview-section-label">Launch Flags</div>
+              <div className="overview-list">
+                {overview.flags.map((f) => (
+                  <div key={f} className="overview-list-item"><code>{f}</code></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {customClaudeMd && (
+            <div className="overview-section">
+              <div className="overview-section-label">Instructions</div>
+              <div className="overview-instructions-preview">{customClaudeMd}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Tab bar ─────────────────────────────────────────────────────────────────
@@ -495,102 +676,14 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
       {/* Overview modal */}
       {overviewOpen && (
-        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOverviewOpen(false); }}>
-          <div className="modal-dialog" role="dialog" aria-modal="true" aria-label="Profile Overview">
-            <div className="modal-header">
-              <span className="modal-title">Profile Overview</span>
-              <button className="modal-close" onClick={() => setOverviewOpen(false)} aria-label="Close overview">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">
-                Summary of what this profile will load when launched.
-              </p>
-              <div className="overview-grid">
-                <div className="overview-stat">
-                  <div className="overview-stat-value">{overview.enabledPlugins.length}</div>
-                  <div className="overview-stat-label">Plugins</div>
-                </div>
-                <div className="overview-stat">
-                  <div className="overview-stat-value">{overview.skills.length}</div>
-                  <div className="overview-stat-label">Skills</div>
-                </div>
-                <div className="overview-stat">
-                  <div className="overview-stat-value">{overview.agents.length}</div>
-                  <div className="overview-stat-label">Agents</div>
-                </div>
-                <div className="overview-stat">
-                  <div className="overview-stat-value">{overview.commands.length}</div>
-                  <div className="overview-stat-label">Commands</div>
-                </div>
-                <div className="overview-stat">
-                  <div className="overview-stat-value">{overview.pluginMcps.length + overview.standaloneMcps.length}</div>
-                  <div className="overview-stat-label">MCP Servers</div>
-                </div>
-              </div>
-
-              {overview.enabledPlugins.length > 0 && (
-                <div className="overview-section">
-                  <div className="overview-section-label">Plugins</div>
-                  <div className="overview-list">
-                    {overview.enabledPlugins.map((p) => (
-                      <div key={p.name} className="overview-list-item">
-                        <span>{p.pluginName}</span>
-                        <span className="overview-list-meta">
-                          {p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name)).length} items
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {(overview.pluginMcps.length + overview.standaloneMcps.length) > 0 && (
-                <div className="overview-section">
-                  <div className="overview-section-label">MCP Servers</div>
-                  <div className="overview-list">
-                    {[...overview.pluginMcps, ...overview.standaloneMcps].map((m) => (
-                      <div key={m.name} className="overview-list-item">
-                        <span>{m.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {model && (
-                <div className="overview-section">
-                  <div className="overview-section-label">Settings</div>
-                  <div className="overview-list">
-                    {model && <div className="overview-list-item"><span>Model: {model}</span></div>}
-                    {effortLevel && <div className="overview-list-item"><span>Effort: {effortLevel}</span></div>}
-                  </div>
-                </div>
-              )}
-
-              {overview.flags.length > 0 && (
-                <div className="overview-section">
-                  <div className="overview-section-label">Launch Flags</div>
-                  <div className="overview-list">
-                    {overview.flags.map((f) => (
-                      <div key={f} className="overview-list-item"><code>{f}</code></div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {customClaudeMd && (
-                <div className="overview-section">
-                  <div className="overview-section-label">Instructions</div>
-                  <div className="overview-instructions-preview">{customClaudeMd}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <OverviewModal
+          overview={overview}
+          excludedItems={excludedItems}
+          model={model}
+          effortLevel={effortLevel}
+          customClaudeMd={customClaudeMd}
+          onClose={() => setOverviewOpen(false)}
+        />
       )}
 
     </div>
