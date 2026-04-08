@@ -63,10 +63,21 @@ export function App() {
 
   useEffect(() => {
     refreshImportedProjects();
-    // Apply saved text size preference
+    // Apply saved preferences
     window.api.getAppPreferences().then((p) => {
       const scale = p.fontSize ?? 1;
       if (scale !== 1) document.documentElement.style.fontSize = `${13 * scale}px`;
+      const theme = p.theme ?? "dark";
+      const resolved = theme === "auto"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : theme;
+      document.documentElement.setAttribute("data-theme", resolved);
+      // Listen for system changes if auto
+      if (theme === "auto") {
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+          document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+        });
+      }
     });
   }, [refreshImportedProjects]);
 
@@ -260,6 +271,12 @@ export function App() {
           <img src="./logo.svg" alt="" width="16" height="16" className="drag-bar-logo" />
           <span className="drag-bar-title">Claude Profiles</span>
         </div>
+        <button className="app-settings-btn" onClick={() => setShowAppSettings(true)} title="App Settings">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" fill="none" />
+            <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.1" />
+          </svg>
+        </button>
       </div>
       <div className="sidebar">
         {/* Tab switcher */}
@@ -275,12 +292,6 @@ export function App() {
             onClick={() => handleTabSwitch("teams")}
           >
             Teams
-          </button>
-          <button className="sidebar-settings-btn" onClick={() => setShowAppSettings(true)} title="App Settings">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" fill="none" />
-              <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.1" />
-            </svg>
           </button>
         </div>
         {activeTab === "profiles" ? (

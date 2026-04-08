@@ -53,6 +53,48 @@
   --transition: 180ms ease;
 }
 
+/* ─── Light theme ─────────────────────────────────────────────────────────── */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ebebeb;
+  --bg-surface: #e0e0e0;
+  --bg-elevated: #d6d6d6;
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-selected: rgba(0, 0, 0, 0.07);
+  --bg-selected-border: rgba(0, 0, 0, 0.12);
+  --bg-tertiary: rgba(0, 0, 0, 0.04);
+
+  --text-primary: rgba(0, 0, 0, 0.88);
+  --text-secondary: rgba(0, 0, 0, 0.55);
+  --text-muted: rgba(0, 0, 0, 0.35);
+  --text-placeholder: rgba(0, 0, 0, 0.25);
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --border-focus: rgba(200, 90, 60, 0.55);
+
+  --accent: #c45a3a;
+  --accent-dim: rgba(196, 90, 58, 0.12);
+  --accent-hover: #b34e30;
+
+  --color-skill: #2a9d5c;
+  --color-skill-dim: rgba(42, 157, 92, 0.1);
+  --color-agent: #3a7fd4;
+  --color-agent-dim: rgba(58, 127, 212, 0.1);
+  --color-command: #b8862e;
+  --color-command-dim: rgba(184, 134, 46, 0.1);
+  --color-danger: #d44040;
+  --color-danger-dim: rgba(212, 64, 64, 0.1);
+
+  --color-launch: #2e9e5a;
+  --color-launch-hover: #37b868;
+
+  --color-team: #8a5cd4;
+  --color-team-dim: rgba(138, 92, 212, 0.12);
+}
+
 /* ─── Reset ───────────────────────────────────────────────────────────────── */
 
 * {
@@ -162,8 +204,13 @@ body {
   border-radius: 3px;
 }
 
-.sidebar-settings-btn {
-  margin-left: auto;
+.app-settings-btn {
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--text-muted);
@@ -175,7 +222,7 @@ body {
   align-items: center;
 }
 
-.sidebar-settings-btn:hover {
+.app-settings-btn:hover {
   color: var(--text-primary);
   background: var(--bg-hover);
 }
@@ -814,6 +861,40 @@ body {
   display: flex;
   align-items: baseline;
   gap: 6px;
+}
+
+.theme-options {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.846rem;
+  transition: all var(--transition-fast);
+}
+
+.theme-option:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.theme-option.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 
 .text-size-slider {

@@ -267,14 +267,15 @@ ipcMain.handle("run-diagnostics", () => runDiagnostics());
 ipcMain.handle("get-app-preferences", () => {
   try {
     const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude-profiles", "global-defaults.json"), "utf-8"));
-    return { fontSize: data.appFontSize ?? 13 };
-  } catch { return { fontSize: 13 }; }
+    return { fontSize: data.appFontSize ?? 1, theme: data.appTheme ?? "dark" };
+  } catch { return { fontSize: 1, theme: "dark" }; }
 });
-ipcMain.handle("save-app-preferences", (_event, prefs: { fontSize: number }) => {
+ipcMain.handle("save-app-preferences", (_event, prefs: { fontSize: number; theme?: string }) => {
   const filePath = path.join(os.homedir(), ".claude-profiles", "global-defaults.json");
   let data: any = {};
   try { data = JSON.parse(fs.readFileSync(filePath, "utf-8")); } catch {}
   data.appFontSize = prefs.fontSize;
+  if (prefs.theme) data.appTheme = prefs.theme;
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 });
 ipcMain.handle("get-global-env", () => getGlobalEnv());
