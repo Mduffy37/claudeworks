@@ -680,6 +680,185 @@ body {
   flex: 1;
 }
 
+/* ─── Bulk Manage Dialog ─────────────────────────────────────────────────── */
+
+.bulk-manage-dialog {
+  display: flex;
+  flex-direction: column;
+}
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.bulk-select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+
+.bulk-action-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* Match .field select styling for all selects in the action bar */
+.bulk-action-controls select {
+  padding: 6px 28px 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.bulk-action-controls select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.bulk-action-controls select:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bulk-action-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Match .field input styling for the tag input */
+.bulk-tag-input-wrap input {
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  width: 160px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bulk-tag-input-wrap input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.15);
+}
+
+.bulk-item-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.bulk-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.bulk-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--border);
+}
+
+.bulk-item:last-of-type {
+  border-bottom: none;
+}
+
+.bulk-item:hover {
+  background: var(--bg-hover);
+}
+
+.bulk-item.selected {
+  background: var(--accent-dim);
+}
+
+
+.bulk-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bulk-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.bulk-item-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulk-item-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.bulk-tag-chip {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.bulk-item-meta {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bulk-meta-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
 /* ─── Sidebar footer ──────────────────────────────────────────────────────── */
 
 .sidebar-footer {

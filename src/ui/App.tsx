@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { ConfirmDialog } from "./components/shared/ConfirmDialog";
 import { ManageDialog } from "./components/ManageDialog";
+import { BulkManageDialog } from "./components/BulkManageDialog";
 import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
@@ -22,6 +23,7 @@ export function App() {
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
   const [showManageDialog, setShowManageDialog] = useState(false);
+  const [showBulkManage, setShowBulkManage] = useState(false);
   const [importedProjects, setImportedProjects] = useState<string[]>([]);
   const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
   const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook, renameTeam: renameTeamHook } =
@@ -275,7 +277,7 @@ export function App() {
         <div className="sidebar-dock">
           <button
             className="sidebar-dock-action"
-            onClick={() => { /* TODO: open manage profiles/teams modal */ }}
+            onClick={() => setShowBulkManage(true)}
             title={activeTab === "profiles" ? "Manage Profiles" : "Manage Teams"}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -337,6 +339,25 @@ export function App() {
           onUninstall={handlePluginUninstall}
           onNavigateToProfile={handleNavigateToProfile}
           onClose={handleCloseManageDialog}
+        />
+      )}
+      {showBulkManage && (
+        <BulkManageDialog
+          profiles={profiles}
+          teams={teams}
+          plugins={plugins}
+          defaultTab={activeTab}
+          onUpdateProfile={async (p) => { await updateProfile(p); }}
+          onDeleteProfile={async (name) => {
+            await deleteProfile(name);
+            if (selectedName === name) setSelectedName(null);
+          }}
+          onUpdateTeam={async (t) => { await saveTeamHook(t); }}
+          onDeleteTeam={async (name) => {
+            await deleteTeamHook(name);
+            if (selectedTeamName === name) setSelectedTeamName(null);
+          }}
+          onClose={() => setShowBulkManage(false)}
         />
       )}
       {pendingNav && (

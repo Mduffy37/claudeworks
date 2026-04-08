@@ -90,6 +90,7 @@ export interface Profile {
   };
   customFlags?: string; // additional CLI flags as raw text
   useDefaultAuth?: boolean; // symlink default credentials (default: true)
+  tags?: string[];
 }
 
 /** A member of a team. */
@@ -108,6 +109,7 @@ export interface Team {
   model?: "opus" | "sonnet" | "haiku";
   effortLevel?: "low" | "medium" | "high" | "max";
   customFlags?: string;
+  tags?: string[];
 }
 
 /** Merge preview for a team. */
