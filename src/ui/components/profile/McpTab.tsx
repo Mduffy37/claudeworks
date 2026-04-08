@@ -39,7 +39,10 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
   return (
     <div className="pe-mcp-tab">
       <div className="pe-mcp-context">
-        Showing project MCPs for <strong>{launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default directory"}</strong>
+        {launchDir
+        ? <>Showing project MCPs for <strong>{launchDir.split("/").pop() ?? launchDir}</strong></>
+        : <>No directory selected — select one in the topbar to see project-specific MCP servers</>
+      }
       </div>
       {pluginMcps.length > 0 && (
         <div className="pe-mcp-section">

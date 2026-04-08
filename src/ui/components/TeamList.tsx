@@ -95,36 +95,40 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
       </div>
 
       {teams.length > 0 && (
-        <div className="pl-search">
-          <input
-            type="text"
-            className="pl-search-input"
-            placeholder="Search teams..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {allTags.length > 0 && (
+        <div className="pl-search-area">
+          <div className="pl-search">
+            <input
+              type="text"
+              className="pl-search-input"
+              placeholder="Search teams..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="pl-filters">
+            {allTags.length > 0 && (
+              <select
+                className="pl-sort-select"
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                title="Filter by tag"
+              >
+                <option value="">All tags</option>
+                {allTags.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            )}
             <select
               className="pl-sort-select"
-              value={tagFilter}
-              onChange={(e) => setTagFilter(e.target.value)}
-              title="Filter by tag"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SidebarSort)}
+              title="Sort by"
             >
-              <option value="">All tags</option>
-              {allTags.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
+              <option value="name">A-Z</option>
+              <option value="members">Members</option>
             </select>
-          )}
-          <select
-            className="pl-sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SidebarSort)}
-            title="Sort by"
-          >
-            <option value="name">A-Z</option>
-            <option value="members">Members</option>
-          </select>
+          </div>
         </div>
       )}
 

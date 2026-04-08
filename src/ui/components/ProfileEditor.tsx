@@ -219,7 +219,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "agents", label: "Agents" },
   { id: "commands", label: "Commands" },
   { id: "mcp", label: "MCP Servers" },
-  { id: "local", label: "Local" },
+  { id: "local", label: "Project Items" },
   { id: "instructions", label: "Instructions" },
   { id: "settings", label: "Settings" },
 ];
@@ -588,16 +588,22 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
             <div className="pe-local-tab">
               {!launchDir ? (
                 <div className="pe-tab-empty">
-                  Select a directory to see local items.
+                  Select a directory in the topbar to see project-specific skills, agents, and commands.
                 </div>
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">
-                  No local items found in {launchDir}/.claude/
+                  <p>No items found in {launchDir}/.claude/</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>
+                    Add skills, agents, or commands to your project's <code>.claude/</code> directory and they'll appear here.
+                  </p>
+                  <button className="btn-secondary" style={{ marginTop: "8px" }} onClick={() => window.api.openInFinder(launchDir + "/.claude")}>
+                    Open .claude/ directory
+                  </button>
                 </div>
               ) : (
                 <>
                   <div className="local-items-note">
-                    From {launchDir}/.claude/ — always loaded in this directory, not managed by profile
+                    Items from <strong>{launchDir.split("/").pop()}</strong>/.claude/ — these are loaded automatically when launching into this directory, independent of profile settings.
                   </div>
                   {(["skill", "agent", "command"] as const).map((type) => {
                     const items = localItems.filter((i) => i.type === type);

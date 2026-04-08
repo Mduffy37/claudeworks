@@ -53,7 +53,7 @@ export function InfoCard({
         </span>
         <span className="pe-info-card-toggle-label">Description</span>
         {!open && description && (
-          <span className="pe-info-card-toggle-dir">{description}</span>
+          <span className="pe-info-card-toggle-preview">{description}</span>
         )}
       </button>
 

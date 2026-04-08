@@ -1282,14 +1282,14 @@ body {
   color: var(--text-muted);
 }
 
-.pe-info-card-toggle-dir {
+.pe-info-card-toggle-preview {
   flex: 1;
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-style: italic;
 }
 
 .pe-info-card-toggle-chevron {
@@ -1318,11 +1318,25 @@ body {
   background: var(--bg-primary);
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: none;          /* Firefox */
+  scrollbar-width: thin;          /* Firefox */
   -ms-overflow-style: none;       /* IE/Edge */
 }
 .pe-tab-bar::-webkit-scrollbar {
-  display: none;                  /* Chrome/Safari */
+  height: 2px;
+}
+
+.pe-tab-bar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.pe-tab-bar:hover::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+
+.pe-tab-bar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .pe-tab {
@@ -2732,11 +2746,32 @@ body {
   flex-direction: column;
 }
 
-.pl-search {
+.pl-search-area {
+  flex-shrink: 0;
   padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pl-filters {
+  display: flex;
+  gap: 4px;
+}
+
+.pl-filters .pl-sort-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-search {
   flex-shrink: 0;
   display: flex;
   gap: 4px;
+}
+
+.pl-search-area .pl-search {
+  padding: 0;
 }
 
 .pl-search-input {
@@ -2761,15 +2796,20 @@ body {
 }
 
 .pl-sort-select {
-  background: var(--bg-surface);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 10px;
-  padding: 4px 4px;
+  font-size: 12px;
+  padding: 6px 24px 6px 10px;
   cursor: pointer;
   outline: none;
   flex-shrink: 0;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: border-color var(--transition-fast);
 }
 
 .pl-sort-select:focus {

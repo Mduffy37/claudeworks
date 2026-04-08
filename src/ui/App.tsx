@@ -68,20 +68,25 @@ export function App() {
     [profiles, selectedName]
   );
 
+  // Skip dirty guard for brand-new profiles/teams with no name entered
+  const shouldGuard = dirty && !(isCreating && !selectedName) && !(isCreatingTeam && !selectedTeamName);
+
   const handleNew = () => {
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "new" });
       return;
     }
+    setDirty(false);
     setSelectedName(null);
     setIsCreating(true);
   };
 
   const handleSelect = (name: string) => {
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "select", name });
       return;
     }
+    setDirty(false);
     setSelectedName(name);
     setIsCreating(false);
   };
@@ -122,7 +127,7 @@ export function App() {
 
   const handleTabSwitch = (tab: "profiles" | "teams") => {
     if (tab === activeTab) return;
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "tab", tab });
       return;
     }
@@ -143,7 +148,7 @@ export function App() {
   };
 
   const handleNavigateToProfile = (profileName: string) => {
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "select", name: profileName });
       return;
     }
@@ -153,7 +158,7 @@ export function App() {
   };
 
   const handleNewTeam = () => {
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "new-team" });
       return;
     }
@@ -162,7 +167,7 @@ export function App() {
   };
 
   const handleSelectTeam = (name: string) => {
-    if (dirty) {
+    if (shouldGuard) {
       setPendingNav({ type: "select-team", name });
       return;
     }
