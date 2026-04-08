@@ -177,9 +177,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
 
   if (!team && !isNew) {
     return (
-      <div className="pm-empty">
+      <div className="profile-editor empty">
         <div className="empty-state">
-          <div className="empty-state-title">Select a team to edit or create a new one</div>
+          <div className="empty-state-icon">&#9671;</div>
+          <div className="empty-state-title">No team selected</div>
+          <div className="empty-state-body">
+            Choose a team from the sidebar, or create a new one to get started.
+          </div>
         </div>
       </div>
     );

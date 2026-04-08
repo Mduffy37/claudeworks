@@ -31,6 +31,9 @@ interface Props {
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "plugins", label: "Plugins" },
+  { id: "skills", label: "Skills" },
+  { id: "agents", label: "Agents" },
+  { id: "commands", label: "Commands" },
   { id: "mcp", label: "MCP Servers" },
   { id: "local", label: "Local" },
   { id: "instructions", label: "Instructions" },
@@ -147,15 +150,19 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
   const tabCounts = useMemo<Partial<Record<TabId, number>>>(() => {
     const enabledPlugins = plugins.filter((p) => selectedPlugins.includes(p.name));
+    const allItems = plugins.flatMap((p) => p.items);
     const pluginMcpCount = enabledPlugins.reduce((s, p) => s + p.mcpServers.length, 0);
     const standaloneMcpCount = mcpServers.length;
 
     return {
+      plugins: plugins.filter((p) => p.items.length > 0 || p.mcpServers.length > 0).length,
+      skills: allItems.filter((i) => i.type === "skill").length,
+      agents: allItems.filter((i) => i.type === "agent").length,
+      commands: allItems.filter((i) => i.type === "command").length,
       mcp: pluginMcpCount + standaloneMcpCount,
       local: localItems.length,
-      plugins: plugins.filter((p) => p.items.length > 0 || p.mcpServers.length > 0).length,
     };
-  }, [plugins, selectedPlugins, mcpServers, localItems]);
+  }, [plugins, selectedPlugins, excludedItems, mcpServers, localItems]);
 
   // ─── Overview data ─────────────────────────────────────────────────────────
 
@@ -281,6 +288,68 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
         {/* Tab content */}
         <div className="pe-tab-content">
+          {(activeTab === "skills" || activeTab === "agents" || activeTab === "commands") && (() => {
+            const type = activeTab === "skills" ? "skill" : activeTab === "agents" ? "agent" : "command";
+            // Show ALL items of this type from ALL plugins
+            const items = plugins.flatMap((p) =>
+              p.items
+                .filter((i) => i.type === type)
+                .map((i) => ({
+                  ...i,
+                  pluginName: p.name,
+                  pluginDisplayName: p.pluginName,
+                  enabled: selectedPlugins.includes(p.name) && !(excludedItems[p.name] ?? []).includes(i.name),
+                  pluginEnabled: selectedPlugins.includes(p.name),
+                }))
+            );
+
+            if (items.length === 0) {
+              return (
+                <div className="pe-tab-empty">
+                  No {activeTab} available. Enable plugins in the Plugins tab to see {activeTab} here.
+                </div>
+              );
+            }
+
+            return (
+              <div className="pe-flat-list">
+                {items.map((item) => (
+                  <div key={`${item.pluginName}:${item.name}`} className="pe-flat-item">
+                    <div
+                      className={`item-checkbox${item.enabled ? " checked" : ""}`}
+                      onClick={() => {
+                        if (!item.pluginEnabled && !item.enabled) {
+                          handleEnablePluginWithOnly(item.pluginName, item.name);
+                        } else {
+                          handleToggleItem(item.pluginName, item.name, !item.enabled);
+                        }
+                      }}
+                      role="checkbox"
+                      aria-checked={item.enabled}
+                      aria-label={type === "command" ? `/${item.name}` : item.name}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === " " || e.key === "Enter") {
+                          e.preventDefault();
+                          if (!item.pluginEnabled && !item.enabled) {
+                            handleEnablePluginWithOnly(item.pluginName, item.name);
+                          } else {
+                            handleToggleItem(item.pluginName, item.name, !item.enabled);
+                          }
+                        }
+                      }}
+                    />
+                    <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
+                      {type === "command" ? `/${item.name}` : item.name}
+                    </span>
+                    <span className="pe-flat-item-source">{item.pluginDisplayName}</span>
+                    {!item.userInvocable && <span className="skill-badge internal">internal</span>}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           {activeTab === "mcp" && (
             <McpTab
               plugins={plugins}

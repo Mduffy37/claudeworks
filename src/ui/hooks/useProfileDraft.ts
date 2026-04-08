@@ -5,7 +5,7 @@ import type {
   StandaloneMcp,
 } from "../../../src/electron/types";
 
-type TabId = "plugins" | "mcp" | "local" | "instructions" | "settings";
+type TabId = "plugins" | "skills" | "agents" | "commands" | "mcp" | "local" | "instructions" | "settings";
 
 interface UseProfileDraftArgs {
   profile: Profile | null;

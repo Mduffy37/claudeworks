@@ -1035,6 +1035,51 @@ body {
   overflow: visible;
 }
 
+/* ─── Flat item list (skills/agents/commands) ────────────────────────────── */
+
+.pe-flat-list {
+  padding: 4px 0;
+}
+
+.pe-flat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  cursor: default;
+}
+
+.pe-flat-item:hover {
+  background: var(--bg-hover);
+}
+
+.pe-flat-item-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pe-flat-item-name.muted {
+  color: var(--text-muted);
+}
+
+.pe-flat-item-name.command-name {
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 12px;
+}
+
+.pe-flat-item-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
 .pe-tab-empty {
   font-size: 13px;
   color: var(--text-muted);
