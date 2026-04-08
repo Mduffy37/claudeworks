@@ -47,10 +47,15 @@ function DraggableProfile({ profile, inTeam }: { profile: Profile; inTeam: boole
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="te-avail-item">
+    <div
+      ref={setNodeRef}
+      style={{ ...style, pointerEvents: inTeam ? "none" : undefined }}
+      {...(inTeam ? {} : { ...attributes, ...listeners })}
+      className={`te-avail-item${inTeam ? " in-team" : ""}`}
+    >
       <div className="te-avail-name">{profile.name}</div>
       <div className="te-avail-meta">
-        {inTeam ? "Already in team" : `${profile.plugins.length} plugin${profile.plugins.length !== 1 ? "s" : ""}`}
+        {inTeam ? "In team \u2713" : `${profile.plugins.length} plugin${profile.plugins.length !== 1 ? "s" : ""}`}
       </div>
     </div>
   );
@@ -122,7 +127,7 @@ function SortableMember({
           />
         </div>
         <div className="te-field-row">
-          <span className="te-field-label">Inst.</span>
+          <span className="te-field-label">Instructions</span>
           <textarea
             className="te-field-textarea"
             value={member.instructions}
@@ -204,6 +209,16 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
         instructions: "",
         isLead: draft.members.length === 0,
       };
+      // If dropped over a member, insert at that position
+      if (overStr.startsWith("member-")) {
+        const insertIndex = draft.members.findIndex((m) => `member-${m.profile}` === overStr);
+        if (insertIndex !== -1) {
+          const newMembers = [...draft.members];
+          newMembers.splice(insertIndex, 0, newMember);
+          updateDraft({ members: newMembers });
+          return;
+        }
+      }
       updateDraft({ members: [...draft.members, newMember] });
       return;
     }
@@ -244,11 +259,22 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!draft.name.trim()) return;
     await onSave(draft);
     onDirtyChange(false);
-  };
+  }, [draft, onSave, onDirtyChange]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === "s") {
+        e.preventDefault();
+        if (draft.name.trim() && dirty) handleSave();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [draft.name, dirty, handleSave]);
 
   const handlePreviewMerge = async () => {
     const preview = await window.api.getTeamMergePreview(draft);
@@ -284,11 +310,11 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
               </svg>
             </button>
           )}
-          <button className="btn-update" onClick={handlePreviewMerge} disabled={draft.members.length === 0}>
+          <button className="btn-secondary" onClick={handlePreviewMerge} disabled={draft.members.length === 0}>
             Preview Merge
           </button>
-          <button className="btn-uninstall" disabled title="Coming soon" style={{ cursor: "not-allowed" }}>
-            Launch &#x1f512;
+          <button className="btn-secondary" disabled title="Coming soon" style={{ cursor: "not-allowed", opacity: 0.5 }}>
+            Launch (coming soon)
           </button>
           <button
             className="btn-primary"
@@ -312,7 +338,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
           />
         </div>
         <div className="te-field-row">
-          <span className="te-field-label">Desc.</span>
+          <span className="te-field-label">Description</span>
           <input
             className="te-field-input"
             value={draft.description}
@@ -365,7 +391,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
                     onInstructionsChange={(v) => handleMemberField(m.profile, "instructions", v)}
                   />
                 ))}
-                <div className="te-drop-zone">Drag a profile here to add</div>
+                <div className={`te-drop-zone${activeId ? " drag-active" : ""}`}>Drag a profile here to add</div>
               </div>
             </SortableContext>
           </div>

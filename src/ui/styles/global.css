@@ -2425,7 +2425,7 @@ body {
 }
 
 .te-fields-bar .te-field-label {
-  width: 40px;
+  width: 72px;
 }
 
 .te-name-input {
@@ -2504,7 +2504,7 @@ body {
 
 .te-avail-item {
   padding: 8px 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-sm);
   cursor: grab;
 }
@@ -2679,7 +2679,7 @@ body {
 .te-field-label {
   color: var(--text-muted);
   font-size: 10px;
-  width: 32px;
+  width: 72px;
   flex-shrink: 0;
   padding-top: 6px;
 }
@@ -2724,6 +2724,19 @@ body {
   text-align: center;
   color: var(--text-placeholder);
   font-size: 11px;
+}
+
+.te-drop-zone.drag-active {
+  border-color: var(--accent);
+  color: var(--text-secondary);
+  background: var(--accent-dim);
+}
+
+.te-avail-item.in-team {
+  opacity: 0.35;
+  cursor: default;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .te-drag-overlay {
