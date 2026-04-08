@@ -43,6 +43,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
   const [mergeData, setMergeData] = useState<MergePreviewType | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [search, setSearch] = useState("");
+  const [showOverflow, setShowOverflow] = useState(false);
 
   useEffect(() => {
     if (team) {
@@ -191,57 +192,81 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
 
   return (
     <div className="te-editor">
-      {/* Top bar */}
-      <div className="te-topbar">
-        <div className="te-topbar-left">
-          <h2 className="pe-topbar-name">{isNew ? "New Team" : draft.name}</h2>
+      {/* Top bar — matches ProfileEditor layout */}
+      <div className="pe-topbar">
+        {/* Left: Name + subtitle, vertically centered */}
+        <div className="pe-topbar-identity">
+          <input
+            className="pe-topbar-name-input"
+            value={draft.name}
+            onChange={(e) => updateDraft({ name: e.target.value })}
+            placeholder={isNew ? "Team name..." : ""}
+            autoFocus={isNew}
+          />
           <span className="pe-topbar-subtitle">
             {draft.members.length} member{draft.members.length !== 1 ? "s" : ""}
           </span>
         </div>
-        <div className="te-topbar-actions">
-          {!isNew && (
-            <button className="btn-icon te-delete-btn" onClick={() => setShowDeleteConfirm(true)} title="Delete team">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-          )}
-          <button className="btn-secondary" onClick={handlePreviewMerge} disabled={draft.members.length === 0}>
-            Preview Merge
-          </button>
-          <button className="btn-secondary" disabled title="Coming soon" style={{ cursor: "not-allowed", opacity: 0.5 }}>
-            Launch (coming soon)
-          </button>
-          <button
-            className="btn-primary"
-            disabled={!draft.name.trim() || !dirty}
-            onClick={handleSave}
-          >
-            {isNew ? "Create Team" : "Save"}
-          </button>
-        </div>
-      </div>
 
-      {/* Name & description */}
-      <div className="te-fields-bar">
-        <div className="te-field-row">
-          <span className="te-field-label">Name</span>
-          <input
-            className="te-field-input"
-            value={draft.name}
-            onChange={(e) => updateDraft({ name: e.target.value })}
-            placeholder="Team name"
-          />
-        </div>
-        <div className="te-field-row">
-          <span className="te-field-label">Description</span>
-          <input
-            className="te-field-input"
-            value={draft.description}
-            onChange={(e) => updateDraft({ description: e.target.value })}
-            placeholder="Description (optional)"
-          />
+        {/* Right: stacked controls */}
+        <div className="pe-topbar-right">
+          {/* Row 1: dir select + Launch — placeholder for now */}
+          {!isNew && (
+            <div className="pe-topbar-controls-row">
+              <select className="pe-launch-dir-select" disabled>
+                <option>None (choose at launch)</option>
+              </select>
+              <button className="btn-launch" disabled title="Team launch coming soon">
+                <span className="btn-launch-icon">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                Launch
+              </button>
+            </div>
+          )}
+
+          {/* Row 2: ... + Save */}
+          <div className="pe-topbar-controls-row pe-topbar-controls-row-end">
+            {!isNew && (
+              <div className="pe-topbar-secondary">
+                <button
+                  className="pe-overflow-btn"
+                  onClick={() => setShowOverflow(!showOverflow)}
+                  title="More actions"
+                  aria-label="More actions"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="3" cy="8" r="1.3" fill="currentColor" />
+                    <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+                    <circle cx="13" cy="8" r="1.3" fill="currentColor" />
+                  </svg>
+                </button>
+                {showOverflow && (
+                  <>
+                    <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
+                    <div className="pe-overflow-menu">
+                      <button onClick={() => { setShowOverflow(false); handlePreviewMerge(); }} disabled={draft.members.length === 0}>
+                        Preview Merge
+                      </button>
+                      <div className="pe-overflow-divider" />
+                      <button className="pe-overflow-danger" onClick={() => { setShowOverflow(false); setShowDeleteConfirm(true); }}>
+                        Delete Team
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            <button
+              className="btn-primary"
+              disabled={!draft.name.trim() || !dirty}
+              onClick={handleSave}
+            >
+              {isNew ? "Create Team" : "Save"}
+            </button>
+          </div>
         </div>
       </div>
 
