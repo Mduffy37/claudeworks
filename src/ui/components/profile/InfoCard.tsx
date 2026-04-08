@@ -29,27 +29,16 @@ function ChevronIcon({ open }: { open: boolean }) {
 
 interface InfoCardProps {
   description: string;
-  directories: string[];
   isNew: boolean;
   onChangeDescription: (v: string) => void;
-  onChangeDirectories: (dirs: string[]) => void;
 }
 
 export function InfoCard({
   description,
-  directories,
   isNew,
   onChangeDescription,
-  onChangeDirectories,
 }: InfoCardProps) {
-  const [open, setOpen] = useState(isNew);
-
-  const addDirectory = async () => {
-    const dir = await window.api.selectDirectory();
-    if (dir && !directories.includes(dir)) {
-      onChangeDirectories([...directories, dir]);
-    }
-  };
+  const [open, setOpen] = useState(isNew || !!description);
 
   return (
     <div className="pe-info-card">
@@ -62,16 +51,15 @@ export function InfoCard({
         <span className="pe-info-card-toggle-chevron">
           <ChevronIcon open={open} />
         </span>
-        <span className="pe-info-card-toggle-label">Profile Info</span>
-        {!open && directories.length > 0 && (
-          <span className="pe-info-card-toggle-dir">{directories[0]}{directories.length > 1 ? ` +${directories.length - 1}` : ""}</span>
+        <span className="pe-info-card-toggle-label">Description</span>
+        {!open && description && (
+          <span className="pe-info-card-toggle-dir">{description}</span>
         )}
       </button>
 
       {open && (
         <div className="pe-info-card-body" id="profile-info-body">
           <div className="field">
-            <label>Description</label>
             <input
               type="text"
               value={description}
@@ -79,32 +67,6 @@ export function InfoCard({
               placeholder="What this profile is for"
             />
           </div>
-
-          <div className="field-divider" />
-
-          <div className="field">
-            <label>Directories</label>
-            <div className="dir-list">
-              {directories.map((dir, i) => (
-                <div key={dir} className="dir-list-item">
-                  <span className="dir-list-path">{dir}</span>
-                  <button
-                    className="dir-list-remove"
-                    onClick={() => onChangeDirectories(directories.filter((_, j) => j !== i))}
-                    title="Remove"
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-              <div className="field-with-button">
-                <button className="btn-secondary" onClick={addDirectory} style={{ width: "100%" }}>
-                  + Add Directory
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       )}
     </div>

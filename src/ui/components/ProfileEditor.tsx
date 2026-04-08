@@ -409,7 +409,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         onSetConfirmDelete={setConfirmDelete}
         onDuplicate={onDuplicate}
         onSetOverviewOpen={setOverviewOpen}
-        onOpenSettings={() => setActiveTab("settings")}
         onSave={handleSave}
         onLaunch={handleLaunch}
       />
@@ -448,20 +447,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         {/* Profile info card — collapsible */}
         <InfoCard
           description={description}
-          directories={directories}
           isNew={isNew}
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
-          onChangeDirectories={(dirs) => {
-            setDirectories(dirs);
-            setLaunchDir(dirs[0] ?? "");
-            setDisabledMcpServers((prev) => {
-              const pruned = Object.fromEntries(
-                Object.entries(prev).filter(([k]) => dirs.includes(k))
-              );
-              return pruned;
-            });
-            markDirty();
-          }}
         />
 
         {/* Tab strip */}
