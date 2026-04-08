@@ -18,6 +18,18 @@ function profileInitial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "P";
 }
 
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 function shortPath(dir: string): string {
   const parts = dir.split("/").filter(Boolean);
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
@@ -95,6 +107,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
     if (tagFilter) result = result.filter((p) => (p.tags ?? []).includes(tagFilter));
     if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "plugins") result = [...result].sort((a, b) => b.plugins.length - a.plugins.length);
+    else if (sortBy === "recent") result = [...result].sort((a, b) => (b.lastLaunched ?? 0) - (a.lastLaunched ?? 0));
     return result;
   }, [profiles, search, sortBy, tagFilter]);
 
@@ -139,6 +152,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
           >
             <option value="name">A-Z</option>
             <option value="plugins">Plugins</option>
+            <option value="recent">Recent</option>
           </select>
         </div>
       )}
@@ -193,6 +207,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 </div>
                 <div className="profile-item-meta">
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
+                  {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched)}` : ""}
                 </div>
               </div>
               <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} />

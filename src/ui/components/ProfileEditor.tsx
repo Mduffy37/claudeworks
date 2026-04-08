@@ -230,7 +230,7 @@ function TabBar({
   onChange,
 }: {
   active: TabId;
-  counts: Partial<Record<TabId, number>>;
+  counts: Partial<Record<TabId, string>>;
   onChange: (id: TabId) => void;
 }) {
   return (
@@ -244,7 +244,7 @@ function TabBar({
             onClick={() => onChange(tab.id)}
           >
             {tab.label}
-            {count !== undefined && count > 0 && (
+            {count !== undefined && (
               <span className="pe-tab-count">{count}</span>
             )}
           </button>
@@ -342,19 +342,30 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
   // ─── Tab counts ────────────────────────────────────────────────────────────
 
-  const tabCounts = useMemo<Partial<Record<TabId, number>>>(() => {
+  const tabCounts = useMemo<Partial<Record<TabId, string>>>(() => {
     const enabledPlugins = plugins.filter((p) => selectedPlugins.includes(p.name));
+    const totalPlugins = plugins.filter((p) => p.items.length > 0 || p.mcpServers.length > 0).length;
     const allItems = plugins.flatMap((p) => p.items);
+    const enabledItems = enabledPlugins.flatMap((p) =>
+      p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name))
+    );
     const pluginMcpCount = enabledPlugins.reduce((s, p) => s + p.mcpServers.length, 0);
     const standaloneMcpCount = mcpServers.length;
 
+    const totalSkills = allItems.filter((i) => i.type === "skill").length;
+    const totalAgents = allItems.filter((i) => i.type === "agent").length;
+    const totalCommands = allItems.filter((i) => i.type === "command").length;
+    const enabledSkills = enabledItems.filter((i) => i.type === "skill").length;
+    const enabledAgents = enabledItems.filter((i) => i.type === "agent").length;
+    const enabledCommands = enabledItems.filter((i) => i.type === "command").length;
+
     return {
-      plugins: plugins.filter((p) => p.items.length > 0 || p.mcpServers.length > 0).length,
-      skills: allItems.filter((i) => i.type === "skill").length,
-      agents: allItems.filter((i) => i.type === "agent").length,
-      commands: allItems.filter((i) => i.type === "command").length,
-      mcp: pluginMcpCount + standaloneMcpCount,
-      local: localItems.length,
+      plugins: `${enabledPlugins.length}/${totalPlugins}`,
+      skills: `${enabledSkills}/${totalSkills}`,
+      agents: `${enabledAgents}/${totalAgents}`,
+      commands: `${enabledCommands}/${totalCommands}`,
+      mcp: `${pluginMcpCount + standaloneMcpCount}`,
+      local: `${localItems.length}`,
     };
   }, [plugins, selectedPlugins, excludedItems, mcpServers, localItems]);
 
@@ -633,6 +644,9 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 onChange={(e) => { setCustomClaudeMd(e.target.value); markDirty(); }}
                 placeholder="Additional instructions for this profile..."
               />
+              <div className="pe-instructions-stats">
+                {customClaudeMd.length.toLocaleString()} chars · {customClaudeMd ? customClaudeMd.split("\n").length : 0} lines
+              </div>
             </div>
           )}
 
@@ -654,6 +668,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
               onChangeUseDefaultAuth={(v) => { setUseDefaultAuth(v); markDirty(); }}
               env={env}
+              profileName={name}
               onChangeEnv={(v) => { setEnv(v); markDirty(); }}
               onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
             />

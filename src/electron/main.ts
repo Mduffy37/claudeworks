@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -32,6 +32,8 @@ import {
   removeImportedProject,
   getProjectClaudeMd,
   saveProjectClaudeMd,
+  getProfileConfigDir,
+  getClaudeHome,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -141,6 +143,9 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   } catch (err: any) {
     throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
   }
+  // Track last launch time
+  profile.lastLaunched = Date.now();
+  saveProfile(profile);
   await launchProfile(profile, directory);
 });
 
@@ -226,6 +231,11 @@ ipcMain.handle("add-imported-project", (_event, dir: string) => addImportedProje
 ipcMain.handle("remove-imported-project", (_event, dir: string) => removeImportedProject(dir));
 ipcMain.handle("get-project-claude-md", (_event, dir: string) => getProjectClaudeMd(dir));
 ipcMain.handle("save-project-claude-md", (_event, dir: string, content: string) => saveProjectClaudeMd(dir, content));
+
+// Filesystem
+ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(filePath));
+ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
+ipcMain.handle("get-claude-home", () => getClaudeHome());
 
 // ---------------------------------------------------------------------------
 // App lifecycle

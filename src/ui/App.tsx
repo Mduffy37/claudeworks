@@ -111,6 +111,14 @@ export function App() {
     setPendingNav(null);
   };
 
+  const handleSaveAndProceed = async () => {
+    if (editorSaveRef.current) {
+      await editorSaveRef.current();
+    }
+    setDirty(false);
+    handleDiscardAndProceed();
+  };
+
   const handleTabSwitch = (tab: "profiles" | "teams") => {
     if (tab === activeTab) return;
     if (dirty) {
@@ -217,6 +225,7 @@ export function App() {
 
   const handleLaunch = async (name: string, directory?: string) => {
     await window.api.launchProfile(name, directory);
+    await refresh();
   };
 
   if (profilesLoading || pluginsLoading || teamsLoading) {
@@ -367,6 +376,8 @@ export function App() {
           confirmLabel="Discard & Switch"
           onConfirm={handleDiscardAndProceed}
           onCancel={handleCancelNav}
+          extraLabel="Save & Switch"
+          onExtra={handleSaveAndProceed}
         />
       )}
     </div>

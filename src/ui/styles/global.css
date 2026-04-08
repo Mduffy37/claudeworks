@@ -614,6 +614,7 @@ body {
   color: var(--color-danger);
 }
 
+
 .manage-project-detail {
   padding: 16px;
 }
@@ -1735,6 +1736,13 @@ body {
 .pe-instructions-editor:focus {
   outline: none;
   border-color: var(--border-focus);
+}
+
+.pe-instructions-stats {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  padding: 4px 2px 0;
 }
 
 /* ─── Fields ──────────────────────────────────────────────────────────────── */
@@ -3357,7 +3365,8 @@ body {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.te-drag-overlay {
+.te-drag-overlay,
+.te-drag-overlay-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);

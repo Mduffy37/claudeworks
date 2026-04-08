@@ -7,6 +7,8 @@ interface Props {
   confirmVariant?: "danger" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
+  extraLabel?: string;
+  onExtra?: () => void;
 }
 
 export function ConfirmDialog({
@@ -16,6 +18,8 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   onCancel,
+  extraLabel,
+  onExtra,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +57,11 @@ export function ConfirmDialog({
             <button className="btn-secondary" onClick={onCancel}>
               Cancel
             </button>
+            {extraLabel && onExtra && (
+              <button className="btn-primary" onClick={onExtra}>
+                {extraLabel}
+              </button>
+            )}
             <button
               className={confirmVariant === "danger" ? "btn-danger" : "btn-primary"}
               onClick={onConfirm}

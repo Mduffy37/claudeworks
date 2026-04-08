@@ -37,6 +37,7 @@ export function PluginPicker({
   onEnablePluginWithOnly,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
 
   const toggleExpand = (name: string) => {
     setExpanded((prev) => {
@@ -50,15 +51,15 @@ export function PluginPicker({
   const isMcpOnly = (p: PluginWithItems) =>
     p.items.length === 0 && p.mcpServers.length > 0;
 
-  const globalPlugins = useMemo(
-    () => plugins.filter((p) => p.scope === "user" && !isMcpOnly(p)),
-    [plugins]
-  );
+  const globalPlugins = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return plugins.filter((p) => p.scope === "user" && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+  }, [plugins, search]);
 
-  const localPlugins = useMemo(
-    () => plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p)),
-    [plugins, directory]
-  );
+  const localPlugins = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+  }, [plugins, directory, search]);
 
   const renderPlugin = (plugin: PluginWithItems) => {
     const enabled = selectedPlugins.includes(plugin.name);
@@ -166,6 +167,15 @@ export function PluginPicker({
 
   return (
     <div className="plugin-picker">
+      <div className="pl-search" style={{ padding: "8px 0" }}>
+        <input
+          type="text"
+          className="pl-search-input"
+          placeholder="Search plugins..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
       <div className="plugin-section">
         <div className="plugin-section-header">
           <h3>Global Plugins</h3>

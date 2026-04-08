@@ -107,6 +107,19 @@ function ProjectsTab() {
           <div className="manage-project-detail">
             <div className="manage-section">
               <div className="manage-section-header">
+                <span className="manage-section-label">Directory</span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected)}>
+                    Open Project
+                  </button>
+                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected + "/.claude")}>
+                    Open .claude/
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="manage-section">
+              <div className="manage-section-header">
                 <span className="manage-section-label">CLAUDE.md</span>
                 {claudeMdDirty && (
                   <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
@@ -171,6 +184,15 @@ function GlobalSettingsTab() {
 
   return (
     <div className="manage-global-settings">
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Global Config</span>
+          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={async () => { const dir = await window.api.getClaudeHome(); window.api.openInFinder(dir); }}>
+            Open in Finder
+          </button>
+        </div>
+      </div>
+
       <div className="manage-section">
         <div className="manage-section-header">
           <span className="manage-section-label">Global CLAUDE.md</span>

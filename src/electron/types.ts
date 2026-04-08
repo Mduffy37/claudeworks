@@ -91,6 +91,7 @@ export interface Profile {
   customFlags?: string; // additional CLI flags as raw text
   useDefaultAuth?: boolean; // symlink default credentials (default: true)
   tags?: string[];
+  lastLaunched?: number; // timestamp of last launch
 }
 
 /** A member of a team. */
@@ -176,6 +177,9 @@ export interface ElectronAPI {
   removeImportedProject: (dir: string) => Promise<string[]>;
   getProjectClaudeMd: (dir: string) => Promise<string>;
   saveProjectClaudeMd: (dir: string, content: string) => Promise<void>;
+  openInFinder: (path: string) => Promise<void>;
+  getProfileConfigDir: (name: string) => Promise<string>;
+  getClaudeHome: () => Promise<string>;
 }
 
 declare global {

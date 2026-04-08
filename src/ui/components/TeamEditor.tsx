@@ -119,6 +119,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       return;
     }
 
+    // Dragging member back to available list = remove
+    if (activeStr.startsWith("member-") && overStr.startsWith("avail-")) {
+      const profileName = activeStr.replace("member-", "");
+      handleRemoveMember(profileName);
+      return;
+    }
+
     // Reordering within members
     if (activeStr.startsWith("member-") && overStr.startsWith("member-")) {
       const oldIndex = draft.members.findIndex((m) => `member-${m.profile}` === activeStr);
@@ -332,11 +339,18 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         </div>
 
         <DragOverlay>
-          {activeId ? (
-            <div className="te-drag-overlay">
-              {activeId.replace("avail-", "").replace("member-", "")}
-            </div>
-          ) : null}
+          {activeId ? (() => {
+            const name = activeId.replace("avail-", "").replace("member-", "");
+            const p = profiles.find((pr) => pr.name === name);
+            return (
+              <div className="te-drag-overlay-card">
+                <div className="te-avail-name">{name}</div>
+                <div className="te-avail-meta">
+                  {p ? `${p.plugins.length} plugin${p.plugins.length !== 1 ? "s" : ""}` : ""}
+                </div>
+              </div>
+            );
+          })() : null}
         </DragOverlay>
       </DndContext>
 

@@ -1408,3 +1408,15 @@ export function saveProjectClaudeMd(dir: string, content: string): void {
   const mdPath = path.join(dir, "CLAUDE.md");
   fs.writeFileSync(mdPath, content, "utf-8");
 }
+
+export function getProfileConfigDir(name: string): string {
+  return path.join(PROFILES_DIR, name, "config");
+}
+
+export function getClaudeHome(): string {
+  return CLAUDE_HOME;
+}
+
+export function getProfilesDir(): string {
+  return PROFILES_DIR;
+}

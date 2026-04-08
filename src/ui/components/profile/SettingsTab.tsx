@@ -11,6 +11,7 @@ interface Props {
   customFlags: string;
   useDefaultAuth: boolean;
   env: Record<string, string>;
+  profileName: string;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
@@ -25,7 +26,7 @@ interface Props {
 export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
-    launchFlags, customFlags, useDefaultAuth, env,
+    launchFlags, customFlags, useDefaultAuth, env, profileName,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
     onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onAddToPath,
   } = props;
@@ -197,6 +198,20 @@ export function SettingsTab(props: Props) {
           </div>
         </div>
       </div>
+
+      {profileName && (
+        <div className="pe-settings-section">
+          <div className="pe-settings-section-label">Profile Config</div>
+          <div className="modal-fields">
+            <div className="field">
+              <button className="btn-secondary" style={{ width: "100%" }} onClick={async () => { const dir = await window.api.getProfileConfigDir(profileName); window.api.openInFinder(dir); }}>
+                Open Config Directory in Finder
+              </button>
+              <div className="field-hint">View this profile's assembled settings, plugins, and CLAUDE.md</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
