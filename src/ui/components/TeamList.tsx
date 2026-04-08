@@ -43,7 +43,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: P
                 tabIndex={0}
                 onKeyDown={(e) => e.key === "Enter" && onSelect(t.name)}
               >
-                <div className="profile-item-icon" style={{ background: "rgba(186,104,255,0.15)", color: "#c490ff" }}>
+                <div className="profile-item-icon" style={{ background: "var(--color-team-dim)", color: "var(--color-team)" }}>
                   {t.name.trim().charAt(0).toUpperCase() || "T"}
                 </div>
                 <div className="profile-item-body">

@@ -17,7 +17,7 @@
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
-  --border-focus: rgba(99, 179, 237, 0.6);
+  --border-focus: rgba(222, 115, 86, 0.55);
 
   /* Accent — the single action color */
   --accent: #DE7356;
@@ -37,6 +37,10 @@
   /* Launch green */
   --color-launch: #3dba6e;
   --color-launch-hover: #48d47f;
+
+  /* Team purple */
+  --color-team: #c490ff;
+  --color-team-dim: rgba(186, 104, 255, 0.15);
 
   /* Radius */
   --radius-sm: 5px;
@@ -60,7 +64,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
-  user-select: none;
   overflow: hidden;
   height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -84,6 +87,24 @@ body {
   right: 0;
   z-index: 200;
   pointer-events: none;
+}
+
+.drag-bar,
+.sidebar-tabs,
+.sidebar-tab,
+.pe-tab-bar,
+.pe-tab,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-launch,
+.btn-icon,
+.btn-update,
+.btn-uninstall,
+.toggle-switch,
+.profile-item-icon,
+.te-drag-handle {
+  user-select: none;
 }
 
 /* ─── App layout ─────────────────────────────────────────────────────────── */
@@ -1085,7 +1106,7 @@ body {
 .field input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.12);
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
 }
 
 .field input:disabled {
@@ -1758,7 +1779,7 @@ body {
 .launch-dir input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.12);
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
 }
 
 /* ─── Empty states ────────────────────────────────────────────────────────── */
@@ -1833,7 +1854,7 @@ body {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(220, 60, 60, 0.15);
+  background: var(--color-danger-dim);
   border-bottom: 1px solid rgba(220, 60, 60, 0.3);
   color: #f87171;
   font-size: 12px;
@@ -1979,7 +2000,6 @@ body {
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  -webkit-app-region: drag;
 }
 
 .sidebar-tab {
@@ -2003,7 +2023,9 @@ body {
 
 .sidebar-tab.active {
   color: var(--text-primary);
-  border-bottom-color: var(--accent);
+  background: var(--bg-elevated);
+  border-color: transparent;
+  border-radius: var(--radius-sm);
 }
 
 /* ─── Plugin List Sidebar ──────────────────────────────────────────────────── */
@@ -2485,11 +2507,11 @@ body {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  background: rgba(186, 104, 255, 0.15);
+  background: var(--color-team-dim);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #c490ff;
+  color: var(--color-team);
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
