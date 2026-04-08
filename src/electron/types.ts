@@ -112,6 +112,9 @@ export interface ElectronAPI {
   selectDirectory: () => Promise<string | null>;
   isBinInPath: () => Promise<boolean>;
   addBinToPath: () => Promise<void>;
+  updatePlugin: (name: string) => Promise<void>;
+  uninstallPlugin: (name: string) => Promise<void>;
+  checkPluginUpdates: () => Promise<Record<string, string>>;
 }
 
 declare global {
