@@ -17,8 +17,14 @@ import {
   updatePlugin,
   uninstallPlugin,
   checkPluginUpdates,
+  loadTeams,
+  saveTeam,
+  renameTeam,
+  deleteTeamByName,
+  getTeamMergePreview,
+  checkAllTeamHealth,
 } from "./core";
-import type { Profile } from "./types";
+import type { Profile, Team } from "./types";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -172,6 +178,30 @@ ipcMain.handle("uninstall-plugin", async (_event, name: string) => {
 
 ipcMain.handle("check-plugin-updates", async () => {
   return checkPluginUpdates();
+});
+
+ipcMain.handle("get-teams", () => {
+  return loadTeams();
+});
+
+ipcMain.handle("save-team", (_event, team: Team) => {
+  return saveTeam(team);
+});
+
+ipcMain.handle("rename-team", (_event, oldName: string, team: Team) => {
+  return renameTeam(oldName, team);
+});
+
+ipcMain.handle("delete-team", async (_event, name: string) => {
+  deleteTeamByName(name);
+});
+
+ipcMain.handle("get-team-merge-preview", (_event, team: Team) => {
+  return getTeamMergePreview(team);
+});
+
+ipcMain.handle("check-team-health", () => {
+  return checkAllTeamHealth(loadTeams());
 });
 
 // ---------------------------------------------------------------------------
