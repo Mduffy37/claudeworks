@@ -28,21 +28,17 @@ function ChevronIcon({ open }: { open: boolean }) {
 // ─── InfoCard ───────────────────────────────────────────────────────────────
 
 interface InfoCardProps {
-  name: string;
   description: string;
   directories: string[];
   isNew: boolean;
-  onChangeName: (v: string) => void;
   onChangeDescription: (v: string) => void;
   onChangeDirectories: (dirs: string[]) => void;
 }
 
 export function InfoCard({
-  name,
   description,
   directories,
   isNew,
-  onChangeName,
   onChangeDescription,
   onChangeDirectories,
 }: InfoCardProps) {
@@ -73,19 +69,6 @@ export function InfoCard({
 
       {open && (
         <div className="pe-info-card-body">
-          <div className="field">
-            <label>Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => onChangeName(e.target.value)}
-              placeholder="e.g. frontend, research, devops"
-              disabled={false}
-            />
-          </div>
-
-          <div className="field-divider" />
-
           <div className="field">
             <label>Description</label>
             <input

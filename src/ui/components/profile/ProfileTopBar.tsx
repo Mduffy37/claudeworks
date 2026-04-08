@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Profile } from "../../../electron/types";
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
@@ -75,6 +75,8 @@ interface ProfileTopBarProps {
   directories: string[];
   launchDir: string;
   launching: boolean;
+  onChangeName: (v: string) => void;
+  markDirty: () => void;
   onSetLaunchDir: (dir: string) => void;
   onSetConfirmDelete: (v: boolean) => void;
   onDuplicate?: (name: string) => void;
@@ -93,6 +95,8 @@ export function ProfileTopBar({
   directories,
   launchDir,
   launching,
+  onChangeName,
+  markDirty,
   onSetLaunchDir,
   onSetConfirmDelete,
   onDuplicate,
@@ -101,6 +105,7 @@ export function ProfileTopBar({
   onSave,
   onLaunch,
 }: ProfileTopBarProps) {
+  const [showOverflow, setShowOverflow] = useState(false);
   const enabledCount = selectedPlugins.length;
   const subtitle = isNew
     ? "Configure plugins and skills for this profile"
@@ -111,105 +116,102 @@ export function ProfileTopBar({
   return (
     <div className="pe-topbar">
       <div className="pe-topbar-identity">
-        <h2 className="pe-topbar-name">{isNew ? "New Profile" : name}</h2>
+        <input
+          className="pe-topbar-name-input"
+          value={name}
+          onChange={(e) => { onChangeName(e.target.value); markDirty(); }}
+          placeholder={isNew ? "Profile name..." : ""}
+          autoFocus={isNew}
+        />
         <span className="pe-topbar-subtitle">{subtitle}</span>
       </div>
 
       <div className="pe-topbar-actions">
-        {/* Delete — only for existing profiles */}
+        {/* Group A: secondary/destructive — overflow menu */}
         {!isNew && profile && (
-          <button
-            className="pe-delete-btn"
-            onClick={() => onSetConfirmDelete(true)}
-            title="Delete profile"
-          >
-            <svg width="13" height="13" viewBox="0 0 12 13" fill="none">
-              <path d="M1 3h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M4.5 3V2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M2 3l.7 7.3A.8.8 0 0 0 2.7 11h6.6a.8.8 0 0 0 .8-.7L10.8 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4.5 5.5v3M7.5 5.5v3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-            </svg>
-          </button>
-        )}
-
-        {/* Duplicate — only for existing profiles */}
-        {!isNew && profile && onDuplicate && (
-          <button
-            className="pe-duplicate-btn"
-            onClick={() => onDuplicate(profile.name)}
-            title="Duplicate profile"
-          >
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <rect x="4" y="4" width="8" height="8" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M2 10V2.8A.8.8 0 0 1 2.8 2H10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-          </button>
-        )}
-
-        {/* Overview */}
-        {!isNew && profile && (
-          <button
-            className="pe-settings-btn"
-            onClick={() => onSetOverviewOpen(true)}
-            title="Profile overview"
-            aria-label="Open profile overview"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M4.5 6h7M4.5 8.5h5M4.5 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-            </svg>
-            <span>Overview</span>
-          </button>
-        )}
-
-        {/* Settings gear */}
-        <button
-          className="pe-settings-btn"
-          onClick={() => onSetSettingsOpen(true)}
-          title="Session settings"
-          aria-label="Open session settings"
-        >
-          <GearIcon />
-          <span>Settings</span>
-        </button>
-
-        {/* Save */}
-        <button
-          className="btn-primary"
-          disabled={!name.trim() || !dirty}
-          onClick={onSave}
-        >
-          {isNew ? "Create Profile" : "Save"}
-        </button>
-
-        {/* Launch — only for existing profiles */}
-        {!isNew && profile && (
-          <div className="pe-launch-group">
-            {directories.length >= 1 && (
-              <select
-                className="pe-launch-dir-select"
-                value={launchDir}
-                onChange={(e) => onSetLaunchDir(e.target.value)}
-              >
-                <option value="">None (choose at launch)</option>
-                {directories.map((dir) => (
-                  <option key={dir} value={dir}>{shortPath(dir)}</option>
-                ))}
-              </select>
-            )}
+          <div className="pe-topbar-secondary">
             <button
-              className={`btn-launch${launching ? " launching" : ""}`}
-              disabled={launching}
-              onClick={onLaunch}
-              aria-label="Launch profile in iTerm2"
+              className="pe-overflow-btn"
+              onClick={() => setShowOverflow(!showOverflow)}
+              title="More actions"
+              aria-label="More actions"
             >
-              <span className="btn-launch-icon">
-                <LaunchIcon spinning={launching} />
-              </span>
-              {launching ? "Launching\u2026" : "Launch"}
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <circle cx="3" cy="8" r="1.3" fill="currentColor" />
+                <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+                <circle cx="13" cy="8" r="1.3" fill="currentColor" />
+              </svg>
             </button>
+            {showOverflow && (
+              <>
+                <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
+                <div className="pe-overflow-menu">
+                  {onDuplicate && (
+                    <button onClick={() => { setShowOverflow(false); onDuplicate(profile.name); }}>
+                      Duplicate
+                    </button>
+                  )}
+                  <button onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
+                    Overview
+                  </button>
+                  <div className="pe-overflow-divider" />
+                  <button className="pe-overflow-danger" onClick={() => { setShowOverflow(false); onSetConfirmDelete(true); }}>
+                    Delete Profile
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
+
+        {/* Group B: primary actions */}
+        <div className="pe-topbar-primary">
+          <button
+            className="pe-settings-btn"
+            onClick={() => onSetSettingsOpen(true)}
+            title="Session settings"
+            aria-label="Open session settings"
+          >
+            <GearIcon />
+            <span>Settings</span>
+          </button>
+
+          <button
+            className="btn-primary"
+            disabled={!name.trim() || !dirty}
+            onClick={onSave}
+          >
+            {isNew ? "Create Profile" : "Save"}
+          </button>
+
+          {!isNew && profile && (
+            <div className="pe-launch-group">
+              {directories.length >= 1 && (
+                <select
+                  className="pe-launch-dir-select"
+                  value={launchDir}
+                  onChange={(e) => onSetLaunchDir(e.target.value)}
+                >
+                  <option value="">None (choose at launch)</option>
+                  {directories.map((dir) => (
+                    <option key={dir} value={dir}>{shortPath(dir)}</option>
+                  ))}
+                </select>
+              )}
+              <button
+                className={`btn-launch${launching ? " launching" : ""}`}
+                disabled={launching}
+                onClick={onLaunch}
+                aria-label="Launch profile in iTerm2"
+              >
+                <span className="btn-launch-icon">
+                  <LaunchIcon spinning={launching} />
+                </span>
+                {launching ? "Launching\u2026" : "Launch"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

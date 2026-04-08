@@ -207,6 +207,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         directories={directories}
         launchDir={launchDir}
         launching={launching}
+        onChangeName={setName}
+        markDirty={markDirty}
         onSetLaunchDir={setLaunchDir}
         onSetConfirmDelete={setConfirmDelete}
         onDuplicate={onDuplicate}
@@ -245,11 +247,9 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
       <div className="pe-content">
         {/* Profile info card — collapsible */}
         <InfoCard
-          name={name}
           description={description}
           directories={directories}
           isNew={isNew}
-          onChangeName={(v) => { setName(v); markDirty(); }}
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
           onChangeDirectories={(dirs) => {
             setDirectories(dirs);
