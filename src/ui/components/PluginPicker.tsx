@@ -171,7 +171,7 @@ export function PluginPicker({
                 {plugin.hooks.map((hook, i) => (
                   <div key={`${hook.event}-${i}`} className="mcp-server-item">
                     <span className="mcp-server-name">{hook.event}</span>
-                    <span className="plugin-badge" style={{ fontFamily: '"SF Mono", monospace', fontSize: "9px" }}>{hook.command}</span>
+                    <span className="plugin-badge" style={{ fontFamily: '"SF Mono", monospace', fontSize: "0.692rem" }}>{hook.command}</span>
                   </div>
                 ))}
               </div>

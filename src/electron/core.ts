@@ -1073,6 +1073,34 @@ export async function copyCredentials(profile: Profile): Promise<boolean> {
   }
 }
 
+export async function checkCredentialStatus(): Promise<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> }> {
+  const username = os.userInfo().username;
+
+  // Check global credentials
+  let globalOk = false;
+  try {
+    await execFileAsync("security", ["find-generic-password", "-s", "Claude Code-credentials", "-a", username, "-w"]);
+    globalOk = true;
+  } catch {}
+
+  // Check each profile
+  const profiles = loadProfiles();
+  const results: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> = [];
+  for (const profile of profiles) {
+    const configDir = path.join(PROFILES_DIR, profile.name, "config");
+    const hash = crypto.createHash("sha256").update(configDir).digest("hex").slice(0, 8);
+    const service = `Claude Code-credentials-${hash}`;
+    let hasCredentials = false;
+    try {
+      await execFileAsync("security", ["find-generic-password", "-s", service, "-a", username, "-w"]);
+      hasCredentials = true;
+    } catch {}
+    results.push({ name: profile.name, useDefaultAuth: profile.useDefaultAuth !== false, hasCredentials });
+  }
+
+  return { global: globalOk, profiles: results };
+}
+
 // ---------------------------------------------------------------------------
 // Plugin operations
 // ---------------------------------------------------------------------------
@@ -1510,6 +1538,70 @@ export function saveGlobalHooks(hooks: Record<string, any>): void {
     delete data.hooks;
   }
   fs.writeFileSync(settingsPath, JSON.stringify(data, null, 2));
+}
+
+export function runDiagnostics(): {
+  version: string;
+  configDir: string;
+  claudeHome: string;
+  profileCount: number;
+  teamCount: number;
+  issues: string[];
+} {
+  const profiles = loadProfiles();
+  const teams = loadTeams();
+  const issues: string[] = [];
+
+  // Check each profile's config dir
+  for (const profile of profiles) {
+    const configDir = path.join(PROFILES_DIR, profile.name, "config");
+    if (!fs.existsSync(configDir)) {
+      issues.push(`Profile "${profile.name}": config directory missing`);
+      continue;
+    }
+    // Check key symlinks
+    const claudeMdLink = path.join(configDir, "CLAUDE.md");
+    if (fs.existsSync(claudeMdLink)) {
+      try {
+        const target = fs.readlinkSync(claudeMdLink);
+        if (!fs.existsSync(target)) {
+          issues.push(`Profile "${profile.name}": CLAUDE.md symlink broken → ${target}`);
+        }
+      } catch {}
+    }
+    const projectsLink = path.join(configDir, "projects");
+    if (fs.existsSync(projectsLink)) {
+      try {
+        const target = fs.readlinkSync(projectsLink);
+        if (!fs.existsSync(target)) {
+          issues.push(`Profile "${profile.name}": projects symlink broken → ${target}`);
+        }
+      } catch {}
+    }
+    // Check settings.json exists
+    if (!fs.existsSync(path.join(configDir, "settings.json"))) {
+      issues.push(`Profile "${profile.name}": settings.json missing`);
+    }
+  }
+
+  // Check global files
+  if (!fs.existsSync(path.join(CLAUDE_HOME, "settings.json"))) {
+    issues.push("Global settings.json missing");
+  }
+  if (!fs.existsSync(path.join(CLAUDE_HOME, ".claude.json")) && !fs.existsSync(path.join(os.homedir(), ".claude.json"))) {
+    issues.push("~/.claude.json missing (auth may not work)");
+  }
+
+  const pkg = require("../../package.json");
+
+  return {
+    version: pkg.version ?? "unknown",
+    configDir: PROFILES_DIR,
+    claudeHome: CLAUDE_HOME,
+    profileCount: profiles.length,
+    teamCount: teams.length,
+    issues,
+  };
 }
 
 export function getProfileConfigDir(name: string): string {

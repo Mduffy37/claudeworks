@@ -596,7 +596,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">
                   <p>No items found in {launchDir}/.claude/</p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px" }}>
+                  <p style={{ fontSize: "0.846rem", color: "var(--text-muted)", marginTop: "8px" }}>
                     Add skills, agents, or commands to your project's <code>.claude/</code> directory and they'll appear here.
                   </p>
                   <button className="btn-secondary" style={{ marginTop: "8px" }} onClick={() => window.api.openInFinder(launchDir + "/.claude")}>

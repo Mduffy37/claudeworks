@@ -27,6 +27,8 @@ import {
   saveGlobalClaudeMd,
   getPrompts,
   savePrompts,
+  checkCredentialStatus,
+  runDiagnostics,
   getGlobalEnv,
   saveGlobalEnv,
   getGlobalHooks,
@@ -259,6 +261,21 @@ ipcMain.handle("import-prompt", async () => {
   } catch {
     return null;
   }
+});
+ipcMain.handle("check-credential-status", () => checkCredentialStatus());
+ipcMain.handle("run-diagnostics", () => runDiagnostics());
+ipcMain.handle("get-app-preferences", () => {
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude-profiles", "global-defaults.json"), "utf-8"));
+    return { fontSize: data.appFontSize ?? 13 };
+  } catch { return { fontSize: 13 }; }
+});
+ipcMain.handle("save-app-preferences", (_event, prefs: { fontSize: number }) => {
+  const filePath = path.join(os.homedir(), ".claude-profiles", "global-defaults.json");
+  let data: any = {};
+  try { data = JSON.parse(fs.readFileSync(filePath, "utf-8")); } catch {}
+  data.appFontSize = prefs.fontSize;
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 });
 ipcMain.handle("get-global-env", () => getGlobalEnv());
 ipcMain.handle("save-global-env", (_event, env: Record<string, string>) => saveGlobalEnv(env));

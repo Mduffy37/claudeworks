@@ -61,6 +61,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 1rem;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   background: var(--bg-primary);
@@ -69,7 +73,7 @@ body {
   height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 13px;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -123,7 +127,7 @@ body {
 
 .loading-text {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 1rem;
   letter-spacing: 0.02em;
 }
 
@@ -158,8 +162,26 @@ body {
   border-radius: 3px;
 }
 
+.sidebar-settings-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-settings-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
 .drag-bar-title {
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: -0.01em;
@@ -183,7 +205,7 @@ body {
 }
 
 .profile-list-header h2 {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -228,7 +250,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 1.077rem;
   flex-shrink: 0;
   color: var(--text-secondary);
   transition: background var(--transition-fast), border-color var(--transition-fast);
@@ -249,7 +271,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
@@ -258,7 +280,7 @@ body {
 }
 
 .profile-item-meta {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-top: 1px;
 }
@@ -283,7 +305,7 @@ body {
   justify-content: center;
   flex-shrink: 0;
   transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 .profile-item:hover .btn-delete {
@@ -305,7 +327,7 @@ body {
   border: 1px solid rgba(61, 186, 110, 0.25);
   border-radius: var(--radius-sm);
   color: var(--color-launch);
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -353,7 +375,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 0.846rem;
   font-family: "SF Mono", "Fira Code", monospace;
   cursor: pointer;
   /* strip default OS select chrome */
@@ -410,7 +432,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -443,7 +465,7 @@ body {
   background: var(--accent-dim);
   border: none;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -489,7 +511,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   padding: 4px 12px;
   border-radius: var(--radius-sm);
@@ -539,7 +561,7 @@ body {
 }
 
 .manage-projects-title {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -551,7 +573,7 @@ body {
 }
 
 .manage-projects-empty {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
   padding: 16px 8px;
   text-align: center;
@@ -579,13 +601,13 @@ body {
 }
 
 .manage-project-name {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .manage-project-path {
-  font-size: 10px;
+  font-size: 0.769rem;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -599,7 +621,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 1.077rem;
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--transition-fast);
@@ -624,12 +646,12 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 .manage-git-branch {
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-primary);
   background: var(--bg-surface);
   padding: 2px 8px;
@@ -638,7 +660,7 @@ body {
 }
 
 .manage-git-dirty {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--color-warning, #e5a84b);
   font-style: italic;
 }
@@ -653,7 +675,7 @@ body {
 }
 
 .project-items-group-label {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -680,7 +702,7 @@ body {
 }
 
 .project-item-name {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-primary);
   flex: 1;
 }
@@ -710,7 +732,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -725,7 +747,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 .project-create-row input:focus {
@@ -751,19 +773,72 @@ body {
 }
 
 .project-mcp-name {
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .project-mcp-value {
   flex: 1;
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   font-family: "SF Mono", "Fira Code", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ─── App Settings ───────────────────────────────────────────────────────── */
+
+.app-settings-dialog {
+  max-width: 560px;
+  height: auto;
+  max-height: 80vh;
+}
+
+.app-settings-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.diag-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diag-issue {
+  font-size: 0.923rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.text-size-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 0;
+}
+
+.text-size-slider input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.text-size-label-sm {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.text-size-label-lg {
+  font-size: 1.231rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* ─── Prompt picker modal ────────────────────────────────────────────────── */
@@ -789,7 +864,7 @@ body {
 }
 
 .prompt-picker-title {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -806,7 +881,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   outline: none;
 }
 
@@ -823,7 +898,7 @@ body {
   padding: 24px 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 .prompt-picker-item {
@@ -842,13 +917,13 @@ body {
 }
 
 .prompt-picker-item-name {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .prompt-picker-item-desc {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -868,7 +943,7 @@ body {
   border: 1px solid rgba(222, 115, 86, 0.25);
   border-radius: var(--radius-sm);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 500;
   padding: 4px 10px;
   cursor: pointer;
@@ -906,7 +981,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 10px;
@@ -919,7 +994,7 @@ body {
   border: none;
   color: var(--accent);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 1rem;
   line-height: 1;
   padding: 0;
   opacity: 0.6;
@@ -933,7 +1008,7 @@ body {
   border: none;
   background: transparent;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   outline: none;
   min-width: 80px;
   flex: 1;
@@ -965,7 +1040,7 @@ body {
 }
 
 .manage-section-label {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -973,7 +1048,7 @@ body {
 }
 
 .manage-section-hint {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-bottom: 8px;
 }
@@ -985,7 +1060,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
   padding: 10px 12px;
   resize: vertical;
@@ -1027,7 +1102,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
@@ -1049,7 +1124,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 1rem;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -1081,7 +1156,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 1rem;
   width: 160px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -1104,7 +1179,7 @@ body {
   justify-content: center;
   height: 100%;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 1rem;
 }
 
 .bulk-item {
@@ -1139,13 +1214,13 @@ body {
 }
 
 .bulk-item-name {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .bulk-item-desc {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1160,7 +1235,7 @@ body {
 }
 
 .bulk-tag-chip {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 10px;
@@ -1175,7 +1250,7 @@ body {
 }
 
 .bulk-meta-badge {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   padding: 3px 8px;
   border-radius: var(--radius-sm);
@@ -1202,7 +1277,7 @@ body {
   height: 26px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 1.154rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1222,7 +1297,7 @@ body {
   border: none;
   padding: 6px 16px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: background var(--transition-fast), opacity var(--transition-fast);
@@ -1245,7 +1320,7 @@ body {
   border: 1px solid var(--border);
   padding: 6px 12px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 1rem;
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
@@ -1265,7 +1340,7 @@ body {
   border: none;
   padding: 9px 20px;
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -1297,7 +1372,7 @@ body {
 }
 
 .btn-launch-icon {
-  font-size: 15px;
+  font-size: 1.154rem;
   line-height: 1;
 }
 
@@ -1347,14 +1422,14 @@ body {
 }
 
 .editor-header h2 {
-  font-size: 17px;
+  font-size: 1.308rem;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .editor-header-subtitle {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
 }
 
@@ -1402,7 +1477,7 @@ body {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 1.231rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   padding: 2px 6px;
@@ -1422,7 +1497,7 @@ body {
 }
 
 .pe-topbar-subtitle {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
 }
 
@@ -1476,7 +1551,7 @@ body {
   color: var(--text-primary);
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.923rem;
   cursor: pointer;
 }
 
@@ -1514,7 +1589,7 @@ body {
   border: none;
   padding: 6px 16px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -1535,7 +1610,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
   position: relative;
@@ -1588,7 +1663,7 @@ body {
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.923rem;
   text-align: left;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
@@ -1599,7 +1674,7 @@ body {
 }
 
 .pe-info-card-toggle-label {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1608,7 +1683,7 @@ body {
 
 .pe-info-card-toggle-preview {
   flex: 1;
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -1673,7 +1748,7 @@ body {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: color var(--transition-fast), border-color var(--transition-fast);
@@ -1690,7 +1765,7 @@ body {
 }
 
 .pe-tab-count {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   color: var(--text-muted);
   background: var(--bg-surface);
@@ -1733,7 +1808,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   padding: 5px 8px;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -1752,7 +1827,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 0.846rem;
   padding: 4px 6px;
   cursor: pointer;
   outline: none;
@@ -1782,7 +1857,7 @@ body {
 }
 
 .pe-flat-item-name {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--text-primary);
   flex: 1;
   min-width: 0;
@@ -1797,17 +1872,17 @@ body {
 
 .pe-flat-item-name.command-name {
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 .pe-flat-item-source {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .pe-tab-empty {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--text-muted);
   padding: 32px 0;
   text-align: center;
@@ -1852,7 +1927,7 @@ body {
 }
 
 .pe-plugin-group-name {
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 600;
   color: var(--text-secondary);
   flex: 1;
@@ -1863,13 +1938,13 @@ body {
 }
 
 .pe-plugin-group-version {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-family: "SF Mono", "Fira Code", monospace;
   color: var(--text-muted);
 }
 
 .pe-plugin-group-badge {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   padding: 1px 7px;
   border-radius: 20px;
@@ -1897,7 +1972,7 @@ body {
 .pe-mcp-context {
   padding: 6px 10px;
   margin-bottom: 8px;
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-secondary);
   background: var(--bg-surface);
   border-radius: var(--radius-sm);
@@ -1915,7 +1990,7 @@ body {
 }
 
 .pe-mcp-section-label {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1924,7 +1999,7 @@ body {
 }
 
 .pe-mcp-source {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-right: auto;
 }
@@ -1987,7 +2062,7 @@ body {
 }
 
 .modal-title {
-  font-size: 14px;
+  font-size: 1.077rem;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.01em;
@@ -2023,7 +2098,7 @@ body {
 }
 
 .modal-description {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
   line-height: 1.6;
 }
@@ -2059,7 +2134,7 @@ body {
 }
 
 .pe-instructions-hint {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -2073,7 +2148,7 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
   line-height: 1.6;
   resize: vertical;
 }
@@ -2084,7 +2159,7 @@ body {
 }
 
 .pe-instructions-stats {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   text-align: right;
   padding: 4px 2px 0;
@@ -2104,7 +2179,7 @@ body {
 
 .field label {
   display: block;
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2119,7 +2194,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 1rem;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   font-family: inherit;
 }
@@ -2152,7 +2227,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 1rem;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -2172,7 +2247,7 @@ body {
 }
 
 .field-toggle-label {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--text-secondary);
 }
 
@@ -2191,7 +2266,7 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
   line-height: 1.5;
   resize: vertical;
 }
@@ -2213,7 +2288,7 @@ body {
 .field-with-button input {
   flex: 1;
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
 }
 
 /* ─── Directory list ──────────────────────────────────────────────────────── */
@@ -2237,7 +2312,7 @@ body {
 .dir-list-path {
   flex: 1;
   font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2249,7 +2324,7 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1.231rem;
   line-height: 1;
   padding: 0 4px;
   border-radius: 3px;
@@ -2262,7 +2337,7 @@ body {
 }
 
 .field-hint {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-top: 4px;
 }
@@ -2289,7 +2364,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-family: "SF Mono", "Fira Code", monospace;
   cursor: pointer;
   min-width: 140px;
@@ -2318,7 +2393,7 @@ body {
 }
 
 .plugin-section-header h3 {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2326,7 +2401,7 @@ body {
 }
 
 .plugin-section-count {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   color: var(--text-muted);
   background: var(--bg-surface);
@@ -2449,7 +2524,7 @@ body {
 }
 
 .plugin-name {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
@@ -2463,7 +2538,7 @@ body {
 /* Version — deemphasised, reads as metadata attached to the name */
 .plugin-version {
   font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 400;
   color: var(--text-muted);
   flex-shrink: 0;
@@ -2484,7 +2559,7 @@ body {
 }
 
 .plugin-summary {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -2492,7 +2567,7 @@ body {
 /* ─── Plugin badges ───────────────────────────────────────────────────────── */
 
 .plugin-badge {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   padding: 2px 7px;
   border-radius: 20px;
@@ -2511,7 +2586,7 @@ body {
   background: transparent;
   border: none;
   font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 10px;
+  font-size: 0.769rem;
   padding: 2px 4px;
 }
 
@@ -2546,7 +2621,7 @@ body {
 
 .skill-toggler-empty {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.923rem;
   padding: 4px 0;
   font-style: italic;
 }
@@ -2558,7 +2633,7 @@ body {
 }
 
 .skill-group-label {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2633,13 +2708,13 @@ body {
 
 .skill-name {
   flex: 1;
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--text-primary);
 }
 
 .skill-name.command-name {
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--color-command);
 }
 
@@ -2648,7 +2723,7 @@ body {
 }
 
 .skill-badge {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 500;
   padding: 1px 6px;
   border-radius: 20px;
@@ -2715,7 +2790,7 @@ body {
 }
 
 .mcp-server-name {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -2724,7 +2799,7 @@ body {
 }
 
 .mcp-scope-label {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2735,7 +2810,7 @@ body {
 /* ─── Local items ────────────────────────────────────────────────────────── */
 
 .local-items-note {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
   padding: 0 0 8px;
 }
@@ -2759,7 +2834,7 @@ body {
 
 .local-item-name {
   flex: 1;
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -2797,7 +2872,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -2805,7 +2880,7 @@ body {
 .launch-dir input::placeholder {
   color: var(--text-placeholder);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 13px;
+  font-size: 1rem;
 }
 
 .launch-dir input:focus {
@@ -2827,26 +2902,26 @@ body {
 }
 
 .empty-state-icon {
-  font-size: 32px;
+  font-size: 2.462rem;
   opacity: 0.25;
   line-height: 1;
 }
 
 .empty-state-title {
-  font-size: 14px;
+  font-size: 1.077rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .empty-state-body {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
   max-width: 220px;
   line-height: 1.6;
 }
 
 .empty-state-inline {
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-muted);
   padding: 10px 2px;
   font-style: italic;
@@ -2889,7 +2964,7 @@ body {
   background: var(--color-danger-dim);
   border-bottom: 1px solid rgba(220, 60, 60, 0.3);
   color: #f87171;
-  font-size: 12px;
+  font-size: 0.923rem;
   line-height: 1.4;
 }
 
@@ -2915,7 +2990,7 @@ body {
   background: rgba(234, 179, 8, 0.12);
   border-bottom: 1px solid rgba(234, 179, 8, 0.25);
   color: #eab308;
-  font-size: 12px;
+  font-size: 0.923rem;
   line-height: 1.4;
 }
 
@@ -2966,14 +3041,14 @@ body {
 }
 
 .overview-stat-value {
-  font-size: 20px;
+  font-size: 1.538rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .overview-stat-label {
-  font-size: 10px;
+  font-size: 0.769rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2987,7 +3062,7 @@ body {
 }
 
 .overview-section-label {
-  font-size: 11px;
+  font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3008,12 +3083,12 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.923rem;
   color: var(--text-primary);
 }
 
 .overview-list-meta {
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-muted);
 }
 
@@ -3023,7 +3098,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-size: 11px;
+  font-size: 0.846rem;
   color: var(--text-secondary);
   line-height: 1.5;
   max-height: 80px;
@@ -3049,7 +3124,7 @@ body {
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   cursor: pointer;
   transition: color var(--transition-fast), border-color var(--transition-fast);
@@ -3113,7 +3188,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   outline: none;
   transition: border-color var(--transition-fast);
 }
@@ -3131,7 +3206,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.923rem;
   padding: 6px 24px 6px 10px;
   cursor: pointer;
   outline: none;
@@ -3153,7 +3228,7 @@ body {
 
 .pl-section-header {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 8px 8px 4px;
@@ -3178,7 +3253,7 @@ body {
 
 .pl-item-name {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -3187,7 +3262,7 @@ body {
 
 .pl-item-meta {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   margin-top: 2px;
 }
 
@@ -3223,14 +3298,14 @@ body {
 }
 
 .pm-name {
-  font-size: 18px;
+  font-size: 1.385rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .pm-subtitle {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.923rem;
   margin-top: 4px;
 }
 
@@ -3246,7 +3321,7 @@ body {
   border: 1px solid rgba(76, 175, 80, 0.25);
   padding: 6px 14px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.923rem;
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3266,7 +3341,7 @@ body {
   border: 1px solid rgba(245, 91, 91, 0.2);
   padding: 6px 14px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.923rem;
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3293,7 +3368,7 @@ body {
 
 .pm-label {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -3311,7 +3386,7 @@ body {
   color: var(--accent);
   padding: 4px 10px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.923rem;
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3337,7 +3412,7 @@ body {
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   width: 100%;
   text-align: left;
@@ -3351,7 +3426,7 @@ body {
 
 .pm-section-count {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 400;
 }
 
@@ -3374,13 +3449,13 @@ body {
 
 .pm-item-name {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   flex-shrink: 0;
 }
 
 .pm-item-desc {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 0.846rem;
   text-align: left;
   flex: 1;
   overflow: hidden;
@@ -3429,7 +3504,7 @@ body {
   background: none;
   border: none;
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 1.385rem;
   font-weight: 600;
   outline: none;
   width: 300px;
@@ -3443,7 +3518,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.923rem;
   outline: none;
   width: 300px;
 }
@@ -3484,7 +3559,7 @@ body {
 .te-available-header,
 .te-members-header {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 12px 12px 4px;
@@ -3512,13 +3587,13 @@ body {
 
 .te-avail-name {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
 }
 
 .te-avail-meta {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   margin-top: 2px;
 }
 
@@ -3577,7 +3652,7 @@ body {
 .te-drag-handle {
   color: var(--text-placeholder);
   cursor: grab;
-  font-size: 14px;
+  font-size: 1.077rem;
   user-select: none;
 }
 
@@ -3594,7 +3669,7 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--color-team);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -3606,7 +3681,7 @@ body {
 
 .te-member-name {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -3626,7 +3701,7 @@ body {
 
 .te-member-meta {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
 }
 
 .te-lead-badge {
@@ -3634,7 +3709,7 @@ body {
   color: var(--accent);
   padding: 1px 6px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 0.692rem;
   font-weight: 500;
 }
 
@@ -3643,7 +3718,7 @@ body {
   color: var(--color-danger);
   padding: 1px 6px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 0.692rem;
   font-weight: 500;
 }
 
@@ -3651,7 +3726,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 0.846rem;
   cursor: pointer;
 }
 
@@ -3663,7 +3738,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 16px;
+  font-size: 1.231rem;
   cursor: pointer;
   padding: 0 4px;
 }
@@ -3686,7 +3761,7 @@ body {
 
 .te-field-label {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
   width: 72px;
   flex-shrink: 0;
   padding-top: 6px;
@@ -3699,7 +3774,7 @@ body {
   border-radius: 4px;
   padding: 5px 8px;
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: 0.846rem;
   outline: none;
 }
 
@@ -3714,7 +3789,7 @@ body {
   border-radius: 4px;
   padding: 5px 8px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 0.846rem;
   resize: vertical;
   min-height: 36px;
   font-family: inherit;
@@ -3731,7 +3806,7 @@ body {
   padding: 20px;
   text-align: center;
   color: var(--text-placeholder);
-  font-size: 11px;
+  font-size: 0.846rem;
 }
 
 .te-drop-zone.drag-active {
@@ -3754,7 +3829,7 @@ body {
   border-radius: var(--radius-sm);
   padding: 8px 12px;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -3780,7 +3855,7 @@ body {
   border-radius: 4px;
   padding: 4px 8px;
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: 0.846rem;
 }
 
 /* Merge preview */
@@ -3819,25 +3894,25 @@ body {
 
 .mp-agent-name {
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 0.923rem;
   font-weight: 500;
 }
 
 .mp-agent-source {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 0.769rem;
 }
 
 .mp-agent-instructions {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 0.846rem;
   margin-top: 4px;
   white-space: pre-wrap;
 }
 
 .mp-settings {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.923rem;
   line-height: 1.8;
 }
 
@@ -3849,7 +3924,7 @@ body {
 
 .mp-conflict {
   color: var(--color-danger);
-  font-size: 11px;
+  font-size: 0.846rem;
   padding: 4px 8px;
   background: var(--color-danger-dim);
   border-radius: var(--radius-sm);
@@ -3871,7 +3946,7 @@ body {
 }
 
 .pe-settings-section-label {
-  font-size: 10px;
+  font-size: 0.769rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;

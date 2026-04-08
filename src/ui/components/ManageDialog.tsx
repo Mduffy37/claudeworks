@@ -67,10 +67,10 @@ function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
         <span className="manage-section-label">{type}: {name}</span>
         <div style={{ display: "flex", gap: "6px" }}>
           {dirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>Save</button>
           )}
-          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
-          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={onClose}>Close</button>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onClose}>Close</button>
         </div>
       </div>
       <textarea
@@ -244,10 +244,10 @@ function ProjectsTab() {
               <div className="manage-section-header">
                 <span className="manage-section-label">Directory</span>
                 <div style={{ display: "flex", gap: "6px" }}>
-                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected)}>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected)}>
                     Open Project
                   </button>
-                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected + "/.claude")}>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected + "/.claude")}>
                     Open .claude/
                   </button>
                 </div>
@@ -261,7 +261,7 @@ function ProjectsTab() {
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
                   {claudeMdDirty && (
-                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
+                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
                       Save
                     </button>
                   )}
@@ -346,16 +346,16 @@ function ProjectsTab() {
               <div className="manage-section-header">
                 <span className="manage-section-label">MCP Servers</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                  {mcpError && <span style={{ fontSize: "11px", color: "var(--color-danger, #e55)" }}>{mcpError}</span>}
+                  {mcpError && <span style={{ fontSize: "0.846rem", color: "var(--color-danger, #e55)" }}>{mcpError}</span>}
                   {mcpDirty && (
-                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveMcp}>Save</button>
+                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveMcp}>Save</button>
                   )}
                 </div>
               </div>
               <div className="manage-section-hint">Edit .mcp.json — raw JSON for project-level MCP server configuration.</div>
               <textarea
                 className="manage-claudemd-editor"
-                style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "11px", minHeight: "120px" }}
+                style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "0.846rem", minHeight: "120px" }}
                 value={mcpJson}
                 onChange={(e) => { setMcpJson(e.target.value); setMcpDirty(true); setMcpError(""); }}
                 placeholder='{ "server-name": { "type": "stdio", "command": "npx", "args": [...] } }'
@@ -367,7 +367,7 @@ function ProjectsTab() {
               <div className="manage-section-header">
                 <span className="manage-section-label">Project Settings</span>
                 {settingsDirty && (
-                  <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveSettings}>Save</button>
+                  <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveSettings}>Save</button>
                 )}
               </div>
               <div className="manage-section-hint">Saved to .claude/settings.json — applies to all sessions in this directory.</div>
@@ -435,6 +435,7 @@ function ProjectsTab() {
 // ─── Global settings tab ────────────────────────────────────────────────────
 
 function GlobalSettingsTab() {
+  const [credStatus, setCredStatus] = useState<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> } | null>(null);
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [model, setModel] = useState("");
@@ -451,6 +452,7 @@ function GlobalSettingsTab() {
   const [showPromptPicker, setShowPromptPicker] = useState(false);
 
   useEffect(() => {
+    window.api.checkCredentialStatus().then(setCredStatus);
     window.api.getGlobalClaudeMd().then((content) => {
       setClaudeMd(content);
       setClaudeMdDirty(false);
@@ -528,7 +530,7 @@ function GlobalSettingsTab() {
       <div className="manage-section">
         <div className="manage-section-header">
           <span className="manage-section-label">Global Config</span>
-          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={async () => { const dir = await window.api.getClaudeHome(); window.api.openInFinder(dir); }}>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={async () => { const dir = await window.api.getClaudeHome(); window.api.openInFinder(dir); }}>
             Open in Finder
           </button>
         </div>
@@ -540,7 +542,7 @@ function GlobalSettingsTab() {
           <div style={{ display: "flex", gap: "6px" }}>
             <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
             {claudeMdDirty && (
-              <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
+              <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
                 Save
               </button>
             )}
@@ -567,7 +569,7 @@ function GlobalSettingsTab() {
         <div className="manage-section-header">
           <span className="manage-section-label">Default Model &amp; Effort</span>
           {defaultsDirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
               Save
             </button>
           )}
@@ -602,7 +604,7 @@ function GlobalSettingsTab() {
         <div className="manage-section-header">
           <span className="manage-section-label">Environment Variables</span>
           {envDirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveEnv}>
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEnv}>
               Save
             </button>
           )}
@@ -636,7 +638,7 @@ function GlobalSettingsTab() {
         <div className="manage-section-header">
           <span className="manage-section-label">Default CLI Flags</span>
           {defaultsDirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
               Save
             </button>
           )}
@@ -655,9 +657,9 @@ function GlobalSettingsTab() {
         <div className="manage-section-header">
           <span className="manage-section-label">Hooks</span>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            {hooksError && <span style={{ fontSize: "11px", color: "var(--color-danger, #e55)" }}>{hooksError}</span>}
+            {hooksError && <span style={{ fontSize: "0.846rem", color: "var(--color-danger, #e55)" }}>{hooksError}</span>}
             {hooksDirty && (
-              <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveHooks}>Save</button>
+              <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveHooks}>Save</button>
             )}
           </div>
         </div>
@@ -666,11 +668,56 @@ function GlobalSettingsTab() {
         </div>
         <textarea
           className="manage-claudemd-editor"
-          style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "11px", minHeight: "140px" }}
+          style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "0.846rem", minHeight: "140px" }}
           value={hooksJson}
           onChange={(e) => { setHooksJson(e.target.value); setHooksDirty(true); setHooksError(""); }}
           placeholder={'{\n  "PreToolUse": [\n    { "matcher": "*", "hooks": [{ "type": "command", "command": "echo hello" }] }\n  ]\n}'}
         />
+      </div>
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Authentication</span>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.checkCredentialStatus().then(setCredStatus)}>
+            Refresh
+          </button>
+        </div>
+        {credStatus ? (
+          <div className="modal-fields" style={{ marginTop: "8px" }}>
+            <div className="field">
+              <label>Global Credentials</label>
+              <div className="field-hint" style={{ margin: 0 }}>
+                <span style={{ color: credStatus.global ? "var(--color-skill)" : "var(--color-danger)" }}>
+                  {credStatus.global ? "Active" : "Not found"}
+                </span>
+                {" "}— stored in macOS Keychain as "Claude Code-credentials"
+              </div>
+            </div>
+            {credStatus.profiles.length > 0 && (
+              <>
+                <div className="field-divider" />
+                <div className="field">
+                  <label>Profile Credentials</label>
+                </div>
+                {credStatus.profiles.map((p) => (
+                  <div className="field" key={p.name}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.923rem" }}>
+                      <span style={{ color: p.hasCredentials ? "var(--color-skill)" : "var(--text-muted)", fontSize: "0.769rem" }}>
+                        {p.hasCredentials ? "\u25CF" : "\u25CB"}
+                      </span>
+                      <span style={{ color: "var(--text-primary)" }}>{p.name}</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.846rem" }}>
+                        {p.useDefaultAuth ? "default auth" : "separate auth"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="manage-section-hint">Loading credential status...</div>
+        )}
       </div>
     </div>
   );
@@ -828,12 +875,12 @@ function PromptsTab() {
               <div className="manage-section-header">
                 <span className="manage-section-label">Prompt</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                  {statusMsg && <span style={{ fontSize: "11px", color: "var(--color-skill)" }}>{statusMsg}</span>}
+                  {statusMsg && <span style={{ fontSize: "0.846rem", color: "var(--color-skill)" }}>{statusMsg}</span>}
                   {dirty && (
-                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>Save</button>
                   )}
-                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={async () => { if (draft) { const p = await window.api.exportPrompt(draft); if (p) { setStatusMsg("Saved to Downloads"); setTimeout(() => setStatusMsg(""), 3000); } } }}>Export</button>
-                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={async () => { if (draft) { const p = await window.api.exportPrompt(draft); if (p) { setStatusMsg("Saved to Downloads"); setTimeout(() => setStatusMsg(""), 3000); } } }}>Export</button>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
                 </div>
               </div>
               <div className="modal-fields" style={{ marginTop: "8px" }}>

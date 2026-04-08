@@ -185,6 +185,10 @@ export interface ElectronAPI {
   savePrompts: (prompts: Prompt[]) => Promise<void>;
   exportPrompt: (prompt: Prompt) => Promise<string | null>;
   importPrompt: () => Promise<Prompt | null>;
+  checkCredentialStatus: () => Promise<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> }>;
+  runDiagnostics: () => Promise<{ version: string; configDir: string; claudeHome: string; profileCount: number; teamCount: number; issues: string[] }>;
+  getAppPreferences: () => Promise<{ fontSize: number }>;
+  saveAppPreferences: (prefs: { fontSize: number }) => Promise<void>;
   getGlobalEnv: () => Promise<Record<string, string>>;
   saveGlobalEnv: (env: Record<string, string>) => Promise<void>;
   getGlobalHooks: () => Promise<Record<string, any>>;

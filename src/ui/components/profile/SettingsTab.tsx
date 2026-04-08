@@ -180,7 +180,7 @@ export function SettingsTab(props: Props) {
           )}
           {envEntries.map(([key, value]) => (
             <div className="field" key={key}>
-              <label>{key}{globalEnv[key] !== undefined && <span style={{ color: "var(--accent)", fontSize: "9px", marginLeft: "6px" }}>overriding global</span>}</label>
+              <label>{key}{globalEnv[key] !== undefined && <span style={{ color: "var(--accent)", fontSize: "0.692rem", marginLeft: "6px" }}>overriding global</span>}</label>
               <div className="field-with-button">
                 <input
                   type="text"
@@ -237,7 +237,7 @@ export function SettingsTab(props: Props) {
                     </label>
                     <span className="field-toggle-label">
                       <strong>{h.event}</strong>
-                      <span style={{ color: "var(--text-muted)", marginLeft: "8px", fontSize: "11px", fontFamily: '"SF Mono", monospace' }}>{h.command}</span>
+                      <span style={{ color: "var(--text-muted)", marginLeft: "8px", fontSize: "0.846rem", fontFamily: '"SF Mono", monospace' }}>{h.command}</span>
                     </span>
                   </div>
                 </div>
