@@ -6,7 +6,6 @@ export function useTeams() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     const data = await window.api.getTeams();
     setTeams(data);
     setLoading(false);
