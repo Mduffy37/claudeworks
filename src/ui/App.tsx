@@ -90,6 +90,7 @@ export function App() {
     setDirty(false);
     if (!pendingNav) return;
     if (pendingNav.type === "select") {
+      setActiveTab("profiles");
       setSelectedName(pendingNav.name);
       setIsCreating(false);
     } else if (pendingNav.type === "new") {
@@ -142,6 +143,10 @@ export function App() {
   };
 
   const handleNavigateToProfile = (profileName: string) => {
+    if (dirty) {
+      setPendingNav({ type: "select", name: profileName });
+      return;
+    }
     setActiveTab("profiles");
     setSelectedName(profileName);
     setIsCreating(false);
@@ -336,6 +341,7 @@ export function App() {
             onDelete={handleDeleteTeam}
             dirty={dirty}
             onDirtyChange={setDirty}
+            onNavigateToProfile={handleNavigateToProfile}
           />
         )}
       </div>

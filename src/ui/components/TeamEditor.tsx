@@ -33,9 +33,10 @@ interface Props {
   onDelete: (name: string) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
+  onNavigateToProfile?: (name: string) => void;
 }
 
-export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, dirty, onDirtyChange }: Props) {
+export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, dirty, onDirtyChange, onNavigateToProfile }: Props) {
   const [draft, setDraft] = useState<Team>({
     name: "",
     description: "",
@@ -330,6 +331,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                     onSetLead={() => handleSetLead(m.profile)}
                     onRoleChange={(v) => handleMemberField(m.profile, "role", v)}
                     onInstructionsChange={(v) => handleMemberField(m.profile, "instructions", v)}
+                    onNavigateToProfile={onNavigateToProfile}
                   />
                 ))}
                 <div className={`te-drop-zone${activeId ? " drag-active" : ""}`}>Drag a profile here to add</div>

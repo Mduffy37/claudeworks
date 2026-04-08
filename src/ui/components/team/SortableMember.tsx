@@ -11,6 +11,7 @@ export function SortableMember({
   onSetLead,
   onRoleChange,
   onInstructionsChange,
+  onNavigateToProfile,
 }: {
   member: TeamMember;
   profile: Profile | undefined;
@@ -19,6 +20,7 @@ export function SortableMember({
   onSetLead: () => void;
   onRoleChange: (role: string) => void;
   onInstructionsChange: (instructions: string) => void;
+  onNavigateToProfile?: (name: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: `member-${member.profile}`,
@@ -44,7 +46,11 @@ export function SortableMember({
           <div className="te-member-avatar">{initial}</div>
           <div>
             <div className="te-member-name">
-              {member.profile}
+              {onNavigateToProfile ? (
+                <span className="te-member-name-link" onClick={(e) => { e.stopPropagation(); onNavigateToProfile(member.profile); }} title={`Go to ${member.profile}`}>
+                  {member.profile}
+                </span>
+              ) : member.profile}
               {member.isLead && <span className="te-lead-badge">LEAD</span>}
               {isBroken && <span className="te-broken-badge">Missing</span>}
             </div>
