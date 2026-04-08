@@ -108,28 +108,37 @@ export function PluginPicker({
               <span className="plugin-version">v{plugin.version}</span>
             </span>
 
-            {/* Badge row — sits below the name and wraps freely */}
-            {(() => {
-              const skills = plugin.items.filter((i) => i.type === "skill").length;
-              const agents = plugin.items.filter((i) => i.type === "agent").length;
-              const commands = plugin.items.filter((i) => i.type === "command").length;
-              const hooks = plugin.hooks.length;
-              const mcps = plugin.mcpServers.length;
-              const hasNothing = !skills && !agents && !commands && !hooks && !mcps;
-              return (
-                <span className="plugin-badge-row">
-                  {skills > 0 && <span className="plugin-badge skill-badge">{skills} skill{skills !== 1 ? "s" : ""}</span>}
-                  {agents > 0 && <span className="plugin-badge agent-badge">{agents} agent{agents !== 1 ? "s" : ""}</span>}
-                  {commands > 0 && <span className="plugin-badge cmd-badge">{commands} cmd{commands !== 1 ? "s" : ""}</span>}
-                  {hooks > 0 && <span className="plugin-badge hook-badge">{hooks} hook{hooks !== 1 ? "s" : ""}</span>}
-                  {mcps > 0 && <span className="plugin-badge mcp">{mcps} MCP</span>}
-                  {hasNothing && <span className="plugin-badge">LSP</span>}
-                  {excludedCount > 0 && enabled && (
-                    <span className="plugin-badge excluded">{excludedCount} excluded</span>
-                  )}
-                </span>
-              );
-            })()}
+            {/* Badge row — summary when collapsed, full badges when expanded */}
+            {!isExpanded ? (
+              <span className="plugin-summary">
+                {plugin.items.length + plugin.mcpServers.length} item{(plugin.items.length + plugin.mcpServers.length) !== 1 ? "s" : ""}
+                {excludedCount > 0 && enabled && (
+                  <> &middot; <span className="plugin-badge excluded">{excludedCount} excluded</span></>
+                )}
+              </span>
+            ) : (
+              (() => {
+                const skills = plugin.items.filter((i) => i.type === "skill").length;
+                const agents = plugin.items.filter((i) => i.type === "agent").length;
+                const commands = plugin.items.filter((i) => i.type === "command").length;
+                const hooks = plugin.hooks.length;
+                const mcps = plugin.mcpServers.length;
+                const hasNothing = !skills && !agents && !commands && !hooks && !mcps;
+                return (
+                  <span className="plugin-badge-row">
+                    {skills > 0 && <span className="plugin-badge skill-badge">{skills} skill{skills !== 1 ? "s" : ""}</span>}
+                    {agents > 0 && <span className="plugin-badge agent-badge">{agents} agent{agents !== 1 ? "s" : ""}</span>}
+                    {commands > 0 && <span className="plugin-badge cmd-badge">{commands} cmd{commands !== 1 ? "s" : ""}</span>}
+                    {hooks > 0 && <span className="plugin-badge hook-badge">{hooks} hook{hooks !== 1 ? "s" : ""}</span>}
+                    {mcps > 0 && <span className="plugin-badge mcp">{mcps} MCP</span>}
+                    {hasNothing && <span className="plugin-badge">LSP</span>}
+                    {excludedCount > 0 && enabled && (
+                      <span className="plugin-badge excluded">{excludedCount} excluded</span>
+                    )}
+                  </span>
+                );
+              })()
+            )}
           </div>
         </div>
 

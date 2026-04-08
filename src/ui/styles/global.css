@@ -1503,6 +1503,7 @@ body {
 .toggle-switch input:checked + .toggle-track {
   background: var(--color-launch);
   border-color: rgba(61, 186, 110, 0.4);
+  box-shadow: 0 0 8px rgba(61, 186, 110, 0.3);
 }
 
 .toggle-switch input:checked + .toggle-track .toggle-thumb {
@@ -1576,6 +1577,12 @@ body {
 /* Visually separate the excluded badge from the type badges */
 .plugin-badge-row .excluded {
   margin-left: 4px;
+}
+
+.plugin-summary {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 /* ─── Plugin badges ───────────────────────────────────────────────────────── */
