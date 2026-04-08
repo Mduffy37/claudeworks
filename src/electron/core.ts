@@ -1135,6 +1135,7 @@ export function loadTeams(): Team[] {
 }
 
 export function saveTeam(team: Team): Team {
+  validateProfileName(team.name);
   const store = readTeamsStore();
   store.teams[team.name] = team;
   writeTeamsStore(store);
@@ -1142,6 +1143,7 @@ export function saveTeam(team: Team): Team {
 }
 
 export function renameTeam(oldName: string, team: Team): Team {
+  validateProfileName(team.name);
   const store = readTeamsStore();
   if (!store.teams[oldName]) throw new Error(`Team "${oldName}" not found`);
   if (team.name !== oldName && store.teams[team.name]) {

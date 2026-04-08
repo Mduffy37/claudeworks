@@ -18,7 +18,7 @@ export function App() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" | "teams" } | null>(null);
+  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" | "teams" } | { type: "select-team"; name: string } | { type: "new-team" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "plugins" | "teams">("profiles");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
@@ -74,12 +74,18 @@ export function App() {
     if (pendingNav.type === "select") {
       setSelectedName(pendingNav.name);
       setIsCreating(false);
+    } else if (pendingNav.type === "new") {
+      setSelectedName(null);
+      setIsCreating(true);
+    } else if (pendingNav.type === "select-team") {
+      setSelectedTeamName(pendingNav.name);
+      setIsCreatingTeam(false);
+    } else if (pendingNav.type === "new-team") {
+      setSelectedTeamName(null);
+      setIsCreatingTeam(true);
     } else if (pendingNav.type === "tab") {
       setActiveTab(pendingNav.tab);
       if (pendingNav.tab === "plugins") checkForUpdates();
-    } else {
-      setSelectedName(null);
-      setIsCreating(true);
     }
     setPendingNav(null);
   };
@@ -121,7 +127,7 @@ export function App() {
 
   const handleNewTeam = () => {
     if (dirty) {
-      setPendingNav({ type: "new" });
+      setPendingNav({ type: "new-team" });
       return;
     }
     setSelectedTeamName(null);
@@ -130,7 +136,7 @@ export function App() {
 
   const handleSelectTeam = (name: string) => {
     if (dirty) {
-      setPendingNav({ type: "select", name });
+      setPendingNav({ type: "select-team", name });
       return;
     }
     setSelectedTeamName(name);
@@ -310,7 +316,7 @@ export function App() {
             </div>
             <div className="modal-body">
               <p className="modal-description">
-                Changes to <strong>{selectedProfile?.name ?? "this profile"}</strong> will be lost if you switch now.
+                Changes to <strong>{activeTab === "teams" ? (selectedTeam?.name ?? "this team") : (selectedProfile?.name ?? "this profile")}</strong> will be lost if you switch now.
               </p>
               <div className="modal-confirm-actions">
                 <button className="btn-secondary" onClick={handleCancelNav}>
