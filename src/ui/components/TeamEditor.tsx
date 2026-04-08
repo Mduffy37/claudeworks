@@ -53,7 +53,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
     onDirtyChange(false);
     setShowMergePreview(false);
     setMergeData(null);
-  }, [team, isNew]);
+  }, [team, isNew, onDirtyChange]);
 
   const markDirty = useCallback(() => onDirtyChange(true), [onDirtyChange]);
 

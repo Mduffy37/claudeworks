@@ -60,11 +60,6 @@ export function PluginPicker({
     [plugins, directory]
   );
 
-  const mcpOnlyPlugins = useMemo(
-    () => plugins.filter(isMcpOnly),
-    [plugins]
-  );
-
   const renderPlugin = (plugin: PluginWithItems) => {
     const enabled = selectedPlugins.includes(plugin.name);
     const isExpanded = expanded.has(plugin.name);

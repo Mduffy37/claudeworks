@@ -182,7 +182,7 @@ export function ProfileTopBar({
 
           <button
             className="btn-primary"
-            disabled={!name.trim() || (!dirty && saveStatus !== "saved") || saving}
+            disabled={!name.trim() || !dirty || saving}
             onClick={onSave}
           >
             {saving ? "Saving\u2026" : saveStatus === "saved" ? "\u2713 Saved" : isNew ? "Create Profile" : "Save"}
