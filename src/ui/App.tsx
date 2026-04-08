@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { ConfirmDialog } from "./components/shared/ConfirmDialog";
+import { ManageDialog } from "./components/ManageDialog";
 import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
 import { ProfileEditor } from "./components/ProfileEditor";
-import { PluginList } from "./components/PluginList";
-import { PluginManager } from "./components/PluginManager";
 import { TeamList } from "./components/TeamList";
 import { TeamEditor } from "./components/TeamEditor";
 import { useTeams } from "./hooks/useTeams";
@@ -19,10 +18,10 @@ export function App() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" | "teams" } | { type: "select-team"; name: string } | { type: "new-team" } | null>(null);
+  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "teams" } | { type: "select-team"; name: string } | { type: "new-team" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
-  const [activeTab, setActiveTab] = useState<"profiles" | "plugins" | "teams">("profiles");
-  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
+  const [showManageDialog, setShowManageDialog] = useState(false);
   const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook } =
     useTeams();
   const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
@@ -86,7 +85,6 @@ export function App() {
       setIsCreatingTeam(true);
     } else if (pendingNav.type === "tab") {
       setActiveTab(pendingNav.tab);
-      if (pendingNav.tab === "plugins") checkForUpdates();
     }
     setPendingNav(null);
   };
@@ -95,16 +93,13 @@ export function App() {
     setPendingNav(null);
   };
 
-  const handleTabSwitch = (tab: "profiles" | "plugins" | "teams") => {
+  const handleTabSwitch = (tab: "profiles" | "teams") => {
     if (tab === activeTab) return;
     if (dirty) {
       setPendingNav({ type: "tab", tab });
       return;
     }
     setActiveTab(tab);
-    if (tab === "plugins") {
-      checkForUpdates();
-    }
   };
 
   const handlePluginUpdate = async (name: string) => {
@@ -172,8 +167,6 @@ export function App() {
     [teams, selectedTeamName]
   );
 
-  const selectedPluginData = plugins.find((p) => p.name === selectedPlugin) ?? null;
-
   const handleDelete = async (name: string) => {
     try {
       await deleteProfile(name);
@@ -229,7 +222,7 @@ export function App() {
         {/* Tab switcher */}
         <div className="sidebar-tabs">
           <button
-            className={`sidebar-tab${activeTab === "profiles" || activeTab === "plugins" ? " active" : ""}`}
+            className={`sidebar-tab${activeTab === "profiles" ? " active" : ""}`}
             onClick={() => handleTabSwitch("profiles")}
           >
             Profiles
@@ -241,25 +234,16 @@ export function App() {
             Teams
           </button>
         </div>
-        {activeTab === "profiles" || activeTab === "plugins" ? (
-          activeTab === "plugins" ? (
-            <PluginList
-              plugins={plugins}
-              selectedPlugin={selectedPlugin}
-              availableUpdates={availableUpdates}
-              onSelect={setSelectedPlugin}
-            />
-          ) : (
-            <ProfileList
-              profiles={profiles}
-              selectedName={selectedName}
-              profileHealth={profileHealth}
-              onSelect={handleSelect}
-              onNew={handleNew}
-              onLaunch={handleLaunch}
-              dirty={dirty}
-            />
-          )
+        {activeTab === "profiles" ? (
+          <ProfileList
+            profiles={profiles}
+            selectedName={selectedName}
+            profileHealth={profileHealth}
+            onSelect={handleSelect}
+            onNew={handleNew}
+            onLaunch={handleLaunch}
+            dirty={dirty}
+          />
         ) : (
           <TeamList
             teams={teams}
@@ -270,17 +254,31 @@ export function App() {
             onLaunch={handleLaunch}
           />
         )}
-        {(activeTab === "profiles" || activeTab === "plugins") && (
+        <div className="sidebar-dock">
           <button
-            className={`sidebar-plugins-btn${activeTab === "plugins" ? " active" : ""}`}
-            onClick={() => handleTabSwitch("plugins")}
+            className="sidebar-dock-action"
+            onClick={() => { /* TODO: open manage profiles/teams modal */ }}
+            title={activeTab === "profiles" ? "Manage Profiles" : "Manage Teams"}
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1v6M8 9v6M1 8h6M9 8h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
             </svg>
-            Manage Plugins
+            <span className="sidebar-dock-label">
+              {activeTab === "profiles" ? "Manage" : "Manage"}
+            </span>
           </button>
-        )}
+          <div className="sidebar-dock-divider" />
+          <button
+            className="sidebar-dock-primary"
+            onClick={() => { checkForUpdates(); setShowManageDialog(true); }}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" fill="none" />
+              <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.1" />
+            </svg>
+            Configure Claude
+          </button>
+        </div>
       </div>
       <div className="main">
         {activeTab === "profiles" ? (
@@ -296,15 +294,6 @@ export function App() {
             dirty={dirty}
             onDirtyChange={setDirty}
           />
-        ) : activeTab === "plugins" ? (
-          <PluginManager
-            plugin={selectedPluginData}
-            profiles={profiles}
-            availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
-            onUpdate={handlePluginUpdate}
-            onUninstall={handlePluginUninstall}
-            onNavigateToProfile={handleNavigateToProfile}
-          />
         ) : (
           <TeamEditor
             team={selectedTeam}
@@ -318,6 +307,17 @@ export function App() {
           />
         )}
       </div>
+      {showManageDialog && (
+        <ManageDialog
+          plugins={plugins}
+          profiles={profiles}
+          availableUpdates={availableUpdates}
+          onUpdate={handlePluginUpdate}
+          onUninstall={handlePluginUninstall}
+          onNavigateToProfile={handleNavigateToProfile}
+          onClose={() => setShowManageDialog(false)}
+        />
+      )}
       {pendingNav && (
         <ConfirmDialog
           title="Unsaved Changes"
