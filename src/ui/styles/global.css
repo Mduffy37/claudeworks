@@ -2725,3 +2725,8 @@ body {
   background: var(--color-danger-dim);
   border-radius: var(--radius-sm);
 }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

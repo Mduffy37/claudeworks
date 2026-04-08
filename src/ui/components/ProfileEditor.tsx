@@ -36,7 +36,7 @@ function LaunchIcon({ spinning }: { spinning: boolean }) {
         height="13"
         viewBox="0 0 14 14"
         fill="none"
-        style={{ animation: "pe-spin 1s linear infinite" }}
+        style={{ animation: "spin 1s linear infinite" }}
       >
         <circle
           cx="7"
@@ -915,7 +915,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
           onChangeDirectories={(dirs) => {
             setDirectories(dirs);
-            setDirectory(dirs[0] ?? "");
+            setLaunchDir(dirs[0] ?? "");
             setDisabledMcpServers((prev) => {
               const pruned = Object.fromEntries(
                 Object.entries(prev).filter(([k]) => dirs.includes(k))
@@ -1204,12 +1204,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         </div>
       )}
 
-      <style>{`
-        @keyframes pe-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
