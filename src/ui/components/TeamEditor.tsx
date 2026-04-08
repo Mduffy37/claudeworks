@@ -31,12 +31,13 @@ interface Props {
   importedProjects?: string[];
   onSave: (team: Team) => void | Promise<void>;
   onDelete: (name: string) => void;
+  onLaunch: (name: string, directory?: string) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
   onNavigateToProfile?: (name: string) => void;
 }
 
-export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, dirty, onDirtyChange, onNavigateToProfile }: Props) {
+export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, onLaunch, dirty, onDirtyChange, onNavigateToProfile }: Props) {
   const [draft, setDraft] = useState<Team>({
     name: "",
     description: "",
@@ -47,6 +48,20 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [search, setSearch] = useState("");
   const [showOverflow, setShowOverflow] = useState(false);
+  const [launchDir, setLaunchDir] = useState("");
+
+  const handleLaunch = async () => {
+    const lead = draft.members.find((m) => m.isLead);
+    if (!lead) return;
+    if (dirty) await onSave(draft);
+    let dir = launchDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+    onLaunch(lead.profile, dir);
+  };
 
   useEffect(() => {
     if (team) {
@@ -220,16 +235,16 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
 
         {/* Right: stacked controls */}
         <div className="pe-topbar-right">
-          {/* Row 1: dir select + Launch — placeholder for now */}
+          {/* Row 1: dir select + Launch */}
           {!isNew && (
             <div className="pe-topbar-controls-row">
-              <select className="pe-launch-dir-select" disabled>
+              <select className="pe-launch-dir-select" value={launchDir} onChange={(e) => setLaunchDir(e.target.value)}>
                 <option value="">None (choose at launch)</option>
                 {importedProjects.map((dir) => (
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
                 ))}
               </select>
-              <button className="btn-launch" disabled title="Team launch coming soon">
+              <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead)} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch lead profile" : "Set a lead profile first"}>
                 <span className="btn-launch-icon">
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                     <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

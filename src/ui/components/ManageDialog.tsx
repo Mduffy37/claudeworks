@@ -22,6 +22,7 @@ function ProjectsTab() {
   const [selected, setSelected] = useState<string | null>(null);
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
+  const [gitContext, setGitContext] = useState<{ branch: string; dirty: boolean; isRepo: boolean } | null>(null);
 
   useEffect(() => {
     window.api.getImportedProjects().then(setProjects);
@@ -33,9 +34,11 @@ function ProjectsTab() {
         setClaudeMd(content);
         setClaudeMdDirty(false);
       });
+      window.api.getGitContext(selected).then(setGitContext);
     } else {
       setClaudeMd("");
       setClaudeMdDirty(false);
+      setGitContext(null);
     }
   }, [selected]);
 
@@ -105,6 +108,19 @@ function ProjectsTab() {
       <div className="manage-dialog-content">
         {selected ? (
           <div className="manage-project-detail">
+            {/* Git context */}
+            {gitContext?.isRepo && (
+              <div className="manage-section">
+                <div className="manage-section-header">
+                  <span className="manage-section-label">Git</span>
+                </div>
+                <div className="manage-project-git">
+                  <span className="manage-git-branch">{gitContext.branch}</span>
+                  {gitContext.dirty && <span className="manage-git-dirty">uncommitted changes</span>}
+                </div>
+              </div>
+            )}
+
             <div className="manage-section">
               <div className="manage-section-header">
                 <span className="manage-section-label">Directory</span>
@@ -158,7 +174,11 @@ function GlobalSettingsTab() {
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [model, setModel] = useState("");
   const [effort, setEffort] = useState("");
+  const [env, setEnv] = useState<Record<string, string>>({});
+  const [customFlags, setCustomFlags] = useState("");
   const [defaultsDirty, setDefaultsDirty] = useState(false);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
 
   useEffect(() => {
     window.api.getGlobalClaudeMd().then((content) => {
@@ -168,6 +188,8 @@ function GlobalSettingsTab() {
     window.api.getGlobalDefaults().then((d) => {
       setModel(d.model);
       setEffort(d.effortLevel);
+      setEnv(d.env ?? {});
+      setCustomFlags(d.customFlags ?? "");
       setDefaultsDirty(false);
     });
   }, []);
@@ -178,9 +200,35 @@ function GlobalSettingsTab() {
   };
 
   const handleSaveDefaults = async () => {
-    await window.api.saveGlobalDefaults({ model, effortLevel: effort });
+    await window.api.saveGlobalDefaults({
+      model,
+      effortLevel: effort,
+      env: Object.keys(env).length > 0 ? env : undefined,
+      customFlags: customFlags.trim() || undefined,
+    });
     setDefaultsDirty(false);
   };
+
+  const handleAddEnv = () => {
+    const key = newKey.trim();
+    if (!key) return;
+    setEnv((prev) => ({ ...prev, [key]: newValue }));
+    setNewKey("");
+    setNewValue("");
+    setDefaultsDirty(true);
+  };
+
+  const handleRemoveEnv = (key: string) => {
+    setEnv((prev) => { const next = { ...prev }; delete next[key]; return next; });
+    setDefaultsDirty(true);
+  };
+
+  const handleUpdateEnvValue = (key: string, value: string) => {
+    setEnv((prev) => ({ ...prev, [key]: value }));
+    setDefaultsDirty(true);
+  };
+
+  const envEntries = Object.entries(env);
 
   return (
     <div className="manage-global-settings">
@@ -244,6 +292,59 @@ function GlobalSettingsTab() {
               <option value="high">High</option>
               <option value="max">Max</option>
             </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Environment Variables</span>
+          {defaultsDirty && (
+            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+              Save
+            </button>
+          )}
+        </div>
+        <div className="manage-section-hint">
+          Applied to all sessions. Per-profile env vars override these.
+        </div>
+        <div className="modal-fields" style={{ marginTop: "8px" }}>
+          {envEntries.map(([key, value]) => (
+            <div className="field" key={key}>
+              <label>{key}</label>
+              <div className="field-with-button">
+                <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder="value" />
+                <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
+              </div>
+            </div>
+          ))}
+          {envEntries.length > 0 && <div className="field-divider" />}
+          <div className="field">
+            <label>Add Variable</label>
+            <div className="field-with-button">
+              <input type="text" value={newKey} onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))} placeholder="e.g. CLAUDE_CODE_MAX_OUTPUT_TOKENS" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+              <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+              <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Default CLI Flags</span>
+          {defaultsDirty && (
+            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+              Save
+            </button>
+          )}
+        </div>
+        <div className="manage-section-hint">
+          Flags passed to <code>claude</code> on every launch. Per-profile flags are appended after these.
+        </div>
+        <div className="modal-fields" style={{ marginTop: "8px" }}>
+          <div className="field">
+            <input type="text" value={customFlags} onChange={(e) => { setCustomFlags(e.target.value); setDefaultsDirty(true); }} placeholder="e.g. --max-turns 10 --verbose" />
           </div>
         </div>
       </div>

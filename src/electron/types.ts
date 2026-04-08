@@ -169,14 +169,15 @@ export interface ElectronAPI {
   // Global settings
   getGlobalClaudeMd: () => Promise<string>;
   saveGlobalClaudeMd: (content: string) => Promise<void>;
-  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string }>;
-  saveGlobalDefaults: (defaults: { model: string; effortLevel: string }) => Promise<void>;
+  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }>;
+  saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }) => Promise<void>;
   // Projects
   getImportedProjects: () => Promise<string[]>;
   addImportedProject: (dir: string) => Promise<string[]>;
   removeImportedProject: (dir: string) => Promise<string[]>;
   getProjectClaudeMd: (dir: string) => Promise<string>;
   saveProjectClaudeMd: (dir: string, content: string) => Promise<void>;
+  getGitContext: (dir: string) => Promise<{ branch: string; dirty: boolean; isRepo: boolean }>;
   openInFinder: (path: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;
   getClaudeHome: () => Promise<string>;

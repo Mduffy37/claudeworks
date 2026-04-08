@@ -344,6 +344,7 @@ export function App() {
             importedProjects={importedProjects}
             onSave={handleSaveTeam}
             onDelete={handleDeleteTeam}
+            onLaunch={handleLaunch}
             dirty={dirty}
             onDirtyChange={setDirty}
             onNavigateToProfile={handleNavigateToProfile}

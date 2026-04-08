@@ -233,6 +233,16 @@ ipcMain.handle("get-project-claude-md", (_event, dir: string) => getProjectClaud
 ipcMain.handle("save-project-claude-md", (_event, dir: string, content: string) => saveProjectClaudeMd(dir, content));
 
 // Filesystem
+ipcMain.handle("get-git-context", async (_event, dir: string) => {
+  const { execSync } = require("child_process");
+  try {
+    const branch = execSync("git rev-parse --abbrev-ref HEAD", { cwd: dir, encoding: "utf-8" }).trim();
+    const status = execSync("git status --porcelain", { cwd: dir, encoding: "utf-8" }).trim();
+    return { branch, dirty: status.length > 0, isRepo: true };
+  } catch {
+    return { branch: "", dirty: false, isRepo: false };
+  }
+});
 ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(filePath));
 ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
 ipcMain.handle("get-claude-home", () => getClaudeHome());

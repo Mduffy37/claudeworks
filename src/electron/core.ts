@@ -730,6 +730,10 @@ export function assembleProfile(profile: Profile): string {
   if (profile.voiceEnabled !== undefined) {
     settings.voiceEnabled = profile.voiceEnabled;
   }
+  // Apply global env defaults, then profile-specific overrides
+  if (globalDefaults.env && Object.keys(globalDefaults.env).length > 0) {
+    settings.env = { ...(settings.env ?? {}), ...globalDefaults.env };
+  }
   if (profile.env) {
     settings.env = { ...(settings.env ?? {}), ...profile.env };
   }
@@ -1113,8 +1117,10 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
 
   const mcpConfigPath = path.join(configDir, "mcp.json");
 
-  // Build launch flags
+  // Build launch flags — global defaults first, profile overrides on top
   const flagParts: string[] = [];
+  const globalDefs = getGlobalDefaults();
+  if (globalDefs.customFlags?.trim()) flagParts.push(globalDefs.customFlags.trim());
   if (profile.launchFlags?.dangerouslySkipPermissions) flagParts.push("--dangerously-skip-permissions");
   if (profile.launchFlags?.verbose) flagParts.push("--verbose");
   if (profile.customFlags?.trim()) flagParts.push(profile.customFlags.trim());
@@ -1348,15 +1354,16 @@ export function saveGlobalClaudeMd(content: string): void {
   fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
 }
 
-export function getGlobalDefaults(): { model: string; effortLevel: string } {
+export function getGlobalDefaults(): { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string } {
   try {
-    return JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+    const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+    return { model: data.model ?? "", effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags };
   } catch {
     return { model: "", effortLevel: "" };
   }
 }
 
-export function saveGlobalDefaults(defaults: { model: string; effortLevel: string }): void {
+export function saveGlobalDefaults(defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }): void {
   fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(defaults, null, 2));
 }
 

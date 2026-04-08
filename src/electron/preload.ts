@@ -37,6 +37,7 @@ const api: ElectronAPI = {
   removeImportedProject: (dir) => ipcRenderer.invoke("remove-imported-project", dir),
   getProjectClaudeMd: (dir) => ipcRenderer.invoke("get-project-claude-md", dir),
   saveProjectClaudeMd: (dir, content) => ipcRenderer.invoke("save-project-claude-md", dir, content),
+  getGitContext: (dir) => ipcRenderer.invoke("get-git-context", dir),
   openInFinder: (path) => ipcRenderer.invoke("open-in-finder", path),
   getProfileConfigDir: (name) => ipcRenderer.invoke("get-profile-config-dir", name),
   getClaudeHome: () => ipcRenderer.invoke("get-claude-home"),

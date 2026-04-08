@@ -617,7 +617,32 @@ body {
 
 .manage-project-detail {
   padding: 16px;
+  overflow-y: auto;
 }
+
+.manage-project-git {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.manage-git-branch {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.manage-git-dirty {
+  font-size: 11px;
+  color: var(--color-warning, #e5a84b);
+  font-style: italic;
+}
+
 
 /* ─── Global settings tab ────────────────────────────────────────────────── */
 
