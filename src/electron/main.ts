@@ -25,6 +25,8 @@ import {
   checkAllTeamHealth,
   getGlobalClaudeMd,
   saveGlobalClaudeMd,
+  getPrompts,
+  savePrompts,
   getGlobalHooks,
   saveGlobalHooks,
   getGlobalDefaults,
@@ -224,6 +226,8 @@ ipcMain.handle("check-team-health", () => {
 // Global settings
 ipcMain.handle("get-global-claude-md", () => getGlobalClaudeMd());
 ipcMain.handle("save-global-claude-md", (_event, content: string) => saveGlobalClaudeMd(content));
+ipcMain.handle("get-prompts", () => getPrompts());
+ipcMain.handle("save-prompts", (_event, prompts: any[]) => savePrompts(prompts));
 ipcMain.handle("get-global-hooks", () => getGlobalHooks());
 ipcMain.handle("save-global-hooks", (_event, hooks: Record<string, any>) => saveGlobalHooks(hooks));
 ipcMain.handle("get-global-defaults", () => getGlobalDefaults());

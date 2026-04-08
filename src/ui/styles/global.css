@@ -766,6 +766,183 @@ body {
   white-space: nowrap;
 }
 
+/* ─── Prompt picker modal ────────────────────────────────────────────────── */
+
+.prompt-picker-modal {
+  width: 440px;
+  max-height: 500px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.prompt-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prompt-picker-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prompt-picker-search {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prompt-picker-search input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+.prompt-picker-search input:focus {
+  border-color: var(--border-focus);
+}
+
+.prompt-picker-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.prompt-picker-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.prompt-picker-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+
+.prompt-picker-item:last-child {
+  border-bottom: none;
+}
+
+.prompt-picker-item:hover {
+  background: var(--bg-hover);
+}
+
+.prompt-picker-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.prompt-picker-item-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.prompt-picker-item-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.insert-prompt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(222, 115, 86, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.01em;
+}
+
+.insert-prompt-btn:hover {
+  background: rgba(222, 115, 86, 0.22);
+  border-color: rgba(222, 115, 86, 0.4);
+  color: var(--accent-hover);
+}
+
+.insert-prompt-btn svg {
+  flex-shrink: 0;
+}
+
+/* ─── Prompts ────────────────────────────────────────────────────────────── */
+
+.prompt-list-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.prompt-tags-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.prompt-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.prompt-tag-chip button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.6;
+}
+
+.prompt-tag-chip button:hover {
+  opacity: 1;
+}
+
+.prompt-tag-input {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+  min-width: 80px;
+  flex: 1;
+}
+
+.prompt-tag-input::placeholder {
+  color: var(--text-muted);
+}
+
 /* ─── Global settings tab ────────────────────────────────────────────────── */
 
 .manage-global-settings {
@@ -1872,6 +2049,13 @@ body {
   flex-direction: column;
   gap: 10px;
   max-width: 720px;
+}
+
+.pe-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .pe-instructions-hint {

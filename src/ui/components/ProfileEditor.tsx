@@ -12,6 +12,7 @@ import { useProfileDraft, type TabId } from "../hooks/useProfileDraft";
 import { usePluginToggles } from "../hooks/usePluginToggles";
 import { ProfileTopBar } from "./profile/ProfileTopBar";
 import { InfoCard } from "./profile/InfoCard";
+import { PromptPicker } from "./PromptPicker";
 import { McpTab } from "./profile/McpTab";
 import { SettingsTab } from "./profile/SettingsTab";
 
@@ -266,6 +267,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
   const [itemSearch, setItemSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<FilterOption>("all");
+  const [showPromptPicker, setShowPromptPicker] = useState(false);
   const [itemSort, setItemSort] = useState<SortOption>("name");
 
   const {
@@ -642,9 +644,19 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
           {activeTab === "instructions" && (
             <div className="pe-instructions-tab">
-              <div className="pe-instructions-hint">
-                Appended to your global CLAUDE.md for sessions using this profile
+              <div className="pe-editor-toolbar">
+                <span className="pe-instructions-hint">Appended to your global CLAUDE.md for sessions using this profile</span>
+                <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                  Insert Prompt
+                </button>
               </div>
+              {showPromptPicker && (
+                <PromptPicker
+                  onSelect={(content) => { setCustomClaudeMd((prev) => prev ? prev + "\n\n" + content : content); markDirty(); }}
+                  onClose={() => setShowPromptPicker(false)}
+                />
+              )}
               <textarea
                 className="pe-instructions-editor"
                 value={customClaudeMd}

@@ -1444,6 +1444,24 @@ export function saveProjectClaudeMd(dir: string, content: string): void {
   fs.writeFileSync(mdPath, content, "utf-8");
 }
 
+// ---------------------------------------------------------------------------
+// Prompts
+// ---------------------------------------------------------------------------
+
+const PROMPTS_JSON = path.join(PROFILES_DIR, "prompts.json");
+
+export function getPrompts(): import("./types").Prompt[] {
+  try {
+    return JSON.parse(fs.readFileSync(PROMPTS_JSON, "utf-8"));
+  } catch {
+    return [];
+  }
+}
+
+export function savePrompts(prompts: import("./types").Prompt[]): void {
+  fs.writeFileSync(PROMPTS_JSON, JSON.stringify(prompts, null, 2));
+}
+
 export function getGlobalHooks(): Record<string, any> {
   const settingsPath = path.join(CLAUDE_HOME, "settings.json");
   try {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
-import type { PluginWithItems, Profile } from "../../electron/types";
+import type { PluginWithItems, Profile, Prompt } from "../../electron/types";
+import { PromptPicker } from "./PromptPicker";
 
-type ManageTab = "plugins" | "projects" | "global";
+type ManageTab = "plugins" | "projects" | "global" | "prompts";
 
 interface Props {
   plugins: PluginWithItems[];
@@ -92,6 +93,7 @@ function ProjectsTab() {
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [gitContext, setGitContext] = useState<{ branch: string; dirty: boolean; isRepo: boolean } | null>(null);
+  const [showPromptPicker, setShowPromptPicker] = useState(false);
   const [localItems, setLocalItems] = useState<ProjectItem[]>([]);
   const [editingItem, setEditingItem] = useState<{ type: ItemType; name: string } | null>(null);
   const [newItemType, setNewItemType] = useState<ItemType>("skill");
@@ -256,12 +258,21 @@ function ProjectsTab() {
             <div className="manage-section">
               <div className="manage-section-header">
                 <span className="manage-section-label">CLAUDE.md</span>
-                {claudeMdDirty && (
-                  <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
-                    Save
-                  </button>
-                )}
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
+                  {claudeMdDirty && (
+                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
+                      Save
+                    </button>
+                  )}
+                </div>
               </div>
+              {showPromptPicker && (
+                <PromptPicker
+                  onSelect={(content) => { setClaudeMd((prev) => prev ? prev + "\n\n" + content : content); setClaudeMdDirty(true); }}
+                  onClose={() => setShowPromptPicker(false)}
+                />
+              )}
               <textarea
                 className="manage-claudemd-editor"
                 value={claudeMd}
@@ -436,6 +447,7 @@ function GlobalSettingsTab() {
   const [hooksJson, setHooksJson] = useState("");
   const [hooksDirty, setHooksDirty] = useState(false);
   const [hooksError, setHooksError] = useState("");
+  const [showPromptPicker, setShowPromptPicker] = useState(false);
 
   useEffect(() => {
     window.api.getGlobalClaudeMd().then((content) => {
@@ -517,12 +529,21 @@ function GlobalSettingsTab() {
       <div className="manage-section">
         <div className="manage-section-header">
           <span className="manage-section-label">Global CLAUDE.md</span>
-          {claudeMdDirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
-              Save
-            </button>
-          )}
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
+            {claudeMdDirty && (
+              <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
+                Save
+              </button>
+            )}
+          </div>
         </div>
+        {showPromptPicker && (
+          <PromptPicker
+            onSelect={(content) => { setClaudeMd((prev) => prev ? prev + "\n\n" + content : content); setClaudeMdDirty(true); }}
+            onClose={() => setShowPromptPicker(false)}
+          />
+        )}
         <div className="manage-section-hint">
           Instructions that apply to every Claude Code session, regardless of profile.
         </div>
@@ -647,6 +668,209 @@ function GlobalSettingsTab() {
   );
 }
 
+// ─── Prompts tab ────────────────────────────────────────────────────────────
+
+function PromptsTab() {
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Prompt | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [search, setSearch] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  useEffect(() => {
+    window.api.getPrompts().then(setPrompts);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return prompts;
+    return prompts.filter((p) =>
+      p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [prompts, search]);
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const p of prompts) for (const t of p.tags) tags.add(t);
+    return Array.from(tags).sort();
+  }, [prompts]);
+
+  useEffect(() => {
+    if (selected) {
+      const prompt = prompts.find((p) => p.id === selected);
+      if (prompt) {
+        setDraft({ ...prompt });
+        setDirty(false);
+      }
+    } else {
+      setDraft(null);
+      setDirty(false);
+    }
+  }, [selected, prompts]);
+
+  const handleNew = () => {
+    const id = `prompt-${Date.now()}`;
+    const now = Date.now();
+    const newPrompt: Prompt = { id, name: "", description: "", tags: [], content: "", createdAt: now, updatedAt: now };
+    setPrompts((prev) => [...prev, newPrompt]);
+    setSelected(id);
+    setDraft(newPrompt);
+    setDirty(true);
+  };
+
+  const handleSave = async () => {
+    if (!draft) return;
+    const updated = { ...draft, updatedAt: Date.now() };
+    const next = prompts.map((p) => p.id === updated.id ? updated : p);
+    await window.api.savePrompts(next);
+    setPrompts(next);
+    setDirty(false);
+  };
+
+  const handleDelete = async () => {
+    if (!draft) return;
+    const next = prompts.filter((p) => p.id !== draft.id);
+    await window.api.savePrompts(next);
+    setPrompts(next);
+    setSelected(null);
+  };
+
+  const handleAddTag = () => {
+    if (!draft || !tagInput.trim()) return;
+    const tag = tagInput.trim();
+    if (!draft.tags.includes(tag)) {
+      setDraft({ ...draft, tags: [...draft.tags, tag] });
+      setDirty(true);
+    }
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    if (!draft) return;
+    setDraft({ ...draft, tags: draft.tags.filter((t) => t !== tag) });
+    setDirty(true);
+  };
+
+  return (
+    <div className="manage-dialog-split">
+      <div className="manage-dialog-sidebar">
+        <div className="manage-projects-header">
+          <span className="manage-projects-title">Prompts</span>
+          <button className="btn-icon" onClick={handleNew} title="New prompt" aria-label="New prompt">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="pl-search" style={{ padding: "8px 12px" }}>
+          <input
+            type="text"
+            className="pl-search-input"
+            placeholder="Search prompts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="manage-projects-list">
+          {filtered.length === 0 ? (
+            <div className="manage-projects-empty">
+              {prompts.length === 0 ? "No prompts yet. Click + to create one." : "No matches."}
+            </div>
+          ) : (
+            filtered.map((p) => (
+              <div
+                key={p.id}
+                className={`manage-project-item${selected === p.id ? " selected" : ""}`}
+                onClick={() => setSelected(p.id)}
+              >
+                <div className="manage-project-name">{p.name || "Untitled"}</div>
+                {p.description && <div className="manage-project-path">{p.description}</div>}
+                {p.tags.length > 0 && (
+                  <div className="prompt-list-tags">
+                    {p.tags.map((t) => <span key={t} className="bulk-tag-chip">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      <div className="manage-dialog-content">
+        {draft ? (
+          <div className="manage-project-detail">
+            <div className="manage-section">
+              <div className="manage-section-header">
+                <span className="manage-section-label">Prompt</span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {dirty && (
+                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+                  )}
+                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
+                </div>
+              </div>
+              <div className="modal-fields" style={{ marginTop: "8px" }}>
+                <div className="field">
+                  <label>Name</label>
+                  <input type="text" value={draft.name} onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setDirty(true); }} placeholder="Prompt name..." autoFocus />
+                </div>
+                <div className="field">
+                  <label>Description</label>
+                  <input type="text" value={draft.description} onChange={(e) => { setDraft({ ...draft, description: e.target.value }); setDirty(true); }} placeholder="What this prompt is for..." />
+                </div>
+                <div className="field">
+                  <label>Tags</label>
+                  <div className="prompt-tags-editor">
+                    {draft.tags.map((t) => (
+                      <span key={t} className="prompt-tag-chip">
+                        {t}
+                        <button onClick={() => handleRemoveTag(t)}>&times;</button>
+                      </span>
+                    ))}
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddTag(); }}
+                      placeholder="Add tag..."
+                      list="prompt-tag-suggestions"
+                      className="prompt-tag-input"
+                    />
+                    <datalist id="prompt-tag-suggestions">
+                      {allTags.map((t) => <option key={t} value={t} />)}
+                    </datalist>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="manage-section">
+              <div className="manage-section-header">
+                <span className="manage-section-label">Content</span>
+              </div>
+              <textarea
+                className="manage-claudemd-editor"
+                value={draft.content}
+                onChange={(e) => { setDraft({ ...draft, content: e.target.value }); setDirty(true); }}
+                placeholder="Prompt content — this text gets inserted into CLAUDE.md editors..."
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="pm-empty">
+            <div className="empty-state">
+              <div className="empty-state-icon">&#9998;</div>
+              <div className="empty-state-title">Select a prompt</div>
+              <div className="empty-state-body">
+                Choose a prompt from the list, or create a new one. Prompts can be inserted into profile instructions, project CLAUDE.md, or global CLAUDE.md.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main dialog ────────────────────────────────────────────────────────────
 
 export function ManageDialog({
@@ -702,6 +926,12 @@ export function ManageDialog({
               Projects
             </button>
             <button
+              className={`manage-dialog-tab${activeTab === "prompts" ? " active" : ""}`}
+              onClick={() => setActiveTab("prompts")}
+            >
+              Prompts
+            </button>
+            <button
               className={`manage-dialog-tab${activeTab === "global" ? " active" : ""}`}
               onClick={() => setActiveTab("global")}
             >
@@ -739,6 +969,8 @@ export function ManageDialog({
           )}
 
           {activeTab === "projects" && <ProjectsTab />}
+
+          {activeTab === "prompts" && <PromptsTab />}
 
           {activeTab === "global" && <GlobalSettingsTab />}
         </div>

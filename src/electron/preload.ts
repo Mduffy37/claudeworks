@@ -29,6 +29,8 @@ const api: ElectronAPI = {
   // Global settings
   getGlobalClaudeMd: () => ipcRenderer.invoke("get-global-claude-md"),
   saveGlobalClaudeMd: (content) => ipcRenderer.invoke("save-global-claude-md", content),
+  getPrompts: () => ipcRenderer.invoke("get-prompts"),
+  savePrompts: (prompts) => ipcRenderer.invoke("save-prompts", prompts),
   getGlobalHooks: () => ipcRenderer.invoke("get-global-hooks"),
   saveGlobalHooks: (hooks) => ipcRenderer.invoke("save-global-hooks", hooks),
   getGlobalDefaults: () => ipcRenderer.invoke("get-global-defaults"),

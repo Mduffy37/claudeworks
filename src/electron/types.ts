@@ -132,6 +132,17 @@ export interface MergePreview {
   conflicts: string[];
 }
 
+/** A reusable prompt/template for CLAUDE.md content. */
+export interface Prompt {
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Stored profiles file format. */
 export interface ProfilesStore {
   profiles: Record<string, Profile>;
@@ -170,6 +181,8 @@ export interface ElectronAPI {
   // Global settings
   getGlobalClaudeMd: () => Promise<string>;
   saveGlobalClaudeMd: (content: string) => Promise<void>;
+  getPrompts: () => Promise<Prompt[]>;
+  savePrompts: (prompts: Prompt[]) => Promise<void>;
   getGlobalHooks: () => Promise<Record<string, any>>;
   saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
   getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }>;
