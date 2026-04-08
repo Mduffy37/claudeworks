@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   /* Core backgrounds — neutral dark, not blue-purple */
   --bg-primary: #141414;
   --bg-secondary: #1c1c1e;
@@ -2254,8 +2255,8 @@ body {
 }
 
 .item-checkbox.checked {
-  background: var(--color-launch);
-  border-color: var(--color-launch);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .item-checkbox.checked::after {

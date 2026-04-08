@@ -78,15 +78,25 @@ type SidebarSort = "name" | "plugins" | "recent";
 export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
+  const [tagFilter, setTagFilter] = useState("");
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const p of profiles) {
+      for (const t of p.tags ?? []) tags.add(t);
+    }
+    return Array.from(tags).sort();
+  }, [profiles]);
 
   const filtered = useMemo(() => {
     let result = profiles;
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((p) => p.name.toLowerCase().includes(q));
+    if (tagFilter) result = result.filter((p) => (p.tags ?? []).includes(tagFilter));
     if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "plugins") result = [...result].sort((a, b) => b.plugins.length - a.plugins.length);
     return result;
-  }, [profiles, search, sortBy]);
+  }, [profiles, search, sortBy, tagFilter]);
 
   return (
     <div className="profile-list">
@@ -108,6 +118,19 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {allTags.length > 0 && (
+            <select
+              className="pl-sort-select"
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              title="Filter by tag"
+            >
+              <option value="">All tags</option>
+              {allTags.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          )}
           <select
             className="pl-sort-select"
             value={sortBy}

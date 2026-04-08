@@ -63,15 +63,25 @@ type SidebarSort = "name" | "members";
 export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onLaunch }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
+  const [tagFilter, setTagFilter] = useState("");
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const t of teams) {
+      for (const tag of t.tags ?? []) tags.add(tag);
+    }
+    return Array.from(tags).sort();
+  }, [teams]);
 
   const filtered = useMemo(() => {
     let result = teams;
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((t) => t.name.toLowerCase().includes(q));
+    if (tagFilter) result = result.filter((t) => (t.tags ?? []).includes(tagFilter));
     if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "members") result = [...result].sort((a, b) => b.members.length - a.members.length);
     return result;
-  }, [teams, search, sortBy]);
+  }, [teams, search, sortBy, tagFilter]);
 
   return (
     <div className="team-list">
@@ -93,6 +103,19 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {allTags.length > 0 && (
+            <select
+              className="pl-sort-select"
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              title="Filter by tag"
+            >
+              <option value="">All tags</option>
+              {allTags.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          )}
           <select
             className="pl-sort-select"
             value={sortBy}
