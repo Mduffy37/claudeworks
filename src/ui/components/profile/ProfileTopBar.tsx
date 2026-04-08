@@ -206,7 +206,7 @@ export function ProfileTopBar({
               <span className="btn-launch-icon">
                 <LaunchIcon spinning={launching} />
               </span>
-              {launching ? "Launching..." : "Launch"}
+              {launching ? "Launching\u2026" : "Launch"}
             </button>
           </div>
         )}
