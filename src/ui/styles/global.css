@@ -2304,8 +2304,21 @@ body {
 
 .te-topbar-left {
   display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.te-fields-bar {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.te-fields-bar .te-field-label {
+  width: 40px;
 }
 
 .te-name-input {

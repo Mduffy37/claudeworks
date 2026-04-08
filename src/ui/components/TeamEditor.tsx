@@ -270,29 +270,12 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
       {/* Top bar */}
       <div className="te-topbar">
         <div className="te-topbar-left">
-          <input
-            className="te-name-input"
-            value={draft.name}
-            onChange={(e) => updateDraft({ name: e.target.value })}
-            placeholder="Team name"
-          />
-          <input
-            className="te-desc-input"
-            value={draft.description}
-            onChange={(e) => updateDraft({ description: e.target.value })}
-            placeholder="Description"
-          />
+          <h2 className="pe-topbar-name">{isNew ? "New Team" : draft.name}</h2>
+          <span className="pe-topbar-subtitle">
+            {draft.members.length} member{draft.members.length !== 1 ? "s" : ""}
+          </span>
         </div>
         <div className="te-topbar-actions">
-          <button className="btn-update" onClick={handlePreviewMerge} disabled={draft.members.length === 0}>
-            Preview Merge
-          </button>
-          <button className="btn-uninstall" disabled title="Coming soon" style={{ cursor: "not-allowed" }}>
-            Launch &#x1f512;
-          </button>
-          {dirty && (
-            <button className="btn-primary" onClick={handleSave}>Save</button>
-          )}
           {!isNew && (
             <button className="btn-icon te-delete-btn" onClick={() => setShowDeleteConfirm(true)} title="Delete team">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -300,6 +283,41 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
               </svg>
             </button>
           )}
+          <button className="btn-update" onClick={handlePreviewMerge} disabled={draft.members.length === 0}>
+            Preview Merge
+          </button>
+          <button className="btn-uninstall" disabled title="Coming soon" style={{ cursor: "not-allowed" }}>
+            Launch &#x1f512;
+          </button>
+          <button
+            className="btn-primary"
+            disabled={!draft.name.trim() || !dirty}
+            onClick={handleSave}
+          >
+            {isNew ? "Create Team" : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Name & description */}
+      <div className="te-fields-bar">
+        <div className="te-field-row">
+          <span className="te-field-label">Name</span>
+          <input
+            className="te-field-input"
+            value={draft.name}
+            onChange={(e) => updateDraft({ name: e.target.value })}
+            placeholder="Team name"
+          />
+        </div>
+        <div className="te-field-row">
+          <span className="te-field-label">Desc.</span>
+          <input
+            className="te-field-input"
+            value={draft.description}
+            onChange={(e) => updateDraft({ description: e.target.value })}
+            placeholder="Description (optional)"
+          />
         </div>
       </div>
 
