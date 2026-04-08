@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import type {
   Profile,
   PluginWithItems,
 } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
+import { FilterBar, type FilterOption, type SortOption } from "./shared/FilterBar";
 import { useProfileDraft, type TabId } from "../hooks/useProfileDraft";
 import { usePluginToggles } from "../hooks/usePluginToggles";
 import { ProfileTopBar } from "./profile/ProfileTopBar";
@@ -74,6 +75,9 @@ function TabBar({
 
 export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange }: Props) {
   const draft = useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange });
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemFilter, setItemFilter] = useState<FilterOption>("all");
+  const [itemSort, setItemSort] = useState<SortOption>("name");
 
   const {
     name, setName,
@@ -291,7 +295,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           {(activeTab === "skills" || activeTab === "agents" || activeTab === "commands") && (() => {
             const type = activeTab === "skills" ? "skill" : activeTab === "agents" ? "agent" : "command";
             // Show ALL items of this type from ALL plugins
-            const items = plugins.flatMap((p) =>
+            let items = plugins.flatMap((p) =>
               p.items
                 .filter((i) => i.type === type)
                 .map((i) => ({
@@ -303,50 +307,80 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
                 }))
             );
 
-            if (items.length === 0) {
-              return (
-                <div className="pe-tab-empty">
-                  No {activeTab} available. Enable plugins in the Plugins tab to see {activeTab} here.
-                </div>
+            // Apply search
+            if (itemSearch.trim()) {
+              const q = itemSearch.toLowerCase().trim();
+              items = items.filter((i) =>
+                i.name.toLowerCase().includes(q) || i.pluginDisplayName.toLowerCase().includes(q)
               );
             }
 
+            // Apply filter
+            if (itemFilter === "enabled") items = items.filter((i) => i.enabled);
+            if (itemFilter === "disabled") items = items.filter((i) => !i.enabled);
+
+            // Apply sort
+            items.sort((a, b) =>
+              itemSort === "source"
+                ? a.pluginDisplayName.localeCompare(b.pluginDisplayName) || a.name.localeCompare(b.name)
+                : a.name.localeCompare(b.name)
+            );
+
             return (
-              <div className="pe-flat-list">
-                {items.map((item) => (
-                  <div key={`${item.pluginName}:${item.name}`} className="pe-flat-item">
-                    <div
-                      className={`item-checkbox${item.enabled ? " checked" : ""}`}
-                      onClick={() => {
-                        if (!item.pluginEnabled && !item.enabled) {
-                          handleEnablePluginWithOnly(item.pluginName, item.name);
-                        } else {
-                          handleToggleItem(item.pluginName, item.name, !item.enabled);
-                        }
-                      }}
-                      role="checkbox"
-                      aria-checked={item.enabled}
-                      aria-label={type === "command" ? `/${item.name}` : item.name}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === " " || e.key === "Enter") {
-                          e.preventDefault();
-                          if (!item.pluginEnabled && !item.enabled) {
-                            handleEnablePluginWithOnly(item.pluginName, item.name);
-                          } else {
-                            handleToggleItem(item.pluginName, item.name, !item.enabled);
-                          }
-                        }
-                      }}
-                    />
-                    <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
-                      {type === "command" ? `/${item.name}` : item.name}
-                    </span>
-                    <span className="pe-flat-item-source">{item.pluginDisplayName}</span>
-                    {!item.userInvocable && <span className="skill-badge internal">internal</span>}
+              <>
+                <FilterBar
+                  search={itemSearch}
+                  onSearchChange={setItemSearch}
+                  filter={itemFilter}
+                  onFilterChange={setItemFilter}
+                  sort={itemSort}
+                  onSortChange={setItemSort}
+                  placeholder={`Search ${activeTab}...`}
+                />
+                {items.length === 0 ? (
+                  <div className="pe-tab-empty">
+                    {itemSearch || itemFilter !== "all"
+                      ? "No matches"
+                      : `No ${activeTab} available. Install plugins to see ${activeTab} here.`}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="pe-flat-list">
+                    {items.map((item) => (
+                      <div key={`${item.pluginName}:${item.name}`} className="pe-flat-item">
+                        <div
+                          className={`item-checkbox${item.enabled ? " checked" : ""}`}
+                          onClick={() => {
+                            if (!item.pluginEnabled && !item.enabled) {
+                              handleEnablePluginWithOnly(item.pluginName, item.name);
+                            } else {
+                              handleToggleItem(item.pluginName, item.name, !item.enabled);
+                            }
+                          }}
+                          role="checkbox"
+                          aria-checked={item.enabled}
+                          aria-label={type === "command" ? `/${item.name}` : item.name}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault();
+                              if (!item.pluginEnabled && !item.enabled) {
+                                handleEnablePluginWithOnly(item.pluginName, item.name);
+                              } else {
+                                handleToggleItem(item.pluginName, item.name, !item.enabled);
+                              }
+                            }
+                          }}
+                        />
+                        <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
+                          {type === "command" ? `/${item.name}` : item.name}
+                        </span>
+                        <span className="pe-flat-item-source">{item.pluginDisplayName}</span>
+                        {!item.userInvocable && <span className="skill-badge internal">internal</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             );
           })()}
 

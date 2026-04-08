@@ -1037,6 +1037,52 @@ body {
 
 /* ─── Flat item list (skills/agents/commands) ────────────────────────────── */
 
+/* ─── Filter bar ─────────────────────────────────────────────────────────── */
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-bar-search {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.filter-bar-search:focus {
+  border-color: var(--border-focus);
+}
+
+.filter-bar-search::placeholder {
+  color: var(--text-placeholder);
+}
+
+.filter-bar-select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 6px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.filter-bar-select:focus {
+  border-color: var(--border-focus);
+}
+
 .pe-flat-list {
   padding: 4px 0;
 }
@@ -2323,10 +2369,13 @@ body {
 .pl-search {
   padding: 8px 12px;
   flex-shrink: 0;
+  display: flex;
+  gap: 4px;
 }
 
 .pl-search-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 6px 10px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -2343,6 +2392,22 @@ body {
 
 .pl-search-input::placeholder {
   color: var(--text-placeholder);
+}
+
+.pl-sort-select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 4px 4px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.pl-sort-select:focus {
+  border-color: var(--border-focus);
 }
 
 .pl-section {

@@ -74,14 +74,20 @@ function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
   );
 }
 
+type SidebarSort = "name" | "plugins" | "recent";
+
 export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, dirty }: Props) {
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SidebarSort>("name");
 
   const filtered = useMemo(() => {
+    let result = profiles;
     const q = search.toLowerCase().trim();
-    if (!q) return profiles;
-    return profiles.filter((p) => p.name.toLowerCase().includes(q));
-  }, [profiles, search]);
+    if (q) result = result.filter((p) => p.name.toLowerCase().includes(q));
+    if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "plugins") result = [...result].sort((a, b) => b.plugins.length - a.plugins.length);
+    return result;
+  }, [profiles, search, sortBy]);
 
   return (
     <div className="profile-list">
@@ -103,6 +109,15 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <select
+            className="pl-sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SidebarSort)}
+            title="Sort by"
+          >
+            <option value="name">A-Z</option>
+            <option value="plugins">Plugins</option>
+          </select>
         </div>
       )}
 

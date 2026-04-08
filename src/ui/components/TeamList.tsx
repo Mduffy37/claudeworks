@@ -54,14 +54,20 @@ function TeamSidebarLaunch({ team, onLaunch }: { team: Team; onLaunch: (name: st
   );
 }
 
+type SidebarSort = "name" | "members";
+
 export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew, onLaunch }: Props) {
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SidebarSort>("name");
 
   const filtered = useMemo(() => {
+    let result = teams;
     const q = search.toLowerCase().trim();
-    if (!q) return teams;
-    return teams.filter((t) => t.name.toLowerCase().includes(q));
-  }, [teams, search]);
+    if (q) result = result.filter((t) => t.name.toLowerCase().includes(q));
+    if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "members") result = [...result].sort((a, b) => b.members.length - a.members.length);
+    return result;
+  }, [teams, search, sortBy]);
 
   return (
     <div className="team-list">
@@ -83,6 +89,15 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew, onL
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <select
+            className="pl-sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SidebarSort)}
+            title="Sort by"
+          >
+            <option value="name">A-Z</option>
+            <option value="members">Members</option>
+          </select>
         </div>
       )}
 
