@@ -4,14 +4,13 @@ import type {
   PluginWithItems,
 } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
-import { SettingsModal } from "./SettingsModal";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 import { useProfileDraft, type TabId } from "../hooks/useProfileDraft";
 import { usePluginToggles } from "../hooks/usePluginToggles";
 import { ProfileTopBar } from "./profile/ProfileTopBar";
 import { InfoCard } from "./profile/InfoCard";
-import { ItemsTab } from "./profile/ItemsTab";
 import { McpTab } from "./profile/McpTab";
+import { SettingsTab } from "./profile/SettingsTab";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -32,12 +31,10 @@ interface Props {
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "plugins", label: "Plugins" },
-  { id: "skills", label: "Skills" },
-  { id: "agents", label: "Agents" },
-  { id: "commands", label: "Commands" },
   { id: "mcp", label: "MCP Servers" },
   { id: "local", label: "Local" },
   { id: "instructions", label: "Instructions" },
+  { id: "settings", label: "Settings" },
 ];
 
 function TabBar({
@@ -89,7 +86,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
     activeTab, setActiveTab,
-    settingsOpen, setSettingsOpen,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,
     launchError, setLaunchError,
@@ -139,21 +135,16 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
   // ─── Tab counts ────────────────────────────────────────────────────────────
 
   const tabCounts = useMemo<Partial<Record<TabId, number>>>(() => {
-    const countType = (type: "skill" | "agent" | "command") =>
-      plugins.reduce((sum, p) => sum + p.items.filter((i) => i.type === type).length, 0);
-
-    const pluginMcpCount = plugins.reduce((s, p) => s + p.mcpServers.length, 0);
+    const enabledPlugins = plugins.filter((p) => selectedPlugins.includes(p.name));
+    const pluginMcpCount = enabledPlugins.reduce((s, p) => s + p.mcpServers.length, 0);
     const standaloneMcpCount = mcpServers.length;
 
     return {
-      skills: countType("skill"),
-      agents: countType("agent"),
-      commands: countType("command"),
       mcp: pluginMcpCount + standaloneMcpCount,
       local: localItems.length,
       plugins: plugins.filter((p) => p.items.length > 0 || p.mcpServers.length > 0).length,
     };
-  }, [plugins, mcpServers, localItems]);
+  }, [plugins, selectedPlugins, mcpServers, localItems]);
 
   // ─── Overview data ─────────────────────────────────────────────────────────
 
@@ -213,7 +204,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         onSetConfirmDelete={setConfirmDelete}
         onDuplicate={onDuplicate}
         onSetOverviewOpen={setOverviewOpen}
-        onSetSettingsOpen={setSettingsOpen}
+        onOpenSettings={() => setActiveTab("settings")}
         onSave={handleSave}
         onLaunch={handleLaunch}
       />
@@ -273,42 +264,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
         {/* Tab content */}
         <div className="pe-tab-content">
-          {activeTab === "skills" && (
-            <ItemsTab
-              type="skill"
-              plugins={plugins}
-              selectedPlugins={selectedPlugins}
-              excludedItems={excludedItems}
-              onTogglePlugin={handleTogglePlugin}
-              onToggleItem={handleToggleItem}
-              onEnablePluginWithOnly={handleEnablePluginWithOnly}
-            />
-          )}
-
-          {activeTab === "agents" && (
-            <ItemsTab
-              type="agent"
-              plugins={plugins}
-              selectedPlugins={selectedPlugins}
-              excludedItems={excludedItems}
-              onTogglePlugin={handleTogglePlugin}
-              onToggleItem={handleToggleItem}
-              onEnablePluginWithOnly={handleEnablePluginWithOnly}
-            />
-          )}
-
-          {activeTab === "commands" && (
-            <ItemsTab
-              type="command"
-              plugins={plugins}
-              selectedPlugins={selectedPlugins}
-              excludedItems={excludedItems}
-              onTogglePlugin={handleTogglePlugin}
-              onToggleItem={handleToggleItem}
-              onEnablePluginWithOnly={handleEnablePluginWithOnly}
-            />
-          )}
-
           {activeTab === "mcp" && (
             <McpTab
               plugins={plugins}
@@ -383,6 +338,25 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
               />
             </div>
           )}
+
+          {activeTab === "settings" && (
+            <SettingsTab
+              model={model}
+              effortLevel={effortLevel}
+              voiceEnabled={voiceEnabled}
+              alias={alias}
+              isInPath={binInPath}
+              launchFlags={launchFlags}
+              customFlags={customFlags}
+              onChangeModel={(v) => { setModel(v); markDirty(); }}
+              onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
+              onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
+              onChangeAlias={(v) => { setAlias(v); markDirty(); }}
+              onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
+              onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
+              onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
+            />
+          )}
         </div>
       </div>
 
@@ -394,27 +368,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
           confirmLabel="Delete Profile"
           onConfirm={() => { setConfirmDelete(false); onDelete(profile.name); }}
           onCancel={() => setConfirmDelete(false)}
-        />
-      )}
-
-      {/* Settings modal */}
-      {settingsOpen && (
-        <SettingsModal
-          model={model}
-          effortLevel={effortLevel}
-          voiceEnabled={voiceEnabled}
-          alias={alias}
-          isInPath={binInPath}
-          launchFlags={launchFlags}
-          customFlags={customFlags}
-          onChangeModel={(v) => { setModel(v); markDirty(); }}
-          onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
-          onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
-          onChangeAlias={(v) => { setAlias(v); markDirty(); }}
-          onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
-          onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
-          onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
-          onClose={() => setSettingsOpen(false)}
         />
       )}
 

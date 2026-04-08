@@ -2837,3 +2837,22 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ── Settings tab ─────────────────────────────────────────────────────────── */
+
+.pe-settings-tab {
+  padding: 0 4px;
+}
+
+.pe-settings-section {
+  margin-bottom: 20px;
+}
+
+.pe-settings-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}

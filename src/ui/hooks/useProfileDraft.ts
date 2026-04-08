@@ -5,7 +5,7 @@ import type {
   StandaloneMcp,
 } from "../../../src/electron/types";
 
-type TabId = "skills" | "agents" | "commands" | "mcp" | "local" | "plugins" | "instructions";
+type TabId = "plugins" | "mcp" | "local" | "instructions" | "settings";
 
 interface UseProfileDraftArgs {
   profile: Profile | null;
@@ -29,7 +29,6 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
   const [customClaudeMd, setCustomClaudeMd] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
@@ -163,7 +162,6 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
     activeTab, setActiveTab,
-    settingsOpen, setSettingsOpen,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,
     launchError, setLaunchError,

@@ -81,7 +81,7 @@ interface ProfileTopBarProps {
   onSetConfirmDelete: (v: boolean) => void;
   onDuplicate?: (name: string) => void;
   onSetOverviewOpen: (v: boolean) => void;
-  onSetSettingsOpen: (v: boolean) => void;
+  onOpenSettings: () => void;
   onSave: () => void;
   onLaunch: () => void;
 }
@@ -101,7 +101,7 @@ export function ProfileTopBar({
   onSetConfirmDelete,
   onDuplicate,
   onSetOverviewOpen,
-  onSetSettingsOpen,
+  onOpenSettings,
   onSave,
   onLaunch,
 }: ProfileTopBarProps) {
@@ -168,7 +168,7 @@ export function ProfileTopBar({
         <div className="pe-topbar-primary">
           <button
             className="pe-settings-btn"
-            onClick={() => onSetSettingsOpen(true)}
+            onClick={onOpenSettings}
             title="Session settings"
             aria-label="Open session settings"
           >
