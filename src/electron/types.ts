@@ -89,6 +89,7 @@ export interface Profile {
     verbose?: boolean;
   };
   customFlags?: string; // additional CLI flags as raw text
+  useDefaultAuth?: boolean; // symlink default credentials (default: true)
 }
 
 /** A member of a team. */

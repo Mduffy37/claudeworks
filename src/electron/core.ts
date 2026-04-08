@@ -768,7 +768,7 @@ export function assembleProfile(profile: Profile): string {
   applyExclusions(profile, configDir, installedPlugins);
 
   // Symlink shared resources
-  symlinkShared(configDir);
+  symlinkShared(configDir, profile);
 
   // Copy auto-skills (commands/skills/agents that ship with every profile)
   installAutoSkills(configDir);
@@ -916,7 +916,26 @@ function installAutoSkills(configDir: string): void {
   }
 }
 
-function symlinkShared(configDir: string): void {
+function symlinkShared(configDir: string, profile: Profile): void {
+  // Copy ~/.claude.json into profile config dir to seed auth + onboarding state.
+  // Claude Code reads $CLAUDE_CONFIG_DIR/.claude.json instead of ~/.claude.json
+  // when CLAUDE_CONFIG_DIR is set. This is a copy (not symlink) because Claude
+  // writes to this file during sessions.
+  // Skip when useDefaultAuth is false — the user wants separate credentials.
+  const homeClaudeJson = path.join(os.homedir(), ".claude.json");
+  const profileClaudeJson = path.join(configDir, ".claude.json");
+  if (profile.useDefaultAuth !== false) {
+    // Always overwrite — the profile may have stale auth from a previous toggle-off
+    if (fs.existsSync(homeClaudeJson)) {
+      fs.copyFileSync(homeClaudeJson, profileClaudeJson);
+    }
+  } else {
+    // Remove copied auth state so the profile gets its own credentials on next launch
+    if (fs.existsSync(profileClaudeJson)) {
+      fs.unlinkSync(profileClaudeJson);
+    }
+  }
+
   const shared: [string, string][] = [
     ["CLAUDE.md", "CLAUDE.md"],
     ["projects", "projects"],

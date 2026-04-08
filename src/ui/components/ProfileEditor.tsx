@@ -95,6 +95,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
     disabledMcpServers, setDisabledMcpServers,
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
+    useDefaultAuth, setUseDefaultAuth,
     saving,
     saveStatus,
     handleSave,
@@ -364,12 +365,14 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
               isInPath={binInPath}
               launchFlags={launchFlags}
               customFlags={customFlags}
+              useDefaultAuth={useDefaultAuth}
               onChangeModel={(v) => { setModel(v); markDirty(); }}
               onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
               onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
               onChangeAlias={(v) => { setAlias(v); markDirty(); }}
               onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
               onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
+              onChangeUseDefaultAuth={(v) => { setUseDefaultAuth(v); markDirty(); }}
               onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
             />
           )}

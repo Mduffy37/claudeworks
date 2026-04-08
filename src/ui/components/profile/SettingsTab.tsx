@@ -9,21 +9,23 @@ interface Props {
   isInPath: boolean;
   launchFlags: NonNullable<Profile["launchFlags"]>;
   customFlags: string;
+  useDefaultAuth: boolean;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
   onChangeAlias: (v: string) => void;
   onChangeLaunchFlags: (v: NonNullable<Profile["launchFlags"]>) => void;
   onChangeCustomFlags: (v: string) => void;
+  onChangeUseDefaultAuth: (v: boolean) => void;
   onAddToPath: () => void;
 }
 
 export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
-    launchFlags, customFlags,
+    launchFlags, customFlags, useDefaultAuth,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
-    onChangeLaunchFlags, onChangeCustomFlags, onAddToPath,
+    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onAddToPath,
   } = props;
 
   return (
@@ -62,6 +64,26 @@ export function SettingsTab(props: Props) {
               <span className="field-toggle-label">
                 {voiceEnabled === undefined ? "Default" : voiceEnabled ? "Enabled" : "Disabled"}
               </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pe-settings-section">
+        <div className="pe-settings-section-label">Authentication</div>
+        <div className="modal-fields">
+          <div className="field">
+            <div className="field-toggle">
+              <label className="toggle-switch">
+                <input type="checkbox" checked={useDefaultAuth} onChange={(e) => onChangeUseDefaultAuth(e.target.checked)} />
+                <span className="toggle-track"><span className="toggle-thumb" /></span>
+              </label>
+              <span className="field-toggle-label">Use default authentication</span>
+            </div>
+            <div className="field-hint">
+              {useDefaultAuth
+                ? "This profile shares credentials with your default Claude Code installation."
+                : "This profile will use its own credentials. You'll need to authenticate separately on first launch."}
             </div>
           </div>
         </div>

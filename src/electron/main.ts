@@ -81,13 +81,14 @@ ipcMain.handle("check-profile-health", () => {
 ipcMain.handle("create-profile", async (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
-  await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
   return saved;
 });
 
-ipcMain.handle("update-profile", (_event, profile: Profile) => {
+ipcMain.handle("update-profile", async (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
+  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
   return saved;
 });
 
@@ -118,7 +119,7 @@ ipcMain.handle("duplicate-profile", async (_event, name: string) => {
   const copy: Profile = { ...source, name: copyName };
   const saved = saveProfile(copy);
   assembleProfile(saved);
-  await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
   return saved;
 });
 

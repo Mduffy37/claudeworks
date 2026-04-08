@@ -38,6 +38,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [disabledMcpServers, setDisabledMcpServers] = useState<Record<string, string[]>>({});
   const [launchFlags, setLaunchFlags] = useState<NonNullable<Profile["launchFlags"]>>({});
   const [customFlags, setCustomFlags] = useState("");
+  const [useDefaultAuth, setUseDefaultAuth] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
@@ -60,6 +61,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
         launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
         customFlags: customFlags.trim() || undefined,
+        useDefaultAuth,
       });
       onDirtyChange(false);
       setSaveStatus("saved");
@@ -67,7 +69,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -86,6 +88,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setDisabledMcpServers(profile.disabledMcpServers ?? {});
       setLaunchFlags(profile.launchFlags ?? {});
       setCustomFlags(profile.customFlags ?? "");
+      setUseDefaultAuth(profile.useDefaultAuth !== false);
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -105,6 +108,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setDisabledMcpServers({});
       setLaunchFlags({});
       setCustomFlags("");
+      setUseDefaultAuth(true);
       setLaunchDir("");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -184,6 +188,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     disabledMcpServers, setDisabledMcpServers,
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
+    useDefaultAuth, setUseDefaultAuth,
     saving,
     saveStatus,
     // Callbacks
