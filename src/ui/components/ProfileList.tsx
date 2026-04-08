@@ -5,6 +5,7 @@ interface Props {
   profiles: Profile[];
   selectedName: string | null;
   profileHealth: Record<string, string[]>;
+  importedProjects?: string[];
   onSelect: (name: string) => void;
   onNew: () => void;
   onLaunch: (name: string, directory?: string) => void;
@@ -22,14 +23,16 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty }: {
+function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, importedProjects = [] }: {
   profile: Profile;
   onLaunch: (name: string, directory?: string) => void;
   onSave?: () => Promise<void> | void;
   isSelectedAndDirty?: boolean;
+  importedProjects?: string[];
 }) {
-  const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
-  const [selectedDir, setSelectedDir] = useState(dirs[0] ?? "");
+  const profileDirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
+  const dirs = [...new Set([...importedProjects, ...profileDirs])];
+  const [selectedDir, setSelectedDir] = useState(profileDirs[0] ?? "");
 
   const handleLaunch = async () => {
     if (isSelectedAndDirty && onSave) {
@@ -72,7 +75,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty }: {
 
 type SidebarSort = "name" | "plugins" | "recent";
 
-export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, onSave, dirty }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
 
@@ -169,7 +172,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
                 </div>
               </div>
-              <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} />
+              <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} />
             </div>
           ))
         )}

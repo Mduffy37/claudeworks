@@ -23,6 +23,15 @@ import {
   deleteTeamByName,
   getTeamMergePreview,
   checkAllTeamHealth,
+  getGlobalClaudeMd,
+  saveGlobalClaudeMd,
+  getGlobalDefaults,
+  saveGlobalDefaults,
+  getImportedProjects,
+  addImportedProject,
+  removeImportedProject,
+  getProjectClaudeMd,
+  saveProjectClaudeMd,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -204,6 +213,19 @@ ipcMain.handle("get-team-merge-preview", (_event, team: Team) => {
 ipcMain.handle("check-team-health", () => {
   return checkAllTeamHealth(loadTeams());
 });
+
+// Global settings
+ipcMain.handle("get-global-claude-md", () => getGlobalClaudeMd());
+ipcMain.handle("save-global-claude-md", (_event, content: string) => saveGlobalClaudeMd(content));
+ipcMain.handle("get-global-defaults", () => getGlobalDefaults());
+ipcMain.handle("save-global-defaults", (_event, defaults: { model: string; effortLevel: string }) => saveGlobalDefaults(defaults));
+
+// Projects
+ipcMain.handle("get-imported-projects", () => getImportedProjects());
+ipcMain.handle("add-imported-project", (_event, dir: string) => addImportedProject(dir));
+ipcMain.handle("remove-imported-project", (_event, dir: string) => removeImportedProject(dir));
+ipcMain.handle("get-project-claude-md", (_event, dir: string) => getProjectClaudeMd(dir));
+ipcMain.handle("save-project-claude-md", (_event, dir: string, content: string) => saveProjectClaudeMd(dir, content));
 
 // ---------------------------------------------------------------------------
 // App lifecycle

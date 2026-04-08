@@ -22,6 +22,7 @@ interface Props {
   plugins: PluginWithItems[];
   isNew: boolean;
   brokenPlugins: string[];
+  importedProjects?: string[];
   onSave: (profile: Profile) => void;
   onLaunch: (name: string, directory?: string) => void;
   onDelete: (name: string) => void;
@@ -255,7 +256,7 @@ function TabBar({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange, onRegisterSave }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange, onRegisterSave }: Props) {
   const draft = useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange });
 
   // Register the editor's save function so the sidebar can trigger it
@@ -407,7 +408,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         saving={saving}
         saveStatus={saveStatus}
         selectedPlugins={selectedPlugins}
-        directories={directories}
+        directories={[...new Set([...importedProjects, ...directories])]}
         launchDir={launchDir}
         launching={launching}
         onChangeName={setName}

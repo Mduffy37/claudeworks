@@ -1306,3 +1306,85 @@ function readFrontmatter(filePath: string): Record<string, string> {
   }
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// Global settings
+// ---------------------------------------------------------------------------
+
+const GLOBAL_CLAUDE_MD = path.join(CLAUDE_HOME, "CLAUDE.md");
+const GLOBAL_DEFAULTS_JSON = path.join(PROFILES_DIR, "global-defaults.json");
+const IMPORTED_PROJECTS_JSON = path.join(PROFILES_DIR, "imported-projects.json");
+
+export function getGlobalClaudeMd(): string {
+  try {
+    return fs.readFileSync(GLOBAL_CLAUDE_MD, "utf-8");
+  } catch {
+    return "";
+  }
+}
+
+export function saveGlobalClaudeMd(content: string): void {
+  fs.mkdirSync(CLAUDE_HOME, { recursive: true });
+  fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
+}
+
+export function getGlobalDefaults(): { model: string; effortLevel: string } {
+  try {
+    return JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+  } catch {
+    return { model: "", effortLevel: "" };
+  }
+}
+
+export function saveGlobalDefaults(defaults: { model: string; effortLevel: string }): void {
+  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(defaults, null, 2));
+}
+
+// ---------------------------------------------------------------------------
+// Imported projects
+// ---------------------------------------------------------------------------
+
+function readImportedProjects(): string[] {
+  try {
+    return JSON.parse(fs.readFileSync(IMPORTED_PROJECTS_JSON, "utf-8"));
+  } catch {
+    return [];
+  }
+}
+
+function writeImportedProjects(projects: string[]): void {
+  fs.writeFileSync(IMPORTED_PROJECTS_JSON, JSON.stringify(projects, null, 2));
+}
+
+export function getImportedProjects(): string[] {
+  return readImportedProjects();
+}
+
+export function addImportedProject(dir: string): string[] {
+  const projects = readImportedProjects();
+  if (!projects.includes(dir)) {
+    projects.push(dir);
+    writeImportedProjects(projects);
+  }
+  return projects;
+}
+
+export function removeImportedProject(dir: string): string[] {
+  const projects = readImportedProjects().filter((p) => p !== dir);
+  writeImportedProjects(projects);
+  return projects;
+}
+
+export function getProjectClaudeMd(dir: string): string {
+  const mdPath = path.join(dir, "CLAUDE.md");
+  try {
+    return fs.readFileSync(mdPath, "utf-8");
+  } catch {
+    return "";
+  }
+}
+
+export function saveProjectClaudeMd(dir: string, content: string): void {
+  const mdPath = path.join(dir, "CLAUDE.md");
+  fs.writeFileSync(mdPath, content, "utf-8");
+}

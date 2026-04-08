@@ -26,6 +26,17 @@ const api: ElectronAPI = {
   renameTeam: (oldName, team) => ipcRenderer.invoke("rename-team", oldName, team),
   getTeamMergePreview: (team) => ipcRenderer.invoke("get-team-merge-preview", team),
   checkTeamHealth: () => ipcRenderer.invoke("check-team-health"),
+  // Global settings
+  getGlobalClaudeMd: () => ipcRenderer.invoke("get-global-claude-md"),
+  saveGlobalClaudeMd: (content) => ipcRenderer.invoke("save-global-claude-md", content),
+  getGlobalDefaults: () => ipcRenderer.invoke("get-global-defaults"),
+  saveGlobalDefaults: (defaults) => ipcRenderer.invoke("save-global-defaults", defaults),
+  // Projects
+  getImportedProjects: () => ipcRenderer.invoke("get-imported-projects"),
+  addImportedProject: (dir) => ipcRenderer.invoke("add-imported-project", dir),
+  removeImportedProject: (dir) => ipcRenderer.invoke("remove-imported-project", dir),
+  getProjectClaudeMd: (dir) => ipcRenderer.invoke("get-project-claude-md", dir),
+  saveProjectClaudeMd: (dir, content) => ipcRenderer.invoke("save-project-claude-md", dir, content),
 };
 
 contextBridge.exposeInMainWorld("api", api);

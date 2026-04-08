@@ -22,6 +22,7 @@ export function App() {
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
   const [showManageDialog, setShowManageDialog] = useState(false);
+  const [importedProjects, setImportedProjects] = useState<string[]>([]);
   const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
   const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook } =
     useTeams();
@@ -45,6 +46,20 @@ export function App() {
   useEffect(() => {
     if (!teamsLoading) refreshTeamHealth();
   }, [teams, teamsLoading, refreshTeamHealth]);
+
+  const handleCloseManageDialog = useCallback(() => {
+    setShowManageDialog(false);
+    window.api.getImportedProjects().then(setImportedProjects);
+  }, []);
+
+  // Load imported projects
+  const refreshImportedProjects = useCallback(() => {
+    window.api.getImportedProjects().then(setImportedProjects);
+  }, []);
+
+  useEffect(() => {
+    refreshImportedProjects();
+  }, [refreshImportedProjects]);
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.name === selectedName) ?? null,
@@ -240,6 +255,7 @@ export function App() {
             profiles={profiles}
             selectedName={selectedName}
             profileHealth={profileHealth}
+            importedProjects={importedProjects}
             onSelect={handleSelect}
             onNew={handleNew}
             onLaunch={handleLaunch}
@@ -251,6 +267,7 @@ export function App() {
             teams={teams}
             selectedTeam={selectedTeamName}
             teamHealth={teamHealth}
+            importedProjects={importedProjects}
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
             onLaunch={handleLaunch}
@@ -289,6 +306,7 @@ export function App() {
             plugins={plugins}
             isNew={isCreating}
             brokenPlugins={selectedProfile ? (profileHealth[selectedProfile.name] ?? []) : []}
+            importedProjects={importedProjects}
             onSave={handleSave}
             onLaunch={handleLaunch}
             onDelete={handleDelete}
@@ -303,6 +321,7 @@ export function App() {
             profiles={profiles}
             isNew={isCreatingTeam}
             brokenMembers={selectedTeam ? (teamHealth[selectedTeam.name] ?? []) : []}
+            importedProjects={importedProjects}
             onSave={handleSaveTeam}
             onDelete={handleDeleteTeam}
             dirty={dirty}
@@ -318,7 +337,7 @@ export function App() {
           onUpdate={handlePluginUpdate}
           onUninstall={handlePluginUninstall}
           onNavigateToProfile={handleNavigateToProfile}
-          onClose={() => setShowManageDialog(false)}
+          onClose={handleCloseManageDialog}
         />
       )}
       {pendingNav && (

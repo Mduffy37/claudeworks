@@ -163,6 +163,17 @@ export interface ElectronAPI {
   renameTeam: (oldName: string, team: Team) => Promise<Team>;
   getTeamMergePreview: (team: Team) => Promise<MergePreview>;
   checkTeamHealth: () => Promise<Record<string, string[]>>;
+  // Global settings
+  getGlobalClaudeMd: () => Promise<string>;
+  saveGlobalClaudeMd: (content: string) => Promise<void>;
+  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string }>;
+  saveGlobalDefaults: (defaults: { model: string; effortLevel: string }) => Promise<void>;
+  // Projects
+  getImportedProjects: () => Promise<string[]>;
+  addImportedProject: (dir: string) => Promise<string[]>;
+  removeImportedProject: (dir: string) => Promise<string[]>;
+  getProjectClaudeMd: (dir: string) => Promise<string>;
+  saveProjectClaudeMd: (dir: string, content: string) => Promise<void>;
 }
 
 declare global {

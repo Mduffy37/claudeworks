@@ -528,6 +528,158 @@ body {
   overflow-y: auto;
 }
 
+/* ─── Projects tab ───────────────────────────────────────────────────────── */
+
+.manage-projects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+}
+
+.manage-projects-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.manage-projects-list {
+  padding: 0 8px 8px;
+}
+
+.manage-projects-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 16px 8px;
+  text-align: center;
+  font-style: italic;
+}
+
+.manage-project-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  position: relative;
+  transition: background var(--transition-fast);
+}
+
+.manage-project-item:hover {
+  background: var(--bg-hover);
+}
+
+.manage-project-item.selected {
+  background: var(--bg-selected);
+  border: 1px solid var(--bg-selected-border);
+}
+
+.manage-project-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.manage-project-path {
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-project-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  padding: 2px 4px;
+}
+
+.manage-project-item:hover .manage-project-remove {
+  opacity: 1;
+}
+
+.manage-project-remove:hover {
+  color: var(--color-danger);
+}
+
+.manage-project-detail {
+  padding: 16px;
+}
+
+/* ─── Global settings tab ────────────────────────────────────────────────── */
+
+.manage-global-settings {
+  padding: 16px 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* ─── Shared manage sections ─────────────────────────────────────────────── */
+
+.manage-section {
+  margin-bottom: 20px;
+}
+
+.manage-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.manage-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.manage-section-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.manage-claudemd-editor {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.manage-claudemd-editor:focus {
+  border-color: var(--border-focus);
+}
+
+.manage-defaults-row {
+  display: flex;
+  gap: 12px;
+}
+
+.manage-defaults-row .field {
+  flex: 1;
+}
+
 /* ─── Sidebar footer ──────────────────────────────────────────────────────── */
 
 .sidebar-footer {

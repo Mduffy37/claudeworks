@@ -27,13 +27,14 @@ interface Props {
   profiles: Profile[];
   isNew: boolean;
   brokenMembers: string[];
+  importedProjects?: string[];
   onSave: (team: Team) => void | Promise<void>;
   onDelete: (name: string) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
 }
 
-export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDelete, dirty, onDirtyChange }: Props) {
+export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, dirty, onDirtyChange }: Props) {
   const [draft, setDraft] = useState<Team>({
     name: "",
     description: "",
@@ -214,7 +215,10 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
           {!isNew && (
             <div className="pe-topbar-controls-row">
               <select className="pe-launch-dir-select" disabled>
-                <option>None (choose at launch)</option>
+                <option value="">None (choose at launch)</option>
+                {importedProjects.map((dir) => (
+                  <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
+                ))}
               </select>
               <button className="btn-launch" disabled title="Team launch coming soon">
                 <span className="btn-launch-icon">

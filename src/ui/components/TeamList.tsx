@@ -5,6 +5,7 @@ interface Props {
   teams: Team[];
   selectedTeam: string | null;
   teamHealth: Record<string, string[]>;
+  importedProjects?: string[];
   onSelect: (name: string) => void;
   onNew: () => void;
   onLaunch: (name: string, directory?: string) => void;
@@ -15,7 +16,7 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function TeamSidebarLaunch({ team, onLaunch }: { team: Team; onLaunch: (name: string, directory?: string) => void }) {
+function TeamSidebarLaunch({ team, onLaunch, importedProjects = [] }: { team: Team; onLaunch: (name: string, directory?: string) => void; importedProjects?: string[] }) {
   const [selectedDir, setSelectedDir] = useState("");
   const lead = team.members.find((m) => m.isLead);
 
@@ -38,6 +39,9 @@ function TeamSidebarLaunch({ team, onLaunch }: { team: Team; onLaunch: (name: st
         onChange={(e) => setSelectedDir(e.target.value)}
       >
         <option value="">None</option>
+        {importedProjects.map((dir) => (
+          <option key={dir} value={dir}>{shortPath(dir)}</option>
+        ))}
       </select>
       <button
         className="btn-launch-sidebar"
@@ -56,7 +60,7 @@ function TeamSidebarLaunch({ team, onLaunch }: { team: Team; onLaunch: (name: st
 
 type SidebarSort = "name" | "members";
 
-export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew, onLaunch }: Props) {
+export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onLaunch }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
 
@@ -157,7 +161,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew, onL
                     {lead ? ` · Lead: ${lead.profile}` : ""}
                   </div>
                 </div>
-                <TeamSidebarLaunch team={t} onLaunch={onLaunch} />
+                <TeamSidebarLaunch team={t} onLaunch={onLaunch} importedProjects={importedProjects} />
               </div>
             );
           })
