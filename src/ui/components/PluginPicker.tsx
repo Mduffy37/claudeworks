@@ -131,9 +131,9 @@ export function PluginPicker({
 
         {isExpanded && (
           <div className="plugin-items">
-            {plugin.items.length === 0 ? (
+            {plugin.items.length === 0 && plugin.hooks.length === 0 ? (
               <div className="empty-state-inline">No configurable items</div>
-            ) : (
+            ) : plugin.items.length === 0 ? null : (
               <SkillToggler
                 items={plugin.items}
                 allPlugins={plugins}
@@ -155,6 +155,23 @@ export function PluginPicker({
                   <div key={mcp.name} className="mcp-server-item">
                     <span className="mcp-server-name">{mcp.name}</span>
                     <span className="plugin-badge">{mcp.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {plugin.hooks.length > 0 && (
+              <div className="mcp-servers">
+                <div className="skill-group-label" style={{ color: "var(--color-hook, var(--text-muted))" }}>
+                  <span className="skill-group-label-dot" />
+                  Hooks
+                  <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+                    &nbsp;{plugin.hooks.length}
+                  </span>
+                </div>
+                {plugin.hooks.map((hook, i) => (
+                  <div key={`${hook.event}-${i}`} className="mcp-server-item">
+                    <span className="mcp-server-name">{hook.event}</span>
+                    <span className="plugin-badge" style={{ fontFamily: '"SF Mono", monospace', fontSize: "9px" }}>{hook.command}</span>
                   </div>
                 ))}
               </div>

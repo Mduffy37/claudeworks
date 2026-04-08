@@ -433,11 +433,19 @@ function GlobalSettingsTab() {
   const [defaultsDirty, setDefaultsDirty] = useState(false);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  const [hooksJson, setHooksJson] = useState("");
+  const [hooksDirty, setHooksDirty] = useState(false);
+  const [hooksError, setHooksError] = useState("");
 
   useEffect(() => {
     window.api.getGlobalClaudeMd().then((content) => {
       setClaudeMd(content);
       setClaudeMdDirty(false);
+    });
+    window.api.getGlobalHooks().then((h) => {
+      setHooksJson(JSON.stringify(h, null, 2));
+      setHooksDirty(false);
+      setHooksError("");
     });
     window.api.getGlobalDefaults().then((d) => {
       setModel(d.model);
@@ -451,6 +459,17 @@ function GlobalSettingsTab() {
   const handleSaveClaudeMd = async () => {
     await window.api.saveGlobalClaudeMd(claudeMd);
     setClaudeMdDirty(false);
+  };
+
+  const handleSaveHooks = async () => {
+    try {
+      const parsed = JSON.parse(hooksJson);
+      await window.api.saveGlobalHooks(parsed);
+      setHooksDirty(false);
+      setHooksError("");
+    } catch {
+      setHooksError("Invalid JSON");
+    }
   };
 
   const handleSaveDefaults = async () => {
@@ -601,6 +620,28 @@ function GlobalSettingsTab() {
             <input type="text" value={customFlags} onChange={(e) => { setCustomFlags(e.target.value); setDefaultsDirty(true); }} placeholder="e.g. --max-turns 10 --verbose" />
           </div>
         </div>
+      </div>
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Hooks</span>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            {hooksError && <span style={{ fontSize: "11px", color: "var(--color-danger, #e55)" }}>{hooksError}</span>}
+            {hooksDirty && (
+              <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveHooks}>Save</button>
+            )}
+          </div>
+        </div>
+        <div className="manage-section-hint">
+          Shell commands that run in response to Claude Code events. Saved to ~/.claude/settings.json and inherited by all profiles.
+        </div>
+        <textarea
+          className="manage-claudemd-editor"
+          style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "11px", minHeight: "140px" }}
+          value={hooksJson}
+          onChange={(e) => { setHooksJson(e.target.value); setHooksDirty(true); setHooksError(""); }}
+          placeholder={'{\n  "PreToolUse": [\n    { "matcher": "*", "hooks": [{ "type": "command", "command": "echo hello" }] }\n  ]\n}'}
+        />
       </div>
     </div>
   );

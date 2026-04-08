@@ -711,6 +711,21 @@ export function assembleProfile(profile: Profile): string {
   for (const [k, v] of Object.entries(source)) {
     if (SAFE_KEYS.has(k)) settings[k] = v;
   }
+  // Filter disabled hooks per-profile
+  if (settings.hooks && profile.disabledHooks && Object.keys(profile.disabledHooks).length > 0) {
+    const filtered: Record<string, any[]> = {};
+    for (const [event, matchers] of Object.entries(settings.hooks as Record<string, any[]>)) {
+      const disabledIndices = new Set(profile.disabledHooks[event] ?? []);
+      if (disabledIndices.size === 0) {
+        filtered[event] = matchers;
+      } else {
+        const kept = matchers.filter((_: any, i: number) => !disabledIndices.has(i));
+        if (kept.length > 0) filtered[event] = kept;
+      }
+    }
+    settings.hooks = Object.keys(filtered).length > 0 ? filtered : undefined;
+  }
+
   settings.enabledPlugins = Object.fromEntries(
     profile.plugins.map((name) => [name, true])
   );
@@ -1225,6 +1240,7 @@ export function getTeamMergePreview(team: Team): MergePreview {
   const profiles = loadProfiles();
   const allPlugins = new Set<string>();
   const allMcps = new Set<string>();
+  const mcpSources = new Map<string, string>(); // mcp name -> profile that added it
   const agents: MergePreview["agents"] = [];
   const conflicts: string[] = [];
   const excludedByProfile: Record<string, Record<string, string[]>> = {};
@@ -1247,10 +1263,22 @@ export function getTeamMergePreview(team: Team): MergePreview {
       excludedByProfile[member.profile] = profile.excludedItems;
     }
 
-    // Collect MCP servers
-    if (profile.disabledMcpServers) {
-      for (const dir of Object.keys(profile.disabledMcpServers)) {
-        // MCPs are directory-scoped; just note them
+    // Collect MCP servers from this member's enabled plugins
+    const allPluginsWithItems = getPluginsWithItems();
+    for (const pluginName of profile.plugins) {
+      const plugin = allPluginsWithItems.find((p) => p.name === pluginName);
+      if (!plugin) continue;
+      for (const mcp of plugin.mcpServers) {
+        if (allMcps.has(mcp.name)) {
+          // Conflict: same MCP server name from different profiles
+          const existing = mcpSources.get(mcp.name);
+          if (existing && existing !== member.profile) {
+            conflicts.push(`MCP server "${mcp.name}" provided by both "${existing}" and "${member.profile}"`);
+          }
+        } else {
+          allMcps.add(mcp.name);
+          mcpSources.set(mcp.name, member.profile);
+        }
       }
     }
 
@@ -1414,6 +1442,32 @@ export function getProjectClaudeMd(dir: string): string {
 export function saveProjectClaudeMd(dir: string, content: string): void {
   const mdPath = path.join(dir, "CLAUDE.md");
   fs.writeFileSync(mdPath, content, "utf-8");
+}
+
+export function getGlobalHooks(): Record<string, any> {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  try {
+    const data = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    return data.hooks ?? {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveGlobalHooks(hooks: Record<string, any>): void {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  let data: Record<string, any> = {};
+  try {
+    data = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+  } catch {
+    // Start fresh
+  }
+  if (Object.keys(hooks).length > 0) {
+    data.hooks = hooks;
+  } else {
+    delete data.hooks;
+  }
+  fs.writeFileSync(settingsPath, JSON.stringify(data, null, 2));
 }
 
 export function getProfileConfigDir(name: string): string {

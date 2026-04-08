@@ -40,6 +40,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [customFlags, setCustomFlags] = useState("");
   const [useDefaultAuth, setUseDefaultAuth] = useState(true);
   const [env, setEnv] = useState<Record<string, string>>({});
+  const [disabledHooks, setDisabledHooks] = useState<Record<string, number[]>>({});
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
@@ -64,6 +65,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         customFlags: customFlags.trim() || undefined,
         useDefaultAuth,
         env: Object.keys(env).length > 0 ? env : undefined,
+        disabledHooks: Object.keys(disabledHooks).length > 0 ? disabledHooks : undefined,
       });
       onDirtyChange(false);
       setSaveStatus("saved");
@@ -71,7 +73,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -92,6 +94,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setCustomFlags(profile.customFlags ?? "");
       setUseDefaultAuth(profile.useDefaultAuth !== false);
       setEnv(profile.env ?? {});
+      setDisabledHooks(profile.disabledHooks ?? {});
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -113,6 +116,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setCustomFlags("");
       setUseDefaultAuth(true);
       setEnv({});
+      setDisabledHooks({});
       setLaunchDir("");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -194,6 +198,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     customFlags, setCustomFlags,
     useDefaultAuth, setUseDefaultAuth,
     env, setEnv,
+    disabledHooks, setDisabledHooks,
     saving,
     saveStatus,
     // Callbacks

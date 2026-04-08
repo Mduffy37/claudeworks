@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Profile } from "../../../electron/types";
+
+interface HookEntry { event: string; index: number; command: string }
 
 interface Props {
   model: string;
@@ -12,6 +14,7 @@ interface Props {
   useDefaultAuth: boolean;
   env: Record<string, string>;
   profileName: string;
+  disabledHooks: Record<string, number[]>;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
@@ -20,19 +23,53 @@ interface Props {
   onChangeCustomFlags: (v: string) => void;
   onChangeUseDefaultAuth: (v: boolean) => void;
   onChangeEnv: (v: Record<string, string>) => void;
+  onChangeDisabledHooks: (v: Record<string, number[]>) => void;
   onAddToPath: () => void;
 }
 
 export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
-    launchFlags, customFlags, useDefaultAuth, env, profileName,
+    launchFlags, customFlags, useDefaultAuth, env, profileName, disabledHooks,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
-    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onAddToPath,
+    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks, onAddToPath,
   } = props;
 
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  const [globalHooks, setGlobalHooks] = useState<HookEntry[]>([]);
+
+  useEffect(() => {
+    window.api.getGlobalHooks().then((hooks) => {
+      const entries: HookEntry[] = [];
+      for (const [event, matchers] of Object.entries(hooks)) {
+        for (let i = 0; i < (matchers as any[]).length; i++) {
+          const matcher = (matchers as any[])[i];
+          for (const hook of matcher.hooks ?? []) {
+            entries.push({ event, index: i, command: hook.command ?? "" });
+          }
+        }
+      }
+      setGlobalHooks(entries);
+    });
+  }, []);
+
+  const isHookDisabled = (event: string, index: number) =>
+    (disabledHooks[event] ?? []).includes(index);
+
+  const toggleHook = (event: string, index: number) => {
+    const current = disabledHooks[event] ?? [];
+    let next: Record<string, number[]>;
+    if (current.includes(index)) {
+      const filtered = current.filter((i) => i !== index);
+      next = { ...disabledHooks };
+      if (filtered.length > 0) next[event] = filtered;
+      else delete next[event];
+    } else {
+      next = { ...disabledHooks, [event]: [...current, index] };
+    }
+    onChangeDisabledHooks(next);
+  };
 
   const envEntries = Object.entries(env);
 
@@ -158,6 +195,34 @@ export function SettingsTab(props: Props) {
           )}
         </div>
       </div>
+
+      {globalHooks.length > 0 && (
+        <div className="pe-settings-section">
+          <div className="pe-settings-section-label">Hooks</div>
+          <div className="modal-fields">
+            <div className="field-hint" style={{ marginBottom: "4px" }}>
+              Global hooks inherited from ~/.claude/settings.json. Toggle off to disable for this profile.
+            </div>
+            {globalHooks.map((h) => {
+              const disabled = isHookDisabled(h.event, h.index);
+              return (
+                <div key={`${h.event}-${h.index}`} className="field">
+                  <div className="field-toggle">
+                    <label className="toggle-switch">
+                      <input type="checkbox" checked={!disabled} onChange={() => toggleHook(h.event, h.index)} />
+                      <span className="toggle-track"><span className="toggle-thumb" /></span>
+                    </label>
+                    <span className="field-toggle-label">
+                      <strong>{h.event}</strong>
+                      <span style={{ color: "var(--text-muted)", marginLeft: "8px", fontSize: "11px", fontFamily: '"SF Mono", monospace' }}>{h.command}</span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="pe-settings-section">
         <div className="pe-settings-section-label">Launch Configuration</div>

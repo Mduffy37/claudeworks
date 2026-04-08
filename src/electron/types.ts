@@ -91,6 +91,7 @@ export interface Profile {
   customFlags?: string; // additional CLI flags as raw text
   useDefaultAuth?: boolean; // symlink default credentials (default: true)
   tags?: string[];
+  disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
 }
 
@@ -169,6 +170,8 @@ export interface ElectronAPI {
   // Global settings
   getGlobalClaudeMd: () => Promise<string>;
   saveGlobalClaudeMd: (content: string) => Promise<void>;
+  getGlobalHooks: () => Promise<Record<string, any>>;
+  saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
   getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }>;
   saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }) => Promise<void>;
   // Projects
