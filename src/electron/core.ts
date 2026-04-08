@@ -1013,6 +1013,52 @@ export async function copyCredentials(profile: Profile): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
+// Plugin operations
+// ---------------------------------------------------------------------------
+
+export async function updatePlugin(pluginId: string): Promise<void> {
+  await execFileAsync("claude", ["plugin", "update", pluginId]);
+  _knownPluginNamesCache = null;
+}
+
+export async function uninstallPlugin(pluginId: string): Promise<void> {
+  await execFileAsync("claude", ["plugin", "uninstall", pluginId]);
+  _knownPluginNamesCache = null;
+}
+
+export async function checkPluginUpdates(): Promise<Record<string, string>> {
+  const updates: Record<string, string> = {};
+
+  try {
+    const { stdout } = await execFileAsync("claude", [
+      "plugin", "list", "--json", "--available",
+    ]);
+    const data = JSON.parse(stdout);
+    const installed: Array<{ id: string; version: string }> = data.installed ?? [];
+    const available: Array<{ pluginId: string; source?: { sha?: string } }> = data.available ?? [];
+
+    // Build a set of available plugin IDs for quick lookup
+    const availableIds = new Set(available.map((a) => a.pluginId));
+
+    // A plugin might have an update if it's in the available list
+    // and its installed version is "unknown" (git-based, always check)
+    // or differs from what the marketplace offers
+    for (const inst of installed) {
+      if (availableIds.has(inst.id)) {
+        // For git-based plugins (version "unknown"), always mark as potentially updatable
+        if (inst.version === "unknown") {
+          updates[inst.id] = "latest";
+        }
+      }
+    }
+  } catch {
+    // CLI call failed — return empty (no updates detected)
+  }
+
+  return updates;
+}
+
+// ---------------------------------------------------------------------------
 // Launch
 // ---------------------------------------------------------------------------
 

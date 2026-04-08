@@ -14,6 +14,9 @@ import {
   copyCredentials,
   launchProfile,
   checkAllProfileHealth,
+  updatePlugin,
+  uninstallPlugin,
+  checkPluginUpdates,
 } from "./core";
 import type { Profile } from "./types";
 
@@ -157,6 +160,18 @@ ipcMain.handle("add-bin-to-path", () => {
   if (!existing.includes(binDir)) {
     fs.appendFileSync(rcFile, exportLine);
   }
+});
+
+ipcMain.handle("update-plugin", async (_event, name: string) => {
+  await updatePlugin(name);
+});
+
+ipcMain.handle("uninstall-plugin", async (_event, name: string) => {
+  await uninstallPlugin(name);
+});
+
+ipcMain.handle("check-plugin-updates", async () => {
+  return checkPluginUpdates();
 });
 
 // ---------------------------------------------------------------------------
