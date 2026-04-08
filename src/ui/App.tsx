@@ -3,17 +3,22 @@ import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
 import { ProfileEditor } from "./components/ProfileEditor";
+import { PluginList } from "./components/PluginList";
+import { PluginManager } from "./components/PluginManager";
 import type { Profile } from "../electron/types";
 
 export function App() {
   const { profiles, loading: profilesLoading, createProfile, updateProfile, deleteProfile, refresh } =
     useProfiles();
-  const { plugins, loading: pluginsLoading } = usePlugins();
+  const { plugins, loading: pluginsLoading, refresh: refreshPlugins, availableUpdates, checkForUpdates } =
+    usePlugins();
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
+  const [activeTab, setActiveTab] = useState<"profiles" | "plugins">("profiles");
+  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
 
   const refreshHealth = useCallback(() => {
     window.api.checkProfileHealth().then(setProfileHealth);
@@ -64,6 +69,38 @@ export function App() {
     setPendingNav(null);
   };
 
+  const handleTabSwitch = (tab: "profiles" | "plugins") => {
+    if (tab === activeTab) return;
+    if (tab === "plugins" && dirty) {
+      return;
+    }
+    setActiveTab(tab);
+    if (tab === "plugins") {
+      checkForUpdates();
+    }
+  };
+
+  const handlePluginUpdate = async (name: string) => {
+    await window.api.updatePlugin(name);
+    refreshPlugins();
+    checkForUpdates();
+  };
+
+  const handlePluginUninstall = async (name: string) => {
+    await window.api.uninstallPlugin(name);
+    setSelectedPlugin(null);
+    refreshPlugins();
+    refreshHealth();
+  };
+
+  const handleNavigateToProfile = (profileName: string) => {
+    setActiveTab("profiles");
+    setSelectedName(profileName);
+    setIsCreating(false);
+  };
+
+  const selectedPluginData = plugins.find((p) => p.name === selectedPlugin) ?? null;
+
   const handleDelete = async (name: string) => {
     await deleteProfile(name);
     if (selectedName === name) {
@@ -109,34 +146,69 @@ export function App() {
     <div className="app">
       <div className="drag-bar" />
       <div className="sidebar">
+        {/* Tab switcher */}
+        <div className="sidebar-tabs">
+          <button
+            className={`sidebar-tab${activeTab === "profiles" ? " active" : ""}`}
+            onClick={() => handleTabSwitch("profiles")}
+          >
+            Profiles
+          </button>
+          <button
+            className={`sidebar-tab${activeTab === "plugins" ? " active" : ""}`}
+            onClick={() => handleTabSwitch("plugins")}
+          >
+            Plugins
+          </button>
+        </div>
         <div className="app-title">
           <div className="app-title-icon">
             <img src="./logo.svg" alt="" width="240" height="240" />
           </div>
           <span className="app-title-text">Claude Profiles</span>
         </div>
-        <ProfileList
-          profiles={profiles}
-          selectedName={selectedName}
-          profileHealth={profileHealth}
-          onSelect={handleSelect}
-          onNew={handleNew}
-          onLaunch={handleLaunch}
-        />
+        {activeTab === "profiles" ? (
+          <ProfileList
+            profiles={profiles}
+            selectedName={selectedName}
+            profileHealth={profileHealth}
+            onSelect={handleSelect}
+            onNew={handleNew}
+            onLaunch={handleLaunch}
+          />
+        ) : (
+          <PluginList
+            plugins={plugins}
+            selectedPlugin={selectedPlugin}
+            availableUpdates={availableUpdates}
+            onSelect={setSelectedPlugin}
+          />
+        )}
       </div>
       <div className="main">
-        <ProfileEditor
-          profile={selectedProfile}
-          plugins={plugins}
-          isNew={isCreating}
-          brokenPlugins={selectedProfile ? (profileHealth[selectedProfile.name] ?? []) : []}
-          onSave={handleSave}
-          onLaunch={handleLaunch}
-          onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-          dirty={dirty}
-          onDirtyChange={setDirty}
-        />
+        {activeTab === "profiles" ? (
+          <ProfileEditor
+            profile={selectedProfile}
+            plugins={plugins}
+            isNew={isCreating}
+            brokenPlugins={selectedProfile ? (profileHealth[selectedProfile.name] ?? []) : []}
+            onSave={handleSave}
+            onLaunch={handleLaunch}
+            onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
+            dirty={dirty}
+            onDirtyChange={setDirty}
+          />
+        ) : (
+          <PluginManager
+            plugin={selectedPluginData}
+            profiles={profiles}
+            availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
+            onUpdate={handlePluginUpdate}
+            onUninstall={handlePluginUninstall}
+            onNavigateToProfile={handleNavigateToProfile}
+          />
+        )}
       </div>
       {pendingNav && (
         <div className="modal-backdrop" onClick={handleCancelNav}>
