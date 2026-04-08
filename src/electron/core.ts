@@ -1235,14 +1235,12 @@ export function getTeamMergePreview(team: Team): MergePreview {
     }
   }
 
-  // Resolve settings
+  // Settings come from individual profiles — summarize what's configured
   const settings: MergePreview["settings"] = {
-    model: team.model ?? leadProfile?.model,
-    effortLevel: team.effortLevel ?? leadProfile?.effortLevel,
-    customFlags: team.customFlags ?? leadProfile?.customFlags,
-    source: team.model || team.effortLevel || team.customFlags
-      ? "team override"
-      : "lead",
+    model: leadProfile?.model,
+    effortLevel: leadProfile?.effortLevel,
+    customFlags: leadProfile?.customFlags,
+    source: "per-profile",
   };
 
   return {

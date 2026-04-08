@@ -140,7 +140,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
     description: "",
     members: [],
   });
-  const [showSettings, setShowSettings] = useState(false);
   const [showMergePreview, setShowMergePreview] = useState(false);
   const [mergeData, setMergeData] = useState<MergePreviewType | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -153,7 +152,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
       setDraft({ name: "", description: "", members: [] });
     }
     onDirtyChange(false);
-    setShowSettings(false);
     setShowMergePreview(false);
     setMergeData(null);
   }, [team, isNew]);
@@ -267,8 +265,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
     );
   }
 
-  const leadMember = draft.members.find((m) => m.isLead);
-
   return (
     <div className="te-editor">
       {/* Top bar */}
@@ -294,12 +290,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
           <button className="btn-uninstall" disabled title="Coming soon" style={{ cursor: "not-allowed" }}>
             Launch &#x1f512;
           </button>
-          <button className="btn-icon" onClick={() => setShowSettings(!showSettings)} title="Settings">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2-.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
-              <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
-            </svg>
-          </button>
           {dirty && (
             <button className="btn-primary" onClick={handleSave}>Save</button>
           )}
@@ -312,48 +302,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
           )}
         </div>
       </div>
-
-      {/* Settings panel */}
-      {showSettings && (
-        <div className="te-settings">
-          <div className="te-settings-row">
-            <span className="te-field-label">Model</span>
-            <select
-              className="te-field-input"
-              value={draft.model ?? ""}
-              onChange={(e) => updateDraft({ model: (e.target.value || undefined) as Team["model"] })}
-            >
-              <option value="">{leadMember ? `Inherit from ${leadMember.profile}` : "Default"}</option>
-              <option value="opus">Opus</option>
-              <option value="sonnet">Sonnet</option>
-              <option value="haiku">Haiku</option>
-            </select>
-          </div>
-          <div className="te-settings-row">
-            <span className="te-field-label">Effort</span>
-            <select
-              className="te-field-input"
-              value={draft.effortLevel ?? ""}
-              onChange={(e) => updateDraft({ effortLevel: (e.target.value || undefined) as Team["effortLevel"] })}
-            >
-              <option value="">{leadMember ? `Inherit from ${leadMember.profile}` : "Default"}</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="max">Max</option>
-            </select>
-          </div>
-          <div className="te-settings-row">
-            <span className="te-field-label">Flags</span>
-            <input
-              className="te-field-input"
-              value={draft.customFlags ?? ""}
-              onChange={(e) => updateDraft({ customFlags: e.target.value || undefined })}
-              placeholder={leadMember ? `Inherit from ${leadMember.profile}` : "Custom flags"}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Drag-and-drop split view */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
