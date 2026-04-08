@@ -16,6 +16,9 @@ import type {
   LocalItem,
   Profile,
   ProfilesStore,
+  Team,
+  TeamsStore,
+  MergePreview,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -1106,6 +1109,147 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
     }
     throw new Error(`Launch failed: ${msg || "Unknown AppleScript error"}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Team persistence
+// ---------------------------------------------------------------------------
+
+const TEAMS_JSON = path.join(PROFILES_DIR, "teams.json");
+
+function readTeamsStore(): TeamsStore {
+  if (!fs.existsSync(TEAMS_JSON)) return { teams: {} };
+  return JSON.parse(fs.readFileSync(TEAMS_JSON, "utf-8"));
+}
+
+function writeTeamsStore(store: TeamsStore): void {
+  ensureProfilesDir();
+  const tmp = TEAMS_JSON + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(store, null, 2) + "\n");
+  fs.renameSync(tmp, TEAMS_JSON);
+}
+
+export function loadTeams(): Team[] {
+  const store = readTeamsStore();
+  return Object.values(store.teams);
+}
+
+export function saveTeam(team: Team): Team {
+  const store = readTeamsStore();
+  store.teams[team.name] = team;
+  writeTeamsStore(store);
+  return team;
+}
+
+export function renameTeam(oldName: string, team: Team): Team {
+  const store = readTeamsStore();
+  if (!store.teams[oldName]) throw new Error(`Team "${oldName}" not found`);
+  if (team.name !== oldName && store.teams[team.name]) {
+    throw new Error(`A team named "${team.name}" already exists`);
+  }
+  if (team.name !== oldName) {
+    delete store.teams[oldName];
+  }
+  store.teams[team.name] = team;
+  writeTeamsStore(store);
+  return team;
+}
+
+export function deleteTeamByName(name: string): void {
+  const store = readTeamsStore();
+  delete store.teams[name];
+  writeTeamsStore(store);
+}
+
+export function checkAllTeamHealth(teams: Team[]): Record<string, string[]> {
+  const profiles = loadProfiles();
+  const profileNames = new Set(profiles.map((p) => p.name));
+  const result: Record<string, string[]> = {};
+  for (const team of teams) {
+    const orphaned = team.members
+      .filter((m) => !profileNames.has(m.profile))
+      .map((m) => m.profile);
+    if (orphaned.length > 0) result[team.name] = orphaned;
+  }
+  return result;
+}
+
+export function getTeamMergePreview(team: Team): MergePreview {
+  const profiles = loadProfiles();
+  const allPlugins = new Set<string>();
+  const allMcps = new Set<string>();
+  const agents: MergePreview["agents"] = [];
+  const conflicts: string[] = [];
+  const excludedByProfile: Record<string, Record<string, string[]>> = {};
+
+  const leadMember = team.members.find((m) => m.isLead);
+  const leadProfile = leadMember
+    ? profiles.find((p) => p.name === leadMember.profile)
+    : undefined;
+
+  for (const member of team.members) {
+    const profile = profiles.find((p) => p.name === member.profile);
+    if (!profile) continue;
+
+    for (const plugin of profile.plugins) {
+      allPlugins.add(plugin);
+    }
+
+    // Track exclusions per profile for conflict detection
+    if (Object.keys(profile.excludedItems).length > 0) {
+      excludedByProfile[member.profile] = profile.excludedItems;
+    }
+
+    // Collect MCP servers
+    if (profile.disabledMcpServers) {
+      for (const dir of Object.keys(profile.disabledMcpServers)) {
+        // MCPs are directory-scoped; just note them
+      }
+    }
+
+    // Non-lead members become agents
+    if (!member.isLead) {
+      agents.push({
+        name: member.role || member.profile,
+        profile: member.profile,
+        instructions: member.instructions,
+      });
+    }
+  }
+
+  // Detect exclusion conflicts: same plugin in multiple profiles with different exclusions
+  const pluginProfiles: Record<string, string[]> = {};
+  for (const [profileName, exclusions] of Object.entries(excludedByProfile)) {
+    for (const pluginName of Object.keys(exclusions)) {
+      if (!pluginProfiles[pluginName]) pluginProfiles[pluginName] = [];
+      pluginProfiles[pluginName].push(profileName);
+    }
+  }
+  for (const [pluginName, profileNames] of Object.entries(pluginProfiles)) {
+    if (profileNames.length > 1) {
+      conflicts.push(
+        `Plugin "${pluginName.split("@")[0]}" has different exclusions in: ${profileNames.join(", ")}`
+      );
+    }
+  }
+
+  // Resolve settings
+  const settings: MergePreview["settings"] = {
+    model: team.model ?? leadProfile?.model,
+    effortLevel: team.effortLevel ?? leadProfile?.effortLevel,
+    customFlags: team.customFlags ?? leadProfile?.customFlags,
+    source: team.model || team.effortLevel || team.customFlags
+      ? "team override"
+      : "lead",
+  };
+
+  return {
+    plugins: Array.from(allPlugins),
+    mcpServers: Array.from(allMcps),
+    agents,
+    settings,
+    conflicts,
+  };
 }
 
 // ---------------------------------------------------------------------------
