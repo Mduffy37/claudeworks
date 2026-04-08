@@ -257,6 +257,7 @@ export function App() {
               onSelect={handleSelect}
               onNew={handleNew}
               onLaunch={handleLaunch}
+              dirty={dirty}
             />
           )
         ) : (

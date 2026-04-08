@@ -8,6 +8,7 @@ interface Props {
   onSelect: (name: string) => void;
   onNew: () => void;
   onLaunch: (name: string, directory?: string) => void;
+  dirty?: boolean;
 }
 
 // Deterministic single-letter avatar from profile name
@@ -20,9 +21,24 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (name: string, directory?: string) => void }) {
+function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
+  profile: Profile;
+  onLaunch: (name: string, directory?: string) => void;
+  isSelectedAndDirty?: boolean;
+}) {
   const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const [selectedDir, setSelectedDir] = useState(dirs[0] ?? "");
+
+  if (isSelectedAndDirty) {
+    return (
+      <button className="btn-launch-sidebar" disabled title="Save changes first">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="btn-launch-label">Save first</span>
+      </button>
+    );
+  }
 
   if (dirs.length <= 1) {
     return (
@@ -67,7 +83,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
   );
 }
 
-export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, dirty }: Props) {
   return (
     <div className="profile-list">
       <div className="profile-list-header">
@@ -127,7 +143,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
                 </div>
               </div>
-              <SidebarLaunch profile={p} onLaunch={onLaunch} />
+              <SidebarLaunch profile={p} onLaunch={onLaunch} isSelectedAndDirty={p.name === selectedName && !!dirty} />
             </div>
           ))
         )}
