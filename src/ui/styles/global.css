@@ -736,6 +736,13 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   background: var(--bg-primary);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+.pe-tab-bar::-webkit-scrollbar {
+  display: none;                  /* Chrome/Safari */
 }
 
 .pe-tab {
