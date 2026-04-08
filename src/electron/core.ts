@@ -806,6 +806,26 @@ export function assembleProfile(profile: Profile): string {
   // Apply skill-level exclusions
   applyExclusions(profile, configDir, installedPlugins);
 
+  // Rewrite installPath for plugins with exclusions so Claude Code reads the patched manifest
+  if (profile.excludedItems && Object.keys(profile.excludedItems).length > 0) {
+    const manifestPath = path.join(configDir, "plugins", "installed_plugins.json");
+    if (fs.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      for (const [pluginName, entries] of Object.entries(manifest.plugins ?? {})) {
+        if (!(profile.excludedItems[pluginName]?.length > 0)) continue;
+        const plugin = installedPlugins.find((p) => p.name === pluginName);
+        if (!plugin) continue;
+        const copiedPath = path.join(configDir, "plugins", "cache", plugin.marketplace, plugin.pluginName, plugin.version);
+        if (fs.existsSync(copiedPath)) {
+          for (const entry of entries as any[]) {
+            entry.installPath = copiedPath;
+          }
+        }
+      }
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    }
+  }
+
   // Symlink shared resources
   symlinkShared(configDir, profile);
 
@@ -898,13 +918,32 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
         );
         if (fs.existsSync(copiedItemPath)) {
           if (item.type === "skill") {
-            // Remove entire skill directory
             fs.rmSync(path.dirname(copiedItemPath), { recursive: true, force: true });
           } else {
             fs.unlinkSync(copiedItemPath);
           }
         }
       }
+    }
+
+    // Patch marketplace.json to remove excluded skill/agent/command paths
+    const copiedPluginDir = path.join(marketplaceDir, plugin.pluginName, plugin.version);
+    const marketplaceJsonPath = path.join(copiedPluginDir, ".claude-plugin", "marketplace.json");
+    if (fs.existsSync(marketplaceJsonPath)) {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(marketplaceJsonPath, "utf-8"));
+        for (const p of manifest.plugins ?? []) {
+          for (const key of ["skills", "agents", "commands"]) {
+            if (Array.isArray(p[key])) {
+              p[key] = p[key].filter((itemPath: string) => {
+                const itemName = itemPath.split("/").pop() ?? "";
+                return !excludedNames.includes(itemName);
+              });
+            }
+          }
+        }
+        fs.writeFileSync(marketplaceJsonPath, JSON.stringify(manifest, null, 2));
+      } catch {}
     }
   }
 }
