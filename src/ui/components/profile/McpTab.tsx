@@ -38,6 +38,9 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
 
   return (
     <div className="pe-mcp-tab">
+      <div className="pe-mcp-context">
+        Showing project MCPs for <strong>{launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default directory"}</strong>
+      </div>
       {pluginMcps.length > 0 && (
         <div className="pe-mcp-section">
           <div className="pe-mcp-section-label">From Plugins</div>

@@ -59,13 +59,13 @@ export function InfoCard({
         aria-expanded={open}
         aria-controls="profile-info-body"
       >
+        <span className="pe-info-card-toggle-chevron">
+          <ChevronIcon open={open} />
+        </span>
         <span className="pe-info-card-toggle-label">Profile Info</span>
         {!open && directories.length > 0 && (
           <span className="pe-info-card-toggle-dir">{directories[0]}{directories.length > 1 ? ` +${directories.length - 1}` : ""}</span>
         )}
-        <span className="pe-info-card-toggle-chevron">
-          <ChevronIcon open={open} />
-        </span>
       </button>
 
       {open && (

@@ -28,7 +28,13 @@ function CollapsibleSection({
   return (
     <div className="pm-section">
       <button className="pm-section-header" onClick={() => setOpen(!open)}>
-        <span className={`pm-section-arrow${open ? " open" : ""}`}>&#9654;</span>
+        <svg
+          width="10" height="10" viewBox="0 0 10 10" fill="none"
+          className="pm-section-arrow"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 180ms ease" }}
+        >
+          <path d="M3 2L7 5L3 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         <span style={{ color }}>{label}</span>
         <span className="pm-section-count">{count}</span>
       </button>

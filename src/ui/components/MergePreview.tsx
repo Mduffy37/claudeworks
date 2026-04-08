@@ -9,7 +9,7 @@ interface Props {
 export function MergePreview({ data, onClose }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-dialog" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-dialog modal-dialog--wide" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <span className="modal-title">Merge Preview</span>
           <button className="modal-close" onClick={onClose}>

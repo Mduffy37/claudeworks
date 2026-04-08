@@ -27,7 +27,8 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: P
             <div className="empty-state-icon">&#9711;</div>
             <div className="empty-state-title">No teams yet</div>
             <div className="empty-state-body">
-              Create a team to group profiles into coordinated agent sessions.
+              Teams group profiles into coordinated multi-agent sessions.
+              Click <strong>+</strong> above to create a team.
             </div>
           </div>
         ) : (

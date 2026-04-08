@@ -85,7 +85,8 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
             <div className="empty-state-icon">&#9711;</div>
             <div className="empty-state-title">No profiles yet</div>
             <div className="empty-state-body">
-              Create a profile to save a named set of plugins and skills.
+              Profiles save named presets of plugins, skills, and settings for Claude Code sessions.
+              Click <strong>+</strong> above to create your first profile.
             </div>
           </div>
         ) : (
