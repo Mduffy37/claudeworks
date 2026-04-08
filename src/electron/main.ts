@@ -1,4 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import {
   getPluginsWithItems,
@@ -67,10 +69,10 @@ ipcMain.handle("check-profile-health", () => {
   return checkAllProfileHealth(loadProfiles());
 });
 
-ipcMain.handle("create-profile", (_event, profile: Profile) => {
+ipcMain.handle("create-profile", async (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
-  copyCredentials(saved);
+  await copyCredentials(saved);
   return saved;
 });
 
@@ -86,11 +88,11 @@ ipcMain.handle("rename-profile", (_event, oldName: string, profile: Profile) => 
   return saved;
 });
 
-ipcMain.handle("delete-profile", (_event, name: string) => {
-  deleteProfileByName(name);
+ipcMain.handle("delete-profile", async (_event, name: string) => {
+  await deleteProfileByName(name);
 });
 
-ipcMain.handle("duplicate-profile", (_event, name: string) => {
+ipcMain.handle("duplicate-profile", async (_event, name: string) => {
   const profiles = loadProfiles();
   const source = profiles.find((p) => p.name === name);
   if (!source) throw new Error(`Profile "${name}" not found`);
@@ -107,7 +109,7 @@ ipcMain.handle("duplicate-profile", (_event, name: string) => {
   const copy: Profile = { ...source, name: copyName };
   const saved = saveProfile(copy);
   assembleProfile(saved);
-  copyCredentials(saved);
+  await copyCredentials(saved);
   return saved;
 });
 
@@ -132,9 +134,6 @@ ipcMain.handle("select-directory", async () => {
 });
 
 ipcMain.handle("is-bin-in-path", () => {
-  const os = require("os");
-  const fs = require("fs");
-  const path = require("path");
   const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
   const shell = process.env.SHELL ?? "/bin/zsh";
   const rcFile = shell.includes("zsh")
@@ -145,13 +144,9 @@ ipcMain.handle("is-bin-in-path", () => {
 });
 
 ipcMain.handle("add-bin-to-path", () => {
-  const os = require("os");
-  const fs = require("fs");
-  const path = require("path");
   const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
   fs.mkdirSync(binDir, { recursive: true });
 
-  // Detect shell config file
   const shell = process.env.SHELL ?? "/bin/zsh";
   const rcFile = shell.includes("zsh")
     ? path.join(os.homedir(), ".zshrc")

@@ -22,6 +22,16 @@ const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
 
+function validateProfileName(name: string): void {
+  if (!name || /[\/\\\0]|\.\./.test(name)) {
+    throw new Error(`Invalid profile name: "${name}". Names must not contain path separators, "..", or null bytes.`);
+  }
+  const resolved = path.resolve(PROFILES_DIR, name);
+  if (!resolved.startsWith(PROFILES_DIR + path.sep)) {
+    throw new Error(`Invalid profile name: "${name}" resolves outside the profiles directory.`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Plugin scanning
 // ---------------------------------------------------------------------------
@@ -519,7 +529,9 @@ function readProfilesStore(): ProfilesStore {
 
 function writeProfilesStore(store: ProfilesStore): void {
   ensureProfilesDir();
-  fs.writeFileSync(PROFILES_JSON, JSON.stringify(store, null, 2) + "\n");
+  const tmp = PROFILES_JSON + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(store, null, 2) + "\n");
+  fs.renameSync(tmp, PROFILES_JSON);
 }
 
 export function loadProfiles(): Profile[] {
@@ -528,6 +540,8 @@ export function loadProfiles(): Profile[] {
 }
 
 export function renameProfile(oldName: string, profile: Profile): Profile {
+  validateProfileName(oldName);
+  validateProfileName(profile.name);
   const store = readProfilesStore();
   if (!store.profiles[oldName]) throw new Error(`Profile "${oldName}" not found`);
   if (profile.name !== oldName && store.profiles[profile.name]) {
@@ -552,7 +566,7 @@ export function renameProfile(oldName: string, profile: Profile): Profile {
 }
 
 export function saveProfile(profile: Profile): Profile {
-  // Clean up old alias if name changed
+  validateProfileName(profile.name);
   const store = readProfilesStore();
   const existing = store.profiles[profile.name];
   if (existing?.alias && existing.alias !== profile.alias) {
@@ -602,8 +616,8 @@ function removeAlias(alias: string): void {
   try { fs.unlinkSync(scriptPath); } catch {}
 }
 
-export function deleteProfileByName(name: string): void {
-  // Remove from store
+export async function deleteProfileByName(name: string): Promise<void> {
+  validateProfileName(name);
   const store = readProfilesStore();
   const profile = store.profiles[name];
   if (profile?.alias) removeAlias(profile.alias);
@@ -616,9 +630,9 @@ export function deleteProfileByName(name: string): void {
   const service = `Claude Code-credentials-${hash}`;
   const username = os.userInfo().username;
   try {
-    execFileSync("security", [
+    await execFileAsync("security", [
       "delete-generic-password", "-s", service, "-a", username,
-    ], { stdio: "ignore" });
+    ]);
   } catch {
     // Entry may not exist
   }
@@ -733,16 +747,22 @@ export function assembleProfile(profile: Profile): string {
       content = fs.readFileSync(globalClaudeMd, "utf-8") + "\n\n";
     }
     content += "# Profile: " + profile.name + "\n\n" + profile.customClaudeMd;
-    // Remove existing symlink if present
+    // Remove existing file/symlink before writing
     try { fs.unlinkSync(claudeMdTarget); } catch {}
     fs.writeFileSync(claudeMdTarget, content);
+  } else {
+    // Remove stale custom file so symlinkShared can create the global symlink
+    try { fs.unlinkSync(claudeMdTarget); } catch {}
   }
 
+  // Scan plugins once for cache setup and exclusions
+  const installedPlugins = scanInstalledPlugins();
+
   // Symlink plugin caches
-  symlinkSelectedCaches(profile, configDir);
+  symlinkSelectedCaches(profile, configDir, installedPlugins);
 
   // Apply skill-level exclusions
-  applyExclusions(profile, configDir);
+  applyExclusions(profile, configDir, installedPlugins);
 
   // Symlink shared resources
   symlinkShared(configDir);
@@ -753,7 +773,7 @@ export function assembleProfile(profile: Profile): string {
   return configDir;
 }
 
-function symlinkSelectedCaches(profile: Profile, configDir: string): void {
+function symlinkSelectedCaches(profile: Profile, configDir: string, plugins: PluginEntry[]): void {
   const sourceCache = path.join(CLAUDE_HOME, "plugins", "cache");
   const targetCache = path.join(configDir, "plugins", "cache");
 
@@ -768,7 +788,6 @@ function symlinkSelectedCaches(profile: Profile, configDir: string): void {
   }
 
   // Determine which marketplace dirs need symlinking
-  const plugins = scanInstalledPlugins();
   const neededMarketplaces = new Set<string>();
   for (const p of plugins) {
     if (profile.plugins.includes(p.name)) {
@@ -786,10 +805,8 @@ function symlinkSelectedCaches(profile: Profile, configDir: string): void {
   }
 }
 
-function applyExclusions(profile: Profile, configDir: string): void {
+function applyExclusions(profile: Profile, configDir: string, plugins: PluginEntry[]): void {
   if (!profile.excludedItems || Object.keys(profile.excludedItems).length === 0) return;
-
-  const plugins = scanInstalledPlugins();
   for (const [pluginName, excludedNames] of Object.entries(profile.excludedItems)) {
     if (excludedNames.length === 0) continue;
 
@@ -959,16 +976,17 @@ function symlinkShared(configDir: string): void {
 // Credentials
 // ---------------------------------------------------------------------------
 
-export function copyCredentials(profile: Profile): boolean {
+export async function copyCredentials(profile: Profile): Promise<boolean> {
   const username = os.userInfo().username;
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
 
   // Read default credentials
   let cred: string;
   try {
-    cred = execFileSync("security", [
+    const { stdout } = await execFileAsync("security", [
       "find-generic-password", "-s", "Claude Code-credentials", "-a", username, "-w",
-    ], { encoding: "utf-8" }).trim();
+    ]);
+    cred = stdout.trim();
   } catch {
     return false;
   }
@@ -979,15 +997,15 @@ export function copyCredentials(profile: Profile): boolean {
 
   try {
     try {
-      execFileSync("security", [
+      await execFileAsync("security", [
         "delete-generic-password", "-s", service, "-a", username,
-      ], { stdio: "ignore" });
+      ]);
     } catch {
       // Not found — fine
     }
-    execFileSync("security", [
+    await execFileAsync("security", [
       "add-generic-password", "-s", service, "-a", username, "-w", cred,
-    ], { stdio: "ignore" });
+    ]);
     return true;
   } catch {
     return false;
