@@ -17,3 +17,4 @@ release/
 app/.build/
 .worktrees/
 .claude/
+.idea/
