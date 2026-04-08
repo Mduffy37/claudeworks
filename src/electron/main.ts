@@ -232,6 +232,66 @@ ipcMain.handle("remove-imported-project", (_event, dir: string) => removeImporte
 ipcMain.handle("get-project-claude-md", (_event, dir: string) => getProjectClaudeMd(dir));
 ipcMain.handle("save-project-claude-md", (_event, dir: string, content: string) => saveProjectClaudeMd(dir, content));
 
+// Project file operations
+ipcMain.handle("read-project-file", async (_event, dir: string, relativePath: string) => {
+  const filePath = path.join(dir, relativePath);
+  try {
+    return fs.readFileSync(filePath, "utf-8");
+  } catch {
+    return "";
+  }
+});
+
+ipcMain.handle("write-project-file", async (_event, dir: string, relativePath: string, content: string) => {
+  const filePath = path.join(dir, relativePath);
+  const dirPath = path.dirname(filePath);
+  if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+  fs.writeFileSync(filePath, content, "utf-8");
+});
+
+ipcMain.handle("delete-project-file", async (_event, dir: string, relativePath: string) => {
+  const filePath = path.join(dir, relativePath);
+  if (fs.existsSync(filePath)) {
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      fs.rmSync(filePath, { recursive: true });
+    } else {
+      fs.unlinkSync(filePath);
+    }
+  }
+});
+
+ipcMain.handle("get-project-mcp-config", async (_event, dir: string) => {
+  const mcpPath = path.join(dir, ".mcp.json");
+  try {
+    const data = JSON.parse(fs.readFileSync(mcpPath, "utf-8"));
+    return data.mcpServers ?? data;
+  } catch {
+    return {};
+  }
+});
+
+ipcMain.handle("save-project-mcp-config", async (_event, dir: string, servers: Record<string, any>) => {
+  const mcpPath = path.join(dir, ".mcp.json");
+  fs.writeFileSync(mcpPath, JSON.stringify({ mcpServers: servers }, null, 2));
+});
+
+ipcMain.handle("get-project-settings", async (_event, dir: string) => {
+  const settingsPath = path.join(dir, ".claude", "settings.json");
+  try {
+    return JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+  } catch {
+    return {};
+  }
+});
+
+ipcMain.handle("save-project-settings", async (_event, dir: string, settings: Record<string, any>) => {
+  const settingsPath = path.join(dir, ".claude", "settings.json");
+  const dirPath = path.dirname(settingsPath);
+  if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+});
+
 // Filesystem
 ipcMain.handle("get-git-context", async (_event, dir: string) => {
   const { execSync } = require("child_process");

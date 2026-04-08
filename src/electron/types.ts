@@ -177,6 +177,14 @@ export interface ElectronAPI {
   removeImportedProject: (dir: string) => Promise<string[]>;
   getProjectClaudeMd: (dir: string) => Promise<string>;
   saveProjectClaudeMd: (dir: string, content: string) => Promise<void>;
+  // Project file operations
+  readProjectFile: (dir: string, relativePath: string) => Promise<string>;
+  writeProjectFile: (dir: string, relativePath: string, content: string) => Promise<void>;
+  deleteProjectFile: (dir: string, relativePath: string) => Promise<void>;
+  getProjectMcpConfig: (dir: string) => Promise<Record<string, { type: string; command?: string; url?: string }>>;
+  saveProjectMcpConfig: (dir: string, servers: Record<string, { type: string; command?: string; url?: string }>) => Promise<void>;
+  getProjectSettings: (dir: string) => Promise<Record<string, any>>;
+  saveProjectSettings: (dir: string, settings: Record<string, any>) => Promise<void>;
   getGitContext: (dir: string) => Promise<{ branch: string; dirty: boolean; isRepo: boolean }>;
   openInFinder: (path: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;

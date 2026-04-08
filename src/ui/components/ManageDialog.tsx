@@ -17,28 +17,115 @@ interface Props {
 
 // ─── Projects tab ───────────────────────────────────────────────────────────
 
+// ─── Item editor inline ────────────────────────────────────────────────────
+
+type ItemType = "skill" | "agent" | "command";
+
+function itemRelativePath(type: ItemType, name: string): string {
+  if (type === "skill") return `.claude/skills/${name}/SKILL.md`;
+  if (type === "agent") return `.claude/agents/${name}.md`;
+  return `.claude/commands/${name}.md`;
+}
+
+function itemStub(type: ItemType, name: string): string {
+  return `---\nname: ${name}\ndescription: \n---\n\n`;
+}
+
+function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
+  dir: string; type: ItemType; name: string; onClose: () => void; onRefresh: () => void;
+}) {
+  const [content, setContent] = useState("");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    window.api.readProjectFile(dir, itemRelativePath(type, name)).then((c) => {
+      setContent(c);
+      setDirty(false);
+    });
+  }, [dir, type, name]);
+
+  const handleSave = async () => {
+    await window.api.writeProjectFile(dir, itemRelativePath(type, name), content);
+    setDirty(false);
+    onRefresh();
+  };
+
+  const handleDelete = async () => {
+    if (type === "skill") {
+      await window.api.deleteProjectFile(dir, `.claude/skills/${name}`);
+    } else {
+      await window.api.deleteProjectFile(dir, itemRelativePath(type, name));
+    }
+    onRefresh();
+    onClose();
+  };
+
+  return (
+    <div className="project-item-editor">
+      <div className="manage-section-header">
+        <span className="manage-section-label">{type}: {name}</span>
+        <div style={{ display: "flex", gap: "6px" }}>
+          {dirty && (
+            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+          )}
+          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
+          <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={onClose}>Close</button>
+        </div>
+      </div>
+      <textarea
+        className="manage-claudemd-editor"
+        value={content}
+        onChange={(e) => { setContent(e.target.value); setDirty(true); }}
+        placeholder={`${type} content...`}
+      />
+    </div>
+  );
+}
+
+// ─── Projects tab ───────────────────────────────────────────────────────────
+
+interface ProjectItem { name: string; type: ItemType; path: string }
+
 function ProjectsTab() {
   const [projects, setProjects] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [gitContext, setGitContext] = useState<{ branch: string; dirty: boolean; isRepo: boolean } | null>(null);
+  const [localItems, setLocalItems] = useState<ProjectItem[]>([]);
+  const [editingItem, setEditingItem] = useState<{ type: ItemType; name: string } | null>(null);
+  const [newItemType, setNewItemType] = useState<ItemType>("skill");
+  const [newItemName, setNewItemName] = useState("");
+  const [mcpJson, setMcpJson] = useState("");
+  const [mcpDirty, setMcpDirty] = useState(false);
+  const [mcpError, setMcpError] = useState("");
+  const [projSettings, setProjSettings] = useState<Record<string, any>>({});
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [projEnvNewKey, setProjEnvNewKey] = useState("");
+  const [projEnvNewVal, setProjEnvNewVal] = useState("");
 
   useEffect(() => {
     window.api.getImportedProjects().then(setProjects);
   }, []);
 
+  const refreshProjectData = () => {
+    if (!selected) return;
+    window.api.getProjectClaudeMd(selected).then((c) => { setClaudeMd(c); setClaudeMdDirty(false); });
+    window.api.getGitContext(selected).then(setGitContext);
+    window.api.getLocalItems(selected).then((items) => setLocalItems(items as ProjectItem[]));
+    window.api.getProjectMcpConfig(selected).then((s) => { setMcpJson(JSON.stringify(s, null, 2)); setMcpDirty(false); setMcpError(""); });
+    window.api.getProjectSettings(selected).then((s) => { setProjSettings(s); setSettingsDirty(false); });
+  };
+
   useEffect(() => {
     if (selected) {
-      window.api.getProjectClaudeMd(selected).then((content) => {
-        setClaudeMd(content);
-        setClaudeMdDirty(false);
-      });
-      window.api.getGitContext(selected).then(setGitContext);
+      refreshProjectData();
+      setEditingItem(null);
     } else {
-      setClaudeMd("");
-      setClaudeMdDirty(false);
-      setGitContext(null);
+      setClaudeMd(""); setClaudeMdDirty(false); setGitContext(null);
+      setLocalItems([]); setEditingItem(null);
+      setMcpJson("{}"); setMcpDirty(false); setMcpError("");
+      setProjSettings({}); setSettingsDirty(false);
     }
   }, [selected]);
 
@@ -63,10 +150,39 @@ function ProjectsTab() {
     setClaudeMdDirty(false);
   };
 
+  const handleCreateItem = async () => {
+    if (!selected || !newItemName.trim()) return;
+    const name = newItemName.trim().replace(/\s+/g, "-").toLowerCase();
+    await window.api.writeProjectFile(selected, itemRelativePath(newItemType, name), itemStub(newItemType, name));
+    setNewItemName("");
+    refreshProjectData();
+    setEditingItem({ type: newItemType, name });
+  };
+
+  const handleSaveMcp = async () => {
+    if (!selected) return;
+    try {
+      const parsed = JSON.parse(mcpJson);
+      await window.api.saveProjectMcpConfig(selected, parsed);
+      setMcpDirty(false);
+      setMcpError("");
+    } catch {
+      setMcpError("Invalid JSON");
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selected) return;
+    await window.api.saveProjectSettings(selected, projSettings);
+    setSettingsDirty(false);
+  };
+
   const shortPath = (dir: string) => {
     const parts = dir.split("/").filter(Boolean);
     return parts.length <= 1 ? dir : parts[parts.length - 1];
   };
+
+  const projEnvEntries = Object.entries(projSettings.env ?? {});
 
   return (
     <div className="manage-dialog-split">
@@ -121,6 +237,7 @@ function ProjectsTab() {
               </div>
             )}
 
+            {/* Directory buttons */}
             <div className="manage-section">
               <div className="manage-section-header">
                 <span className="manage-section-label">Directory</span>
@@ -134,6 +251,8 @@ function ProjectsTab() {
                 </div>
               </div>
             </div>
+
+            {/* CLAUDE.md */}
             <div className="manage-section">
               <div className="manage-section-header">
                 <span className="manage-section-label">CLAUDE.md</span>
@@ -150,6 +269,141 @@ function ProjectsTab() {
                 placeholder="Project-level instructions for Claude Code..."
               />
             </div>
+
+            {/* Skills / Agents / Commands */}
+            <div className="manage-section">
+              <div className="manage-section-header">
+                <span className="manage-section-label">Skills, Agents &amp; Commands</span>
+              </div>
+              {localItems.length === 0 && !editingItem ? (
+                <div className="manage-section-hint">No items in .claude/ yet. Create one below.</div>
+              ) : (
+                <div className="project-items-list">
+                  {(["skill", "agent", "command"] as const).map((type) => {
+                    const items = localItems.filter((i) => i.type === type);
+                    if (items.length === 0) return null;
+                    return (
+                      <div key={type} className="project-items-group">
+                        <div className="project-items-group-label">{type === "skill" ? "Skills" : type === "agent" ? "Agents" : "Commands"}</div>
+                        {items.map((item) => (
+                          <div
+                            key={item.path}
+                            className={`project-item-row${editingItem?.name === item.name && editingItem?.type === type ? " active" : ""}`}
+                            onClick={() => setEditingItem({ type, name: item.name })}
+                          >
+                            <span className="project-item-name">{type === "command" ? `/${item.name}` : item.name}</span>
+                            <span className="plugin-badge">{type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Inline editor */}
+              {editingItem && selected && (
+                <ProjectItemEditor
+                  dir={selected}
+                  type={editingItem.type}
+                  name={editingItem.name}
+                  onClose={() => setEditingItem(null)}
+                  onRefresh={refreshProjectData}
+                />
+              )}
+
+              {/* Create new */}
+              <div className="project-create-row">
+                <select value={newItemType} onChange={(e) => setNewItemType(e.target.value as ItemType)}>
+                  <option value="skill">Skill</option>
+                  <option value="agent">Agent</option>
+                  <option value="command">Command</option>
+                </select>
+                <input
+                  type="text"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  placeholder="Name..."
+                  onKeyDown={(e) => { if (e.key === "Enter") handleCreateItem(); }}
+                />
+                <button className="btn-secondary" onClick={handleCreateItem} disabled={!newItemName.trim()}>Create</button>
+              </div>
+            </div>
+
+            {/* MCP Servers */}
+            <div className="manage-section">
+              <div className="manage-section-header">
+                <span className="manage-section-label">MCP Servers</span>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  {mcpError && <span style={{ fontSize: "11px", color: "var(--color-danger, #e55)" }}>{mcpError}</span>}
+                  {mcpDirty && (
+                    <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveMcp}>Save</button>
+                  )}
+                </div>
+              </div>
+              <div className="manage-section-hint">Edit .mcp.json — raw JSON for project-level MCP server configuration.</div>
+              <textarea
+                className="manage-claudemd-editor"
+                style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "11px", minHeight: "120px" }}
+                value={mcpJson}
+                onChange={(e) => { setMcpJson(e.target.value); setMcpDirty(true); setMcpError(""); }}
+                placeholder='{ "server-name": { "type": "stdio", "command": "npx", "args": [...] } }'
+              />
+            </div>
+
+            {/* Project Settings */}
+            <div className="manage-section">
+              <div className="manage-section-header">
+                <span className="manage-section-label">Project Settings</span>
+                {settingsDirty && (
+                  <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveSettings}>Save</button>
+                )}
+              </div>
+              <div className="manage-section-hint">Saved to .claude/settings.json — applies to all sessions in this directory.</div>
+              <div className="modal-fields" style={{ marginTop: "8px" }}>
+                <div className="field">
+                  <label>Model</label>
+                  <select value={projSettings.model ?? ""} onChange={(e) => { setProjSettings((p) => ({ ...p, model: e.target.value || undefined })); setSettingsDirty(true); }}>
+                    <option value="">Default</option>
+                    <option value="opus">Opus</option>
+                    <option value="sonnet">Sonnet</option>
+                    <option value="haiku">Haiku</option>
+                  </select>
+                </div>
+                <div className="field-divider" />
+                <div className="field">
+                  <label>Effort Level</label>
+                  <select value={projSettings.effortLevel ?? ""} onChange={(e) => { setProjSettings((p) => ({ ...p, effortLevel: e.target.value || undefined })); setSettingsDirty(true); }}>
+                    <option value="">Default</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="max">Max</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-fields" style={{ marginTop: "8px" }}>
+                <div className="manage-section-label" style={{ padding: 0, margin: 0 }}>Environment Variables</div>
+                {projEnvEntries.map(([key, value]) => (
+                  <div className="field" key={key}>
+                    <label>{key}</label>
+                    <div className="field-with-button">
+                      <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} />
+                      <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>Remove</button>
+                    </div>
+                  </div>
+                ))}
+                {projEnvEntries.length > 0 && <div className="field-divider" />}
+                <div className="field">
+                  <label>Add Variable</label>
+                  <div className="field-with-button">
+                    <input type="text" value={projEnvNewKey} onChange={(e) => setProjEnvNewKey(e.target.value.replace(/\s/g, ""))} placeholder="KEY" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
+                    <input type="text" value={projEnvNewVal} onChange={(e) => setProjEnvNewVal(e.target.value)} placeholder="value" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
+                    <button className="btn-secondary" disabled={!projEnvNewKey.trim()} onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); }}>Add</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="pm-empty">
@@ -157,7 +411,7 @@ function ProjectsTab() {
               <div className="empty-state-icon">&#9671;</div>
               <div className="empty-state-title">Select a project</div>
               <div className="empty-state-body">
-                Choose a project from the list, or add one to manage its CLAUDE.md and local add-ons.
+                Choose a project from the list, or add one to manage its CLAUDE.md, skills, MCP servers, and settings.
               </div>
             </div>
           </div>

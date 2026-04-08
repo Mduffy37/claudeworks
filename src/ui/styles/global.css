@@ -643,6 +643,128 @@ body {
   font-style: italic;
 }
 
+/* Project items list */
+.project-items-list {
+  margin-bottom: 8px;
+}
+
+.project-items-group {
+  margin-bottom: 6px;
+}
+
+.project-items-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 4px 0 2px;
+}
+
+.project-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.project-item-row:hover {
+  background: var(--bg-hover);
+}
+
+.project-item-row.active {
+  background: var(--accent-dim);
+}
+
+.project-item-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.project-item-editor {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: var(--bg-surface);
+}
+
+.project-item-editor .manage-claudemd-editor {
+  min-height: 160px;
+}
+
+/* Project create row */
+.project-create-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.project-create-row select {
+  padding: 6px 24px 6px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.project-create-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.project-create-row input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+/* Project MCP list */
+.project-mcp-list {
+  margin: 8px 0;
+}
+
+.project-mcp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.project-mcp-row:hover {
+  background: var(--bg-hover);
+}
+
+.project-mcp-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.project-mcp-value {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: "SF Mono", "Fira Code", monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ─── Global settings tab ────────────────────────────────────────────────── */
 
