@@ -183,6 +183,10 @@ export interface ElectronAPI {
   saveGlobalClaudeMd: (content: string) => Promise<void>;
   getPrompts: () => Promise<Prompt[]>;
   savePrompts: (prompts: Prompt[]) => Promise<void>;
+  exportPrompt: (prompt: Prompt) => Promise<string | null>;
+  importPrompt: () => Promise<Prompt | null>;
+  getGlobalEnv: () => Promise<Record<string, string>>;
+  saveGlobalEnv: (env: Record<string, string>) => Promise<void>;
   getGlobalHooks: () => Promise<Record<string, any>>;
   saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
   getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }>;

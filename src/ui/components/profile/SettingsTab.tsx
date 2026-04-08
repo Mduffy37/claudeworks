@@ -71,6 +71,14 @@ export function SettingsTab(props: Props) {
     onChangeDisabledHooks(next);
   };
 
+  const [globalEnv, setGlobalEnv] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    window.api.getGlobalEnv().then(setGlobalEnv);
+  }, []);
+
+  // Global env vars not overridden by this profile
+  const inheritedEnv = Object.entries(globalEnv).filter(([key]) => !(key in env));
   const envEntries = Object.entries(env);
 
   const handleAddEnv = () => {
@@ -155,9 +163,24 @@ export function SettingsTab(props: Props) {
       <div className="pe-settings-section">
         <div className="pe-settings-section-label">Environment Variables</div>
         <div className="modal-fields">
+          {inheritedEnv.length > 0 && (
+            <>
+              <div className="field-hint" style={{ marginBottom: "2px" }}>Inherited from global settings</div>
+              {inheritedEnv.map(([key, value]) => (
+                <div className="field" key={`global-${key}`}>
+                  <label>{key}</label>
+                  <div className="field-with-button">
+                    <input type="text" value={value} disabled style={{ opacity: 0.5 }} />
+                    <button className="btn-secondary" onClick={() => { onChangeEnv({ ...env, [key]: value }); }} title="Override in this profile">Override</button>
+                  </div>
+                </div>
+              ))}
+              <div className="field-divider" />
+            </>
+          )}
           {envEntries.map(([key, value]) => (
             <div className="field" key={key}>
-              <label>{key}</label>
+              <label>{key}{globalEnv[key] !== undefined && <span style={{ color: "var(--accent)", fontSize: "9px", marginLeft: "6px" }}>overriding global</span>}</label>
               <div className="field-with-button">
                 <input
                   type="text"
@@ -169,7 +192,7 @@ export function SettingsTab(props: Props) {
               </div>
             </div>
           ))}
-          {envEntries.length > 0 && <div className="field-divider" />}
+          {(envEntries.length > 0 || inheritedEnv.length > 0) && <div className="field-divider" />}
           <div className="field">
             <label>Add Variable</label>
             <div className="field-with-button">

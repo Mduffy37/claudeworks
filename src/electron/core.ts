@@ -1462,6 +1462,30 @@ export function savePrompts(prompts: import("./types").Prompt[]): void {
   fs.writeFileSync(PROMPTS_JSON, JSON.stringify(prompts, null, 2));
 }
 
+export function getGlobalEnv(): Record<string, string> {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  try {
+    const data = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    return data.env ?? {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveGlobalEnv(env: Record<string, string>): void {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  let data: Record<string, any> = {};
+  try {
+    data = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+  } catch {}
+  if (Object.keys(env).length > 0) {
+    data.env = env;
+  } else {
+    delete data.env;
+  }
+  fs.writeFileSync(settingsPath, JSON.stringify(data, null, 2));
+}
+
 export function getGlobalHooks(): Record<string, any> {
   const settingsPath = path.join(CLAUDE_HOME, "settings.json");
   try {

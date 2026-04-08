@@ -440,6 +440,7 @@ function GlobalSettingsTab() {
   const [model, setModel] = useState("");
   const [effort, setEffort] = useState("");
   const [env, setEnv] = useState<Record<string, string>>({});
+  const [envDirty, setEnvDirty] = useState(false);
   const [customFlags, setCustomFlags] = useState("");
   const [defaultsDirty, setDefaultsDirty] = useState(false);
   const [newKey, setNewKey] = useState("");
@@ -459,10 +460,13 @@ function GlobalSettingsTab() {
       setHooksDirty(false);
       setHooksError("");
     });
+    window.api.getGlobalEnv().then((e) => {
+      setEnv(e);
+      setEnvDirty(false);
+    });
     window.api.getGlobalDefaults().then((d) => {
       setModel(d.model);
       setEffort(d.effortLevel);
-      setEnv(d.env ?? {});
       setCustomFlags(d.customFlags ?? "");
       setDefaultsDirty(false);
     });
@@ -488,10 +492,14 @@ function GlobalSettingsTab() {
     await window.api.saveGlobalDefaults({
       model,
       effortLevel: effort,
-      env: Object.keys(env).length > 0 ? env : undefined,
       customFlags: customFlags.trim() || undefined,
     });
     setDefaultsDirty(false);
+  };
+
+  const handleSaveEnv = async () => {
+    await window.api.saveGlobalEnv(env);
+    setEnvDirty(false);
   };
 
   const handleAddEnv = () => {
@@ -500,17 +508,17 @@ function GlobalSettingsTab() {
     setEnv((prev) => ({ ...prev, [key]: newValue }));
     setNewKey("");
     setNewValue("");
-    setDefaultsDirty(true);
+    setEnvDirty(true);
   };
 
   const handleRemoveEnv = (key: string) => {
     setEnv((prev) => { const next = { ...prev }; delete next[key]; return next; });
-    setDefaultsDirty(true);
+    setEnvDirty(true);
   };
 
   const handleUpdateEnvValue = (key: string, value: string) => {
     setEnv((prev) => ({ ...prev, [key]: value }));
-    setDefaultsDirty(true);
+    setEnvDirty(true);
   };
 
   const envEntries = Object.entries(env);
@@ -593,14 +601,14 @@ function GlobalSettingsTab() {
       <div className="manage-section">
         <div className="manage-section-header">
           <span className="manage-section-label">Environment Variables</span>
-          {defaultsDirty && (
-            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+          {envDirty && (
+            <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSaveEnv}>
               Save
             </button>
           )}
         </div>
         <div className="manage-section-hint">
-          Applied to all sessions. Per-profile env vars override these.
+          From ~/.claude/settings.json — applied to all sessions. Per-profile env vars override these.
         </div>
         <div className="modal-fields" style={{ marginTop: "8px" }}>
           {envEntries.map(([key, value]) => (
@@ -677,6 +685,7 @@ function PromptsTab() {
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [statusMsg, setStatusMsg] = useState("");
 
   useEffect(() => {
     window.api.getPrompts().then(setPrompts);
@@ -708,6 +717,15 @@ function PromptsTab() {
       setDirty(false);
     }
   }, [selected, prompts]);
+
+  const handleImport = async () => {
+    const imported = await window.api.importPrompt();
+    if (!imported) return;
+    const next = [...prompts, imported];
+    await window.api.savePrompts(next);
+    setPrompts(next);
+    setSelected(imported.id);
+  };
 
   const handleNew = () => {
     const id = `prompt-${Date.now()}`;
@@ -757,11 +775,18 @@ function PromptsTab() {
       <div className="manage-dialog-sidebar">
         <div className="manage-projects-header">
           <span className="manage-projects-title">Prompts</span>
-          <button className="btn-icon" onClick={handleNew} title="New prompt" aria-label="New prompt">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
+          <div style={{ display: "flex", gap: "4px" }}>
+            <button className="btn-icon" onClick={handleImport} title="Import prompt" aria-label="Import prompt">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button className="btn-icon" onClick={handleNew} title="New prompt" aria-label="New prompt">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="pl-search" style={{ padding: "8px 12px" }}>
           <input
@@ -802,10 +827,12 @@ function PromptsTab() {
             <div className="manage-section">
               <div className="manage-section-header">
                 <span className="manage-section-label">Prompt</span>
-                <div style={{ display: "flex", gap: "6px" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  {statusMsg && <span style={{ fontSize: "11px", color: "var(--color-skill)" }}>{statusMsg}</span>}
                   {dirty && (
                     <button className="btn-primary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleSave}>Save</button>
                   )}
+                  <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={async () => { if (draft) { const p = await window.api.exportPrompt(draft); if (p) { setStatusMsg("Saved to Downloads"); setTimeout(() => setStatusMsg(""), 3000); } } }}>Export</button>
                   <button className="btn-secondary" style={{ fontSize: "11px", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
                 </div>
               </div>

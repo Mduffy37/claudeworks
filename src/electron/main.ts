@@ -27,6 +27,8 @@ import {
   saveGlobalClaudeMd,
   getPrompts,
   savePrompts,
+  getGlobalEnv,
+  saveGlobalEnv,
   getGlobalHooks,
   saveGlobalHooks,
   getGlobalDefaults,
@@ -228,6 +230,38 @@ ipcMain.handle("get-global-claude-md", () => getGlobalClaudeMd());
 ipcMain.handle("save-global-claude-md", (_event, content: string) => saveGlobalClaudeMd(content));
 ipcMain.handle("get-prompts", () => getPrompts());
 ipcMain.handle("save-prompts", (_event, prompts: any[]) => savePrompts(prompts));
+ipcMain.handle("export-prompt", async (_event, prompt: any) => {
+  const name = (prompt.name || "prompt").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  const downloadsPath = path.join(os.homedir(), "Downloads", `${name}.md`);
+  fs.writeFileSync(downloadsPath, prompt.content ?? "", "utf-8");
+  return downloadsPath;
+});
+ipcMain.handle("import-prompt", async () => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "Import Prompt",
+    filters: [{ name: "Markdown", extensions: ["md"] }],
+    properties: ["openFile"],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  try {
+    const content = fs.readFileSync(result.filePaths[0], "utf-8");
+    const fileName = path.basename(result.filePaths[0], ".md");
+    return {
+      id: `prompt-${Date.now()}`,
+      name: fileName,
+      description: "",
+      tags: [],
+      content,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+});
+ipcMain.handle("get-global-env", () => getGlobalEnv());
+ipcMain.handle("save-global-env", (_event, env: Record<string, string>) => saveGlobalEnv(env));
 ipcMain.handle("get-global-hooks", () => getGlobalHooks());
 ipcMain.handle("save-global-hooks", (_event, hooks: Record<string, any>) => saveGlobalHooks(hooks));
 ipcMain.handle("get-global-defaults", () => getGlobalDefaults());
