@@ -111,7 +111,7 @@ export function App() {
       <div className="sidebar">
         <div className="app-title">
           <div className="app-title-icon">
-            <img src="./logo.png" alt="" width="240" height="240" />
+            <img src="./logo.svg" alt="" width="240" height="240" />
           </div>
           <span className="app-title-text">Claude Profiles</span>
         </div>
