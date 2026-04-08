@@ -8,6 +8,7 @@ interface Props {
   onSelect: (name: string) => void;
   onNew: () => void;
   onLaunch: (name: string, directory?: string) => void;
+  onSave?: () => Promise<void> | void;
   dirty?: boolean;
 }
 
@@ -21,15 +22,19 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
+function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty }: {
   profile: Profile;
   onLaunch: (name: string, directory?: string) => void;
+  onSave?: () => Promise<void> | void;
   isSelectedAndDirty?: boolean;
 }) {
   const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const [selectedDir, setSelectedDir] = useState(dirs[0] ?? "");
 
   const handleLaunch = async () => {
+    if (isSelectedAndDirty && onSave) {
+      await onSave();
+    }
     let dir = selectedDir || undefined;
     if (!dir) {
       const picked = await window.api.selectDirectory();
@@ -51,32 +56,23 @@ function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
           <option key={dir} value={dir}>{shortPath(dir)}</option>
         ))}
       </select>
-      {isSelectedAndDirty ? (
-        <button className="btn-launch-sidebar" disabled title="Save changes first">
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="btn-launch-label">Save first</span>
-        </button>
-      ) : (
-        <button
-          className="btn-launch-sidebar"
-          onClick={handleLaunch}
-          title={`Launch "${profile.name}"${selectedDir ? ` in ${shortPath(selectedDir)}` : ""}`}
-        >
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="btn-launch-label">Launch</span>
-        </button>
-      )}
+      <button
+        className="btn-launch-sidebar"
+        onClick={handleLaunch}
+        title={`Launch "${profile.name}"${selectedDir ? ` in ${shortPath(selectedDir)}` : ""}`}
+      >
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="btn-launch-label">Launch</span>
+      </button>
     </div>
   );
 }
 
 type SidebarSort = "name" | "plugins" | "recent";
 
-export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, dirty }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, onSave, dirty }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
 
@@ -173,7 +169,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
                   {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
                 </div>
               </div>
-              <SidebarLaunch profile={p} onLaunch={onLaunch} isSelectedAndDirty={p.name === selectedName && !!dirty} />
+              <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} />
             </div>
           ))
         )}

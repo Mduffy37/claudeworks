@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { ConfirmDialog } from "./components/shared/ConfirmDialog";
 import { ManageDialog } from "./components/ManageDialog";
 import { useProfiles } from "./hooks/useProfiles";
@@ -22,6 +22,7 @@ export function App() {
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
   const [showManageDialog, setShowManageDialog] = useState(false);
+  const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
   const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook } =
     useTeams();
   const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
@@ -242,6 +243,7 @@ export function App() {
             onSelect={handleSelect}
             onNew={handleNew}
             onLaunch={handleLaunch}
+            onSave={() => editorSaveRef.current?.()}
             dirty={dirty}
           />
         ) : (
@@ -293,6 +295,7 @@ export function App() {
             onDuplicate={handleDuplicate}
             dirty={dirty}
             onDirtyChange={setDirty}
+            onRegisterSave={(fn) => { editorSaveRef.current = fn; }}
           />
         ) : (
           <TeamEditor
