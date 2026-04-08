@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { PluginWithItems, Profile } from "../../electron/types";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 interface Props {
   plugin: PluginWithItems | null;
@@ -228,33 +229,17 @@ export function PluginManager({
 
       {/* Uninstall confirmation modal */}
       {showConfirm && (
-        <div className="modal-backdrop" onClick={() => setShowConfirm(false)}>
-          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Uninstall {plugin.pluginName}?</span>
-              <button className="modal-close" onClick={() => setShowConfirm(false)}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">
-                {usedByProfiles.length > 0
-                  ? `This plugin is used by ${usedByProfiles.length} profile${usedByProfiles.length !== 1 ? "s" : ""} (${usedByProfiles.map((p) => p.name).join(", ")}). They will show as unhealthy after removal.`
-                  : "This plugin is not used by any profiles."}
-              </p>
-              <div className="modal-confirm-actions">
-                <button className="btn-secondary" onClick={() => setShowConfirm(false)}>
-                  Cancel
-                </button>
-                <button className="btn-danger" onClick={handleUninstall}>
-                  Uninstall
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title={`Uninstall ${plugin.pluginName}?`}
+          description={
+            usedByProfiles.length > 0
+              ? `This plugin is used by ${usedByProfiles.length} profile${usedByProfiles.length !== 1 ? "s" : ""} (${usedByProfiles.map((p) => p.name).join(", ")}). They will show as unhealthy after removal.`
+              : "This plugin is not used by any profiles."
+          }
+          confirmLabel="Uninstall"
+          onConfirm={handleUninstall}
+          onCancel={() => setShowConfirm(false)}
+        />
       )}
     </div>
   );

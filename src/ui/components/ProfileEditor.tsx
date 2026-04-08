@@ -8,6 +8,7 @@ import type {
 import { PluginPicker } from "./PluginPicker";
 import { SkillToggler } from "./SkillToggler";
 import { SettingsModal } from "./SettingsModal";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -1050,37 +1051,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
       {/* Delete confirmation */}
       {confirmDelete && profile && (
-        <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
-          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Delete Profile</span>
-              <button className="modal-close" onClick={() => setConfirmDelete(false)}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">
-                Are you sure you want to delete <strong>{profile.name}</strong>? This will remove the profile configuration and its assembled config directory. This cannot be undone.
-              </p>
-              <div className="modal-confirm-actions">
-                <button className="btn-secondary" onClick={() => setConfirmDelete(false)}>
-                  Cancel
-                </button>
-                <button
-                  className="btn-danger"
-                  onClick={() => {
-                    setConfirmDelete(false);
-                    onDelete(profile.name);
-                  }}
-                >
-                  Delete Profile
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Delete Profile"
+          description={<>Are you sure you want to delete <strong>{profile.name}</strong>? This will remove the profile configuration and its assembled config directory. This cannot be undone.</>}
+          confirmLabel="Delete Profile"
+          onConfirm={() => { setConfirmDelete(false); onDelete(profile.name); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
 
       {/* Settings modal */}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { ConfirmDialog } from "./components/shared/ConfirmDialog";
 import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
@@ -310,31 +311,13 @@ export function App() {
         )}
       </div>
       {pendingNav && (
-        <div className="modal-backdrop" onClick={handleCancelNav}>
-          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Unsaved Changes</span>
-              <button className="modal-close" onClick={handleCancelNav}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">
-                Changes to <strong>{activeTab === "teams" ? (selectedTeam?.name ?? "this team") : (selectedProfile?.name ?? "this profile")}</strong> will be lost if you switch now.
-              </p>
-              <div className="modal-confirm-actions">
-                <button className="btn-secondary" onClick={handleCancelNav}>
-                  Cancel
-                </button>
-                <button className="btn-danger" onClick={handleDiscardAndProceed}>
-                  Discard & Switch
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Unsaved Changes"
+          description={<>Changes to <strong>{activeTab === "teams" ? (selectedTeam?.name ?? "this team") : (selectedProfile?.name ?? "this profile")}</strong> will be lost if you switch now.</>}
+          confirmLabel="Discard & Switch"
+          onConfirm={handleDiscardAndProceed}
+          onCancel={handleCancelNav}
+        />
       )}
     </div>
   );

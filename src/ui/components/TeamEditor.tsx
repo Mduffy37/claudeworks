@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { Team, TeamMember, Profile, MergePreview as MergePreviewType } from "../../electron/types";
 import { MergePreview } from "./MergePreview";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 interface Props {
   team: Team | null;
@@ -386,25 +387,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
 
       {/* Delete confirmation */}
       {showDeleteConfirm && (
-        <div className="modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal-dialog modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Delete {draft.name}?</span>
-              <button className="modal-close" onClick={() => setShowDeleteConfirm(false)}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">This team will be permanently deleted.</p>
-              <div className="modal-confirm-actions">
-                <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                <button className="btn-danger" onClick={() => { setShowDeleteConfirm(false); onDelete(draft.name); }}>Delete</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title={`Delete ${draft.name}?`}
+          description="This team will be permanently deleted."
+          confirmLabel="Delete"
+          onConfirm={() => { setShowDeleteConfirm(false); onDelete(draft.name); }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       )}
     </div>
   );
