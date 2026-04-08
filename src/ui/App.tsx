@@ -267,6 +267,7 @@ export function App() {
             teamHealth={teamHealth}
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
+            onLaunch={handleLaunch}
           />
         )}
         {(activeTab === "profiles" || activeTab === "plugins") && (

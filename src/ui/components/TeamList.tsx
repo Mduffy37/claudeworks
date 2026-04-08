@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import type { Team } from "../../electron/types";
 
 interface Props {
@@ -7,9 +7,62 @@ interface Props {
   teamHealth: Record<string, string[]>;
   onSelect: (name: string) => void;
   onNew: () => void;
+  onLaunch: (name: string, directory?: string) => void;
 }
 
-export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: Props) {
+function shortPath(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+}
+
+function TeamSidebarLaunch({ team, onLaunch }: { team: Team; onLaunch: (name: string, directory?: string) => void }) {
+  const [selectedDir, setSelectedDir] = useState("");
+  const lead = team.members.find((m) => m.isLead);
+
+  const handleLaunch = async () => {
+    if (!lead) return;
+    let dir = selectedDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+    onLaunch(lead.profile, dir);
+  };
+
+  return (
+    <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
+      <select
+        className="sidebar-launch-select"
+        value={selectedDir}
+        onChange={(e) => setSelectedDir(e.target.value)}
+      >
+        <option value="">None</option>
+      </select>
+      <button
+        className="btn-launch-sidebar"
+        onClick={handleLaunch}
+        disabled={!lead}
+        title={lead ? `Launch lead profile "${lead.profile}"` : "No lead profile set"}
+      >
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="btn-launch-label">Launch</span>
+      </button>
+    </div>
+  );
+}
+
+export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew, onLaunch }: Props) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return teams;
+    return teams.filter((t) => t.name.toLowerCase().includes(q));
+  }, [teams, search]);
+
   return (
     <div className="team-list">
       <div className="profile-list-header">
@@ -21,8 +74,20 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: P
         </button>
       </div>
 
+      {teams.length > 0 && (
+        <div className="pl-search">
+          <input
+            type="text"
+            className="pl-search-input"
+            placeholder="Search teams..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       <div className="profile-list-items">
-        {teams.length === 0 ? (
+        {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
             <div className="empty-state-title">No teams yet</div>
@@ -31,8 +96,12 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: P
               Click <strong>+</strong> above to create a team.
             </div>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state" style={{ padding: "20px 8px" }}>
+            <div className="empty-state-title">No matches</div>
+          </div>
         ) : (
-          teams.map((t) => {
+          filtered.map((t) => {
             const lead = t.members.find((m) => m.isLead);
             const health = teamHealth[t.name];
             return (
@@ -73,6 +142,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, onSelect, onNew }: P
                     {lead ? ` · Lead: ${lead.profile}` : ""}
                   </div>
                 </div>
+                <TeamSidebarLaunch team={t} onLaunch={onLaunch} />
               </div>
             );
           })

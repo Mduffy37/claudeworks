@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { Profile } from "../../../src/electron/types";
 
 interface Props {
@@ -29,34 +29,15 @@ function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
   const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const [selectedDir, setSelectedDir] = useState(dirs[0] ?? "");
 
-  if (isSelectedAndDirty) {
-    return (
-      <button className="btn-launch-sidebar" disabled title="Save changes first">
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="btn-launch-label">Save first</span>
-      </button>
-    );
-  }
-
-  if (dirs.length <= 1) {
-    return (
-      <button
-        className="btn-launch-sidebar"
-        onClick={(e) => {
-          e.stopPropagation();
-          onLaunch(profile.name, dirs[0]);
-        }}
-        title={`Launch "${profile.name}"`}
-      >
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="btn-launch-label">Launch</span>
-      </button>
-    );
-  }
+  const handleLaunch = async () => {
+    let dir = selectedDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+    onLaunch(profile.name, dir);
+  };
 
   return (
     <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
@@ -65,25 +46,43 @@ function SidebarLaunch({ profile, onLaunch, isSelectedAndDirty }: {
         value={selectedDir}
         onChange={(e) => setSelectedDir(e.target.value)}
       >
+        <option value="">None</option>
         {dirs.map((dir) => (
           <option key={dir} value={dir}>{shortPath(dir)}</option>
         ))}
       </select>
-      <button
-        className="btn-launch-sidebar"
-        onClick={() => onLaunch(profile.name, selectedDir)}
-        title={`Launch "${profile.name}" in ${selectedDir}`}
-      >
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="btn-launch-label">Launch</span>
-      </button>
+      {isSelectedAndDirty ? (
+        <button className="btn-launch-sidebar" disabled title="Save changes first">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="btn-launch-label">Save first</span>
+        </button>
+      ) : (
+        <button
+          className="btn-launch-sidebar"
+          onClick={handleLaunch}
+          title={`Launch "${profile.name}"${selectedDir ? ` in ${shortPath(selectedDir)}` : ""}`}
+        >
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="btn-launch-label">Launch</span>
+        </button>
+      )}
     </div>
   );
 }
 
 export function ProfileList({ profiles, selectedName, profileHealth, onSelect, onNew, onLaunch, dirty }: Props) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return profiles;
+    return profiles.filter((p) => p.name.toLowerCase().includes(q));
+  }, [profiles, search]);
+
   return (
     <div className="profile-list">
       <div className="profile-list-header">
@@ -95,8 +94,20 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
         </button>
       </div>
 
+      {profiles.length > 0 && (
+        <div className="pl-search">
+          <input
+            type="text"
+            className="pl-search-input"
+            placeholder="Search profiles..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       <div className="profile-list-items">
-        {profiles.length === 0 ? (
+        {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
             <div className="empty-state-title">No profiles yet</div>
@@ -105,8 +116,12 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
               Click <strong>+</strong> above to create your first profile.
             </div>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state" style={{ padding: "20px 8px" }}>
+            <div className="empty-state-title">No matches</div>
+          </div>
         ) : (
-          profiles.map((p) => (
+          filtered.map((p) => (
             <div
               key={p.name}
               className={`profile-item ${p.name === selectedName ? "selected" : ""}`}
