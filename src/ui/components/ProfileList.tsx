@@ -37,7 +37,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
         <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
           <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Launch
+        <span className="btn-launch-label">Launch</span>
       </button>
     );
   }
@@ -61,7 +61,7 @@ function SidebarLaunch({ profile, onLaunch }: { profile: Profile; onLaunch: (nam
         <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
           <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Launch
+        <span className="btn-launch-label">Launch</span>
       </button>
     </div>
   );

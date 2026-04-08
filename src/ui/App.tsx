@@ -212,21 +212,20 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="drag-bar" />
+      <div className="drag-bar">
+        <div className="drag-bar-brand">
+          <img src="./logo.svg" alt="" width="16" height="16" className="drag-bar-logo" />
+          <span className="drag-bar-title">Claude Profiles</span>
+        </div>
+      </div>
       <div className="sidebar">
         {/* Tab switcher */}
         <div className="sidebar-tabs">
           <button
-            className={`sidebar-tab${activeTab === "profiles" ? " active" : ""}`}
+            className={`sidebar-tab${activeTab === "profiles" || activeTab === "plugins" ? " active" : ""}`}
             onClick={() => handleTabSwitch("profiles")}
           >
             Profiles
-          </button>
-          <button
-            className={`sidebar-tab${activeTab === "plugins" ? " active" : ""}`}
-            onClick={() => handleTabSwitch("plugins")}
-          >
-            Plugins
           </button>
           <button
             className={`sidebar-tab${activeTab === "teams" ? " active" : ""}`}
@@ -235,28 +234,24 @@ export function App() {
             Teams
           </button>
         </div>
-        <div className="app-title">
-          <div className="app-title-icon">
-            <img src="./logo.svg" alt="" width="240" height="240" />
-          </div>
-          <span className="app-title-text">Claude Profiles</span>
-        </div>
-        {activeTab === "profiles" ? (
-          <ProfileList
-            profiles={profiles}
-            selectedName={selectedName}
-            profileHealth={profileHealth}
-            onSelect={handleSelect}
-            onNew={handleNew}
-            onLaunch={handleLaunch}
-          />
-        ) : activeTab === "plugins" ? (
-          <PluginList
-            plugins={plugins}
-            selectedPlugin={selectedPlugin}
-            availableUpdates={availableUpdates}
-            onSelect={setSelectedPlugin}
-          />
+        {activeTab === "profiles" || activeTab === "plugins" ? (
+          activeTab === "plugins" ? (
+            <PluginList
+              plugins={plugins}
+              selectedPlugin={selectedPlugin}
+              availableUpdates={availableUpdates}
+              onSelect={setSelectedPlugin}
+            />
+          ) : (
+            <ProfileList
+              profiles={profiles}
+              selectedName={selectedName}
+              profileHealth={profileHealth}
+              onSelect={handleSelect}
+              onNew={handleNew}
+              onLaunch={handleLaunch}
+            />
+          )
         ) : (
           <TeamList
             teams={teams}
@@ -265,6 +260,17 @@ export function App() {
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
           />
+        )}
+        {(activeTab === "profiles" || activeTab === "plugins") && (
+          <button
+            className={`sidebar-plugins-btn${activeTab === "plugins" ? " active" : ""}`}
+            onClick={() => handleTabSwitch("plugins")}
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1v6M8 9v6M1 8h6M9 8h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+            Manage Plugins
+          </button>
         )}
       </div>
       <div className="main">
