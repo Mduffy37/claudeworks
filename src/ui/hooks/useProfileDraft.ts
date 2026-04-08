@@ -38,27 +38,36 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [disabledMcpServers, setDisabledMcpServers] = useState<Record<string, string[]>>({});
   const [launchFlags, setLaunchFlags] = useState<NonNullable<Profile["launchFlags"]>>({});
   const [customFlags, setCustomFlags] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
   const handleSave = useCallback(async () => {
-    if (!name.trim()) return;
-    await onSave({
-      name: name.trim(),
-      description,
-      directory: directories[0] || undefined,
-      directories: directories.length > 0 ? directories : undefined,
-      alias: alias.trim() || undefined,
-      plugins: selectedPlugins,
-      excludedItems,
-      model: (model || undefined) as Profile["model"],
-      effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
-      voiceEnabled,
-      customClaudeMd: customClaudeMd || undefined,
-      disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
-      launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
-      customFlags: customFlags.trim() || undefined,
-    });
-    onDirtyChange(false);
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, onSave, onDirtyChange]);
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      await onSave({
+        name: name.trim(),
+        description,
+        directory: directories[0] || undefined,
+        directories: directories.length > 0 ? directories : undefined,
+        alias: alias.trim() || undefined,
+        plugins: selectedPlugins,
+        excludedItems,
+        model: (model || undefined) as Profile["model"],
+        effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
+        voiceEnabled,
+        customClaudeMd: customClaudeMd || undefined,
+        disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
+        launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
+        customFlags: customFlags.trim() || undefined,
+      });
+      onDirtyChange(false);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -79,6 +88,8 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setCustomFlags(profile.customFlags ?? "");
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
+      setOverviewOpen(false);
+      setConfirmDelete(false);
     } else if (isNew) {
       setName("");
       setDescription("");
@@ -96,6 +107,8 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setCustomFlags("");
       setLaunchDir("");
       onDirtyChange(false);
+      setOverviewOpen(false);
+      setConfirmDelete(false);
     }
   }, [profile, isNew, onDirtyChange]);
 
@@ -171,6 +184,8 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     disabledMcpServers, setDisabledMcpServers,
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
+    saving,
+    saveStatus,
     // Callbacks
     handleSave,
     handleToggleMcp,

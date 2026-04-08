@@ -159,8 +159,12 @@ export function App() {
   };
 
   const handleDeleteTeam = async (name: string) => {
-    await deleteTeamHook(name);
-    if (selectedTeamName === name) setSelectedTeamName(null);
+    try {
+      await deleteTeamHook(name);
+      if (selectedTeamName === name) setSelectedTeamName(null);
+    } catch (err: any) {
+      console.error("Delete team failed:", err);
+    }
   };
 
   const selectedTeam = useMemo(
@@ -171,9 +175,11 @@ export function App() {
   const selectedPluginData = plugins.find((p) => p.name === selectedPlugin) ?? null;
 
   const handleDelete = async (name: string) => {
-    await deleteProfile(name);
-    if (selectedName === name) {
-      setSelectedName(null);
+    try {
+      await deleteProfile(name);
+      if (selectedName === name) setSelectedName(null);
+    } catch (err: any) {
+      console.error("Delete failed:", err);
     }
   };
 

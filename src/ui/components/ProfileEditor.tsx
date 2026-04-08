@@ -95,6 +95,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
     disabledMcpServers, setDisabledMcpServers,
     launchFlags, setLaunchFlags,
     customFlags, setCustomFlags,
+    saving,
+    saveStatus,
     handleSave,
     handleToggleMcp,
     markDirty,
@@ -117,16 +119,24 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
     setLaunchError(null);
     setLaunching(true);
     try {
-      if (dirty) await handleSave();
+      if (dirty) {
+        try {
+          await handleSave();
+        } catch (err: any) {
+          setLaunchError(`Save failed: ${err?.message ?? "Unknown error"}`);
+          setLaunching(false);
+          return;
+        }
+      }
       let dir = launchDir || undefined;
       if (!dir) {
         const picked = await window.api.selectDirectory();
-        if (!picked) return;
+        if (!picked) { setLaunching(false); return; }
         dir = picked;
       }
       await onLaunch(profile.name, dir);
     } catch (err: any) {
-      setLaunchError(err?.message ?? "Unknown error");
+      setLaunchError(`Launch failed: ${err?.message ?? "Unknown error"}`);
     } finally {
       setLaunching(false);
     }
@@ -194,6 +204,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
         isNew={isNew}
         name={name}
         dirty={dirty}
+        saving={saving}
+        saveStatus={saveStatus}
         selectedPlugins={selectedPlugins}
         directories={directories}
         launchDir={launchDir}
@@ -211,7 +223,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, onSave, 
 
       {launchError && (
         <div className="pe-launch-error">
-          <span>Launch failed: {launchError}</span>
+          <span>{launchError}</span>
           <button className="pe-launch-error-dismiss" onClick={() => setLaunchError(null)}>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />

@@ -71,6 +71,8 @@ interface ProfileTopBarProps {
   isNew: boolean;
   name: string;
   dirty: boolean;
+  saving: boolean;
+  saveStatus: "idle" | "saved";
   selectedPlugins: string[];
   directories: string[];
   launchDir: string;
@@ -91,6 +93,8 @@ export function ProfileTopBar({
   isNew,
   name,
   dirty,
+  saving,
+  saveStatus,
   selectedPlugins,
   directories,
   launchDir,
@@ -178,10 +182,10 @@ export function ProfileTopBar({
 
           <button
             className="btn-primary"
-            disabled={!name.trim() || !dirty}
+            disabled={!name.trim() || (!dirty && saveStatus !== "saved") || saving}
             onClick={onSave}
           >
-            {isNew ? "Create Profile" : "Save"}
+            {saving ? "Saving\u2026" : saveStatus === "saved" ? "\u2713 Saved" : isNew ? "Create Profile" : "Save"}
           </button>
 
           {!isNew && profile && (
