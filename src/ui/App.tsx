@@ -15,7 +15,7 @@ export function App() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | null>(null);
+  const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "plugins" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "plugins">("profiles");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
@@ -58,6 +58,9 @@ export function App() {
     if (pendingNav.type === "select") {
       setSelectedName(pendingNav.name);
       setIsCreating(false);
+    } else if (pendingNav.type === "tab") {
+      setActiveTab(pendingNav.tab);
+      if (pendingNav.tab === "plugins") checkForUpdates();
     } else {
       setSelectedName(null);
       setIsCreating(true);
@@ -71,7 +74,8 @@ export function App() {
 
   const handleTabSwitch = (tab: "profiles" | "plugins") => {
     if (tab === activeTab) return;
-    if (tab === "plugins" && dirty) {
+    if (dirty) {
+      setPendingNav({ type: "tab", tab });
       return;
     }
     setActiveTab(tab);
