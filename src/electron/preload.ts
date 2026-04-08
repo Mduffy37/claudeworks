@@ -20,6 +20,12 @@ const api: ElectronAPI = {
   updatePlugin: (name) => ipcRenderer.invoke("update-plugin", name),
   uninstallPlugin: (name) => ipcRenderer.invoke("uninstall-plugin", name),
   checkPluginUpdates: () => ipcRenderer.invoke("check-plugin-updates"),
+  getTeams: () => ipcRenderer.invoke("get-teams"),
+  saveTeam: (team) => ipcRenderer.invoke("save-team", team),
+  deleteTeam: (name) => ipcRenderer.invoke("delete-team", name),
+  renameTeam: (oldName, team) => ipcRenderer.invoke("rename-team", oldName, team),
+  getTeamMergePreview: (team) => ipcRenderer.invoke("get-team-merge-preview", team),
+  checkTeamHealth: () => ipcRenderer.invoke("check-team-health"),
 };
 
 contextBridge.exposeInMainWorld("api", api);

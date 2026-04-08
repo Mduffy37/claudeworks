@@ -91,9 +91,50 @@ export interface Profile {
   customFlags?: string; // additional CLI flags as raw text
 }
 
+/** A member of a team. */
+export interface TeamMember {
+  profile: string;
+  role: string;
+  instructions: string;
+  isLead: boolean;
+}
+
+/** A named team of profiles. */
+export interface Team {
+  name: string;
+  description: string;
+  members: TeamMember[];
+  model?: "opus" | "sonnet" | "haiku";
+  effortLevel?: "low" | "medium" | "high" | "max";
+  customFlags?: string;
+}
+
+/** Merge preview for a team. */
+export interface MergePreview {
+  plugins: string[];
+  mcpServers: string[];
+  agents: Array<{
+    name: string;
+    profile: string;
+    instructions: string;
+  }>;
+  settings: {
+    model?: string;
+    effortLevel?: string;
+    customFlags?: string;
+    source: string;
+  };
+  conflicts: string[];
+}
+
 /** Stored profiles file format. */
 export interface ProfilesStore {
   profiles: Record<string, Profile>;
+}
+
+/** Stored teams file format (separate from profiles). */
+export interface TeamsStore {
+  teams: Record<string, Team>;
 }
 
 /** IPC API exposed to the renderer via contextBridge. */
@@ -115,6 +156,12 @@ export interface ElectronAPI {
   updatePlugin: (name: string) => Promise<void>;
   uninstallPlugin: (name: string) => Promise<void>;
   checkPluginUpdates: () => Promise<Record<string, string>>;
+  getTeams: () => Promise<Team[]>;
+  saveTeam: (team: Team) => Promise<Team>;
+  deleteTeam: (name: string) => Promise<void>;
+  renameTeam: (oldName: string, team: Team) => Promise<Team>;
+  getTeamMergePreview: (team: Team) => Promise<MergePreview>;
+  checkTeamHealth: () => Promise<Record<string, string[]>>;
 }
 
 declare global {
