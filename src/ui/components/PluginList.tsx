@@ -52,7 +52,12 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
         onClick={() => onSelect(plugin.name)}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && onSelect(plugin.name)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(plugin.name);
+          }
+        }}
       >
         <div className="pl-item-name">
           {plugin.pluginName}

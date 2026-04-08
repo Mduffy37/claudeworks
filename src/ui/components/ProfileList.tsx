@@ -96,7 +96,12 @@ export function ProfileList({ profiles, selectedName, profileHealth, onSelect, o
               onClick={() => onSelect(p.name)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && onSelect(p.name)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(p.name);
+                }
+              }}
             >
               <div className="profile-item-icon">
                 {profileInitial(p.name)}

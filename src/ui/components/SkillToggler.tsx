@@ -44,7 +44,7 @@ function resolveAllDeps(
 }
 
 // A custom checkbox that matches the design system
-function ItemCheckbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function ItemCheckbox({ checked, onChange, label }: { checked: boolean; onChange: () => void; label?: string }) {
   return (
     <div
       className={`item-checkbox${checked ? " checked" : ""}`}
@@ -54,6 +54,7 @@ function ItemCheckbox({ checked, onChange }: { checked: boolean; onChange: () =>
       }}
       role="checkbox"
       aria-checked={checked}
+      aria-label={label}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === " " || e.key === "Enter") {
@@ -111,11 +112,11 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                   key={item.name}
                   className="skill-item"
                   title={item.description || undefined}
-                  onClick={() => onToggle(item.name, !enabled)}
                 >
                   <ItemCheckbox
                     checked={enabled}
                     onChange={() => onToggle(item.name, !enabled)}
+                    label={isCommand ? `/${item.name}` : item.name}
                   />
                   <span
                     className={

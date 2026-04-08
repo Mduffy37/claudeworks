@@ -57,6 +57,7 @@ export function InfoCard({
         className="pe-info-card-toggle"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-controls="profile-info-body"
       >
         <span className="pe-info-card-toggle-label">Profile Info</span>
         {!open && directories.length > 0 && (
@@ -68,7 +69,7 @@ export function InfoCard({
       </button>
 
       {open && (
-        <div className="pe-info-card-body">
+        <div className="pe-info-card-body" id="profile-info-body">
           <div className="field">
             <label>Description</label>
             <input
