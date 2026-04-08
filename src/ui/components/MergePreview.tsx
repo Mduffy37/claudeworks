@@ -35,7 +35,7 @@ export function MergePreview({ data, onClose }: Props) {
           {/* Agent Definitions */}
           {data.agents.length > 0 && (
             <div className="mp-section">
-              <div className="pm-label">Agent Definitions ({data.agents.length})</div>
+              <div className="pm-label">Members ({data.agents.length})</div>
               <div className="mp-agents">
                 {data.agents.map((a) => (
                   <div key={a.profile} className="mp-agent">

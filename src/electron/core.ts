@@ -1209,14 +1209,14 @@ export function getTeamMergePreview(team: Team): MergePreview {
       }
     }
 
-    // Non-lead members become agents
-    if (!member.isLead) {
-      agents.push({
-        name: member.role || member.profile,
-        profile: member.profile,
-        instructions: member.instructions,
-      });
-    }
+    // All members appear in agent definitions; lead is labeled
+    agents.push({
+      name: member.isLead
+        ? `${member.role || member.profile} (lead)`
+        : (member.role || member.profile),
+      profile: member.profile,
+      instructions: member.instructions,
+    });
   }
 
   // Detect exclusion conflicts: same plugin in multiple profiles with different exclusions

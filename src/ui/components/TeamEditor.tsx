@@ -26,7 +26,7 @@ interface Props {
   profiles: Profile[];
   isNew: boolean;
   brokenMembers: string[];
-  onSave: (team: Team) => void;
+  onSave: (team: Team) => void | Promise<void>;
   onDelete: (name: string) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
@@ -245,9 +245,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, onSave, onDel
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!draft.name.trim()) return;
-    onSave(draft);
+    await onSave(draft);
     onDirtyChange(false);
   };
 
