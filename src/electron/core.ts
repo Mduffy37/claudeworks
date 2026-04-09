@@ -542,6 +542,48 @@ export function loadProfiles(): Profile[] {
   return Object.values(store.profiles);
 }
 
+/**
+ * Ensure a default profile exists. If none has `isDefault: true`,
+ * create an empty "Default" profile. Called on app startup.
+ */
+export function ensureDefaultProfile(): void {
+  const store = readProfilesStore();
+  const hasDefault = Object.values(store.profiles).some((p) => p.isDefault);
+  if (hasDefault) return;
+
+  const profile: Profile = {
+    name: "Default",
+    plugins: [],
+    excludedItems: {},
+    description: "Your default profile. Running `claude` launches with these plugins and settings.",
+    isDefault: true,
+    alias: "claude",
+    useDefaultAuth: true,
+  };
+
+  // Avoid name collision — if "Default" already exists and isn't default, pick a unique name
+  if (store.profiles["Default"]) {
+    let suffix = 2;
+    while (store.profiles[`Default-${suffix}`]) suffix++;
+    profile.name = `Default-${suffix}`;
+  }
+
+  store.profiles[profile.name] = profile;
+  writeProfilesStore(store);
+  generateAlias(profile);
+
+  // Ensure PATH is set up
+  const binDir = path.join(PROFILES_DIR, "bin");
+  const shell = process.env.SHELL ?? "/bin/zsh";
+  const rcFile = shell.includes("zsh")
+    ? path.join(os.homedir(), ".zshrc")
+    : path.join(os.homedir(), ".bashrc");
+  const existingRc = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, "utf-8") : "";
+  if (!existingRc.includes(binDir)) {
+    fs.appendFileSync(rcFile, `\nexport PATH="${binDir}:$PATH"\n`);
+  }
+}
+
 export function renameProfile(oldName: string, profile: Profile): Profile {
   validateProfileName(oldName);
   validateProfileName(profile.name);

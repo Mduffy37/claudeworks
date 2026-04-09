@@ -42,6 +42,7 @@ import {
   saveProjectClaudeMd,
   getProfileConfigDir,
   getClaudeHome,
+  ensureDefaultProfile,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -91,6 +92,10 @@ ipcMain.handle("get-mcp-servers", (_event, directory?: string) => {
 
 ipcMain.handle("get-profiles", () => {
   return loadProfiles();
+});
+
+ipcMain.handle("ensure-default-profile", () => {
+  ensureDefaultProfile();
 });
 
 ipcMain.handle("check-profile-health", () => {
@@ -184,7 +189,7 @@ ipcMain.handle("add-bin-to-path", () => {
     ? path.join(os.homedir(), ".zshrc")
     : path.join(os.homedir(), ".bashrc");
 
-  const exportLine = `\nexport PATH="$PATH:${binDir}"\n`;
+  const exportLine = `\nexport PATH="${binDir}:$PATH"\n`;
   const existing = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, "utf-8") : "";
   if (!existing.includes(binDir)) {
     fs.appendFileSync(rcFile, exportLine);
@@ -371,7 +376,10 @@ ipcMain.handle("get-claude-home", () => getClaudeHome());
 // App lifecycle
 // ---------------------------------------------------------------------------
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  ensureDefaultProfile();
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   app.quit();
