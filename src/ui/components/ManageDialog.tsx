@@ -10,9 +10,11 @@ interface Props {
   plugins: PluginWithItems[];
   profiles: Profile[];
   availableUpdates: Record<string, string>;
+  hasDefaultProfile: boolean;
   onUpdate: (name: string) => Promise<void>;
   onUninstall: (name: string) => Promise<void>;
   onNavigateToProfile: (profileName: string) => void;
+  onCreateDefault: () => void;
   onClose: () => void;
 }
 
@@ -951,9 +953,11 @@ export function ManageDialog({
   plugins,
   profiles,
   availableUpdates,
+  hasDefaultProfile,
   onUpdate,
   onUninstall,
   onNavigateToProfile,
+  onCreateDefault,
   onClose,
 }: Props) {
   const [activeTab, setActiveTab] = useState<ManageTab>("plugins");
@@ -1020,26 +1024,38 @@ export function ManageDialog({
         </div>
         <div className="manage-dialog-body">
           {activeTab === "plugins" && (
-            <div className="manage-dialog-split">
-              <div className="manage-dialog-sidebar">
-                <PluginList
-                  plugins={plugins}
-                  selectedPlugin={selectedPlugin}
-                  availableUpdates={availableUpdates}
-                  onSelect={setSelectedPlugin}
-                />
+            <>
+              {!hasDefaultProfile && (
+                <div className="manage-default-nudge">
+                  <div className="manage-default-nudge-text">
+                    <strong>No default profile.</strong> Running <code>claude</code> loads all {plugins.length} installed plugin{plugins.length !== 1 ? "s" : ""}.
+                  </div>
+                  <button className="btn-primary" onClick={onCreateDefault}>
+                    Create Default Profile
+                  </button>
+                </div>
+              )}
+              <div className="manage-dialog-split">
+                <div className="manage-dialog-sidebar">
+                  <PluginList
+                    plugins={plugins}
+                    selectedPlugin={selectedPlugin}
+                    availableUpdates={availableUpdates}
+                    onSelect={setSelectedPlugin}
+                  />
+                </div>
+                <div className="manage-dialog-content">
+                  <PluginManager
+                    plugin={selectedPluginData}
+                    profiles={profiles}
+                    availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
+                    onUpdate={onUpdate}
+                    onUninstall={onUninstall}
+                    onNavigateToProfile={(name) => { onClose(); onNavigateToProfile(name); }}
+                  />
+                </div>
               </div>
-              <div className="manage-dialog-content">
-                <PluginManager
-                  plugin={selectedPluginData}
-                  profiles={profiles}
-                  availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
-                  onUpdate={onUpdate}
-                  onUninstall={onUninstall}
-                  onNavigateToProfile={(name) => { onClose(); onNavigateToProfile(name); }}
-                />
-              </div>
-            </div>
+            </>
           )}
 
           {activeTab === "projects" && <ProjectsTab />}

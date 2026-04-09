@@ -86,6 +86,11 @@ export function App() {
     [profiles, selectedName]
   );
 
+  const hasDefaultProfile = useMemo(
+    () => profiles.some((p) => p.isDefault),
+    [profiles]
+  );
+
   // Skip dirty guard for brand-new profiles/teams with no name entered
   const shouldGuard = dirty && !(isCreating && !selectedName) && !(isCreatingTeam && !selectedTeamName);
 
@@ -172,6 +177,22 @@ export function App() {
     }
     setActiveTab("profiles");
     setSelectedName(profileName);
+    setIsCreating(false);
+  };
+
+  const handleCreateDefault = async () => {
+    const defaultProfile: Profile = {
+      name: "Default",
+      plugins: [],
+      excludedItems: {},
+      description: "Your default profile. Running `claude` launches with these plugins and settings.",
+      isDefault: true,
+      alias: "claude",
+      useDefaultAuth: true,
+    };
+    await createProfile(defaultProfile);
+    setShowManageDialog(false);
+    setSelectedName("Default");
     setIsCreating(false);
   };
 
@@ -380,9 +401,11 @@ export function App() {
           plugins={plugins}
           profiles={profiles}
           availableUpdates={availableUpdates}
+          hasDefaultProfile={hasDefaultProfile}
           onUpdate={handlePluginUpdate}
           onUninstall={handlePluginUninstall}
           onNavigateToProfile={handleNavigateToProfile}
+          onCreateDefault={handleCreateDefault}
           onClose={handleCloseManageDialog}
         />
       )}

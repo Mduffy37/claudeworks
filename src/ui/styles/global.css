@@ -4057,6 +4057,34 @@ body {
 
 /* ── Settings tab ─────────────────────────────────────────────────────────── */
 
+.manage-default-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--warning, #e8a735) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning, #e8a735) 25%, transparent);
+  border-radius: 6px;
+  font-size: 0.846rem;
+  line-height: 1.4;
+}
+
+.manage-default-nudge code {
+  font-family: "SF Mono", monospace;
+  font-size: 0.769rem;
+  background: color-mix(in srgb, var(--warning, #e8a735) 15%, transparent);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.manage-default-nudge .btn-primary {
+  flex-shrink: 0;
+  font-size: 0.769rem;
+  padding: 5px 12px;
+}
+
 .pe-settings-tab {
   padding: 0 4px;
 }
