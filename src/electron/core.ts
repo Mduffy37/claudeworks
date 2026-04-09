@@ -671,7 +671,7 @@ function escSh(s: string): string {
  * Find the real `claude` binary by walking PATH entries, skipping the
  * profiles bin directory so an alias named "claude" doesn't shadow itself.
  */
-function findRealClaudeBinary(): string {
+export function findRealClaudeBinary(): string {
   const profilesBin = path.join(PROFILES_DIR, "bin");
   const pathDirs = (process.env.PATH ?? "").split(path.delimiter);
   for (const dir of pathDirs) {
@@ -1352,6 +1352,21 @@ export async function checkPluginUpdates(): Promise<Record<string, string>> {
   }
 
   return updates;
+}
+
+export async function getAvailablePlugins(): Promise<{ installed: any[]; available: any[] }> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  const { stdout } = await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "list", "--available", "--json",
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, maxBuffer: 1024 * 1024 });
+  return JSON.parse(stdout);
+}
+
+export async function installPlugin(pluginId: string): Promise<void> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "install", pluginId,
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 60000 });
 }
 
 // ---------------------------------------------------------------------------

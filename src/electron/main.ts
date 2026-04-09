@@ -17,6 +17,8 @@ import {
   updatePlugin,
   uninstallPlugin,
   checkPluginUpdates,
+  getAvailablePlugins,
+  installPlugin,
   loadTeams,
   saveTeam,
   renameTeam,
@@ -206,6 +208,14 @@ ipcMain.handle("uninstall-plugin", async (_event, name: string) => {
 
 ipcMain.handle("check-plugin-updates", async () => {
   return checkPluginUpdates();
+});
+
+ipcMain.handle("get-available-plugins", async () => {
+  return getAvailablePlugins();
+});
+
+ipcMain.handle("install-plugin", async (_event, pluginId: string) => {
+  await installPlugin(pluginId);
 });
 
 ipcMain.handle("get-teams", () => {

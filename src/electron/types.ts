@@ -144,6 +144,27 @@ export interface Prompt {
   updatedAt: number;
 }
 
+/** An available (not yet installed) plugin from a configured marketplace. */
+export interface AvailablePlugin {
+  pluginId: string;
+  name: string;
+  description: string;
+  marketplaceName: string;
+  source: { source: string; url?: string; sha?: string };
+  installCount: number;
+}
+
+/** An installed plugin as reported by `claude plugin list --json`. */
+export interface InstalledPluginInfo {
+  id: string;
+  version: string;
+  scope: string;
+  enabled: boolean;
+  installPath: string;
+  installedAt: string;
+  lastUpdated: string;
+}
+
 /** Stored profiles file format. */
 export interface ProfilesStore {
   profiles: Record<string, Profile>;
@@ -174,6 +195,8 @@ export interface ElectronAPI {
   updatePlugin: (name: string) => Promise<void>;
   uninstallPlugin: (name: string) => Promise<void>;
   checkPluginUpdates: () => Promise<Record<string, string>>;
+  getAvailablePlugins: () => Promise<{ installed: InstalledPluginInfo[]; available: AvailablePlugin[] }>;
+  installPlugin: (pluginId: string) => Promise<void>;
   getTeams: () => Promise<Team[]>;
   saveTeam: (team: Team) => Promise<Team>;
   deleteTeam: (name: string) => Promise<void>;
