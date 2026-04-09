@@ -275,6 +275,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     description, setDescription,
     directories, setDirectories,
     alias, setAlias,
+    isDefault, setIsDefault,
     selectedPlugins, setSelectedPlugins,
     excludedItems, setExcludedItems,
     localItems,
@@ -435,6 +436,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         onSave={handleSave}
         onLaunch={handleLaunch}
       />
+
+      {isDefault && (
+        <div className="pe-default-banner">
+          This is your default profile. Running <code>claude</code> in any terminal launches with these plugins and settings. Add only what you need for everyday use.
+        </div>
+      )}
 
       {launchError && (
         <div className="pe-launch-error">
@@ -679,6 +686,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               launchFlags={launchFlags}
               customFlags={customFlags}
               useDefaultAuth={useDefaultAuth}
+              isDefault={isDefault}
+              onSetAsDefault={() => {
+                setIsDefault(true);
+                setAlias("claude");
+                markDirty();
+              }}
               onChangeModel={(v) => { setModel(v); markDirty(); }}
               onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
               onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}

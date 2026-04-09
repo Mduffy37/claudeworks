@@ -41,6 +41,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [useDefaultAuth, setUseDefaultAuth] = useState(true);
   const [env, setEnv] = useState<Record<string, string>>({});
   const [disabledHooks, setDisabledHooks] = useState<Record<string, number[]>>({});
+  const [isDefault, setIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
@@ -54,6 +55,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         directory: directories[0] || undefined,
         directories: directories.length > 0 ? directories : undefined,
         alias: alias.trim() || undefined,
+        isDefault: isDefault || undefined,
         plugins: selectedPlugins,
         excludedItems,
         model: (model || undefined) as Profile["model"],
@@ -73,7 +75,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -83,6 +85,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
       setDirectories(dirs);
       setAlias(profile.alias ?? "");
+      setIsDefault(profile.isDefault ?? false);
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
       setModel(profile.model ?? "");
@@ -104,6 +107,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setDescription("");
       setDirectories([]);
       setAlias("");
+      setIsDefault(false);
       setSelectedPlugins([]);
       setExcludedItems({});
       setLocalItems([]);
@@ -178,6 +182,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     description, setDescription,
     directories, setDirectories,
     alias, setAlias,
+    isDefault, setIsDefault,
     selectedPlugins, setSelectedPlugins,
     excludedItems, setExcludedItems,
     localItems, setLocalItems,

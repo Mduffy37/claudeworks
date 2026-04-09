@@ -15,6 +15,8 @@ interface Props {
   env: Record<string, string>;
   profileName: string;
   disabledHooks: Record<string, number[]>;
+  isDefault?: boolean;
+  onSetAsDefault?: () => void;
   onChangeModel: (v: string) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
@@ -31,6 +33,7 @@ export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
     launchFlags, customFlags, useDefaultAuth, env, profileName, disabledHooks,
+    isDefault, onSetAsDefault,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
     onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks, onAddToPath,
   } = props;
@@ -252,16 +255,43 @@ export function SettingsTab(props: Props) {
         <div className="modal-fields">
           <div className="field">
             <label>CLI Alias</label>
-            <div className="field-with-button">
-              <input type="text" value={alias} onChange={(e) => onChangeAlias(e.target.value.replace(/[^a-z0-9-]/g, ""))} placeholder="e.g. claude-research" />
-              {!isInPath && <button className="btn-secondary" onClick={onAddToPath}>Add to PATH</button>}
-            </div>
-            {alias && (
-              <div className="field-hint">
-                {isInPath ? <>Run <code>{alias}</code> from any terminal to launch this profile</> : <>Saves to ~/.claude-profiles/bin/ — add to PATH to use</>}
-              </div>
+            {isDefault ? (
+              <>
+                <div className="field-with-button">
+                  <input type="text" value="claude" disabled style={{ opacity: 0.5 }} />
+                  <span className="field-managed-label">managed</span>
+                </div>
+                <div className="field-hint">
+                  This profile intercepts the <code>claude</code> command. The alias is managed automatically.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="field-with-button">
+                  <input type="text" value={alias} onChange={(e) => onChangeAlias(e.target.value.replace(/[^a-z0-9-]/g, ""))} placeholder="e.g. claude-research" />
+                  {!isInPath && <button className="btn-secondary" onClick={onAddToPath}>Add to PATH</button>}
+                </div>
+                {alias && (
+                  <div className="field-hint">
+                    {isInPath ? <>Run <code>{alias}</code> from any terminal to launch this profile</> : <>Saves to ~/.claude-profiles/bin/ — add to PATH to use</>}
+                  </div>
+                )}
+              </>
             )}
           </div>
+          {!isDefault && onSetAsDefault && (
+            <>
+              <div className="field-divider" />
+              <div className="field">
+                <button className="btn-secondary" style={{ width: "100%" }} onClick={onSetAsDefault}>
+                  Set as Default Profile
+                </button>
+                <div className="field-hint">
+                  Makes this profile the default. Running <code>claude</code> will launch with this profile's plugins and settings.
+                </div>
+              </div>
+            </>
+          )}
           <div className="field-divider" />
           <div className="field">
             <label>Launch Flags</label>
