@@ -972,6 +972,7 @@ export function ManageDialog({
   const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
   const [installedPluginIds, setInstalledPluginIds] = useState<Set<string>>(new Set());
   const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [discoverLoaded, setDiscoverLoaded] = useState(false);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
   const [selectedDiscoverPlugin, setSelectedDiscoverPlugin] = useState<string | null>(null);
 
@@ -982,6 +983,7 @@ export function ManageDialog({
       const data = await window.api.getAvailablePlugins();
       setAvailablePlugins(data.available);
       setInstalledPluginIds(new Set(data.installed.map((p) => p.id)));
+      setDiscoverLoaded(true);
     } catch (err: any) {
       setDiscoverError(err?.message ?? "Failed to load available plugins");
     } finally {
@@ -1066,7 +1068,7 @@ export function ManageDialog({
                   className={`discover-toggle-btn${pluginSubTab === "discover" ? " active" : ""}`}
                   onClick={() => {
                     setPluginSubTab("discover");
-                    if (availablePlugins.length === 0 && !discoverLoading) loadAvailablePlugins();
+                    if (!discoverLoaded && !discoverLoading) loadAvailablePlugins();
                   }}
                 >
                   Discover
@@ -1126,6 +1128,7 @@ export function ManageDialog({
                       </div>
                       <div className="manage-dialog-content">
                         <DiscoverDetail
+                          key={selectedDiscoverPlugin ?? "none"}
                           plugin={availablePlugins.find((p) => p.pluginId === selectedDiscoverPlugin) ?? null}
                           isInstalled={selectedDiscoverPlugin ? installedPluginIds.has(selectedDiscoverPlugin) : false}
                           onInstall={handleInstallPlugin}
