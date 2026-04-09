@@ -140,7 +140,7 @@ ipcMain.handle("duplicate-profile", async (_event, name: string) => {
     attempt++;
   }
 
-  const copy: Profile = { ...source, name: copyName };
+  const copy: Profile = { ...source, name: copyName, alias: undefined, isDefault: undefined };
   const saved = saveProfile(copy);
   assembleProfile(saved);
   if (saved.useDefaultAuth !== false) await copyCredentials(saved);
