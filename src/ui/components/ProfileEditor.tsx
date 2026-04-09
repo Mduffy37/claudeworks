@@ -701,7 +701,15 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       {confirmDelete && profile && (
         <ConfirmDialog
           title="Delete Profile"
-          description={<>Are you sure you want to delete <strong>{profile.name}</strong>? This will remove the profile configuration and its assembled config directory. This cannot be undone.</>}
+          description={
+            <>
+              Are you sure you want to delete <strong>{profile.name}</strong>?
+              {profile.isDefault && (
+                <> This is your default profile. Deleting it means running <code>claude</code> will load all installed plugins.</>
+              )}
+              {" "}This will remove the profile configuration and its assembled config directory. This cannot be undone.
+            </>
+          }
           confirmLabel="Delete Profile"
           onConfirm={() => { setConfirmDelete(false); onDelete(profile.name); }}
           onCancel={() => setConfirmDelete(false)}
