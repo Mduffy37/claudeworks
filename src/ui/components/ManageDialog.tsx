@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
-import type { PluginWithItems, Profile, Prompt } from "../../electron/types";
+import { DiscoverList } from "./DiscoverList";
+import { DiscoverDetail } from "./DiscoverDetail";
+import type { PluginWithItems, Profile, Prompt, AvailablePlugin } from "../../electron/types";
 import { PromptPicker } from "./PromptPicker";
 
 type ManageTab = "plugins" | "projects" | "global" | "prompts";
@@ -964,6 +966,34 @@ export function ManageDialog({
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Discover view state
+  type PluginSubTab = "installed" | "discover";
+  const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
+  const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
+  const [installedPluginIds, setInstalledPluginIds] = useState<Set<string>>(new Set());
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+  const [selectedDiscoverPlugin, setSelectedDiscoverPlugin] = useState<string | null>(null);
+
+  const loadAvailablePlugins = async () => {
+    setDiscoverLoading(true);
+    setDiscoverError(null);
+    try {
+      const data = await window.api.getAvailablePlugins();
+      setAvailablePlugins(data.available);
+      setInstalledPluginIds(new Set(data.installed.map((p) => p.id)));
+    } catch (err: any) {
+      setDiscoverError(err?.message ?? "Failed to load available plugins");
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  const handleInstallPlugin = async (pluginId: string) => {
+    await window.api.installPlugin(pluginId);
+    setInstalledPluginIds((prev) => new Set([...prev, pluginId]));
+  };
+
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
@@ -1025,36 +1055,86 @@ export function ManageDialog({
         <div className="manage-dialog-body">
           {activeTab === "plugins" && (
             <>
-              {!hasDefaultProfile && (
-                <div className="manage-default-nudge">
-                  <div className="manage-default-nudge-text">
-                    <strong>No default profile.</strong> Running <code>claude</code> loads all {plugins.length} installed plugin{plugins.length !== 1 ? "s" : ""}.
-                  </div>
-                  <button className="btn-primary" onClick={onCreateDefault}>
-                    Create Default Profile
-                  </button>
-                </div>
-              )}
-              <div className="manage-dialog-split">
-                <div className="manage-dialog-sidebar">
-                  <PluginList
-                    plugins={plugins}
-                    selectedPlugin={selectedPlugin}
-                    availableUpdates={availableUpdates}
-                    onSelect={setSelectedPlugin}
-                  />
-                </div>
-                <div className="manage-dialog-content">
-                  <PluginManager
-                    plugin={selectedPluginData}
-                    profiles={profiles}
-                    availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
-                    onUpdate={onUpdate}
-                    onUninstall={onUninstall}
-                    onNavigateToProfile={(name) => { onClose(); onNavigateToProfile(name); }}
-                  />
-                </div>
+              <div className="discover-toggle">
+                <button
+                  className={`discover-toggle-btn${pluginSubTab === "installed" ? " active" : ""}`}
+                  onClick={() => setPluginSubTab("installed")}
+                >
+                  Installed
+                </button>
+                <button
+                  className={`discover-toggle-btn${pluginSubTab === "discover" ? " active" : ""}`}
+                  onClick={() => {
+                    setPluginSubTab("discover");
+                    if (availablePlugins.length === 0 && !discoverLoading) loadAvailablePlugins();
+                  }}
+                >
+                  Discover
+                </button>
               </div>
+              {pluginSubTab === "installed" ? (
+                <>
+                  {!hasDefaultProfile && (
+                    <div className="manage-default-nudge">
+                      <div className="manage-default-nudge-text">
+                        <strong>No default profile.</strong> Running <code>claude</code> loads all {plugins.length} installed plugin{plugins.length !== 1 ? "s" : ""}.
+                      </div>
+                      <button className="btn-primary" onClick={onCreateDefault}>
+                        Create Default Profile
+                      </button>
+                    </div>
+                  )}
+                  <div className="manage-dialog-split">
+                    <div className="manage-dialog-sidebar">
+                      <PluginList
+                        plugins={plugins}
+                        selectedPlugin={selectedPlugin}
+                        availableUpdates={availableUpdates}
+                        onSelect={setSelectedPlugin}
+                      />
+                    </div>
+                    <div className="manage-dialog-content">
+                      <PluginManager
+                        plugin={selectedPluginData}
+                        profiles={profiles}
+                        availableUpdate={selectedPlugin ? (availableUpdates[selectedPlugin] ?? null) : null}
+                        onUpdate={onUpdate}
+                        onUninstall={onUninstall}
+                        onNavigateToProfile={(name) => { onClose(); onNavigateToProfile(name); }}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {discoverLoading ? (
+                    <div className="discover-loading">Loading available plugins...</div>
+                  ) : discoverError ? (
+                    <div className="discover-error">
+                      <span>{discoverError}</span>
+                      <button className="btn-secondary" onClick={loadAvailablePlugins}>Retry</button>
+                    </div>
+                  ) : (
+                    <div className="manage-dialog-split">
+                      <div className="manage-dialog-sidebar">
+                        <DiscoverList
+                          plugins={availablePlugins}
+                          installedIds={installedPluginIds}
+                          selectedId={selectedDiscoverPlugin}
+                          onSelect={setSelectedDiscoverPlugin}
+                        />
+                      </div>
+                      <div className="manage-dialog-content">
+                        <DiscoverDetail
+                          plugin={availablePlugins.find((p) => p.pluginId === selectedDiscoverPlugin) ?? null}
+                          isInstalled={selectedDiscoverPlugin ? installedPluginIds.has(selectedDiscoverPlugin) : false}
+                          onInstall={handleInstallPlugin}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </>
           )}
 
