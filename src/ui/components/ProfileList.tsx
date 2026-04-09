@@ -196,6 +196,9 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
               <div className="profile-item-body">
                 <div className="profile-item-name">
                   {p.name}
+                  {p.isDefault && (
+                    <span className="default-badge">DEFAULT</span>
+                  )}
                   {profileHealth[p.name] && (
                     <span
                       className="health-badge"

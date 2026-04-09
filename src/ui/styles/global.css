@@ -338,6 +338,21 @@ body {
   flex-shrink: 0;
 }
 
+.default-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.538rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
 .btn-delete {
   opacity: 0;
   background: none;
