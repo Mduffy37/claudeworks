@@ -4085,6 +4085,124 @@ body {
   padding: 5px 12px;
 }
 
+/* ── Discover toggle ─────────────────────────────────────────────── */
+.discover-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.discover-toggle-btn {
+  padding: 5px 14px;
+  font-size: 0.846rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.discover-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.discover-toggle-btn.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
+}
+
+/* ── Discover loading / error ────────────────────────────────────── */
+.discover-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 0.846rem;
+}
+
+.discover-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--text-error, #e55);
+  font-size: 0.846rem;
+}
+
+/* ── Discover detail ─────────────────────────────────────────────── */
+.discover-installed-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 0.769rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.discover-detail-body {
+  padding: 12px 0;
+}
+
+.discover-detail-description {
+  font-size: 0.923rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.discover-detail-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.discover-stat {
+  text-align: center;
+}
+
+.discover-stat-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.discover-stat-label {
+  font-size: 0.692rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.discover-detail-section {
+  margin-bottom: 12px;
+}
+
+.discover-source-link {
+  font-size: 0.846rem;
+  font-family: "SF Mono", monospace;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.discover-source-link:hover {
+  text-decoration: underline;
+}
+
+/* Installed plugins in discover list — slightly muted */
+.pl-item.installed {
+  opacity: 0.6;
+}
+
 .pe-settings-tab {
   padding: 0 4px;
 }
