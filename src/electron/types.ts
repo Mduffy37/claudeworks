@@ -91,6 +91,7 @@ export interface Profile {
   customFlags?: string; // additional CLI flags as raw text
   useDefaultAuth?: boolean; // symlink default credentials (default: true)
   tags?: string[];
+  isDefault?: boolean; // only one profile can be true — intercepts bare `claude`
   disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
 }
@@ -169,6 +170,7 @@ export interface ElectronAPI {
   selectDirectory: () => Promise<string | null>;
   isBinInPath: () => Promise<boolean>;
   addBinToPath: () => Promise<void>;
+  ensureDefaultProfile: () => Promise<void>;
   updatePlugin: (name: string) => Promise<void>;
   uninstallPlugin: (name: string) => Promise<void>;
   checkPluginUpdates: () => Promise<Record<string, string>>;

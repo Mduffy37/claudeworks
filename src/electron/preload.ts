@@ -17,6 +17,7 @@ const api: ElectronAPI = {
   selectDirectory: () => ipcRenderer.invoke("select-directory"),
   isBinInPath: () => ipcRenderer.invoke("is-bin-in-path"),
   addBinToPath: () => ipcRenderer.invoke("add-bin-to-path"),
+  ensureDefaultProfile: () => ipcRenderer.invoke("ensure-default-profile"),
   updatePlugin: (name) => ipcRenderer.invoke("update-plugin", name),
   uninstallPlugin: (name) => ipcRenderer.invoke("uninstall-plugin", name),
   checkPluginUpdates: () => ipcRenderer.invoke("check-plugin-updates"),
