@@ -2761,6 +2761,34 @@ body {
   background: var(--bg-hover);
 }
 
+.skill-context-menu {
+  position: fixed;
+  min-width: 160px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 4px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.skill-context-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.923rem;
+  cursor: pointer;
+}
+
+.skill-context-menu button:hover {
+  background: var(--bg-hover);
+}
+
 /* ─── Item-level checkbox ─────────────────────────────────────────────────── */
 
 .item-checkbox {

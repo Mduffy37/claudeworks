@@ -237,6 +237,7 @@ export interface ElectronAPI {
   saveProjectSettings: (dir: string, settings: Record<string, any>) => Promise<void>;
   getGitContext: (dir: string) => Promise<{ branch: string; dirty: boolean; isRepo: boolean }>;
   openInFinder: (path: string) => Promise<void>;
+  revealInFinder: (path: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;
   getClaudeHome: () => Promise<string>;
 }

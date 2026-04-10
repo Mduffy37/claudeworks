@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import type { PluginItem, PluginWithItems } from "../../../src/electron/types";
 
 interface Props {
@@ -67,6 +67,20 @@ function ItemCheckbox({ checked, onChange, label }: { checked: boolean; onChange
 }
 
 export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, onToggle }: Props) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, itemPath: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, path: itemPath });
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [contextMenu]);
+
   if (items.length === 0) {
     return <div className="skill-toggler-empty">No items found</div>;
   }
@@ -112,6 +126,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                   key={item.name}
                   className="skill-item"
                   title={item.description || undefined}
+                  onContextMenu={(e) => handleContextMenu(e, item.path)}
                 >
                   <ItemCheckbox
                     checked={enabled}
@@ -144,6 +159,21 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
           </div>
         );
       })}
+      {contextMenu && (
+        <div
+          className="skill-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            onClick={() => {
+              window.api.revealInFinder(contextMenu.path);
+              setContextMenu(null);
+            }}
+          >
+            Reveal in Finder
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -389,6 +389,7 @@ ipcMain.handle("get-git-context", async (_event, dir: string) => {
   }
 });
 ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(filePath));
+ipcMain.handle("reveal-in-finder", (_event, filePath: string) => shell.showItemInFolder(filePath));
 ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
 ipcMain.handle("get-claude-home", () => getClaudeHome());
 
