@@ -671,7 +671,7 @@ function writeProfilesStore(store: ProfilesStore): void {
 
 export function loadProfiles(): Profile[] {
   const store = readProfilesStore();
-  return Object.values(store.profiles);
+  return Object.values(store.profiles).filter((p) => !p.name.startsWith("_team_"));
 }
 
 /**
@@ -1854,6 +1854,12 @@ export function deleteTeamByName(name: string): void {
   const store = readTeamsStore();
   delete store.teams[name];
   writeTeamsStore(store);
+
+  // Clean up the team's profile directory
+  const teamDir = path.join(PROFILES_DIR, `_team_${name}`);
+  if (fs.existsSync(teamDir)) {
+    fs.rmSync(teamDir, { recursive: true });
+  }
 }
 
 export function checkAllTeamHealth(teams: Team[]): Record<string, string[]> {
