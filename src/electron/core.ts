@@ -458,10 +458,25 @@ export function scanLocalItems(directory: string): LocalItem[] {
 
 /** Prefix for all synthetic local plugin names. */
 const LOCAL_PLUGIN_PREFIX = "local:";
+const FRAMEWORK_PLUGIN_PREFIX = "framework:";
 
 /** Check if a plugin name is a synthetic local plugin. */
 export function isLocalPlugin(name: string): boolean {
   return name.startsWith(LOCAL_PLUGIN_PREFIX);
+}
+
+/** Check if a plugin name is a framework plugin. */
+export function isFrameworkPlugin(name: string): boolean {
+  return name.startsWith(FRAMEWORK_PLUGIN_PREFIX);
+}
+
+/** Check if GSD is installed globally. */
+export function isGsdInstalled(): boolean {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  return (
+    fs.existsSync(path.join(claudeHome, "get-shit-done")) ||
+    fs.existsSync(path.join(claudeHome, "gsd-file-manifest.json"))
+  );
 }
 
 /**
@@ -485,7 +500,11 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
     mcpServers: [],
   });
 
-  // Skills: each skill directory → its own plugin
+  const gsdDetected = isGsdInstalled();
+  const GSD_PLUGIN_NAME = `${FRAMEWORK_PLUGIN_PREFIX}gsd`;
+  const gsdItems: PluginItem[] = [];
+
+  // Skills: each skill directory → its own plugin (GSD skills → framework:gsd)
   const skillsDir = path.join(claudeHome, "skills");
   if (fs.existsSync(skillsDir)) {
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
@@ -495,27 +514,41 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
       const fm = readFrontmatter(skillMd);
       const skillName = fm.name ?? entry.name;
       const pluginName = entry.name;
-      plugins.push(makePlugin(pluginName, [{
-        name: skillName,
-        description: fm.description ?? "",
-        type: "skill",
-        plugin: `${LOCAL_PLUGIN_PREFIX}${pluginName}`,
-        path: skillMd,
-        userInvocable: true,
-        dependencies: [],
-      }]));
+
+      if (gsdDetected && entry.name.startsWith("gsd-")) {
+        gsdItems.push({
+          name: skillName,
+          description: fm.description ?? "",
+          type: "skill",
+          plugin: GSD_PLUGIN_NAME,
+          path: skillMd,
+          userInvocable: true,
+          dependencies: [],
+        });
+      } else {
+        plugins.push(makePlugin(pluginName, [{
+          name: skillName,
+          description: fm.description ?? "",
+          type: "skill",
+          plugin: `${LOCAL_PLUGIN_PREFIX}${pluginName}`,
+          path: skillMd,
+          userInvocable: true,
+          dependencies: [],
+        }]));
+      }
     }
   }
 
   // Commands: each namespace dir → its own plugin; loose .md files → "commands" plugin
+  // GSD commands (gsd/ namespace) → framework:gsd
   const cmdsDir = path.join(claudeHome, "commands");
   if (fs.existsSync(cmdsDir)) {
     const looseCommands: PluginItem[] = [];
 
     for (const entry of fs.readdirSync(cmdsDir, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        // Namespaced commands → their own plugin
         const subDir = path.join(cmdsDir, entry.name);
+        const isGsdNamespace = gsdDetected && entry.name === "gsd";
         const items: PluginItem[] = [];
         for (const file of fs.readdirSync(subDir)) {
           if (!file.endsWith(".md")) continue;
@@ -525,13 +558,15 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
             name: fm.name ?? `${entry.name}:${path.basename(file, ".md")}`,
             description: fm.description ?? "",
             type: "command",
-            plugin: `${LOCAL_PLUGIN_PREFIX}${entry.name}`,
+            plugin: isGsdNamespace ? GSD_PLUGIN_NAME : `${LOCAL_PLUGIN_PREFIX}${entry.name}`,
             path: cmdPath,
             userInvocable: true,
             dependencies: [],
           });
         }
-        if (items.length > 0) {
+        if (isGsdNamespace) {
+          gsdItems.push(...items);
+        } else if (items.length > 0) {
           plugins.push(makePlugin(entry.name, items));
         }
       } else if (entry.name.endsWith(".md")) {
@@ -554,7 +589,7 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
     }
   }
 
-  // Agents: all → "agents" plugin
+  // Agents: non-GSD → "agents" plugin, GSD agents → framework:gsd
   const agentsDir = path.join(claudeHome, "agents");
   if (fs.existsSync(agentsDir)) {
     const items: PluginItem[] = [];
@@ -562,19 +597,59 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
       if (!file.endsWith(".md") || file === "README.md") continue;
       const agentPath = path.join(agentsDir, file);
       const fm = readFrontmatter(agentPath);
-      items.push({
+      const isGsdAgent = gsdDetected && file.startsWith("gsd-");
+      const item: PluginItem = {
         name: fm.name ?? path.basename(file, ".md"),
         description: fm.description ?? "",
         type: "agent",
-        plugin: `${LOCAL_PLUGIN_PREFIX}agents`,
+        plugin: isGsdAgent ? GSD_PLUGIN_NAME : `${LOCAL_PLUGIN_PREFIX}agents`,
         path: agentPath,
         userInvocable: false,
         dependencies: [],
-      });
+      };
+      if (isGsdAgent) {
+        gsdItems.push(item);
+      } else {
+        items.push(item);
+      }
     }
     if (items.length > 0) {
       plugins.push(makePlugin("agents", items));
     }
+  }
+
+  // Build GSD framework plugin if detected
+  if (gsdDetected && gsdItems.length > 0) {
+    // Extract GSD hooks from global settings.json
+    const gsdHooks: PluginHook[] = [];
+    const settingsPath = path.join(claudeHome, "settings.json");
+    if (fs.existsSync(settingsPath)) {
+      try {
+        const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+        for (const [event, matchers] of Object.entries(settings.hooks ?? {} as Record<string, any[]>)) {
+          for (const matcher of matchers as any[]) {
+            for (const hook of matcher.hooks ?? []) {
+              const cmd: string = hook.command ?? "";
+              if (cmd.includes("gsd-")) {
+                gsdHooks.push({ event, command: cmd });
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    plugins.push({
+      name: GSD_PLUGIN_NAME,
+      scope: "user",
+      installPath: path.join(claudeHome, "get-shit-done"),
+      version: "local",
+      marketplace: "framework",
+      pluginName: "Get Shit Done",
+      items: gsdItems,
+      hooks: gsdHooks,
+      mcpServers: [],
+    });
   }
 
   return plugins;
@@ -1031,6 +1106,42 @@ export function assembleProfile(profile: Profile): string {
     fs.mkdirSync(path.join(configDir, sub), { recursive: true });
   }
 
+  // Clean stale GSD artifacts when framework:gsd is not enabled
+  if (!profile.plugins.includes(`${FRAMEWORK_PLUGIN_PREFIX}gsd`)) {
+    // Remove GSD agents
+    const agentsDir = path.join(configDir, "agents");
+    if (fs.existsSync(agentsDir)) {
+      for (const f of fs.readdirSync(agentsDir)) {
+        if (f.startsWith("gsd-")) {
+          const full = path.join(agentsDir, f);
+          try { fs.unlinkSync(full); } catch {}
+        }
+      }
+    }
+    // Remove GSD commands namespace
+    const gsdCmdsDir = path.join(configDir, "commands", "gsd");
+    if (fs.existsSync(gsdCmdsDir)) {
+      fs.rmSync(gsdCmdsDir, { recursive: true });
+    }
+    // Remove GSD runtime dir
+    const gsdRuntime = path.join(configDir, "get-shit-done");
+    if (fs.existsSync(gsdRuntime)) {
+      const stat = fs.lstatSync(gsdRuntime);
+      if (stat.isSymbolicLink()) fs.unlinkSync(gsdRuntime);
+      else fs.rmSync(gsdRuntime, { recursive: true });
+    }
+    // Remove GSD hooks
+    const hooksDir = path.join(configDir, "hooks");
+    if (fs.existsSync(hooksDir)) {
+      for (const f of fs.readdirSync(hooksDir)) {
+        if (f.startsWith("gsd-")) {
+          const full = path.join(hooksDir, f);
+          try { fs.unlinkSync(full); } catch {}
+        }
+      }
+    }
+  }
+
   // Read source manifest
   const sourceManifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
   if (!fs.existsSync(sourceManifestPath)) {
@@ -1081,6 +1192,22 @@ export function assembleProfile(profile: Profile): string {
       }
     }
     settings.hooks = Object.keys(filtered).length > 0 ? filtered : undefined;
+  }
+
+  // Strip GSD hooks if framework:gsd is not enabled
+  if (!profile.plugins.includes(`${FRAMEWORK_PLUGIN_PREFIX}gsd`) && settings.hooks) {
+    const stripped: Record<string, any[]> = {};
+    for (const [event, matchers] of Object.entries(settings.hooks as Record<string, any[]>)) {
+      const kept = matchers.filter((m: any) => {
+        const hooks = m.hooks ?? [];
+        const nonGsd = hooks.filter((h: any) => !String(h.command ?? "").includes("gsd-"));
+        if (nonGsd.length === 0) return false;
+        m.hooks = nonGsd;
+        return true;
+      });
+      if (kept.length > 0) stripped[event] = kept;
+    }
+    settings.hooks = Object.keys(stripped).length > 0 ? stripped : undefined;
   }
 
   settings.enabledPlugins = Object.fromEntries(
@@ -1389,14 +1516,15 @@ function symlinkShared(configDir: string, profile: Profile): void {
     }
   }
 
-  // Symlink user-level local add-ons for each enabled local plugin.
-  // Each local plugin (local:devils-advocate, local:vault, etc.) is handled independently.
-  const enabledLocalPlugins = profile.plugins.filter(isLocalPlugin);
-  if (enabledLocalPlugins.length > 0) {
+  // Symlink user-level local add-ons and framework plugins.
+  const enabledLocalOrFramework = profile.plugins.filter(
+    (n) => isLocalPlugin(n) || isFrameworkPlugin(n)
+  );
+  if (enabledLocalOrFramework.length > 0) {
     const localPlugins = scanUserLocalPlugins();
 
     for (const lp of localPlugins) {
-      if (!enabledLocalPlugins.includes(lp.name)) continue;
+      if (!enabledLocalOrFramework.includes(lp.name)) continue;
       const excluded = new Set(profile.excludedItems?.[lp.name] ?? []);
 
       for (const item of lp.items) {
@@ -1425,6 +1553,29 @@ function symlinkShared(configDir: string, profile: Profile): void {
             const tgt = path.join(targetCommands, path.basename(item.path));
             if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
           }
+        }
+      }
+    }
+  }
+
+  // Symlink GSD runtime directory and hooks if framework:gsd is enabled
+  if (profile.plugins.includes(`${FRAMEWORK_PLUGIN_PREFIX}gsd`)) {
+    const gsdRuntime = path.join(CLAUDE_HOME, "get-shit-done");
+    const gsdTgt = path.join(configDir, "get-shit-done");
+    if (fs.existsSync(gsdRuntime) && !fs.existsSync(gsdTgt)) {
+      fs.symlinkSync(gsdRuntime, gsdTgt);
+    }
+
+    // Symlink GSD hook scripts
+    const hooksSource = path.join(CLAUDE_HOME, "hooks");
+    if (fs.existsSync(hooksSource)) {
+      const hooksDest = path.join(configDir, "hooks");
+      fs.mkdirSync(hooksDest, { recursive: true });
+      for (const file of fs.readdirSync(hooksSource)) {
+        if (!file.startsWith("gsd-")) continue;
+        const tgt = path.join(hooksDest, file);
+        if (!fs.existsSync(tgt)) {
+          fs.symlinkSync(path.join(hooksSource, file), tgt);
         }
       }
     }

@@ -52,10 +52,16 @@ export function PluginPicker({
     p.items.length === 0 && p.mcpServers.length > 0;
 
   const isLocal = (p: PluginWithItems) => p.marketplace === "local";
+  const isFramework = (p: PluginWithItems) => p.marketplace === "framework";
 
   const globalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isFramework(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+  }, [plugins, search]);
+
+  const frameworkPlugins = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return plugins.filter((p) => isFramework(p) && (!q || p.pluginName.toLowerCase().includes(q)));
   }, [plugins, search]);
 
   const userLocalPlugins = useMemo(() => {
@@ -215,6 +221,16 @@ export function PluginPicker({
           globalPlugins.map(renderPlugin)
         )}
       </div>
+
+      {frameworkPlugins.length > 0 && (
+        <div className="plugin-section">
+          <div className="plugin-section-header">
+            <h3>Frameworks</h3>
+            <span className="plugin-section-count">{frameworkPlugins.length}</span>
+          </div>
+          {frameworkPlugins.map(renderPlugin)}
+        </div>
+      )}
 
       {userLocalPlugins.length > 0 && (
         <div className="plugin-section">
