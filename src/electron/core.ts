@@ -17,6 +17,7 @@ import type {
   Profile,
   ProfilesStore,
   Team,
+  TeamMember,
   TeamsStore,
   MergePreview,
 } from "./types";
@@ -1892,6 +1893,228 @@ export function enableAgentTeams(): void {
   if (!settings.env) settings.env = {};
   settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+}
+
+export function assembleTeamProfile(team: Team): string {
+  const teamDirName = `_team_${team.name}`;
+  validateProfileName(teamDirName);
+  const configDir = path.join(PROFILES_DIR, teamDirName, "config");
+
+  // Wipe and recreate to ensure clean state on every launch
+  if (fs.existsSync(configDir)) fs.rmSync(configDir, { recursive: true });
+  fs.mkdirSync(path.join(configDir, "plugins", "cache"), { recursive: true });
+  fs.mkdirSync(path.join(configDir, "plugins", "data"), { recursive: true });
+  fs.mkdirSync(path.join(configDir, "plugins", "marketplaces"), { recursive: true });
+  fs.mkdirSync(path.join(configDir, "commands"), { recursive: true });
+
+  const profiles = loadProfiles();
+  const lead = team.members.find((m) => m.isLead);
+  if (!lead) throw new Error("Team has no lead member");
+  const leadProfile = profiles.find((p) => p.name === lead.profile);
+  if (!leadProfile) throw new Error(`Lead profile "${lead.profile}" not found`);
+
+  // Collect union of all plugins across all members
+  const allPlugins = new Set<string>();
+  const memberProfiles: Array<{ member: TeamMember; profile: Profile }> = [];
+  for (const member of team.members) {
+    const prof = profiles.find((p) => p.name === member.profile);
+    if (!prof) throw new Error(`Profile "${member.profile}" not found`);
+    memberProfiles.push({ member, profile: prof });
+    for (const plugin of prof.plugins) {
+      allPlugins.add(plugin);
+    }
+  }
+
+  // Build filtered installed_plugins.json with union of all plugins
+  const sourceManifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
+  let sourceManifest: any = { plugins: {} };
+  if (fs.existsSync(sourceManifestPath)) {
+    sourceManifest = JSON.parse(fs.readFileSync(sourceManifestPath, "utf-8"));
+  }
+  const filteredPlugins: Record<string, any> = {};
+  for (const [name, installs] of Object.entries(sourceManifest.plugins ?? {})) {
+    if (allPlugins.has(name)) {
+      filteredPlugins[name] = installs;
+    }
+  }
+  fs.writeFileSync(
+    path.join(configDir, "plugins", "installed_plugins.json"),
+    JSON.stringify({ plugins: filteredPlugins }, null, 2),
+    "utf-8"
+  );
+
+  // Build settings.json from lead profile, with team-level overrides
+  const globalSettingsPath = path.join(CLAUDE_HOME, "settings.json");
+  let globalSettings: Record<string, any> = {};
+  if (fs.existsSync(globalSettingsPath)) {
+    try { globalSettings = JSON.parse(fs.readFileSync(globalSettingsPath, "utf-8")); } catch {}
+  }
+
+  // Start from safe global keys (same as assembleProfile)
+  const safeKeys = ["env", "hooks", "statusLine", "voiceEnabled"];
+  const teamSettings: Record<string, any> = {};
+  for (const key of safeKeys) {
+    if (key in globalSettings) teamSettings[key] = JSON.parse(JSON.stringify(globalSettings[key]));
+  }
+
+  // Apply lead profile overrides
+  if (leadProfile.model) teamSettings.model = leadProfile.model;
+  if (leadProfile.effortLevel) teamSettings.effortLevel = leadProfile.effortLevel;
+  if (leadProfile.env) {
+    teamSettings.env = { ...(teamSettings.env ?? {}), ...leadProfile.env };
+  }
+
+  // Apply team-level overrides (these win over lead profile)
+  if (team.model) teamSettings.model = team.model;
+  if (team.effortLevel) teamSettings.effortLevel = team.effortLevel;
+
+  // Copy permissions from global settings
+  if (globalSettings.permissions) {
+    teamSettings.permissions = JSON.parse(JSON.stringify(globalSettings.permissions));
+  }
+
+  fs.writeFileSync(
+    path.join(configDir, "settings.json"),
+    JSON.stringify(teamSettings, null, 2),
+    "utf-8"
+  );
+
+  // Symlink plugin caches for all merged plugins
+  const installedPlugins = scanInstalledPlugins();
+  symlinkSelectedCaches(
+    { ...leadProfile, plugins: [...allPlugins] } as Profile,
+    configDir,
+    installedPlugins
+  );
+
+  // Symlink shared resources (auth, CLAUDE.md, projects, local add-ons, marketplaces)
+  symlinkShared(configDir, leadProfile);
+
+  // Install auto-skills (e.g. commands/profiles/check.md)
+  installAutoSkills(configDir);
+
+  // Track add-on ownership: which member contributed each add-on
+  const pluginsWithItems = getPluginsWithItems();
+  const ownedAddOns: Map<string, {
+    skills: string[];
+    agents: string[];
+    commands: string[];
+  }> = new Map();
+
+  const claimedAddOns = new Set<string>();
+  for (const { member, profile } of memberProfiles) {
+    const skills: string[] = [];
+    const agents: string[] = [];
+    const commands: string[] = [];
+
+    for (const pluginName of profile.plugins) {
+      const plugin = pluginsWithItems.find((p) => p.name === pluginName);
+      if (!plugin) continue;
+      const excluded = new Set(profile.excludedItems?.[pluginName] ?? []);
+
+      for (const item of plugin.items) {
+        if (excluded.has(item.name)) continue;
+        const key = `${item.type}:${item.name}`;
+        if (claimedAddOns.has(key)) continue;
+        claimedAddOns.add(key);
+
+        if (item.type === "skill") skills.push(item.name);
+        else if (item.type === "agent") agents.push(item.name);
+        else if (item.type === "command") commands.push(item.name);
+      }
+    }
+
+    ownedAddOns.set(member.profile, { skills, agents, commands });
+  }
+
+  // Generate TEAM.md
+  const nonLeadMembers = team.members.filter((m) => !m.isLead);
+  let teamMd = `# Team: ${team.name}\n\n`;
+  teamMd += `You are the team lead. You have ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""} that you coordinate.\n\n`;
+  teamMd += `## Your Role\n${lead.role}${lead.instructions ? "\n" + lead.instructions : ""}\n\n`;
+  teamMd += `## Teammates\n\n`;
+
+  for (const member of nonLeadMembers) {
+    const addOns = ownedAddOns.get(member.profile) ?? { skills: [], agents: [], commands: [] };
+    teamMd += `### ${member.profile} — ${member.role}\n`;
+    if (member.instructions) teamMd += `- **Instructions**: ${member.instructions}\n`;
+    if (addOns.skills.length > 0) teamMd += `- **Skills**: ${addOns.skills.join(", ")}\n`;
+    if (addOns.agents.length > 0) teamMd += `- **Agents**: ${addOns.agents.join(", ")}\n`;
+    if (addOns.commands.length > 0) teamMd += `- **Commands**: ${addOns.commands.map(c => "/" + c).join(", ")}\n`;
+    if (!addOns.skills.length && !addOns.agents.length && !addOns.commands.length) {
+      teamMd += `- No exclusive add-ons\n`;
+    }
+    teamMd += `\n`;
+  }
+
+  teamMd += `## Rules\n`;
+  teamMd += `- You MUST NOT directly invoke any add-on listed under a teammate's ownership. Always delegate to the owning teammate.\n`;
+  teamMd += `- When delegating, spawn the teammate by name and include their instructions and owned add-ons in the prompt.\n`;
+  teamMd += `- Each teammate's spawn prompt MUST instruct them to only use their assigned add-ons and to report back if they need capabilities they don't own.\n`;
+
+  fs.writeFileSync(path.join(configDir, "TEAM.md"), teamMd, "utf-8");
+
+  // Append TEAM.md reference to CLAUDE.md if it exists, or create one
+  const claudeMdPath = path.join(configDir, "CLAUDE.md");
+  const teamMdRef = "\n\n<!-- Team configuration -->\n@import TEAM.md\n";
+  if (fs.existsSync(claudeMdPath)) {
+    const existing = fs.readFileSync(claudeMdPath, "utf-8");
+    if (!existing.includes("TEAM.md")) {
+      fs.appendFileSync(claudeMdPath, teamMdRef, "utf-8");
+    }
+  } else {
+    fs.writeFileSync(claudeMdPath, teamMdRef.trim(), "utf-8");
+  }
+
+  // Generate /start-team command
+  let startCmd = `# /start-team\n\n`;
+  startCmd += `You are bootstrapping your team. Follow these steps exactly:\n\n`;
+  startCmd += `## Step 1: Spawn teammates\n\n`;
+  startCmd += `Spawn each teammate using the Agent tool. For each teammate:\n`;
+  startCmd += `- Use their name as the \`name\` parameter so they are addressable via SendMessage\n`;
+  startCmd += `- Include their role, instructions, and the exact list of add-ons they own\n\n`;
+
+  for (const member of nonLeadMembers) {
+    const addOns = ownedAddOns.get(member.profile) ?? { skills: [], agents: [], commands: [] };
+    const slug = member.profile.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const allAddOnsList = [
+      ...addOns.skills.map(s => `skill: ${s}`),
+      ...addOns.agents.map(a => `agent: ${a}`),
+      ...addOns.commands.map(c => `command: /${c}`),
+    ];
+    const addOnsStr = allAddOnsList.length > 0 ? allAddOnsList.join(", ") : "none";
+
+    startCmd += `### Spawn: ${member.profile}\n`;
+    startCmd += `- **Name**: \`${slug}\`\n`;
+    startCmd += `- **Role**: ${member.role}\n`;
+    if (member.instructions) startCmd += `- **Instructions**: ${member.instructions}\n`;
+    startCmd += `- **Owned add-ons**: ${addOnsStr}\n`;
+    startCmd += `- **Spawn prompt must include**: "You are a teammate on team ${team.name}. Your role is ${member.role}. `;
+    if (member.instructions) startCmd += `${member.instructions} `;
+    startCmd += `You ONLY have access to the following add-ons: ${addOnsStr}. `;
+    startCmd += `Do NOT use any other skills, agents, or commands — they belong to other teammates. `;
+    startCmd += `If you need something outside your ownership, report back to the team lead and they will delegate to the correct teammate."\n\n`;
+  }
+
+  startCmd += `## Step 2: Confirm\n\n`;
+  startCmd += `Once all teammates are spawned, report to the user:\n\n`;
+  startCmd += `"Team ${team.name} is ready. ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""} spawned:\n`;
+  for (const member of nonLeadMembers) {
+    startCmd += `- ${member.profile} — ${member.role}\n`;
+  }
+  startCmd += `\nWhat are we working on?"\n`;
+
+  fs.writeFileSync(path.join(configDir, "commands", "start-team.md"), startCmd, "utf-8");
+
+  // Generate baseline mcp.json
+  const baselineDir = leadProfile.directory ?? os.homedir();
+  writeMcpConfig(
+    { ...leadProfile, plugins: [...allPlugins] } as Profile,
+    baselineDir,
+    configDir
+  );
+
+  return configDir;
 }
 
 export function getTeamMergePreview(team: Team): MergePreview {
