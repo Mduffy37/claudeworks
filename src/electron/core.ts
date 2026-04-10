@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
-import { execFileSync, execFile } from "child_process";
+import { execFileSync, execFile, spawn } from "child_process";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
@@ -1356,10 +1356,26 @@ export async function checkPluginUpdates(): Promise<Record<string, string>> {
 
 export async function getAvailablePlugins(): Promise<{ installed: any[]; available: any[] }> {
   const claudeHome = path.join(os.homedir(), ".claude");
-  const { stdout } = await execFileAsync(findRealClaudeBinary(), [
-    "plugin", "list", "--available", "--json",
-  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, maxBuffer: 1024 * 1024 });
-  return JSON.parse(stdout);
+  const tmpFile = path.join(os.tmpdir(), `claude-plugins-${Date.now()}.json`);
+  try {
+    // Redirect stdout to a temp file to avoid pipe buffer truncation in Electron
+    await new Promise<void>((resolve, reject) => {
+      const out = fs.openSync(tmpFile, "w");
+      const child = spawn(findRealClaudeBinary(), [
+        "plugin", "list", "--available", "--json",
+      ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, stdio: ["ignore", out, "ignore"] });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        fs.closeSync(out);
+        if (code !== 0) reject(new Error(`claude plugin list exited with code ${code}`));
+        else resolve();
+      });
+    });
+    const stdout = fs.readFileSync(tmpFile, "utf-8");
+    return JSON.parse(stdout);
+  } finally {
+    try { fs.unlinkSync(tmpFile); } catch {}
+  }
 }
 
 export async function installPlugin(pluginId: string): Promise<void> {
