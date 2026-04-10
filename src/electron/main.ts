@@ -23,6 +23,7 @@ import {
   removeMarketplace,
   listMarketplaces,
   getAnalytics,
+  getActiveSessions,
   loadTeams,
   saveTeam,
   renameTeam,
@@ -240,8 +241,12 @@ ipcMain.handle("list-marketplaces", () => {
   return listMarketplaces();
 });
 
-ipcMain.handle("get-analytics", () => {
-  return getAnalytics();
+ipcMain.handle("get-analytics", (_event, since?: number) => {
+  return getAnalytics(since);
+});
+
+ipcMain.handle("get-active-sessions", () => {
+  return getActiveSessions();
 });
 
 ipcMain.handle("get-teams", () => {

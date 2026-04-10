@@ -22,6 +22,7 @@ import type {
   TeamsStore,
   MergePreview,
   AnalyticsData,
+  ActiveSession,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -1936,102 +1937,108 @@ export function listMarketplaces(): Array<{ name: string; repo: string; lastUpda
 }
 
 // ---------------------------------------------------------------------------
-// Analytics
+// Active & Recent Sessions
 // ---------------------------------------------------------------------------
 
-export function getAnalytics(): AnalyticsData {
-  const claudeHome = path.join(os.homedir(), ".claude");
-  const projectsDir = path.join(claudeHome, "projects");
+export function getActiveSessions(): ActiveSession[] {
+  const sessions: ActiveSession[] = [];
+  if (!fs.existsSync(PROFILES_DIR)) return sessions;
 
-  // Build a map of encoded dir name → display name from imported projects
-  const imported = getImportedProjects();
-  const importedMap = new Map<string, string>();
-  for (const projPath of imported) {
-    const encoded = projPath.replace(/[\/ ]/g, "-");
-    importedMap.set(encoded, path.basename(projPath));
-  }
+  for (const dir of fs.readdirSync(PROFILES_DIR)) {
+    if (dir.startsWith("_team_")) continue;
+    const sessDir = path.join(PROFILES_DIR, dir, "config", "sessions");
+    if (!fs.existsSync(sessDir)) continue;
 
-  let totalSessions = 0;
-  let totalMessages = 0;
-  const dailyCounts = new Map<string, number>();
-  const projectCounts = new Map<string, number>();
-  const recentSessions: AnalyticsData["recentSessions"] = [];
-
-  // Scan session files only for imported projects
-  if (fs.existsSync(projectsDir)) {
-    for (const projDir of fs.readdirSync(projectsDir)) {
-      const shortName = importedMap.get(projDir);
-      if (!shortName) continue; // Skip non-imported projects
-
-      const projPath = path.join(projectsDir, projDir);
-      if (!fs.statSync(projPath).isDirectory()) continue;
-
-      for (const file of fs.readdirSync(projPath)) {
-        if (!file.endsWith(".jsonl")) continue;
-        const filePath = path.join(projPath, file);
-        let sessionMsgs = 0;
-        let sessionDate = "";
-        const sessionId = path.basename(file, ".jsonl");
-
+    for (const file of fs.readdirSync(sessDir)) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(sessDir, file), "utf-8"));
+        // Check if PID is still running
         try {
-          const content = fs.readFileSync(filePath, "utf-8");
-          for (const line of content.split("\n")) {
-            if (!line.trim()) continue;
-            const d = JSON.parse(line);
-            if (d.type === "user" && !d.isMeta) {
-              sessionMsgs++;
-              if (d.timestamp) {
-                const dt = new Date(d.timestamp);
-                const dateStr = dt.toISOString().slice(0, 10);
-                if (!sessionDate) sessionDate = dateStr;
-                dailyCounts.set(dateStr, (dailyCounts.get(dateStr) ?? 0) + 1);
-              }
-            }
-          }
-        } catch {
-          continue;
-        }
-
-        if (sessionMsgs > 0) {
-          totalSessions++;
-          totalMessages += sessionMsgs;
-          projectCounts.set(shortName, (projectCounts.get(shortName) ?? 0) + sessionMsgs);
-          recentSessions.push({
-            project: shortName,
-            date: sessionDate,
-            messages: sessionMsgs,
-            sessionId,
+          process.kill(data.pid, 0); // signal 0 = just check existence
+          sessions.push({
+            profile: dir,
+            pid: data.pid,
+            sessionId: data.sessionId,
+            cwd: data.cwd,
+            startedAt: data.startedAt,
           });
+        } catch {
+          // PID not running — stale session file
         }
-      }
+      } catch {}
     }
   }
 
-  // Sort and limit
-  const dailyActivity = [...dailyCounts.entries()]
-    .map(([date, messages]) => ({ date, messages }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-30); // Last 30 days
+  sessions.sort((a, b) => b.startedAt - a.startedAt);
+  return sessions;
+}
 
-  const topProjects = [...projectCounts.entries()]
-    .map(([name, messages]) => ({ name, messages }))
-    .sort((a, b) => b.messages - a.messages)
-    .slice(0, 10);
+// ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
 
-  recentSessions.sort((a, b) => b.date.localeCompare(a.date));
-  const recent = recentSessions.slice(0, 15);
+export function getAnalytics(since?: number): AnalyticsData {
+  // Launch log — app-launched sessions only
+  const launches = getLaunchLog(since);
+  const totalSessions = launches.length;
 
-  // Profile usage from history.jsonl files
+  // Daily launch counts
+  const dailyCounts = new Map<string, number>();
+  const projectCounts = new Map<string, number>();
+  const recentLaunches: AnalyticsData["recentSessions"] = [];
+
+  for (const launch of launches) {
+    const dateStr = new Date(launch.timestamp).toISOString().slice(0, 10);
+    dailyCounts.set(dateStr, (dailyCounts.get(dateStr) ?? 0) + 1);
+
+    const projName = path.basename(launch.directory);
+    projectCounts.set(projName, (projectCounts.get(projName) ?? 0) + 1);
+
+    recentLaunches.push({
+      project: projName,
+      date: dateStr,
+      messages: 0,
+      sessionId: `${launch.timestamp}-${launch.name}`,
+      profile: launch.name,
+      type: launch.type,
+    });
+  }
+
+  // Profile usage from history.jsonl — messages sent through app-launched profiles
+  let totalMessages = 0;
   const profileUsage: AnalyticsData["profileUsage"] = [];
+  const profileMsgsByDate = new Map<string, number>();
+  const currentProfiles = new Set(loadProfiles().map((p) => p.name));
+
   if (fs.existsSync(PROFILES_DIR)) {
     for (const dir of fs.readdirSync(PROFILES_DIR)) {
-      if (dir.startsWith("_team_")) continue;
+      if (dir.startsWith("_team_") || !currentProfiles.has(dir)) continue;
       const histPath = path.join(PROFILES_DIR, dir, "config", "history.jsonl");
       if (!fs.existsSync(histPath)) continue;
       try {
         const lines = fs.readFileSync(histPath, "utf-8").split("\n").filter(Boolean);
-        const sessions = new Set(lines.map((l) => JSON.parse(l).sessionId).filter(Boolean));
-        profileUsage.push({ name: dir, sessions: sessions.size, messages: lines.length });
+        let profileMsgs = 0;
+        const sessions = new Set<string>();
+        for (const line of lines) {
+          const entry = JSON.parse(line);
+          if (since && entry.timestamp < since) continue;
+          profileMsgs++;
+          if (entry.sessionId) sessions.add(entry.sessionId);
+          if (entry.timestamp) {
+            const dateStr = new Date(entry.timestamp).toISOString().slice(0, 10);
+            profileMsgsByDate.set(dateStr, (profileMsgsByDate.get(dateStr) ?? 0) + 1);
+          }
+          // Track project usage from message history
+          if (entry.project) {
+            const projName = path.basename(entry.project);
+            projectCounts.set(projName, (projectCounts.get(projName) ?? 0) + 1);
+          }
+        }
+        totalMessages += profileMsgs;
+        if (profileMsgs > 0) {
+          profileUsage.push({ name: dir, sessions: sessions.size, messages: profileMsgs });
+        }
       } catch {
         continue;
       }
@@ -2039,7 +2046,56 @@ export function getAnalytics(): AnalyticsData {
   }
   profileUsage.sort((a, b) => b.messages - a.messages);
 
+  // Use message counts for daily activity (more granular than launch counts)
+  for (const [date, msgs] of profileMsgsByDate) {
+    dailyCounts.set(date, msgs);
+  }
+
+  const dailyActivity = [...dailyCounts.entries()]
+    .map(([date, messages]) => ({ date, messages }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const topProjects = [...projectCounts.entries()]
+    .map(([name, messages]) => ({ name, messages }))
+    .sort((a, b) => b.messages - a.messages)
+    .slice(0, 10);
+
+  recentLaunches.sort((a, b) => b.date.localeCompare(a.date));
+  const recent = recentLaunches.slice(0, 15);
+
   return { totalSessions, totalMessages, dailyActivity, topProjects, profileUsage, recentSessions: recent };
+}
+
+// ---------------------------------------------------------------------------
+// Launch log
+// ---------------------------------------------------------------------------
+
+const LAUNCH_LOG = path.join(PROFILES_DIR, "launch-log.jsonl");
+
+interface LaunchLogEntry {
+  type: "profile" | "team";
+  name: string;
+  directory: string;
+  timestamp: number;
+}
+
+function recordLaunch(entry: LaunchLogEntry): void {
+  ensureProfilesDir();
+  fs.appendFileSync(LAUNCH_LOG, JSON.stringify(entry) + "\n");
+}
+
+export function getLaunchLog(since?: number): LaunchLogEntry[] {
+  if (!fs.existsSync(LAUNCH_LOG)) return [];
+  try {
+    const entries = fs.readFileSync(LAUNCH_LOG, "utf-8")
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l) as LaunchLogEntry);
+    if (since) return entries.filter((e) => e.timestamp >= since);
+    return entries;
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2084,6 +2140,7 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
 
   try {
     await execFileAsync("osascript", ["-e", script]);
+    recordLaunch({ type: "profile", name: profile.name, directory: workDir, timestamp: Date.now() });
   } catch (err: any) {
     const msg = String(err?.stderr ?? err?.message ?? "");
     if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
@@ -2393,6 +2450,7 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
 
   try {
     await execFileAsync("osascript", ["-e", script]);
+    recordLaunch({ type: "team", name: team.name, directory: workDir, timestamp: Date.now() });
   } catch (err: any) {
     const msg = String(err?.stderr ?? err?.message ?? "");
     if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {

@@ -4371,6 +4371,33 @@ body {
   text-align: center;
 }
 
+.home-period-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.home-period-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  font-size: 0.769rem;
+  cursor: pointer;
+}
+
+.home-period-btn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.home-period-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 .home-stats {
   display: flex;
   gap: 16px;
@@ -4483,6 +4510,54 @@ body {
   font-size: 0.615rem;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+/* Active sessions */
+.home-active-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-active-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+}
+
+.home-active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+
+.home-active-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.home-active-profile {
+  font-weight: 500;
+  font-size: 0.923rem;
+  color: var(--text-primary);
+}
+
+.home-active-cwd {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+}
+
+.home-active-time {
+  font-size: 0.769rem;
+  color: var(--text-muted);
 }
 
 /* Two-column layout */
