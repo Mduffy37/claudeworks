@@ -359,12 +359,30 @@ export function writeMcpConfig(
 
 export function getPluginsWithItems(): PluginWithItems[] {
   const plugins = scanInstalledPlugins();
-  return plugins.map((p) => ({
+  const result: PluginWithItems[] = plugins.map((p) => ({
     ...p,
     items: scanPluginItems(p),
     hooks: scanPluginHooks(p),
     mcpServers: scanPluginMcpServers(p),
   }));
+
+  // Inject synthetic "Local" plugin for user-installed add-ons
+  const localItems = scanUserLocalItems();
+  if (localItems.length > 0) {
+    result.push({
+      name: "Local",
+      scope: "user",
+      installPath: path.join(os.homedir(), ".claude"),
+      version: "local",
+      marketplace: "local",
+      pluginName: "Local",
+      items: localItems,
+      hooks: [],
+      mcpServers: [],
+    });
+  }
+
+  return result;
 }
 
 /** Check which plugins in a profile are no longer installed globally. */
@@ -441,6 +459,89 @@ export function scanLocalItems(directory: string): LocalItem[] {
         type: "agent",
         path: path.join(agentsDir, file),
       });
+    }
+  }
+
+  return items;
+}
+
+/** Scan ~/.claude/ for user-installed local skills, agents, and commands. Returns PluginItem[]. */
+export function scanUserLocalItems(): PluginItem[] {
+  const items: PluginItem[] = [];
+  const claudeHome = path.join(os.homedir(), ".claude");
+
+  // Skills: ~/.claude/skills/{name}/SKILL.md
+  const skillsDir = path.join(claudeHome, "skills");
+  if (fs.existsSync(skillsDir)) {
+    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
+      if (!fs.existsSync(skillMd)) continue;
+      const fm = readFrontmatter(skillMd);
+      items.push({
+        name: fm.name ?? entry.name,
+        description: fm.description ?? "",
+        type: "skill",
+        plugin: "Local",
+        path: skillMd,
+        userInvocable: true,
+        dependencies: [],
+      });
+    }
+  }
+
+  // Agents: ~/.claude/agents/{name}.md
+  const agentsDir = path.join(claudeHome, "agents");
+  if (fs.existsSync(agentsDir)) {
+    for (const file of fs.readdirSync(agentsDir)) {
+      if (!file.endsWith(".md") || file === "README.md") continue;
+      const agentPath = path.join(agentsDir, file);
+      const fm = readFrontmatter(agentPath);
+      items.push({
+        name: fm.name ?? path.basename(file, ".md"),
+        description: fm.description ?? "",
+        type: "agent",
+        plugin: "Local",
+        path: agentPath,
+        userInvocable: false,
+        dependencies: [],
+      });
+    }
+  }
+
+  // Commands: ~/.claude/commands/{name}.md or commands/{namespace}/{name}.md
+  const cmdsDir = path.join(claudeHome, "commands");
+  if (fs.existsSync(cmdsDir)) {
+    for (const entry of fs.readdirSync(cmdsDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        const subDir = path.join(cmdsDir, entry.name);
+        for (const file of fs.readdirSync(subDir)) {
+          if (!file.endsWith(".md")) continue;
+          const cmdPath = path.join(subDir, file);
+          const fm = readFrontmatter(cmdPath);
+          items.push({
+            name: fm.name ?? `${entry.name}:${path.basename(file, ".md")}`,
+            description: fm.description ?? "",
+            type: "command",
+            plugin: "Local",
+            path: cmdPath,
+            userInvocable: true,
+            dependencies: [],
+          });
+        }
+      } else if (entry.name.endsWith(".md")) {
+        const cmdPath = path.join(cmdsDir, entry.name);
+        const fm = readFrontmatter(cmdPath);
+        items.push({
+          name: fm.name ?? path.basename(entry.name, ".md"),
+          description: fm.description ?? "",
+          type: "command",
+          plugin: "Local",
+          path: cmdPath,
+          userInvocable: true,
+          dependencies: [],
+        });
+      }
     }
   }
 
@@ -1246,8 +1347,6 @@ function symlinkShared(configDir: string, profile: Profile): void {
   const shared: [string, string][] = [
     ["CLAUDE.md", "CLAUDE.md"],
     ["projects", "projects"],
-    ["skills", "skills"],
-    ["agents", "agents"],
   ];
 
   for (const [sourceName, targetName] of shared) {
@@ -1258,15 +1357,44 @@ function symlinkShared(configDir: string, profile: Profile): void {
     }
   }
 
-  // Symlink individual user commands (not the whole dir — profiles have their own commands/profiles/)
-  const sourceCommands = path.join(CLAUDE_HOME, "commands");
-  const targetCommands = path.join(configDir, "commands");
-  if (fs.existsSync(sourceCommands)) {
-    fs.mkdirSync(targetCommands, { recursive: true });
-    for (const entry of fs.readdirSync(sourceCommands)) {
-      const tgt = path.join(targetCommands, entry);
-      if (!fs.existsSync(tgt)) {
-        fs.symlinkSync(path.join(sourceCommands, entry), tgt);
+  // Symlink user-level local add-ons if the "Local" plugin is enabled for this profile.
+  // Only symlink items not in excludedItems["Local"].
+  if (profile.plugins.includes("Local")) {
+    const excluded = new Set(profile.excludedItems?.["Local"] ?? []);
+    const localItems = scanUserLocalItems();
+
+    for (const item of localItems) {
+      if (excluded.has(item.name)) continue;
+
+      if (item.type === "skill") {
+        // Skills are directories: ~/.claude/skills/{name}/ → {configDir}/skills/{name}/
+        const skillDir = path.dirname(item.path); // path is to SKILL.md, parent is the skill dir
+        const tgtDir = path.join(configDir, "skills", path.basename(skillDir));
+        fs.mkdirSync(path.join(configDir, "skills"), { recursive: true });
+        if (!fs.existsSync(tgtDir)) fs.symlinkSync(skillDir, tgtDir);
+      } else if (item.type === "agent") {
+        // Agents are files: ~/.claude/agents/{name}.md → {configDir}/agents/{name}.md
+        const tgt = path.join(configDir, "agents", path.basename(item.path));
+        fs.mkdirSync(path.join(configDir, "agents"), { recursive: true });
+        if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
+      } else if (item.type === "command") {
+        // Commands: symlink the file or namespace directory
+        const sourceCommands = path.join(CLAUDE_HOME, "commands");
+        const targetCommands = path.join(configDir, "commands");
+        fs.mkdirSync(targetCommands, { recursive: true });
+        // item.path is the .md file; figure out if it's namespaced
+        const relPath = path.relative(sourceCommands, item.path);
+        const parts = relPath.split(path.sep);
+        if (parts.length === 2) {
+          // Namespaced: commands/{namespace}/{file}.md — symlink the namespace dir
+          const nsDir = path.join(sourceCommands, parts[0]);
+          const tgt = path.join(targetCommands, parts[0]);
+          if (!fs.existsSync(tgt)) fs.symlinkSync(nsDir, tgt);
+        } else {
+          // Top-level: commands/{file}.md
+          const tgt = path.join(targetCommands, path.basename(item.path));
+          if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
+        }
       }
     }
   }
