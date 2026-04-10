@@ -29,6 +29,9 @@ const api: ElectronAPI = {
   renameTeam: (oldName, team) => ipcRenderer.invoke("rename-team", oldName, team),
   getTeamMergePreview: (team) => ipcRenderer.invoke("get-team-merge-preview", team),
   checkTeamHealth: () => ipcRenderer.invoke("check-team-health"),
+  checkAgentTeamsEnabled: () => ipcRenderer.invoke("check-agent-teams-enabled"),
+  enableAgentTeams: () => ipcRenderer.invoke("enable-agent-teams"),
+  launchTeam: (team, directory) => ipcRenderer.invoke("launch-team", team, directory),
   // Global settings
   getGlobalClaudeMd: () => ipcRenderer.invoke("get-global-claude-md"),
   saveGlobalClaudeMd: (content) => ipcRenderer.invoke("save-global-claude-md", content),

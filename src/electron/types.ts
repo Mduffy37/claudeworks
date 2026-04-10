@@ -203,6 +203,9 @@ export interface ElectronAPI {
   renameTeam: (oldName: string, team: Team) => Promise<Team>;
   getTeamMergePreview: (team: Team) => Promise<MergePreview>;
   checkTeamHealth: () => Promise<Record<string, string[]>>;
+  checkAgentTeamsEnabled: () => Promise<boolean>;
+  enableAgentTeams: () => Promise<void>;
+  launchTeam: (team: Team, directory?: string) => Promise<void>;
   // Global settings
   getGlobalClaudeMd: () => Promise<string>;
   saveGlobalClaudeMd: (content: string) => Promise<void>;

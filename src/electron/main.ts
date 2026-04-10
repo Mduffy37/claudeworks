@@ -25,6 +25,9 @@ import {
   deleteTeamByName,
   getTeamMergePreview,
   checkAllTeamHealth,
+  checkAgentTeamsEnabled,
+  enableAgentTeams,
+  launchTeam,
   getGlobalClaudeMd,
   saveGlobalClaudeMd,
   getPrompts,
@@ -245,6 +248,18 @@ ipcMain.handle("get-team-merge-preview", (_event, team: Team) => {
 
 ipcMain.handle("check-team-health", () => {
   return checkAllTeamHealth(loadTeams());
+});
+
+ipcMain.handle("check-agent-teams-enabled", () => {
+  return checkAgentTeamsEnabled();
+});
+
+ipcMain.handle("enable-agent-teams", () => {
+  enableAgentTeams();
+});
+
+ipcMain.handle("launch-team", async (_event, team: Team, directory?: string) => {
+  await launchTeam(team, directory);
 });
 
 // Global settings
