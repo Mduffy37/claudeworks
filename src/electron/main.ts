@@ -11,7 +11,7 @@ import {
   renameProfile,
   deleteProfileByName,
   assembleProfile,
-  copyCredentials,
+  syncCredentials,
   launchProfile,
   checkAllProfileHealth,
   updatePlugin,
@@ -107,21 +107,22 @@ ipcMain.handle("check-profile-health", () => {
 ipcMain.handle("create-profile", async (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
-  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await syncCredentials(saved, "seed");
   return saved;
 });
 
 ipcMain.handle("update-profile", async (_event, profile: Profile) => {
   const saved = saveProfile(profile);
   assembleProfile(saved);
-  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await syncCredentials(saved, "seed");
   return saved;
 });
 
 ipcMain.handle("rename-profile", async (_event, oldName: string, profile: Profile) => {
+  const oldConfigDir = path.join(os.homedir(), ".claude-profiles", oldName, "config");
   const saved = renameProfile(oldName, profile);
   assembleProfile(saved);
-  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await syncCredentials(saved, "rename", oldConfigDir);
   return saved;
 });
 
@@ -146,7 +147,7 @@ ipcMain.handle("duplicate-profile", async (_event, name: string) => {
   const copy: Profile = { ...source, name: copyName, alias: undefined, isDefault: undefined };
   const saved = saveProfile(copy);
   assembleProfile(saved);
-  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
+  if (saved.useDefaultAuth !== false) await syncCredentials(saved, "seed");
   return saved;
 });
 
@@ -161,7 +162,7 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   }
   // Refresh credentials from default keychain entry so profiles don't launch
   // with stale/expired OAuth tokens.
-  if (profile.useDefaultAuth !== false) await copyCredentials(profile);
+  if (profile.useDefaultAuth !== false) await syncCredentials(profile, "launch");
   // Track last launch time
   profile.lastLaunched = Date.now();
   saveProfile(profile);
