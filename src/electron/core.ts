@@ -2117,6 +2117,80 @@ export function assembleTeamProfile(team: Team): string {
   return configDir;
 }
 
+export async function launchTeam(team: Team, directory?: string): Promise<void> {
+  const lead = team.members.find((m) => m.isLead);
+  if (!lead) throw new Error("Team has no lead member");
+  const profiles = loadProfiles();
+  const leadProfile = profiles.find((p) => p.name === lead.profile);
+  if (!leadProfile) throw new Error(`Lead profile "${lead.profile}" not found`);
+
+  const configDir = assembleTeamProfile(team);
+  const workDir = directory ?? leadProfile.directory ?? os.homedir();
+
+  // Regenerate mcp.json for the actual working directory
+  writeMcpConfig(
+    { ...leadProfile, plugins: [...new Set(team.members.flatMap((m) => {
+      const prof = profiles.find((p) => p.name === m.profile);
+      return prof?.plugins ?? [];
+    }))] } as Profile,
+    workDir,
+    configDir
+  );
+
+  // Sync credentials
+  if (leadProfile.useDefaultAuth !== false) {
+    await syncCredentials(leadProfile, "launch");
+  }
+
+  const mcpConfigPath = path.join(configDir, "mcp.json");
+
+  // Build launch flags — global defaults first, then team/lead overrides
+  const flagParts: string[] = [];
+  const globalDefs = getGlobalDefaults();
+  if (globalDefs.customFlags?.trim()) flagParts.push(globalDefs.customFlags.trim());
+  if (leadProfile.launchFlags?.dangerouslySkipPermissions) flagParts.push("--dangerously-skip-permissions");
+  if (leadProfile.launchFlags?.verbose) flagParts.push("--verbose");
+  if (team.customFlags?.trim()) flagParts.push(team.customFlags.trim());
+  const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
+
+  const claudeBin = findRealClaudeBinary();
+  const sessionName = `team-${team.name.replace(/[^a-zA-Z0-9-]/g, "-")}`;
+
+  // Write a launcher script to avoid nested escaping issues with tmux + AppleScript
+  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr} '/start-team'`;
+  const launcherPath = path.join(configDir, ".team-launch.sh");
+  fs.writeFileSync(launcherPath, `#!/bin/bash\n${innerCmd}\n`, { mode: 0o755 });
+
+  const script = [
+    'tell application "iTerm2"',
+    "  activate",
+    "  if (count of windows) = 0 then",
+    "    create window with default profile",
+    "  else",
+    "    tell current window",
+    "      create tab with default profile",
+    "    end tell",
+    "  end if",
+    "  tell current session of current window",
+    `    write text "tmux -CC new-session -s '${escSh(sessionName)}' '${escSh(launcherPath)}'"`,
+    "  end tell",
+    "end tell",
+  ].join("\n");
+
+  try {
+    await execFileAsync("osascript", ["-e", script]);
+  } catch (err: any) {
+    const msg = String(err?.stderr ?? err?.message ?? "");
+    if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
+      throw new Error("iTerm2 is not running. Open iTerm2 and try again.");
+    }
+    if (msg.includes("Not authorized")) {
+      throw new Error("macOS denied AppleScript access to iTerm2. Grant permission in System Settings > Privacy & Security > Automation.");
+    }
+    throw new Error(`Team launch failed: ${msg || "Unknown AppleScript error"}`);
+  }
+}
+
 export function getTeamMergePreview(team: Team): MergePreview {
   const profiles = loadProfiles();
   const allPlugins = new Set<string>();
