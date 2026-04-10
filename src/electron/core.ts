@@ -788,6 +788,63 @@ if (fs.existsSync(localMcpPath)) {
 // Write mcp.json
 fs.mkdirSync(configDir, { recursive: true });
 fs.writeFileSync(path.join(configDir, "mcp.json"), JSON.stringify({ mcpServers }, null, 2) + "\\n");
+
+// --- Credential sync (target-first, then freshest candidate) ---
+if (profile.useDefaultAuth !== false) {
+  const { execFileSync } = require("child_process");
+  const crypto = require("crypto");
+  const username = os.userInfo().username;
+  const SAFETY = 5 * 60 * 1000;
+
+  function svcHash(dir) {
+    return "Claude Code-credentials-" + crypto.createHash("sha256").update(dir).digest("hex").substring(0, 8);
+  }
+
+  function readEntry(svc) {
+    try {
+      const raw = execFileSync("security", ["find-generic-password", "-s", svc, "-a", username, "-w"], { encoding: "utf-8", timeout: 5000 }).trim();
+      const parsed = JSON.parse(raw);
+      let oauth = parsed.claudeAiOauth;
+      if (typeof oauth === "string") oauth = JSON.parse(oauth);
+      if (!oauth || !oauth.accessToken || !oauth.refreshToken || typeof oauth.expiresAt !== "number") return null;
+      return { raw, expiresAt: oauth.expiresAt };
+    } catch { return null; }
+  }
+
+  const targetSvc = svcHash(configDir);
+  const target = readEntry(targetSvc);
+
+  if (!target || target.expiresAt <= Date.now() + SAFETY) {
+    // Scan for freshest valid candidate
+    const candidates = [];
+    const defaultEntry = readEntry("Claude Code-credentials");
+    if (defaultEntry && defaultEntry.expiresAt > Date.now()) candidates.push(defaultEntry);
+
+    for (const [pName, pData] of Object.entries(store.profiles)) {
+      if (pData.useDefaultAuth === false) continue;
+      const pDir = path.join(PROFILES_DIR, pName, "config");
+      const pSvc = svcHash(pDir);
+      if (pSvc === targetSvc) continue;
+      const entry = readEntry(pSvc);
+      if (entry && entry.expiresAt > Date.now()) candidates.push(entry);
+    }
+
+    candidates.sort((a, b) => b.expiresAt - a.expiresAt);
+    if (candidates.length > 0) {
+      // Save existing entry in case add fails after delete
+      const backup = target ? target.raw : null;
+      try {
+        try { execFileSync("security", ["delete-generic-password", "-s", targetSvc, "-a", username], { stdio: "ignore" }); } catch {}
+        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", candidates[0].raw]);
+      } catch {
+        // Add failed — restore backup if we had one
+        if (backup) {
+          try { execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", backup]); } catch {}
+        }
+      }
+    }
+  }
+}
 `;
   fs.writeFileSync(helperPath, helper, { mode: 0o755 });
 }
