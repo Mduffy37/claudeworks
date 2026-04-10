@@ -508,7 +508,8 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
   const skillsDir = path.join(claudeHome, "skills");
   if (fs.existsSync(skillsDir)) {
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      const isDir = entry.isDirectory() || (entry.isSymbolicLink() && fs.statSync(path.join(skillsDir, entry.name)).isDirectory());
+      if (!isDir) continue;
       const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const fm = readFrontmatter(skillMd);
