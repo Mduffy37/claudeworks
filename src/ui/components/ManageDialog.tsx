@@ -1036,6 +1036,26 @@ export function ManageDialog({
     onPluginsChanged?.();
   };
 
+  const [manualInstallInput, setManualInstallInput] = useState("");
+  const [manualInstallLoading, setManualInstallLoading] = useState(false);
+  const [manualInstallError, setManualInstallError] = useState<string | null>(null);
+
+  const handleManualInstall = async () => {
+    const id = manualInstallInput.trim();
+    if (!id) return;
+    setManualInstallLoading(true);
+    setManualInstallError(null);
+    try {
+      await window.api.installPlugin(id);
+      setManualInstallInput("");
+      onPluginsChanged?.();
+    } catch (err: any) {
+      setManualInstallError(err?.message ?? "Failed to install plugin");
+    } finally {
+      setManualInstallLoading(false);
+    }
+  };
+
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
@@ -1206,6 +1226,27 @@ export function ManageDialog({
                 </div>
               ) : (
                 <>
+                  <div className="marketplace-add-row" style={{ padding: "8px 12px 0" }}>
+                    <input
+                      type="text"
+                      className="marketplace-input"
+                      placeholder="Install by ID (e.g. name@owner/repo)"
+                      value={manualInstallInput}
+                      onChange={(e) => setManualInstallInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleManualInstall(); }}
+                      disabled={manualInstallLoading}
+                    />
+                    <button
+                      className="btn-primary"
+                      onClick={handleManualInstall}
+                      disabled={!manualInstallInput.trim() || manualInstallLoading}
+                    >
+                      {manualInstallLoading ? "Installing..." : "Install"}
+                    </button>
+                  </div>
+                  {manualInstallError && (
+                    <div className="marketplace-error" style={{ padding: "0 12px" }}>{manualInstallError}</div>
+                  )}
                   {discoverLoading ? (
                     <div className="discover-loading">Loading available plugins...</div>
                   ) : discoverError ? (

@@ -464,11 +464,17 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           <span>
             {brokenPlugins.length} missing plugin{brokenPlugins.length !== 1 ? "s" : ""}:{" "}
             {brokenPlugins.map((n) => n.split("@")[0]).join(", ")}
-            {" "}
-            <button className="pe-health-link" onClick={() => draft.setActiveTab("plugins")}>
-              Go to Plugins &rarr;
-            </button>
           </span>
+          <button
+            className="pe-health-remove"
+            onClick={() => {
+              const cleaned = draft.selectedPlugins.filter((p) => !brokenPlugins.includes(p));
+              draft.setSelectedPlugins(cleaned);
+              onDirtyChange(true);
+            }}
+          >
+            Remove from profile
+          </button>
         </div>
       )}
 

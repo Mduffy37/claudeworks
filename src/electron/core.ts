@@ -479,6 +479,7 @@ export function isGsdInstalled(): boolean {
   );
 }
 
+
 /**
  * Scan ~/.claude/ for user-installed local skills, agents, and commands.
  * Returns grouped synthetic PluginWithItems[] — each skill and command namespace
@@ -503,6 +504,7 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
   const gsdDetected = isGsdInstalled();
   const GSD_PLUGIN_NAME = `${FRAMEWORK_PLUGIN_PREFIX}gsd`;
   const gsdItems: PluginItem[] = [];
+
 
   // Skills: each skill directory → its own plugin (GSD skills → framework:gsd)
   const skillsDir = path.join(claudeHome, "skills");

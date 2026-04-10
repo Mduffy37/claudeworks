@@ -3124,14 +3124,23 @@ body {
   flex-shrink: 0;
 }
 
-.pe-health-link {
-  background: none;
-  border: none;
-  color: var(--accent);
+.pe-health-warning span {
+  flex: 1;
+}
+
+.pe-health-remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  color: #eab308;
+  border-radius: var(--radius);
+  padding: 3px 8px;
+  font-size: 0.769rem;
   cursor: pointer;
-  font-size: inherit;
-  padding: 0;
-  text-decoration: underline;
+}
+
+.pe-health-remove:hover {
+  background: rgba(234, 179, 8, 0.2);
 }
 
 .pe-health-link:hover {
