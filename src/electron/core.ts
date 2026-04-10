@@ -1242,6 +1242,8 @@ function symlinkShared(configDir: string, profile: Profile): void {
   const shared: [string, string][] = [
     ["CLAUDE.md", "CLAUDE.md"],
     ["projects", "projects"],
+    ["skills", "skills"],
+    ["agents", "agents"],
   ];
 
   for (const [sourceName, targetName] of shared) {
@@ -1249,6 +1251,19 @@ function symlinkShared(configDir: string, profile: Profile): void {
     const tgt = path.join(configDir, targetName);
     if (fs.existsSync(src) && !fs.existsSync(tgt)) {
       fs.symlinkSync(src, tgt);
+    }
+  }
+
+  // Symlink individual user commands (not the whole dir — profiles have their own commands/profiles/)
+  const sourceCommands = path.join(CLAUDE_HOME, "commands");
+  const targetCommands = path.join(configDir, "commands");
+  if (fs.existsSync(sourceCommands)) {
+    fs.mkdirSync(targetCommands, { recursive: true });
+    for (const entry of fs.readdirSync(sourceCommands)) {
+      const tgt = path.join(targetCommands, entry);
+      if (!fs.existsSync(tgt)) {
+        fs.symlinkSync(path.join(sourceCommands, entry), tgt);
+      }
     }
   }
 
