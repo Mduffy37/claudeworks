@@ -54,7 +54,7 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
         <div>
           <h2 className="pm-name">{plugin.name}</h2>
           <div className="pm-subtitle">
-            {plugin.marketplaceName}
+            {plugin.marketplaceName} &middot; {formatCount(plugin.installCount)} installs
           </div>
         </div>
         <div className="pm-actions">
@@ -75,13 +75,6 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
       <div className="discover-detail-body">
         <div className="discover-detail-description">{plugin.description}</div>
 
-        <div className="discover-detail-stats">
-          <div className="discover-stat">
-            <div className="discover-stat-value">{formatCount(plugin.installCount)}</div>
-            <div className="discover-stat-label">installs</div>
-          </div>
-        </div>
-
         {plugin.source.url && (
           <div className="discover-detail-section">
             <div className="pm-label">Source</div>
@@ -94,6 +87,10 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
               }}
             >
               {plugin.source.url.replace("https://github.com/", "").replace(".git", "")}
+              {" "}
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ verticalAlign: "middle", opacity: 0.7 }}>
+                <path d="M4.5 1.5H2.5C1.95 1.5 1.5 1.95 1.5 2.5V9.5C1.5 10.05 1.95 10.5 2.5 10.5H9.5C10.05 10.5 10.5 10.05 10.5 9.5V7.5M7.5 1.5H10.5V4.5M10.5 1.5L5.5 6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </a>
           </div>
         )}

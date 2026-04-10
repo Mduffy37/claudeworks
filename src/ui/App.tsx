@@ -165,7 +165,6 @@ export function App() {
 
   const handlePluginUninstall = async (name: string) => {
     await window.api.uninstallPlugin(name);
-    setSelectedPlugin(null);
     refreshPlugins();
     refreshHealth();
   };
@@ -407,6 +406,7 @@ export function App() {
           onNavigateToProfile={handleNavigateToProfile}
           onCreateDefault={handleCreateDefault}
           onClose={handleCloseManageDialog}
+          onPluginsChanged={refreshPlugins}
         />
       )}
       {showBulkManage && (

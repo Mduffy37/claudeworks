@@ -18,6 +18,7 @@ interface Props {
   onNavigateToProfile: (profileName: string) => void;
   onCreateDefault: () => void;
   onClose: () => void;
+  onPluginsChanged?: () => void;
 }
 
 // ─── Projects tab ───────────────────────────────────────────────────────────
@@ -961,6 +962,7 @@ export function ManageDialog({
   onNavigateToProfile,
   onCreateDefault,
   onClose,
+  onPluginsChanged,
 }: Props) {
   const [activeTab, setActiveTab] = useState<ManageTab>("plugins");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
@@ -970,7 +972,7 @@ export function ManageDialog({
   type PluginSubTab = "installed" | "discover";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
   const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
-  const [installedPluginIds, setInstalledPluginIds] = useState<Set<string>>(new Set());
+  const installedPluginIds = useMemo(() => new Set(plugins.map((p) => p.name)), [plugins]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [discoverLoaded, setDiscoverLoaded] = useState(false);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
@@ -982,7 +984,6 @@ export function ManageDialog({
     try {
       const data = await window.api.getAvailablePlugins();
       setAvailablePlugins(data.available);
-      setInstalledPluginIds(new Set(data.installed.map((p) => p.id)));
       setDiscoverLoaded(true);
     } catch (err: any) {
       setDiscoverError(err?.message ?? "Failed to load available plugins");
@@ -993,7 +994,7 @@ export function ManageDialog({
 
   const handleInstallPlugin = async (pluginId: string) => {
     await window.api.installPlugin(pluginId);
-    setInstalledPluginIds((prev) => new Set([...prev, pluginId]));
+    onPluginsChanged?.();
   };
 
   useEffect(() => {

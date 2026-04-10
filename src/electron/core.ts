@@ -1313,12 +1313,18 @@ export async function checkCredentialStatus(): Promise<{ global: boolean; profil
 // ---------------------------------------------------------------------------
 
 export async function updatePlugin(pluginId: string): Promise<void> {
-  await execFileAsync("claude", ["plugin", "update", pluginId]);
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), ["plugin", "update", pluginId], {
+    env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome },
+  });
   _knownPluginNamesCache = null;
 }
 
 export async function uninstallPlugin(pluginId: string): Promise<void> {
-  await execFileAsync("claude", ["plugin", "uninstall", pluginId]);
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), ["plugin", "uninstall", pluginId], {
+    env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome },
+  });
   _knownPluginNamesCache = null;
 }
 
