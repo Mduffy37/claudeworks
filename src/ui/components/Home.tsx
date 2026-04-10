@@ -99,6 +99,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<TimePeriod>("30d");
+  const [updateInfo, setUpdateInfo] = useState<{ available: boolean; current: string; latest: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -111,6 +112,10 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       setLoading(false);
     });
   }, [period]);
+
+  useEffect(() => {
+    window.api.checkForAppUpdate().then(setUpdateInfo);
+  }, []);
 
   if (loading) {
     return (
@@ -136,6 +141,14 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
           </button>
         ))}
       </div>
+
+      {/* Update banner */}
+      {updateInfo?.available && (
+        <div className="home-update-banner">
+          <span>Update available: v{updateInfo.latest}</span>
+          <span className="home-update-current">Current: v{updateInfo.current}</span>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="home-stats">

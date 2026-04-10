@@ -24,6 +24,7 @@ import {
   listMarketplaces,
   getAnalytics,
   getActiveSessions,
+  checkForAppUpdate,
   loadTeams,
   saveTeam,
   renameTeam,
@@ -247,6 +248,10 @@ ipcMain.handle("get-analytics", (_event, since?: number) => {
 
 ipcMain.handle("get-active-sessions", () => {
   return getActiveSessions();
+});
+
+ipcMain.handle("check-for-app-update", async () => {
+  return checkForAppUpdate();
 });
 
 ipcMain.handle("get-teams", () => {

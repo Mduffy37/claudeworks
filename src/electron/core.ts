@@ -2837,6 +2837,48 @@ export function runDiagnostics(): {
   };
 }
 
+export async function checkForAppUpdate(): Promise<{ available: boolean; current: string; latest: string }> {
+  const pkg = require("../../package.json");
+  const current: string = pkg.version ?? "0.0.0";
+  const repo = pkg.repository?.url?.replace(/.*github\.com\//, "").replace(/\.git$/, "") ?? "";
+
+  if (!repo) return { available: false, current, latest: current };
+
+  try {
+    // Check GitHub releases API
+    const { stdout } = await execFileAsync("curl", [
+      "-s", "-f", `https://api.github.com/repos/${repo}/releases/latest`,
+    ], { timeout: 10000 });
+
+    const release = JSON.parse(stdout);
+    const latest: string = release.tag_name?.replace(/^v/, "") ?? current;
+
+    // Simple semver comparison
+    const cParts = current.split(".").map(Number);
+    const lParts = latest.split(".").map(Number);
+    let available = false;
+    for (let i = 0; i < 3; i++) {
+      if ((lParts[i] ?? 0) > (cParts[i] ?? 0)) { available = true; break; }
+      if ((lParts[i] ?? 0) < (cParts[i] ?? 0)) break;
+    }
+
+    return { available, current, latest };
+  } catch {
+    // No releases yet or network error — try git if available
+    try {
+      const appDir = path.resolve(__dirname, "../..");
+      await execFileAsync("git", ["fetch", "--quiet"], { cwd: appDir, timeout: 10000 });
+      const { stdout } = await execFileAsync("git", [
+        "rev-list", "--count", "HEAD..origin/main",
+      ], { cwd: appDir, timeout: 5000 });
+      const behind = parseInt(stdout.trim(), 10) || 0;
+      return { available: behind > 0, current, latest: behind > 0 ? `${behind} commits ahead` : current };
+    } catch {
+      return { available: false, current, latest: current };
+    }
+  }
+}
+
 export function getProfileConfigDir(name: string): string {
   return path.join(PROFILES_DIR, name, "config");
 }

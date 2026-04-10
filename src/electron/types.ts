@@ -245,6 +245,7 @@ export interface ElectronAPI {
   getClaudeHome: () => Promise<string>;
   getAnalytics: (since?: number) => Promise<AnalyticsData>;
   getActiveSessions: () => Promise<ActiveSession[]>;
+  checkForAppUpdate: () => Promise<{ available: boolean; current: string; latest: string }>;
 }
 
 export interface ActiveSession {
