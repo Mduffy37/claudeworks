@@ -1875,32 +1875,6 @@ export function checkAllTeamHealth(teams: Team[]): Record<string, string[]> {
   return result;
 }
 
-export function checkAgentTeamsEnabled(): boolean {
-  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
-  if (!fs.existsSync(settingsPath)) return false;
-  try {
-    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
-    return settings?.env?.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function enableAgentTeams(): void {
-  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
-  let settings: Record<string, any> = {};
-  if (fs.existsSync(settingsPath)) {
-    try {
-      settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
-    } catch {
-      settings = {};
-    }
-  }
-  if (!settings.env) settings.env = {};
-  settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
-}
-
 export function assembleTeamProfile(team: Team): string {
   const teamDirName = `_team_${team.name}`;
   validateProfileName(teamDirName);
@@ -2033,30 +2007,30 @@ export function assembleTeamProfile(team: Team): string {
     ownedAddOns.set(member.profile, { skills, agents, commands });
   }
 
-  // Generate TEAM.md
+  // Generate TEAM.md — context for the lead about team structure and roles
   const nonLeadMembers = team.members.filter((m) => !m.isLead);
   let teamMd = `# Team: ${team.name}\n\n`;
-  teamMd += `You are the team lead. You have ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""} that you coordinate.\n\n`;
-  teamMd += `## Your Role\n${lead.role}${lead.instructions ? "\n" + lead.instructions : ""}\n\n`;
+  teamMd += `## Your Role (Team Lead)\n`;
+  teamMd += `${lead.role}${lead.instructions ? "\n" + lead.instructions : ""}\n\n`;
   teamMd += `## Teammates\n\n`;
 
   for (const member of nonLeadMembers) {
     const addOns = ownedAddOns.get(member.profile) ?? { skills: [], agents: [], commands: [] };
-    teamMd += `### ${member.profile} — ${member.role}\n`;
+    const slug = member.profile.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    teamMd += `### ${member.profile} (name: "${slug}")\n`;
+    teamMd += `- **Role**: ${member.role}\n`;
     if (member.instructions) teamMd += `- **Instructions**: ${member.instructions}\n`;
     if (addOns.skills.length > 0) teamMd += `- **Skills**: ${addOns.skills.join(", ")}\n`;
     if (addOns.agents.length > 0) teamMd += `- **Agents**: ${addOns.agents.join(", ")}\n`;
     if (addOns.commands.length > 0) teamMd += `- **Commands**: ${addOns.commands.map(c => "/" + c).join(", ")}\n`;
-    if (!addOns.skills.length && !addOns.agents.length && !addOns.commands.length) {
-      teamMd += `- No exclusive add-ons\n`;
-    }
     teamMd += `\n`;
   }
 
-  teamMd += `## Rules\n`;
-  teamMd += `- You MUST NOT directly invoke any add-on listed under a teammate's ownership. Always delegate to the owning teammate.\n`;
-  teamMd += `- When delegating, spawn the teammate by name and include their instructions and owned add-ons in the prompt.\n`;
-  teamMd += `- Each teammate's spawn prompt MUST instruct them to only use their assigned add-ons and to report back if they need capabilities they don't own.\n`;
+  teamMd += `## Add-on Ownership\n`;
+  teamMd += `Each add-on (skill, agent, command) is owned by the teammate whose profile contributed it.\n`;
+  teamMd += `- Delegate work involving a teammate's add-ons to that teammate.\n`;
+  teamMd += `- When spawning a teammate, include their role, instructions, and owned add-ons in the spawn prompt.\n`;
+  teamMd += `- Tell each teammate to only use their assigned add-ons and to report back if they need capabilities they don't own.\n`;
 
   fs.writeFileSync(path.join(configDir, "TEAM.md"), teamMd, "utf-8");
 
@@ -2072,13 +2046,11 @@ export function assembleTeamProfile(team: Team): string {
     fs.writeFileSync(claudeMdPath, teamMdRef.trim(), "utf-8");
   }
 
-  // Generate /start-team command
+  // Generate /start-team command — natural language prompt for native agent teams
   let startCmd = `# /start-team\n\n`;
-  startCmd += `You are bootstrapping your team. Follow these steps exactly:\n\n`;
-  startCmd += `## Step 1: Spawn teammates\n\n`;
-  startCmd += `Spawn each teammate using the Agent tool. For each teammate:\n`;
-  startCmd += `- Use their name as the \`name\` parameter so they are addressable via SendMessage\n`;
-  startCmd += `- Include their role, instructions, and the exact list of add-ons they own\n\n`;
+  startCmd += `Create an agent team called "${team.name}" with ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""}.\n\n`;
+  startCmd += `You are the team lead. Your role: ${lead.role}${lead.instructions ? ". " + lead.instructions : ""}\n\n`;
+  startCmd += `Spawn the following teammates:\n\n`;
 
   for (const member of nonLeadMembers) {
     const addOns = ownedAddOns.get(member.profile) ?? { skills: [], agents: [], commands: [] };
@@ -2090,25 +2062,13 @@ export function assembleTeamProfile(team: Team): string {
     ];
     const addOnsStr = allAddOnsList.length > 0 ? allAddOnsList.join(", ") : "none";
 
-    startCmd += `### Spawn: ${member.profile}\n`;
-    startCmd += `- **Name**: \`${slug}\`\n`;
-    startCmd += `- **Role**: ${member.role}\n`;
-    if (member.instructions) startCmd += `- **Instructions**: ${member.instructions}\n`;
-    startCmd += `- **Owned add-ons**: ${addOnsStr}\n`;
-    startCmd += `- **Spawn prompt must include**: "You are a teammate on team ${team.name}. Your role is ${member.role}. `;
-    if (member.instructions) startCmd += `${member.instructions} `;
-    startCmd += `You ONLY have access to the following add-ons: ${addOnsStr}. `;
-    startCmd += `Do NOT use any other skills, agents, or commands — they belong to other teammates. `;
-    startCmd += `If you need something outside your ownership, report back to the team lead and they will delegate to the correct teammate."\n\n`;
+    startCmd += `- **${slug}**: ${member.role}.`;
+    if (member.instructions) startCmd += ` ${member.instructions}.`;
+    startCmd += ` Owned add-ons: ${addOnsStr}.\n`;
   }
 
-  startCmd += `## Step 2: Confirm\n\n`;
-  startCmd += `Once all teammates are spawned, report to the user:\n\n`;
-  startCmd += `"Team ${team.name} is ready. ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""} spawned:\n`;
-  for (const member of nonLeadMembers) {
-    startCmd += `- ${member.profile} — ${member.role}\n`;
-  }
-  startCmd += `\nWhat are we working on?"\n`;
+  startCmd += `\nEach teammate should only use their assigned add-ons. If they need a capability they don't own, they should report back so you can delegate to the correct teammate.\n`;
+  startCmd += `\nAfter all teammates are spawned, report to the user that the team is ready and ask what to work on.\n`;
 
   fs.writeFileSync(path.join(configDir, "commands", "start-team.md"), startCmd, "utf-8");
 
@@ -2143,9 +2103,10 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
     configDir
   );
 
-  // Sync credentials
+  // Sync credentials for the team config dir (not the lead profile's dir)
   if (leadProfile.useDefaultAuth !== false) {
-    await syncCredentials(leadProfile, "launch");
+    const teamDirName = `_team_${team.name}`;
+    await syncCredentials({ ...leadProfile, name: teamDirName } as Profile, "launch");
   }
 
   const mcpConfigPath = path.join(configDir, "mcp.json");
@@ -2163,7 +2124,7 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
   const sessionName = `team-${team.name.replace(/[^a-zA-Z0-9-]/g, "-")}`;
 
   // Write a launcher script to avoid nested escaping issues with tmux + AppleScript
-  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr} '/start-team'`;
+  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux${flagStr} '/start-team'`;
   const launcherPath = path.join(configDir, ".team-launch.sh");
   fs.writeFileSync(launcherPath, `#!/bin/bash\n${innerCmd}\n`, { mode: 0o755 });
 

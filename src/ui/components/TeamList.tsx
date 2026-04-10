@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import type { Team } from "../../electron/types";
-import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 interface Props {
   teams: Team[];
@@ -18,37 +17,11 @@ function shortPath(dir: string): string {
 
 function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; importedProjects?: string[] }) {
   const [selectedDir, setSelectedDir] = useState("");
-  const [showEnableModal, setShowEnableModal] = useState(false);
   const [launching, setLaunching] = useState(false);
   const lead = team.members.find((m) => m.isLead);
 
   const handleLaunch = async () => {
     if (!lead) return;
-    let dir = selectedDir || undefined;
-    if (!dir) {
-      const picked = await window.api.selectDirectory();
-      if (!picked) return;
-      dir = picked;
-    }
-
-    const enabled = await window.api.checkAgentTeamsEnabled();
-    if (!enabled) {
-      setShowEnableModal(true);
-      return;
-    }
-
-    setLaunching(true);
-    try {
-      await window.api.launchTeam(team, dir);
-    } finally {
-      setLaunching(false);
-    }
-  };
-
-  const handleEnableAndLaunch = async () => {
-    setShowEnableModal(false);
-    await window.api.enableAgentTeams();
-
     let dir = selectedDir || undefined;
     if (!dir) {
       const picked = await window.api.selectDirectory();
@@ -65,41 +38,29 @@ function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; import
   };
 
   return (
-    <>
-      <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
-        <select
-          className="sidebar-launch-select"
-          value={selectedDir}
-          onChange={(e) => setSelectedDir(e.target.value)}
-        >
-          <option value="">None</option>
-          {importedProjects.map((dir) => (
-            <option key={dir} value={dir}>{shortPath(dir)}</option>
-          ))}
-        </select>
-        <button
-          className="btn-launch-sidebar"
-          onClick={handleLaunch}
-          disabled={!lead || launching}
-          title={lead ? "Launch team" : "No lead profile set"}
-        >
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
-        </button>
-      </div>
-      {showEnableModal && (
-        <ConfirmDialog
-          title="Enable Agent Teams?"
-          description="Agent Teams is an experimental Claude Code feature that must be enabled globally. This will add CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS to your ~/.claude/settings.json."
-          confirmLabel="Enable & Launch"
-          confirmVariant="primary"
-          onConfirm={handleEnableAndLaunch}
-          onCancel={() => setShowEnableModal(false)}
-        />
-      )}
-    </>
+    <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
+      <select
+        className="sidebar-launch-select"
+        value={selectedDir}
+        onChange={(e) => setSelectedDir(e.target.value)}
+      >
+        <option value="">None</option>
+        {importedProjects.map((dir) => (
+          <option key={dir} value={dir}>{shortPath(dir)}</option>
+        ))}
+      </select>
+      <button
+        className="btn-launch-sidebar"
+        onClick={handleLaunch}
+        disabled={!lead || launching}
+        title={lead ? "Launch team" : "No lead profile set"}
+      >
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
+      </button>
+    </div>
   );
 }
 

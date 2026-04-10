@@ -49,7 +49,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [search, setSearch] = useState("");
   const [showOverflow, setShowOverflow] = useState(false);
   const [launchDir, setLaunchDir] = useState("");
-  const [showEnableModal, setShowEnableModal] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
 
@@ -65,17 +64,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       dir = picked;
     }
 
-    // Pre-flight: check agent teams enabled
-    const enabled = await window.api.checkAgentTeamsEnabled();
-    if (!enabled) {
-      setShowEnableModal(true);
-      return;
-    }
-
-    await doLaunchTeam(dir);
-  };
-
-  const doLaunchTeam = async (dir?: string) => {
     setLaunching(true);
     setLaunchError(null);
     try {
@@ -85,18 +73,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
     } finally {
       setLaunching(false);
     }
-  };
-
-  const handleEnableAndLaunch = async () => {
-    setShowEnableModal(false);
-    await window.api.enableAgentTeams();
-    let dir = launchDir || undefined;
-    if (!dir) {
-      const picked = await window.api.selectDirectory();
-      if (!picked) return;
-      dir = picked;
-    }
-    await doLaunchTeam(dir);
   };
 
   useEffect(() => {
@@ -430,17 +406,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         />
       )}
 
-      {/* Enable Agent Teams modal */}
-      {showEnableModal && (
-        <ConfirmDialog
-          title="Enable Agent Teams?"
-          description="Agent Teams is an experimental Claude Code feature that must be enabled globally. This will add CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS to your ~/.claude/settings.json."
-          confirmLabel="Enable & Launch"
-          confirmVariant="primary"
-          onConfirm={handleEnableAndLaunch}
-          onCancel={() => setShowEnableModal(false)}
-        />
-      )}
     </div>
   );
 }
