@@ -118,9 +118,10 @@ ipcMain.handle("update-profile", async (_event, profile: Profile) => {
   return saved;
 });
 
-ipcMain.handle("rename-profile", (_event, oldName: string, profile: Profile) => {
+ipcMain.handle("rename-profile", async (_event, oldName: string, profile: Profile) => {
   const saved = renameProfile(oldName, profile);
   assembleProfile(saved);
+  if (saved.useDefaultAuth !== false) await copyCredentials(saved);
   return saved;
 });
 
@@ -158,6 +159,9 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   } catch (err: any) {
     throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
   }
+  // Refresh credentials from default keychain entry so profiles don't launch
+  // with stale/expired OAuth tokens.
+  if (profile.useDefaultAuth !== false) await copyCredentials(profile);
   // Track last launch time
   profile.lastLaunched = Date.now();
   saveProfile(profile);
