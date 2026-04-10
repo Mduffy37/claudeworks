@@ -243,6 +243,16 @@ export interface ElectronAPI {
   revealInFinder: (path: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;
   getClaudeHome: () => Promise<string>;
+  getAnalytics: () => Promise<AnalyticsData>;
+}
+
+export interface AnalyticsData {
+  totalSessions: number;
+  totalMessages: number;
+  dailyActivity: Array<{ date: string; messages: number }>;
+  topProjects: Array<{ name: string; messages: number }>;
+  profileUsage: Array<{ name: string; sessions: number; messages: number }>;
+  recentSessions: Array<{ project: string; date: string; messages: number; sessionId: string }>;
 }
 
 declare global {

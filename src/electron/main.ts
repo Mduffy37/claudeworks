@@ -22,6 +22,7 @@ import {
   addMarketplace,
   removeMarketplace,
   listMarketplaces,
+  getAnalytics,
   loadTeams,
   saveTeam,
   renameTeam,
@@ -237,6 +238,10 @@ ipcMain.handle("remove-marketplace", async (_event, name: string) => {
 
 ipcMain.handle("list-marketplaces", () => {
   return listMarketplaces();
+});
+
+ipcMain.handle("get-analytics", () => {
+  return getAnalytics();
 });
 
 ipcMain.handle("get-teams", () => {

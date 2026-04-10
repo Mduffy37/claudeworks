@@ -26,6 +26,7 @@ const api: ElectronAPI = {
   addMarketplace: (source) => ipcRenderer.invoke("add-marketplace", source),
   removeMarketplace: (name) => ipcRenderer.invoke("remove-marketplace", name),
   listMarketplaces: () => ipcRenderer.invoke("list-marketplaces"),
+  getAnalytics: () => ipcRenderer.invoke("get-analytics"),
   getTeams: () => ipcRenderer.invoke("get-teams"),
   saveTeam: (team) => ipcRenderer.invoke("save-team", team),
   deleteTeam: (name) => ipcRenderer.invoke("delete-team", name),

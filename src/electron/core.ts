@@ -21,6 +21,7 @@ import type {
   TeamMember,
   TeamsStore,
   MergePreview,
+  AnalyticsData,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -1932,6 +1933,113 @@ export function listMarketplaces(): Array<{ name: string; repo: string; lastUpda
   } catch {
     return [];
   }
+}
+
+// ---------------------------------------------------------------------------
+// Analytics
+// ---------------------------------------------------------------------------
+
+export function getAnalytics(): AnalyticsData {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  const projectsDir = path.join(claudeHome, "projects");
+
+  // Build a map of encoded dir name → display name from imported projects
+  const imported = getImportedProjects();
+  const importedMap = new Map<string, string>();
+  for (const projPath of imported) {
+    const encoded = projPath.replace(/[\/ ]/g, "-");
+    importedMap.set(encoded, path.basename(projPath));
+  }
+
+  let totalSessions = 0;
+  let totalMessages = 0;
+  const dailyCounts = new Map<string, number>();
+  const projectCounts = new Map<string, number>();
+  const recentSessions: AnalyticsData["recentSessions"] = [];
+
+  // Scan session files only for imported projects
+  if (fs.existsSync(projectsDir)) {
+    for (const projDir of fs.readdirSync(projectsDir)) {
+      const shortName = importedMap.get(projDir);
+      if (!shortName) continue; // Skip non-imported projects
+
+      const projPath = path.join(projectsDir, projDir);
+      if (!fs.statSync(projPath).isDirectory()) continue;
+
+      for (const file of fs.readdirSync(projPath)) {
+        if (!file.endsWith(".jsonl")) continue;
+        const filePath = path.join(projPath, file);
+        let sessionMsgs = 0;
+        let sessionDate = "";
+        const sessionId = path.basename(file, ".jsonl");
+
+        try {
+          const content = fs.readFileSync(filePath, "utf-8");
+          for (const line of content.split("\n")) {
+            if (!line.trim()) continue;
+            const d = JSON.parse(line);
+            if (d.type === "user" && !d.isMeta) {
+              sessionMsgs++;
+              if (d.timestamp) {
+                const dt = new Date(d.timestamp);
+                const dateStr = dt.toISOString().slice(0, 10);
+                if (!sessionDate) sessionDate = dateStr;
+                dailyCounts.set(dateStr, (dailyCounts.get(dateStr) ?? 0) + 1);
+              }
+            }
+          }
+        } catch {
+          continue;
+        }
+
+        if (sessionMsgs > 0) {
+          totalSessions++;
+          totalMessages += sessionMsgs;
+          projectCounts.set(shortName, (projectCounts.get(shortName) ?? 0) + sessionMsgs);
+          recentSessions.push({
+            project: shortName,
+            date: sessionDate,
+            messages: sessionMsgs,
+            sessionId,
+          });
+        }
+      }
+    }
+  }
+
+  // Sort and limit
+  const dailyActivity = [...dailyCounts.entries()]
+    .map(([date, messages]) => ({ date, messages }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-30); // Last 30 days
+
+  const topProjects = [...projectCounts.entries()]
+    .map(([name, messages]) => ({ name, messages }))
+    .sort((a, b) => b.messages - a.messages)
+    .slice(0, 10);
+
+  recentSessions.sort((a, b) => b.date.localeCompare(a.date));
+  const recent = recentSessions.slice(0, 15);
+
+  // Profile usage from history.jsonl files
+  const profileUsage: AnalyticsData["profileUsage"] = [];
+  if (fs.existsSync(PROFILES_DIR)) {
+    for (const dir of fs.readdirSync(PROFILES_DIR)) {
+      if (dir.startsWith("_team_")) continue;
+      const histPath = path.join(PROFILES_DIR, dir, "config", "history.jsonl");
+      if (!fs.existsSync(histPath)) continue;
+      try {
+        const lines = fs.readFileSync(histPath, "utf-8").split("\n").filter(Boolean);
+        const sessions = new Set(lines.map((l) => JSON.parse(l).sessionId).filter(Boolean));
+        profileUsage.push({ name: dir, sessions: sessions.size, messages: lines.length });
+      } catch {
+        continue;
+      }
+    }
+  }
+  profileUsage.sort((a, b) => b.messages - a.messages);
+
+  return { totalSessions, totalMessages, dailyActivity, topProjects, profileUsage, recentSessions: recent };
 }
 
 // ---------------------------------------------------------------------------

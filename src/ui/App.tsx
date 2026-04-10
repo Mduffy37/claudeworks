@@ -9,6 +9,7 @@ import { ProfileList } from "./components/ProfileList";
 import { ProfileEditor } from "./components/ProfileEditor";
 import { TeamList } from "./components/TeamList";
 import { TeamEditor } from "./components/TeamEditor";
+import { Home } from "./components/Home";
 import { useTeams } from "./hooks/useTeams";
 import type { Profile, Team } from "../electron/types";
 
@@ -23,6 +24,7 @@ export function App() {
   const [pendingNav, setPendingNav] = useState<{ type: "select"; name: string } | { type: "new" } | { type: "tab"; tab: "profiles" | "teams" } | { type: "select-team"; name: string } | { type: "new-team" } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
+  const [showHome, setShowHome] = useState(true);
   const [showManageDialog, setShowManageDialog] = useState(false);
   const [showBulkManage, setShowBulkManage] = useState(false);
   const [showAppSettings, setShowAppSettings] = useState(false);
@@ -102,6 +104,7 @@ export function App() {
     setDirty(false);
     setSelectedName(null);
     setIsCreating(true);
+    setShowHome(false);
   };
 
   const handleSelect = (name: string) => {
@@ -112,6 +115,7 @@ export function App() {
     setDirty(false);
     setSelectedName(name);
     setIsCreating(false);
+    setShowHome(false);
   };
 
   const handleDiscardAndProceed = () => {
@@ -202,6 +206,7 @@ export function App() {
     }
     setSelectedTeamName(null);
     setIsCreatingTeam(true);
+    setShowHome(false);
   };
 
   const handleSelectTeam = (name: string) => {
@@ -211,6 +216,7 @@ export function App() {
     }
     setSelectedTeamName(name);
     setIsCreatingTeam(false);
+    setShowHome(false);
   };
 
   const handleSaveTeam = async (team: Team) => {
@@ -302,14 +308,24 @@ export function App() {
         {/* Tab switcher */}
         <div className="sidebar-tabs">
           <button
-            className={`sidebar-tab${activeTab === "profiles" ? " active" : ""}`}
-            onClick={() => handleTabSwitch("profiles")}
+            className={`sidebar-home-btn${showHome ? " active" : ""}`}
+            onClick={() => setShowHome(true)}
+            title="Home"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M2 8.5L8 3l6 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.5 9.5V14h3.5v-3h2v3H12.5V9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            className={`sidebar-tab${activeTab === "profiles" && !showHome ? " active" : ""}`}
+            onClick={() => { handleTabSwitch("profiles"); setShowHome(false); }}
           >
             Profiles
           </button>
           <button
-            className={`sidebar-tab${activeTab === "teams" ? " active" : ""}`}
-            onClick={() => handleTabSwitch("teams")}
+            className={`sidebar-tab${activeTab === "teams" && !showHome ? " active" : ""}`}
+            onClick={() => { handleTabSwitch("teams"); setShowHome(false); }}
           >
             Teams
           </button>
@@ -363,7 +379,16 @@ export function App() {
         </div>
       </div>
       <div className="main">
-        {activeTab === "profiles" ? (
+        {showHome ? (
+          <Home
+            profiles={profiles}
+            onSelectProfile={(name) => {
+              setActiveTab("profiles");
+              handleSelect(name);
+            }}
+            onLaunch={handleLaunch}
+          />
+        ) : activeTab === "profiles" ? (
           <ProfileEditor
             profile={selectedProfile}
             plugins={plugins}
