@@ -1868,6 +1868,32 @@ export function checkAllTeamHealth(teams: Team[]): Record<string, string[]> {
   return result;
 }
 
+export function checkAgentTeamsEnabled(): boolean {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  if (!fs.existsSync(settingsPath)) return false;
+  try {
+    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    return settings?.env?.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function enableAgentTeams(): void {
+  const settingsPath = path.join(CLAUDE_HOME, "settings.json");
+  let settings: Record<string, any> = {};
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    } catch {
+      settings = {};
+    }
+  }
+  if (!settings.env) settings.env = {};
+  settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+}
+
 export function getTeamMergePreview(team: Team): MergePreview {
   const profiles = loadProfiles();
   const allPlugins = new Set<string>();
