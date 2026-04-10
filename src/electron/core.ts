@@ -818,7 +818,7 @@ if (profile.useDefaultAuth !== false) {
     // Scan for freshest valid candidate
     const candidates = [];
     const defaultEntry = readEntry("Claude Code-credentials");
-    if (defaultEntry && defaultEntry.expiresAt > Date.now()) candidates.push(defaultEntry);
+    if (defaultEntry) candidates.push(defaultEntry);
 
     for (const [pName, pData] of Object.entries(store.profiles)) {
       if (pData.useDefaultAuth === false) continue;
@@ -826,16 +826,20 @@ if (profile.useDefaultAuth !== false) {
       const pSvc = svcHash(pDir);
       if (pSvc === targetSvc) continue;
       const entry = readEntry(pSvc);
-      if (entry && entry.expiresAt > Date.now()) candidates.push(entry);
+      if (entry) candidates.push(entry);
     }
 
-    candidates.sort((a, b) => b.expiresAt - a.expiresAt);
-    if (candidates.length > 0) {
+    // Prefer non-expired; fall back to freshest expired (refresh token may still work)
+    const now = Date.now();
+    const valid = candidates.filter(c => c.expiresAt > now);
+    const pool = valid.length > 0 ? valid : candidates;
+    pool.sort((a, b) => b.expiresAt - a.expiresAt);
+    if (pool.length > 0) {
       // Save existing entry in case add fails after delete
       const backup = target ? target.raw : null;
       try {
         try { execFileSync("security", ["delete-generic-password", "-s", targetSvc, "-a", username], { stdio: "ignore" }); } catch {}
-        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", candidates[0].raw]);
+        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", pool[0].raw]);
       } catch {
         // Add failed — restore backup if we had one
         if (backup) {
@@ -1459,13 +1463,14 @@ export async function syncCredentials(
     if (entry) candidates.push({ raw: entry.raw, expiresAt: entry.expiresAt });
   }
 
-  // Filter to non-expired and pick freshest
+  // Pick freshest non-expired; if all expired, use freshest expired
+  // (the refresh token may still be valid even if the access token expired)
+  if (candidates.length === 0) return false;
   const now = Date.now();
   const valid = candidates.filter((c) => c.expiresAt > now);
-  if (valid.length === 0) return false;
-
-  valid.sort((a, b) => b.expiresAt - a.expiresAt);
-  const best = valid[0];
+  const pool = valid.length > 0 ? valid : candidates;
+  pool.sort((a, b) => b.expiresAt - a.expiresAt);
+  const best = pool[0];
 
   try {
     await writeKeychainEntry(targetService, best.raw);
