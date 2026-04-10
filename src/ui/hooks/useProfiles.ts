@@ -5,16 +5,21 @@ export function useProfiles() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const data = await window.api.getProfiles();
     setProfiles(data);
     setLoading(false);
   }, []);
 
+  const refresh = useCallback(async () => {
+    const data = await window.api.getProfiles();
+    setProfiles(data);
+  }, []);
+
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    load();
+  }, [load]);
 
   const createProfile = useCallback(
     async (profile: Profile) => {

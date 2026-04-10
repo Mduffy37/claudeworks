@@ -19,8 +19,11 @@ export function usePlugins() {
   }, [load]);
 
   const refresh = useCallback(() => {
-    load();
-  }, [load]);
+    // Silently refresh without setting loading — avoids unmounting the entire UI
+    window.api.getPlugins().then((data) => {
+      setPlugins(data);
+    });
+  }, []);
 
   const checkForUpdates = useCallback(async () => {
     const updates = await window.api.checkPluginUpdates();
