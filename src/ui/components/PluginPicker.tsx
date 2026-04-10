@@ -51,9 +51,16 @@ export function PluginPicker({
   const isMcpOnly = (p: PluginWithItems) =>
     p.items.length === 0 && p.mcpServers.length > 0;
 
+  const isLocal = (p: PluginWithItems) => p.marketplace === "local";
+
   const globalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "user" && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
+  }, [plugins, search]);
+
+  const userLocalPlugins = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return plugins.filter((p) => isLocal(p) && (!q || p.pluginName.toLowerCase().includes(q)));
   }, [plugins, search]);
 
   const localPlugins = useMemo(() => {
@@ -101,7 +108,9 @@ export function PluginPicker({
           <div className="plugin-header-body">
             <span className="plugin-name">
               {plugin.pluginName}
-              <span className="plugin-version">v{plugin.version}</span>
+              {plugin.marketplace !== "local" && (
+                <span className="plugin-version">v{plugin.version}</span>
+              )}
             </span>
 
             {/* Badge row — always visible type breakdown */}
@@ -207,9 +216,19 @@ export function PluginPicker({
         )}
       </div>
 
+      {userLocalPlugins.length > 0 && (
+        <div className="plugin-section">
+          <div className="plugin-section-header">
+            <h3>Local</h3>
+            <span className="plugin-section-count">{userLocalPlugins.length}</span>
+          </div>
+          {userLocalPlugins.map(renderPlugin)}
+        </div>
+      )}
+
       <div className="plugin-section">
         <div className="plugin-section-header">
-          <h3>Local Plugins</h3>
+          <h3>Project Plugins</h3>
           {localPlugins.length > 0 && (
             <span className="plugin-section-count">{localPlugins.length}</span>
           )}

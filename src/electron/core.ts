@@ -366,21 +366,8 @@ export function getPluginsWithItems(): PluginWithItems[] {
     mcpServers: scanPluginMcpServers(p),
   }));
 
-  // Inject synthetic "Local" plugin for user-installed add-ons
-  const localItems = scanUserLocalItems();
-  if (localItems.length > 0) {
-    result.push({
-      name: "Local",
-      scope: "user",
-      installPath: path.join(os.homedir(), ".claude"),
-      version: "local",
-      marketplace: "local",
-      pluginName: "Local",
-      items: localItems,
-      hooks: [],
-      mcpServers: [],
-    });
-  }
+  // Inject synthetic local plugins for user-installed add-ons
+  result.push(...scanUserLocalPlugins());
 
   return result;
 }
@@ -388,15 +375,17 @@ export function getPluginsWithItems(): PluginWithItems[] {
 /** Check which plugins in a profile are no longer installed globally. */
 export function checkProfileHealth(profile: Profile): string[] {
   const installed = new Set(scanInstalledPlugins().map((p) => p.name));
-  return profile.plugins.filter((name) => !installed.has(name));
+  const localPluginNames = new Set(scanUserLocalPlugins().map((p) => p.name));
+  return profile.plugins.filter((name) => !installed.has(name) && !localPluginNames.has(name));
 }
 
 /** Check health for all profiles at once (avoids repeated plugin scans). */
 export function checkAllProfileHealth(profiles: Profile[]): Record<string, string[]> {
   const installed = new Set(scanInstalledPlugins().map((p) => p.name));
+  const localPluginNames = new Set(scanUserLocalPlugins().map((p) => p.name));
   const result: Record<string, string[]> = {};
   for (const profile of profiles) {
-    const broken = profile.plugins.filter((name) => !installed.has(name));
+    const broken = profile.plugins.filter((name) => !installed.has(name) && !localPluginNames.has(name));
     if (broken.length > 0) result[profile.name] = broken;
   }
   return result;
@@ -465,12 +454,36 @@ export function scanLocalItems(directory: string): LocalItem[] {
   return items;
 }
 
-/** Scan ~/.claude/ for user-installed local skills, agents, and commands. Returns PluginItem[]. */
-export function scanUserLocalItems(): PluginItem[] {
-  const items: PluginItem[] = [];
-  const claudeHome = path.join(os.homedir(), ".claude");
+/** Prefix for all synthetic local plugin names. */
+const LOCAL_PLUGIN_PREFIX = "local:";
 
-  // Skills: ~/.claude/skills/{name}/SKILL.md
+/** Check if a plugin name is a synthetic local plugin. */
+export function isLocalPlugin(name: string): boolean {
+  return name.startsWith(LOCAL_PLUGIN_PREFIX);
+}
+
+/**
+ * Scan ~/.claude/ for user-installed local skills, agents, and commands.
+ * Returns grouped synthetic PluginWithItems[] — each skill and command namespace
+ * becomes its own plugin; loose commands and agents get catch-all plugins.
+ */
+export function scanUserLocalPlugins(): PluginWithItems[] {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  const plugins: PluginWithItems[] = [];
+
+  const makePlugin = (name: string, items: PluginItem[]): PluginWithItems => ({
+    name: `${LOCAL_PLUGIN_PREFIX}${name}`,
+    scope: "user",
+    installPath: claudeHome,
+    version: "local",
+    marketplace: "local",
+    pluginName: name,
+    items,
+    hooks: [],
+    mcpServers: [],
+  });
+
+  // Skills: each skill directory → its own plugin
   const skillsDir = path.join(claudeHome, "skills");
   if (fs.existsSync(skillsDir)) {
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
@@ -478,43 +491,30 @@ export function scanUserLocalItems(): PluginItem[] {
       const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const fm = readFrontmatter(skillMd);
-      items.push({
-        name: fm.name ?? entry.name,
+      const skillName = fm.name ?? entry.name;
+      const pluginName = entry.name;
+      plugins.push(makePlugin(pluginName, [{
+        name: skillName,
         description: fm.description ?? "",
         type: "skill",
-        plugin: "Local",
+        plugin: `${LOCAL_PLUGIN_PREFIX}${pluginName}`,
         path: skillMd,
         userInvocable: true,
         dependencies: [],
-      });
+      }]));
     }
   }
 
-  // Agents: ~/.claude/agents/{name}.md
-  const agentsDir = path.join(claudeHome, "agents");
-  if (fs.existsSync(agentsDir)) {
-    for (const file of fs.readdirSync(agentsDir)) {
-      if (!file.endsWith(".md") || file === "README.md") continue;
-      const agentPath = path.join(agentsDir, file);
-      const fm = readFrontmatter(agentPath);
-      items.push({
-        name: fm.name ?? path.basename(file, ".md"),
-        description: fm.description ?? "",
-        type: "agent",
-        plugin: "Local",
-        path: agentPath,
-        userInvocable: false,
-        dependencies: [],
-      });
-    }
-  }
-
-  // Commands: ~/.claude/commands/{name}.md or commands/{namespace}/{name}.md
+  // Commands: each namespace dir → its own plugin; loose .md files → "commands" plugin
   const cmdsDir = path.join(claudeHome, "commands");
   if (fs.existsSync(cmdsDir)) {
+    const looseCommands: PluginItem[] = [];
+
     for (const entry of fs.readdirSync(cmdsDir, { withFileTypes: true })) {
       if (entry.isDirectory()) {
+        // Namespaced commands → their own plugin
         const subDir = path.join(cmdsDir, entry.name);
+        const items: PluginItem[] = [];
         for (const file of fs.readdirSync(subDir)) {
           if (!file.endsWith(".md")) continue;
           const cmdPath = path.join(subDir, file);
@@ -523,29 +523,59 @@ export function scanUserLocalItems(): PluginItem[] {
             name: fm.name ?? `${entry.name}:${path.basename(file, ".md")}`,
             description: fm.description ?? "",
             type: "command",
-            plugin: "Local",
+            plugin: `${LOCAL_PLUGIN_PREFIX}${entry.name}`,
             path: cmdPath,
             userInvocable: true,
             dependencies: [],
           });
         }
+        if (items.length > 0) {
+          plugins.push(makePlugin(entry.name, items));
+        }
       } else if (entry.name.endsWith(".md")) {
         const cmdPath = path.join(cmdsDir, entry.name);
         const fm = readFrontmatter(cmdPath);
-        items.push({
+        looseCommands.push({
           name: fm.name ?? path.basename(entry.name, ".md"),
           description: fm.description ?? "",
           type: "command",
-          plugin: "Local",
+          plugin: `${LOCAL_PLUGIN_PREFIX}commands`,
           path: cmdPath,
           userInvocable: true,
           dependencies: [],
         });
       }
     }
+
+    if (looseCommands.length > 0) {
+      plugins.push(makePlugin("commands", looseCommands));
+    }
   }
 
-  return items;
+  // Agents: all → "agents" plugin
+  const agentsDir = path.join(claudeHome, "agents");
+  if (fs.existsSync(agentsDir)) {
+    const items: PluginItem[] = [];
+    for (const file of fs.readdirSync(agentsDir)) {
+      if (!file.endsWith(".md") || file === "README.md") continue;
+      const agentPath = path.join(agentsDir, file);
+      const fm = readFrontmatter(agentPath);
+      items.push({
+        name: fm.name ?? path.basename(file, ".md"),
+        description: fm.description ?? "",
+        type: "agent",
+        plugin: `${LOCAL_PLUGIN_PREFIX}agents`,
+        path: agentPath,
+        userInvocable: false,
+        dependencies: [],
+      });
+    }
+    if (items.length > 0) {
+      plugins.push(makePlugin("agents", items));
+    }
+  }
+
+  return plugins;
 }
 
 export function scanMcpServers(directory?: string): StandaloneMcp[] {
@@ -1357,43 +1387,42 @@ function symlinkShared(configDir: string, profile: Profile): void {
     }
   }
 
-  // Symlink user-level local add-ons if the "Local" plugin is enabled for this profile.
-  // Only symlink items not in excludedItems["Local"].
-  if (profile.plugins.includes("Local")) {
-    const excluded = new Set(profile.excludedItems?.["Local"] ?? []);
-    const localItems = scanUserLocalItems();
+  // Symlink user-level local add-ons for each enabled local plugin.
+  // Each local plugin (local:devils-advocate, local:vault, etc.) is handled independently.
+  const enabledLocalPlugins = profile.plugins.filter(isLocalPlugin);
+  if (enabledLocalPlugins.length > 0) {
+    const localPlugins = scanUserLocalPlugins();
 
-    for (const item of localItems) {
-      if (excluded.has(item.name)) continue;
+    for (const lp of localPlugins) {
+      if (!enabledLocalPlugins.includes(lp.name)) continue;
+      const excluded = new Set(profile.excludedItems?.[lp.name] ?? []);
 
-      if (item.type === "skill") {
-        // Skills are directories: ~/.claude/skills/{name}/ → {configDir}/skills/{name}/
-        const skillDir = path.dirname(item.path); // path is to SKILL.md, parent is the skill dir
-        const tgtDir = path.join(configDir, "skills", path.basename(skillDir));
-        fs.mkdirSync(path.join(configDir, "skills"), { recursive: true });
-        if (!fs.existsSync(tgtDir)) fs.symlinkSync(skillDir, tgtDir);
-      } else if (item.type === "agent") {
-        // Agents are files: ~/.claude/agents/{name}.md → {configDir}/agents/{name}.md
-        const tgt = path.join(configDir, "agents", path.basename(item.path));
-        fs.mkdirSync(path.join(configDir, "agents"), { recursive: true });
-        if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
-      } else if (item.type === "command") {
-        // Commands: symlink the file or namespace directory
-        const sourceCommands = path.join(CLAUDE_HOME, "commands");
-        const targetCommands = path.join(configDir, "commands");
-        fs.mkdirSync(targetCommands, { recursive: true });
-        // item.path is the .md file; figure out if it's namespaced
-        const relPath = path.relative(sourceCommands, item.path);
-        const parts = relPath.split(path.sep);
-        if (parts.length === 2) {
-          // Namespaced: commands/{namespace}/{file}.md — symlink the namespace dir
-          const nsDir = path.join(sourceCommands, parts[0]);
-          const tgt = path.join(targetCommands, parts[0]);
-          if (!fs.existsSync(tgt)) fs.symlinkSync(nsDir, tgt);
-        } else {
-          // Top-level: commands/{file}.md
-          const tgt = path.join(targetCommands, path.basename(item.path));
+      for (const item of lp.items) {
+        if (excluded.has(item.name)) continue;
+
+        if (item.type === "skill") {
+          const skillDir = path.dirname(item.path);
+          const tgtDir = path.join(configDir, "skills", path.basename(skillDir));
+          fs.mkdirSync(path.join(configDir, "skills"), { recursive: true });
+          if (!fs.existsSync(tgtDir)) fs.symlinkSync(skillDir, tgtDir);
+        } else if (item.type === "agent") {
+          const tgt = path.join(configDir, "agents", path.basename(item.path));
+          fs.mkdirSync(path.join(configDir, "agents"), { recursive: true });
           if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
+        } else if (item.type === "command") {
+          const sourceCommands = path.join(CLAUDE_HOME, "commands");
+          const targetCommands = path.join(configDir, "commands");
+          fs.mkdirSync(targetCommands, { recursive: true });
+          const relPath = path.relative(sourceCommands, item.path);
+          const parts = relPath.split(path.sep);
+          if (parts.length === 2) {
+            const nsDir = path.join(sourceCommands, parts[0]);
+            const tgt = path.join(targetCommands, parts[0]);
+            if (!fs.existsSync(tgt)) fs.symlinkSync(nsDir, tgt);
+          } else {
+            const tgt = path.join(targetCommands, path.basename(item.path));
+            if (!fs.existsSync(tgt)) fs.symlinkSync(item.path, tgt);
+          }
         }
       }
     }
@@ -1952,13 +1981,47 @@ function readFrontmatter(filePath: string): Record<string, string> {
 
   if (!lines[0] || lines[0].trim() !== "---") return result;
 
+  let currentKey: string | null = null;
+  let multilineValue: string[] = [];
+  let multilineIndent = 0;
+
+  const flushMultiline = () => {
+    if (currentKey && multilineValue.length > 0) {
+      result[currentKey] = multilineValue.join(" ").trim();
+    }
+    currentKey = null;
+    multilineValue = [];
+    multilineIndent = 0;
+  };
+
   for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === "---") break;
+    if (lines[i].trim() === "---") {
+      flushMultiline();
+      break;
+    }
+
+    // Continuation line for multiline value (indented)
+    if (currentKey && lines[i].length > 0 && (lines[i][0] === " " || lines[i][0] === "\t")) {
+      multilineValue.push(lines[i].trim());
+      continue;
+    }
+
+    // New key — flush any pending multiline
+    flushMultiline();
+
     const colonIdx = lines[i].indexOf(":");
     if (colonIdx !== -1) {
       const key = lines[i].slice(0, colonIdx).trim();
       const value = lines[i].slice(colonIdx + 1).trim();
-      result[key] = value;
+
+      // YAML multiline indicators: > (folded) or | (literal) or quoted strings
+      if (value === ">" || value === "|" || value === ">-" || value === "|-") {
+        currentKey = key;
+        multilineValue = [];
+      } else {
+        // Strip surrounding quotes if present
+        result[key] = value.replace(/^["']|["']$/g, "");
+      }
     }
   }
   return result;
