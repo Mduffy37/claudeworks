@@ -334,7 +334,6 @@ export function App() {
             importedProjects={importedProjects}
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
-            onLaunch={handleLaunch}
           />
         )}
         <div className="sidebar-dock">

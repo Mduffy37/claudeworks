@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { Team } from "../../electron/types";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 interface Props {
   teams: Team[];
@@ -8,7 +9,6 @@ interface Props {
   importedProjects?: string[];
   onSelect: (name: string) => void;
   onNew: () => void;
-  onLaunch: (name: string, directory?: string) => void;
 }
 
 function shortPath(dir: string): string {
@@ -16,8 +16,10 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function TeamSidebarLaunch({ team, onLaunch, importedProjects = [] }: { team: Team; onLaunch: (name: string, directory?: string) => void; importedProjects?: string[] }) {
+function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; importedProjects?: string[] }) {
   const [selectedDir, setSelectedDir] = useState("");
+  const [showEnableModal, setShowEnableModal] = useState(false);
+  const [launching, setLaunching] = useState(false);
   const lead = team.members.find((m) => m.isLead);
 
   const handleLaunch = async () => {
@@ -28,39 +30,82 @@ function TeamSidebarLaunch({ team, onLaunch, importedProjects = [] }: { team: Te
       if (!picked) return;
       dir = picked;
     }
-    onLaunch(lead.profile, dir);
+
+    const enabled = await window.api.checkAgentTeamsEnabled();
+    if (!enabled) {
+      setShowEnableModal(true);
+      return;
+    }
+
+    setLaunching(true);
+    try {
+      await window.api.launchTeam(team, dir);
+    } finally {
+      setLaunching(false);
+    }
+  };
+
+  const handleEnableAndLaunch = async () => {
+    setShowEnableModal(false);
+    await window.api.enableAgentTeams();
+
+    let dir = selectedDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+
+    setLaunching(true);
+    try {
+      await window.api.launchTeam(team, dir);
+    } finally {
+      setLaunching(false);
+    }
   };
 
   return (
-    <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
-      <select
-        className="sidebar-launch-select"
-        value={selectedDir}
-        onChange={(e) => setSelectedDir(e.target.value)}
-      >
-        <option value="">None</option>
-        {importedProjects.map((dir) => (
-          <option key={dir} value={dir}>{shortPath(dir)}</option>
-        ))}
-      </select>
-      <button
-        className="btn-launch-sidebar"
-        onClick={handleLaunch}
-        disabled={!lead}
-        title={lead ? `Launch lead profile "${lead.profile}"` : "No lead profile set"}
-      >
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="btn-launch-label">Launch</span>
-      </button>
-    </div>
+    <>
+      <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
+        <select
+          className="sidebar-launch-select"
+          value={selectedDir}
+          onChange={(e) => setSelectedDir(e.target.value)}
+        >
+          <option value="">None</option>
+          {importedProjects.map((dir) => (
+            <option key={dir} value={dir}>{shortPath(dir)}</option>
+          ))}
+        </select>
+        <button
+          className="btn-launch-sidebar"
+          onClick={handleLaunch}
+          disabled={!lead || launching}
+          title={lead ? "Launch team" : "No lead profile set"}
+        >
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
+        </button>
+      </div>
+      {showEnableModal && (
+        <ConfirmDialog
+          title="Enable Agent Teams?"
+          description="Agent Teams is an experimental Claude Code feature that must be enabled globally. This will add CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS to your ~/.claude/settings.json."
+          confirmLabel="Enable & Launch"
+          confirmVariant="primary"
+          onConfirm={handleEnableAndLaunch}
+          onCancel={() => setShowEnableModal(false)}
+        />
+      )}
+    </>
   );
 }
 
 type SidebarSort = "name" | "members";
 
-export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onLaunch }: Props) {
+export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
@@ -188,7 +233,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                     {lead ? ` · Lead: ${lead.profile}` : ""}
                   </div>
                 </div>
-                <TeamSidebarLaunch team={t} onLaunch={onLaunch} importedProjects={importedProjects} />
+                <TeamSidebarLaunch team={t} importedProjects={importedProjects} />
               </div>
             );
           })
