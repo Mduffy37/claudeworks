@@ -1244,65 +1244,182 @@ function symlinkShared(configDir: string, profile: Profile): void {
 // Credentials
 // ---------------------------------------------------------------------------
 
-export async function copyCredentials(profile: Profile): Promise<boolean> {
-  const username = os.userInfo().username;
-  const configDir = path.join(PROFILES_DIR, profile.name, "config");
+interface OAuthCredential {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
 
-  // Read default credentials
-  let cred: string;
+/** Compute the keychain service name for a given config directory. */
+export function keychainServiceForConfigDir(configDir: string): string {
+  const hash = crypto.createHash("sha256").update(configDir).digest("hex").slice(0, 8);
+  return `Claude Code-credentials-${hash}`;
+}
+
+const KEYCHAIN_USERNAME = os.userInfo().username;
+const DEFAULT_KEYCHAIN_SERVICE = "Claude Code-credentials";
+
+/**
+ * Read and parse a keychain entry. Returns { raw, parsed, expiresAt } or null.
+ * Handles claudeAiOauth being either a JSON string or an already-parsed object.
+ */
+async function readKeychainEntry(
+  service: string
+): Promise<{ raw: string; parsed: OAuthCredential; expiresAt: number } | null> {
+  let raw: string;
   try {
     const { stdout } = await execFileAsync("security", [
-      "find-generic-password", "-s", "Claude Code-credentials", "-a", username, "-w",
+      "find-generic-password", "-s", service, "-a", KEYCHAIN_USERNAME, "-w",
     ]);
-    cred = stdout.trim();
+    raw = stdout.trim();
   } catch {
-    return false;
+    return null;
   }
 
-  // Write to profile's keychain entry
-  const hash = crypto.createHash("sha256").update(configDir).digest("hex").slice(0, 8);
-  const service = `Claude Code-credentials-${hash}`;
+  try {
+    const blob = JSON.parse(raw);
+    let oauth = blob.claudeAiOauth;
+    if (typeof oauth === "string") {
+      oauth = JSON.parse(oauth);
+    }
+    if (
+      !oauth ||
+      typeof oauth.accessToken !== "string" ||
+      typeof oauth.refreshToken !== "string" ||
+      typeof oauth.expiresAt !== "number"
+    ) {
+      return null;
+    }
+    return { raw, parsed: oauth as OAuthCredential, expiresAt: oauth.expiresAt };
+  } catch {
+    return null;
+  }
+}
+
+/** Delete-then-add a keychain entry (macOS security CLI has no update). */
+async function writeKeychainEntry(service: string, raw: string): Promise<void> {
+  try {
+    await execFileAsync("security", [
+      "delete-generic-password", "-s", service, "-a", KEYCHAIN_USERNAME,
+    ]);
+  } catch {
+    // Not found — fine
+  }
+  await execFileAsync("security", [
+    "add-generic-password", "-s", service, "-a", KEYCHAIN_USERNAME, "-w", raw,
+  ]);
+}
+
+/**
+ * Sync credentials for a profile.
+ *
+ * Modes:
+ *  - "rename"  — migrate credentials from oldConfigDir hash to new hash
+ *  - "launch"  — use target's own entry if still fresh; otherwise scan for freshest
+ *  - "seed"    — always scan for freshest (new profile, no existing entry)
+ *
+ * Returns true if valid credentials are in place, false if none found (Claude
+ * Code will handle its own login flow).
+ */
+export async function syncCredentials(
+  profile: Profile,
+  mode: "rename" | "launch" | "seed",
+  oldConfigDir?: string
+): Promise<boolean> {
+  const configDir = path.join(PROFILES_DIR, profile.name, "config");
+  const targetService = keychainServiceForConfigDir(configDir);
+
+  // --- rename: move old entry → new entry, delete old ---
+  if (mode === "rename") {
+    if (!oldConfigDir) return false;
+    const oldService = keychainServiceForConfigDir(oldConfigDir);
+    const entry = await readKeychainEntry(oldService);
+    if (!entry) return false;
+    try {
+      await writeKeychainEntry(targetService, entry.raw);
+      // Clean up old entry
+      try {
+        await execFileAsync("security", [
+          "delete-generic-password", "-s", oldService, "-a", KEYCHAIN_USERNAME,
+        ]);
+      } catch {
+        // Already gone — fine
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // --- launch: check target's own entry first ---
+  if (mode === "launch") {
+    const own = await readKeychainEntry(targetService);
+    const fiveMinFromNow = Date.now() + 5 * 60 * 1000;
+    if (own && own.expiresAt > fiveMinFromNow) {
+      return true; // Still fresh, no-op
+    }
+    // Fall through to scan
+  }
+
+  // --- seed / launch-fallthrough: scan all entries for freshest ---
+  const candidates: Array<{ raw: string; expiresAt: number }> = [];
+
+  // Default entry
+  const defaultEntry = await readKeychainEntry(DEFAULT_KEYCHAIN_SERVICE);
+  if (defaultEntry) {
+    candidates.push({ raw: defaultEntry.raw, expiresAt: defaultEntry.expiresAt });
+  }
+
+  // All profile entries where useDefaultAuth !== false
+  const allProfiles = loadProfiles();
+  for (const p of allProfiles) {
+    if (p.useDefaultAuth === false) continue;
+    const pConfigDir = path.join(PROFILES_DIR, p.name, "config");
+    const pService = keychainServiceForConfigDir(pConfigDir);
+    // Skip the target itself (already checked in launch mode)
+    if (pService === targetService) continue;
+    const entry = await readKeychainEntry(pService);
+    if (entry) {
+      candidates.push({ raw: entry.raw, expiresAt: entry.expiresAt });
+    }
+  }
+
+  // Filter to non-expired and pick freshest
+  const now = Date.now();
+  const valid = candidates.filter((c) => c.expiresAt > now);
+  if (valid.length === 0) return false;
+
+  valid.sort((a, b) => b.expiresAt - a.expiresAt);
+  const best = valid[0];
 
   try {
-    try {
-      await execFileAsync("security", [
-        "delete-generic-password", "-s", service, "-a", username,
-      ]);
-    } catch {
-      // Not found — fine
-    }
-    await execFileAsync("security", [
-      "add-generic-password", "-s", service, "-a", username, "-w", cred,
-    ]);
+    await writeKeychainEntry(targetService, best.raw);
     return true;
   } catch {
     return false;
   }
 }
 
-export async function checkCredentialStatus(): Promise<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> }> {
-  const username = os.userInfo().username;
-
+export async function checkCredentialStatus(): Promise<{
+  global: boolean;
+  profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }>;
+}> {
   // Check global credentials
-  let globalOk = false;
-  try {
-    await execFileAsync("security", ["find-generic-password", "-s", "Claude Code-credentials", "-a", username, "-w"]);
-    globalOk = true;
-  } catch {}
+  const globalEntry = await readKeychainEntry(DEFAULT_KEYCHAIN_SERVICE);
+  const globalOk = globalEntry !== null;
 
   // Check each profile
   const profiles = loadProfiles();
   const results: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> = [];
   for (const profile of profiles) {
     const configDir = path.join(PROFILES_DIR, profile.name, "config");
-    const hash = crypto.createHash("sha256").update(configDir).digest("hex").slice(0, 8);
-    const service = `Claude Code-credentials-${hash}`;
-    let hasCredentials = false;
-    try {
-      await execFileAsync("security", ["find-generic-password", "-s", service, "-a", username, "-w"]);
-      hasCredentials = true;
-    } catch {}
-    results.push({ name: profile.name, useDefaultAuth: profile.useDefaultAuth !== false, hasCredentials });
+    const service = keychainServiceForConfigDir(configDir);
+    const entry = await readKeychainEntry(service);
+    results.push({
+      name: profile.name,
+      useDefaultAuth: profile.useDefaultAuth !== false,
+      hasCredentials: entry !== null,
+    });
   }
 
   return { global: globalOk, profiles: results };
