@@ -2046,29 +2046,87 @@ export function assembleTeamProfile(team: Team): string {
     fs.writeFileSync(claudeMdPath, teamMdRef.trim(), "utf-8");
   }
 
-  // Generate /start-team command — natural language prompt for native agent teams
+  // Generate /start-team command — native agent teams bootstrap
   let startCmd = `# /start-team\n\n`;
-  startCmd += `Create an agent team called "${team.name}" with ${nonLeadMembers.length} teammate${nonLeadMembers.length !== 1 ? "s" : ""}.\n\n`;
-  startCmd += `You are the team lead. Your role: ${lead.role}${lead.instructions ? ". " + lead.instructions : ""}\n\n`;
-  startCmd += `Spawn the following teammates:\n\n`;
+
+  // Section 1: Hard constraints
+  startCmd += `## CONSTRAINTS (non-negotiable)\n\n`;
+  startCmd += `1. You MUST use Claude Code's native agent teams feature. Do NOT use the Agent tool.\n`;
+  startCmd += `2. CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 is set. You are inside tmux.\n`;
+  startCmd += `3. You MUST pass each teammate's spawn prompt VERBATIM — copy it character for character. Do not summarize, rephrase, or omit any part of it.\n`;
+  startCmd += `4. After spawning all teammates, you MUST output the EXACT team overview shown at the bottom of this file. No changes, no additions.\n`;
+  startCmd += `5. Do NOTHING else. Do not explore the codebase. Do not start working. Just spawn and report.\n\n`;
+
+  // Section 2: Lead identity
+  startCmd += `## Team lead\n\n`;
+  startCmd += `You are the lead of team "${team.name}". Your role: ${lead.role || "(unset)"}`;
+  if (lead.instructions) startCmd += `. ${lead.instructions}`;
+  startCmd += `\n`;
+  if (leadProfile.customClaudeMd) {
+    startCmd += `\nProfile instructions:\n${leadProfile.customClaudeMd}\n`;
+  }
+  startCmd += `\n`;
+
+  // Section 3: Teammate spawn prompts — each is a verbatim block
+  startCmd += `## Spawn prompts (copy verbatim)\n\n`;
 
   for (const member of nonLeadMembers) {
     const addOns = ownedAddOns.get(member.profile) ?? { skills: [], agents: [], commands: [] };
+    const memberProfile = memberProfiles.find((mp) => mp.member.profile === member.profile)?.profile;
     const slug = member.profile.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const allAddOnsList = [
-      ...addOns.skills.map(s => `skill: ${s}`),
-      ...addOns.agents.map(a => `agent: ${a}`),
-      ...addOns.commands.map(c => `command: /${c}`),
-    ];
-    const addOnsStr = allAddOnsList.length > 0 ? allAddOnsList.join(", ") : "none";
 
-    startCmd += `- **${slug}**: ${member.role}.`;
-    if (member.instructions) startCmd += ` ${member.instructions}.`;
-    startCmd += ` Owned add-ons: ${addOnsStr}.\n`;
+    const toolLines: string[] = [];
+    if (addOns.skills.length > 0) toolLines.push(`Skills: ${addOns.skills.join(", ")}`);
+    if (addOns.agents.length > 0) toolLines.push(`Agents: ${addOns.agents.join(", ")}`);
+    if (addOns.commands.length > 0) toolLines.push(`Commands: ${addOns.commands.map(c => "/" + c).join(", ")}`);
+    const toolBlock = toolLines.length > 0 ? toolLines.join("\n") : "(none)";
+
+    startCmd += `### Teammate: ${slug}\n\n`;
+    startCmd += `Name this teammate exactly: \`${slug}\`\n\n`;
+    startCmd += `Copy this spawn prompt verbatim (everything between the ~~~ markers):\n\n`;
+    startCmd += `~~~\n`;
+    startCmd += `You are "${slug}" on team "${team.name}".\n`;
+    startCmd += `Role: ${member.role || "(unset)"}\n`;
+    if (member.instructions) startCmd += `Instructions: ${member.instructions}\n`;
+    startCmd += `\n`;
+    if (memberProfile?.customClaudeMd) {
+      startCmd += `Profile instructions (follow strictly):\n${memberProfile.customClaudeMd}\n\n`;
+    }
+    startCmd += `Your available tools:\n${toolBlock}\n`;
+    startCmd += `\n`;
+    startCmd += `You may ONLY use the tools listed above. If you need a tool not in your list, message the team lead and they will delegate to the correct teammate.\n`;
+    startCmd += `\n`;
+    startCmd += `YOUR FIRST OUTPUT must be exactly this (no changes):\n`;
+    startCmd += `\n`;
+    startCmd += `=== ${slug} ===\n`;
+    startCmd += `Role: ${member.role || "(unset)"}\n`;
+    startCmd += `Available tools:\n`;
+    for (const line of toolLines) {
+      startCmd += `  ${line}\n`;
+    }
+    if (toolLines.length === 0) startCmd += `  (none)\n`;
+    startCmd += `Ready.\n`;
+    startCmd += `===============\n`;
+    startCmd += `\n`;
+    startCmd += `After printing the above, stop and wait for work from the team lead. Do not take any other action.\n`;
+    startCmd += `~~~\n\n`;
   }
 
-  startCmd += `\nEach teammate should only use their assigned add-ons. If they need a capability they don't own, they should report back so you can delegate to the correct teammate.\n`;
-  startCmd += `\nAfter all teammates are spawned, report to the user that the team is ready and ask what to work on.\n`;
+  // Section 4: Lead's required output — the exact text to print
+  startCmd += `## Your required output (print exactly this after all teammates are spawned)\n\n`;
+  startCmd += `~~~\n`;
+  startCmd += `=== Team: ${team.name} ===\n`;
+  startCmd += `Members: ${team.members.length}\n`;
+  startCmd += `\n`;
+  startCmd += `Lead: ${lead.role || "(you)"}\n`;
+  for (const member of nonLeadMembers) {
+    const slug = member.profile.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    startCmd += `${slug}: ${member.role || "(no role set)"}\n`;
+  }
+  startCmd += `\n`;
+  startCmd += `All teammates ready. What are we working on?\n`;
+  startCmd += `========================\n`;
+  startCmd += `~~~\n`;
 
   fs.writeFileSync(path.join(configDir, "commands", "start-team.md"), startCmd, "utf-8");
 
@@ -2121,7 +2179,6 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();
-  const sessionName = `team-${team.name.replace(/[^a-zA-Z0-9-]/g, "-")}`;
 
   // Write a launcher script to avoid nested escaping issues with tmux + AppleScript
   const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux${flagStr} '/start-team'`;
@@ -2139,7 +2196,7 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
     "    end tell",
     "  end if",
     "  tell current session of current window",
-    `    write text "tmux -CC new-session -s '${escSh(sessionName)}' '${escSh(launcherPath)}'"`,
+    `    write text "tmux -CC new-session '${escSh(launcherPath)}'"`,
     "  end tell",
     "end tell",
   ].join("\n");
