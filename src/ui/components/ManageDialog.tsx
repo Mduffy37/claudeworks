@@ -969,8 +969,47 @@ export function ManageDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Discover view state
-  type PluginSubTab = "installed" | "discover";
+  type PluginSubTab = "installed" | "discover" | "marketplaces";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
+  const [marketplaces, setMarketplaces] = useState<Array<{ name: string; repo: string; lastUpdated: string }>>([]);
+  const [marketplaceInput, setMarketplaceInput] = useState("");
+  const [marketplaceLoading, setMarketplaceLoading] = useState(false);
+  const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
+
+  const loadMarketplaces = async () => {
+    const list = await window.api.listMarketplaces();
+    setMarketplaces(list);
+  };
+
+  const handleAddMarketplace = async () => {
+    const source = marketplaceInput.trim();
+    if (!source) return;
+    setMarketplaceLoading(true);
+    setMarketplaceError(null);
+    try {
+      await window.api.addMarketplace(source);
+      setMarketplaceInput("");
+      await loadMarketplaces();
+      onPluginsChanged?.();
+    } catch (err: any) {
+      setMarketplaceError(err?.message ?? "Failed to add marketplace");
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  };
+
+  const handleRemoveMarketplace = async (name: string) => {
+    setMarketplaceLoading(true);
+    try {
+      await window.api.removeMarketplace(name);
+      await loadMarketplaces();
+      onPluginsChanged?.();
+    } catch (err: any) {
+      setMarketplaceError(err?.message ?? "Failed to remove marketplace");
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  };
   const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
   const installedPluginIds = useMemo(() => new Set(plugins.map((p) => p.name)), [plugins]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
@@ -1074,6 +1113,15 @@ export function ManageDialog({
                 >
                   Discover
                 </button>
+                <button
+                  className={`discover-toggle-btn${pluginSubTab === "marketplaces" ? " active" : ""}`}
+                  onClick={() => {
+                    setPluginSubTab("marketplaces");
+                    loadMarketplaces();
+                  }}
+                >
+                  Marketplaces
+                </button>
               </div>
               {pluginSubTab === "installed" ? (
                 <>
@@ -1108,6 +1156,54 @@ export function ManageDialog({
                     </div>
                   </div>
                 </>
+              ) : pluginSubTab === "marketplaces" ? (
+                <div className="marketplace-tab">
+                  <div className="marketplace-add-row">
+                    <input
+                      type="text"
+                      className="marketplace-input"
+                      placeholder="GitHub repo (e.g. owner/repo)"
+                      value={marketplaceInput}
+                      onChange={(e) => setMarketplaceInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddMarketplace(); }}
+                      disabled={marketplaceLoading}
+                    />
+                    <button
+                      className="btn-primary"
+                      onClick={handleAddMarketplace}
+                      disabled={!marketplaceInput.trim() || marketplaceLoading}
+                    >
+                      {marketplaceLoading ? "Adding..." : "Add"}
+                    </button>
+                  </div>
+                  {marketplaceError && (
+                    <div className="marketplace-error">{marketplaceError}</div>
+                  )}
+                  <div className="marketplace-list">
+                    {marketplaces.length === 0 ? (
+                      <div className="empty-state-inline">No marketplaces registered</div>
+                    ) : (
+                      marketplaces.map((mp) => (
+                        <div key={mp.name} className="marketplace-item">
+                          <div className="marketplace-item-body">
+                            <div className="marketplace-item-name">{mp.name}</div>
+                            <div className="marketplace-item-repo">{mp.repo}</div>
+                          </div>
+                          {mp.name !== "claude-plugins-official" && (
+                            <button
+                              className="btn-danger-small"
+                              onClick={() => handleRemoveMarketplace(mp.name)}
+                              disabled={marketplaceLoading}
+                              title="Remove marketplace"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
                   {discoverLoading ? (

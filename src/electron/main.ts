@@ -19,6 +19,9 @@ import {
   checkPluginUpdates,
   getAvailablePlugins,
   installPlugin,
+  addMarketplace,
+  removeMarketplace,
+  listMarketplaces,
   loadTeams,
   saveTeam,
   renameTeam,
@@ -222,6 +225,18 @@ ipcMain.handle("get-available-plugins", async () => {
 
 ipcMain.handle("install-plugin", async (_event, pluginId: string) => {
   await installPlugin(pluginId);
+});
+
+ipcMain.handle("add-marketplace", async (_event, source: string) => {
+  await addMarketplace(source);
+});
+
+ipcMain.handle("remove-marketplace", async (_event, name: string) => {
+  await removeMarketplace(name);
+});
+
+ipcMain.handle("list-marketplaces", () => {
+  return listMarketplaces();
 });
 
 ipcMain.handle("get-teams", () => {

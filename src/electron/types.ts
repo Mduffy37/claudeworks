@@ -197,6 +197,9 @@ export interface ElectronAPI {
   checkPluginUpdates: () => Promise<Record<string, string>>;
   getAvailablePlugins: () => Promise<{ installed: InstalledPluginInfo[]; available: AvailablePlugin[] }>;
   installPlugin: (pluginId: string) => Promise<void>;
+  addMarketplace: (source: string) => Promise<void>;
+  removeMarketplace: (name: string) => Promise<void>;
+  listMarketplaces: () => Promise<Array<{ name: string; repo: string; lastUpdated: string }>>;
   getTeams: () => Promise<Team[]>;
   saveTeam: (team: Team) => Promise<Team>;
   deleteTeam: (name: string) => Promise<void>;

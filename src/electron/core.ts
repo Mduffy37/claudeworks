@@ -1902,6 +1902,35 @@ export async function installPlugin(pluginId: string): Promise<void> {
   ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 60000 });
 }
 
+export async function addMarketplace(source: string): Promise<void> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "marketplace", "add", source,
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 60000 });
+}
+
+export async function removeMarketplace(name: string): Promise<void> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "marketplace", "remove", name,
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 60000 });
+}
+
+export function listMarketplaces(): Array<{ name: string; repo: string; lastUpdated: string }> {
+  const filePath = path.join(os.homedir(), ".claude", "plugins", "known_marketplaces.json");
+  if (!fs.existsSync(filePath)) return [];
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    return Object.entries(data).map(([name, info]: [string, any]) => ({
+      name,
+      repo: info.source?.repo ?? info.source?.url ?? "unknown",
+      lastUpdated: info.lastUpdated ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Launch
 // ---------------------------------------------------------------------------
