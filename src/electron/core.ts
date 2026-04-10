@@ -1258,6 +1258,7 @@ export function keychainServiceForConfigDir(configDir: string): string {
 
 const KEYCHAIN_USERNAME = os.userInfo().username;
 const DEFAULT_KEYCHAIN_SERVICE = "Claude Code-credentials";
+const CREDENTIAL_FRESHNESS_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Read and parse a keychain entry. Returns { raw, parsed, expiresAt } or null.
@@ -1354,8 +1355,7 @@ export async function syncCredentials(
   // --- launch: check target's own entry first ---
   if (mode === "launch") {
     const own = await readKeychainEntry(targetService);
-    const fiveMinFromNow = Date.now() + 5 * 60 * 1000;
-    if (own && own.expiresAt > fiveMinFromNow) {
+    if (own && own.expiresAt > Date.now() + CREDENTIAL_FRESHNESS_BUFFER_MS) {
       return true; // Still fresh, no-op
     }
     // Fall through to scan
@@ -1370,18 +1370,21 @@ export async function syncCredentials(
     candidates.push({ raw: defaultEntry.raw, expiresAt: defaultEntry.expiresAt });
   }
 
-  // All profile entries where useDefaultAuth !== false
+  // All profile entries where useDefaultAuth !== false (read in parallel)
   const allProfiles = loadProfiles();
-  for (const p of allProfiles) {
-    if (p.useDefaultAuth === false) continue;
-    const pConfigDir = path.join(PROFILES_DIR, p.name, "config");
-    const pService = keychainServiceForConfigDir(pConfigDir);
-    // Skip the target itself (already checked in launch mode)
-    if (pService === targetService) continue;
-    const entry = await readKeychainEntry(pService);
-    if (entry) {
-      candidates.push({ raw: entry.raw, expiresAt: entry.expiresAt });
-    }
+  const profileEntries = await Promise.all(
+    allProfiles
+      .filter((p) => p.useDefaultAuth !== false)
+      .map((p) => {
+        const pConfigDir = path.join(PROFILES_DIR, p.name, "config");
+        const pService = keychainServiceForConfigDir(pConfigDir);
+        if (pService === targetService) return null; // skip self
+        return readKeychainEntry(pService);
+      })
+      .filter(Boolean) as Array<Promise<Awaited<ReturnType<typeof readKeychainEntry>>>>
+  );
+  for (const entry of profileEntries) {
+    if (entry) candidates.push({ raw: entry.raw, expiresAt: entry.expiresAt });
   }
 
   // Filter to non-expired and pick freshest
@@ -1402,15 +1405,18 @@ export async function syncCredentials(
 
 export async function checkCredentialStatus(): Promise<{
   global: boolean;
-  profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }>;
+  globalExpired: boolean;
+  profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean; isExpired: boolean }>;
 }> {
   // Check global credentials
   const globalEntry = await readKeychainEntry(DEFAULT_KEYCHAIN_SERVICE);
   const globalOk = globalEntry !== null;
+  const globalExpired = globalOk && globalEntry!.expiresAt <= Date.now();
 
   // Check each profile
   const profiles = loadProfiles();
-  const results: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> = [];
+  const now = Date.now();
+  const results: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean; isExpired: boolean }> = [];
   for (const profile of profiles) {
     const configDir = path.join(PROFILES_DIR, profile.name, "config");
     const service = keychainServiceForConfigDir(configDir);
@@ -1419,10 +1425,11 @@ export async function checkCredentialStatus(): Promise<{
       name: profile.name,
       useDefaultAuth: profile.useDefaultAuth !== false,
       hasCredentials: entry !== null,
+      isExpired: entry !== null && entry.expiresAt <= now,
     });
   }
 
-  return { global: globalOk, profiles: results };
+  return { global: globalOk, globalExpired, profiles: results };
 }
 
 // ---------------------------------------------------------------------------
