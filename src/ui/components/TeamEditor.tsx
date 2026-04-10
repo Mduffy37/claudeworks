@@ -49,18 +49,54 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [search, setSearch] = useState("");
   const [showOverflow, setShowOverflow] = useState(false);
   const [launchDir, setLaunchDir] = useState("");
+  const [showEnableModal, setShowEnableModal] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
 
   const handleLaunch = async () => {
     const lead = draft.members.find((m) => m.isLead);
     if (!lead) return;
     if (dirty) await onSave(draft);
+
     let dir = launchDir || undefined;
     if (!dir) {
       const picked = await window.api.selectDirectory();
       if (!picked) return;
       dir = picked;
     }
-    onLaunch(lead.profile, dir);
+
+    // Pre-flight: check agent teams enabled
+    const enabled = await window.api.checkAgentTeamsEnabled();
+    if (!enabled) {
+      setShowEnableModal(true);
+      return;
+    }
+
+    await doLaunchTeam(dir);
+  };
+
+  const doLaunchTeam = async (dir?: string) => {
+    setLaunching(true);
+    setLaunchError(null);
+    try {
+      await window.api.launchTeam(draft, dir);
+    } catch (err: any) {
+      setLaunchError(err?.message ?? "Team launch failed");
+    } finally {
+      setLaunching(false);
+    }
+  };
+
+  const handleEnableAndLaunch = async () => {
+    setShowEnableModal(false);
+    await window.api.enableAgentTeams();
+    let dir = launchDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+    await doLaunchTeam(dir);
   };
 
   useEffect(() => {
@@ -244,13 +280,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
                 ))}
               </select>
-              <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead)} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch lead profile" : "Set a lead profile first"}>
+              <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead) || launching} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch team" : "Set a lead profile first"}>
                 <span className="btn-launch-icon">
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                     <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                Launch
+                {launching ? "Launching..." : "Launch Team"}
               </button>
             </div>
           )}
@@ -297,6 +333,13 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           </div>
         </div>
       </div>
+
+      {launchError && (
+        <div className="pe-error-banner">
+          <span>{launchError}</span>
+          <button onClick={() => setLaunchError(null)}>&times;</button>
+        </div>
+      )}
 
       {/* Description — collapsible, matches profile InfoCard */}
       <InfoCard
@@ -384,6 +427,18 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           confirmLabel="Delete"
           onConfirm={() => { setShowDeleteConfirm(false); onDelete(draft.name); }}
           onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
+      {/* Enable Agent Teams modal */}
+      {showEnableModal && (
+        <ConfirmDialog
+          title="Enable Agent Teams?"
+          description="Agent Teams is an experimental Claude Code feature that must be enabled globally. This will add CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS to your ~/.claude/settings.json."
+          confirmLabel="Enable & Launch"
+          confirmVariant="primary"
+          onConfirm={handleEnableAndLaunch}
+          onCancel={() => setShowEnableModal(false)}
         />
       )}
     </div>
