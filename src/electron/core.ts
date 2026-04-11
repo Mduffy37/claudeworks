@@ -1042,23 +1042,28 @@ if (profile.useDefaultAuth !== false) {
       if (entry) candidates.push(entry);
     }
 
-    // Prefer non-expired; fall back to freshest expired (refresh token may still work)
+    // Only overwrite with a genuinely fresh (non-expired) candidate.
+    // If all candidates are expired, keep the target's own entry — its refresh
+    // token is unique (OAuth rotation) and likely still valid server-side.
     const now = Date.now();
     const valid = candidates.filter(c => c.expiresAt > now);
-    const pool = valid.length > 0 ? valid : candidates;
-    pool.sort((a, b) => b.expiresAt - a.expiresAt);
-    if (pool.length > 0) {
-      // Save existing entry in case add fails after delete
+    if (valid.length > 0) {
+      valid.sort((a, b) => b.expiresAt - a.expiresAt);
       const backup = target ? target.raw : null;
       try {
         try { execFileSync("security", ["delete-generic-password", "-s", targetSvc, "-a", username], { stdio: "ignore" }); } catch {}
-        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", pool[0].raw]);
+        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", valid[0].raw]);
       } catch {
-        // Add failed — restore backup if we had one
         if (backup) {
           try { execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", backup]); } catch {}
         }
       }
+    } else if (!target && candidates.length > 0) {
+      // No target entry at all (fresh alias) — seed from freshest expired
+      candidates.sort((a, b) => b.expiresAt - a.expiresAt);
+      try {
+        execFileSync("security", ["add-generic-password", "-s", targetSvc, "-a", username, "-w", candidates[0].raw]);
+      } catch {}
     }
   }
 }
@@ -1749,7 +1754,11 @@ export async function syncCredentials(
     if (own && own.expiresAt > Date.now() + CREDENTIAL_FRESHNESS_BUFFER_MS) {
       return true; // Still fresh, no-op
     }
-    // Fall through to scan
+    // Fall through to scan for a fresh candidate.
+    // If no fresh candidate exists, keep the profile's own entry — its refresh
+    // token is unique (OAuth token rotation) and likely still valid server-side.
+    // Overwriting with another profile's expired entry would replace a valid
+    // refresh token with one that was already rotated/invalidated.
   }
 
   // --- seed / launch-fallthrough: scan all entries for freshest ---
@@ -1778,11 +1787,25 @@ export async function syncCredentials(
     if (entry) candidates.push({ raw: entry.raw, expiresAt: entry.expiresAt });
   }
 
-  // Pick freshest non-expired; if all expired, use freshest expired
-  // (the refresh token may still be valid even if the access token expired)
-  if (candidates.length === 0) return false;
+  if (candidates.length === 0) {
+    // No candidates at all — profile keeps whatever it has (or nothing)
+    return mode === "launch" && (await readKeychainEntry(targetService)) !== null;
+  }
+
   const now = Date.now();
   const valid = candidates.filter((c) => c.expiresAt > now);
+
+  if (valid.length === 0 && mode === "launch") {
+    // All candidates expired — don't overwrite. Each profile's refresh token is
+    // unique due to OAuth token rotation; replacing it with another profile's
+    // expired (and likely server-invalidated) token causes unnecessary re-login.
+    // Let Claude Code attempt its own refresh with the profile's existing token.
+    return (await readKeychainEntry(targetService)) !== null;
+  }
+
+  // For "seed" mode with all expired, fall back to freshest expired — a new
+  // profile has no entry, so any token (with a possibly-valid refresh) is
+  // better than nothing.
   const pool = valid.length > 0 ? valid : candidates;
   pool.sort((a, b) => b.expiresAt - a.expiresAt);
   const best = pool[0];
