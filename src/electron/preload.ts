@@ -74,6 +74,8 @@ const api: ElectronAPI = {
   revealInFinder: (path) => ipcRenderer.invoke("reveal-in-finder", path),
   getProfileConfigDir: (name) => ipcRenderer.invoke("get-profile-config-dir", name),
   getClaudeHome: () => ipcRenderer.invoke("get-claude-home"),
+  getCuratedMarketplace: () => ipcRenderer.invoke("get-curated-marketplace"),
+  refreshCuratedMarketplace: () => ipcRenderer.invoke("refresh-curated-marketplace"),
 };
 
 contextBridge.exposeInMainWorld("api", api);

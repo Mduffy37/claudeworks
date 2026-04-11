@@ -53,6 +53,8 @@ import {
   getProfileConfigDir,
   getClaudeHome,
   ensureDefaultProfile,
+  getCuratedMarketplace,
+  refreshCuratedMarketplace,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -480,6 +482,8 @@ ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(fi
 ipcMain.handle("reveal-in-finder", (_event, filePath: string) => shell.showItemInFolder(filePath));
 ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
 ipcMain.handle("get-claude-home", () => getClaudeHome());
+ipcMain.handle("get-curated-marketplace", () => getCuratedMarketplace());
+ipcMain.handle("refresh-curated-marketplace", () => refreshCuratedMarketplace());
 
 // ---------------------------------------------------------------------------
 // App lifecycle

@@ -150,6 +150,31 @@ export interface Prompt {
   updatedAt: number;
 }
 
+/** A curated plugin listing from the marketplace repo. */
+export interface CuratedPlugin {
+  pluginId: string;
+  displayName: string;
+  description: string;
+  marketplace: string;
+  collections: string[];
+  verified: boolean;
+  featured: boolean;
+}
+
+/** A collection definition from the marketplace repo. */
+export interface CuratedCollection {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+/** Combined curated marketplace data. */
+export interface CuratedMarketplaceData {
+  plugins: CuratedPlugin[];
+  collections: CuratedCollection[];
+}
+
 /** An available (not yet installed) plugin from a configured marketplace. */
 export interface AvailablePlugin {
   pluginId: string;
@@ -263,6 +288,8 @@ export interface ElectronAPI {
   getAnalytics: (since?: number, project?: string) => Promise<AnalyticsData>;
   getActiveSessions: () => Promise<ActiveSession[]>;
   checkForAppUpdate: () => Promise<{ available: boolean; current: string; latest: string }>;
+  getCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
+  refreshCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
 }
 
 export interface ActiveSession {

@@ -2920,6 +2920,50 @@ export async function checkForAppUpdate(): Promise<{ available: boolean; current
   }
 }
 
+// ---------------------------------------------------------------------------
+// Curated marketplace
+// ---------------------------------------------------------------------------
+
+import type { CuratedMarketplaceData } from "./types";
+
+let curatedCache: CuratedMarketplaceData | null = null;
+
+async function fetchGitHubFileContent(repoPath: string): Promise<string> {
+  const ghPath = process.env.GH_PATH ?? "/opt/homebrew/bin/gh";
+  const { stdout } = await execFileAsync(ghPath, [
+    "api",
+    `repos/Mduffy37/claude-profiles-marketplace/contents/${repoPath}`,
+    "--jq", ".content",
+  ], { timeout: 15000 });
+  // gh api returns base64-encoded content; strip whitespace before decoding
+  return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+}
+
+export async function getCuratedMarketplace(): Promise<CuratedMarketplaceData> {
+  if (curatedCache) return curatedCache;
+  return refreshCuratedMarketplace();
+}
+
+export async function refreshCuratedMarketplace(): Promise<CuratedMarketplaceData> {
+  try {
+    const [pluginsJson, collectionsJson] = await Promise.all([
+      fetchGitHubFileContent("marketplace.json"),
+      fetchGitHubFileContent("collections.json"),
+    ]);
+    const pluginsData = JSON.parse(pluginsJson);
+    const collectionsData = JSON.parse(collectionsJson);
+    curatedCache = {
+      plugins: pluginsData.plugins ?? [],
+      collections: collectionsData.collections ?? [],
+    };
+    return curatedCache;
+  } catch (err: any) {
+    console.error("Failed to fetch curated marketplace:", err?.message);
+    // Return empty data on failure so the UI can fall back gracefully
+    return { plugins: [], collections: [] };
+  }
+}
+
 export function getProfileConfigDir(name: string): string {
   return path.join(PROFILES_DIR, name, "config");
 }

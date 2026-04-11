@@ -3,7 +3,7 @@ import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
 import { DiscoverList } from "./DiscoverList";
 import { DiscoverDetail } from "./DiscoverDetail";
-import type { PluginWithItems, Profile, Prompt, AvailablePlugin } from "../../electron/types";
+import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, CuratedCollection, CuratedMarketplaceData } from "../../electron/types";
 import { PromptPicker } from "./PromptPicker";
 
 type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health";
@@ -1193,9 +1193,75 @@ export function ManageDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Discover view state
-  type PluginSubTab = "installed" | "discover" | "marketplaces";
+  type PluginSubTab = "installed" | "curated" | "discover" | "marketplaces";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
   const [marketplaces, setMarketplaces] = useState<Array<{ name: string; repo: string; lastUpdated: string }>>([]);
+
+  // Curated marketplace state
+  const [curatedData, setCuratedData] = useState<CuratedMarketplaceData | null>(null);
+  const [curatedLoading, setCuratedLoading] = useState(false);
+  const [curatedError, setCuratedError] = useState<string | null>(null);
+  const [curatedCollection, setCuratedCollection] = useState<string | null>(null);
+  const [curatedSearch, setCuratedSearch] = useState("");
+  const [curatedInstalling, setCuratedInstalling] = useState<string | null>(null);
+
+  const loadCurated = async () => {
+    setCuratedLoading(true);
+    setCuratedError(null);
+    try {
+      const data = await window.api.getCuratedMarketplace();
+      setCuratedData(data);
+    } catch (err: any) {
+      setCuratedError(err?.message ?? "Failed to load curated plugins");
+    } finally {
+      setCuratedLoading(false);
+    }
+  };
+
+  const refreshCurated = async () => {
+    setCuratedLoading(true);
+    setCuratedError(null);
+    try {
+      const data = await window.api.refreshCuratedMarketplace();
+      setCuratedData(data);
+    } catch (err: any) {
+      setCuratedError(err?.message ?? "Failed to refresh curated plugins");
+    } finally {
+      setCuratedLoading(false);
+    }
+  };
+
+  const handleCuratedInstall = async (pluginId: string) => {
+    setCuratedInstalling(pluginId);
+    try {
+      await window.api.installPlugin(pluginId);
+      onPluginsChanged?.();
+    } catch (err: any) {
+      // Silently fail — the install button will reset
+    } finally {
+      setCuratedInstalling(null);
+    }
+  };
+
+  const filteredCurated = useMemo(() => {
+    if (!curatedData) return [];
+    let result = curatedData.plugins;
+    if (curatedCollection) {
+      result = result.filter((p) => p.collections.includes(curatedCollection));
+    }
+    const q = curatedSearch.toLowerCase().trim();
+    if (q) {
+      result = result.filter(
+        (p) => p.displayName.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.pluginId.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [curatedData, curatedCollection, curatedSearch]);
+
+  const featuredCurated = useMemo(() => {
+    if (!curatedData) return [];
+    return curatedData.plugins.filter((p) => p.featured);
+  }, [curatedData]);
   const [marketplaceInput, setMarketplaceInput] = useState("");
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
@@ -1355,6 +1421,15 @@ export function ManageDialog({
                   Installed
                 </button>
                 <button
+                  className={`discover-toggle-btn${pluginSubTab === "curated" ? " active" : ""}`}
+                  onClick={() => {
+                    setPluginSubTab("curated");
+                    if (!curatedData && !curatedLoading) loadCurated();
+                  }}
+                >
+                  Curated
+                </button>
+                <button
                   className={`discover-toggle-btn${pluginSubTab === "discover" ? " active" : ""}`}
                   onClick={() => {
                     setPluginSubTab("discover");
@@ -1406,6 +1481,176 @@ export function ManageDialog({
                     </div>
                   </div>
                 </>
+              ) : pluginSubTab === "curated" ? (
+                <div className="curated-tab">
+                  {curatedLoading ? (
+                    <div className="discover-loading">Loading curated plugins...</div>
+                  ) : curatedError ? (
+                    <div className="discover-error">
+                      <span>{curatedError}</span>
+                      <button className="btn-secondary" onClick={loadCurated}>Retry</button>
+                    </div>
+                  ) : curatedData ? (
+                    <>
+                      {/* Featured row */}
+                      {featuredCurated.length > 0 && (
+                        <div className="curated-featured">
+                          <div className="curated-section-title">Featured</div>
+                          <div className="curated-featured-row">
+                            {featuredCurated.map((p) => {
+                              const isInstalled = installedPluginIds.has(p.pluginId);
+                              const isInstalling = curatedInstalling === p.pluginId;
+                              return (
+                                <div key={p.pluginId} className="curated-featured-card">
+                                  <div className="curated-featured-card-header">
+                                    <span className="curated-featured-name">{p.displayName}</span>
+                                    {p.verified && (
+                                      <span className="curated-verified-badge" title="Verified">
+                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                          <path d="M8 1L10 3.5L13 3L12.5 6L15 8L12.5 10L13 13L10 12.5L8 15L6 12.5L3 13L3.5 10L1 8L3.5 6L3 3L6 3.5L8 1Z" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" strokeWidth="1" strokeLinejoin="round"/>
+                                          <path d="M5.5 8L7 9.5L10.5 6" stroke="var(--accent)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="curated-featured-desc">{p.description}</div>
+                                  <div className="curated-featured-footer">
+                                    <div className="curated-collection-tags">
+                                      {p.collections.slice(0, 2).map((c) => {
+                                        const col = curatedData.collections.find((x) => x.id === c);
+                                        return col ? (
+                                          <span key={c} className="curated-tag">{col.icon} {col.name}</span>
+                                        ) : null;
+                                      })}
+                                    </div>
+                                    {isInstalled ? (
+                                      <span className="curated-installed-label">Installed</span>
+                                    ) : (
+                                      <button
+                                        className="btn-primary curated-install-btn"
+                                        onClick={() => handleCuratedInstall(p.pluginId)}
+                                        disabled={isInstalling}
+                                      >
+                                        {isInstalling ? "..." : "Install"}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Collections filter */}
+                      {curatedData.collections.length > 0 && (
+                        <div className="curated-collections">
+                          <div className="curated-section-title">Collections</div>
+                          <div className="curated-collection-row">
+                            <button
+                              className={`curated-collection-chip${curatedCollection === null ? " active" : ""}`}
+                              onClick={() => setCuratedCollection(null)}
+                            >
+                              All
+                            </button>
+                            {curatedData.collections.map((c) => (
+                              <button
+                                key={c.id}
+                                className={`curated-collection-chip${curatedCollection === c.id ? " active" : ""}`}
+                                onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
+                                title={c.description}
+                              >
+                                {c.icon} {c.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Search + refresh */}
+                      <div className="curated-toolbar">
+                        <input
+                          type="text"
+                          className="curated-search"
+                          placeholder="Search curated plugins..."
+                          value={curatedSearch}
+                          onChange={(e) => setCuratedSearch(e.target.value)}
+                        />
+                        <button
+                          className="btn-secondary curated-refresh-btn"
+                          onClick={refreshCurated}
+                          disabled={curatedLoading}
+                          title="Refresh curated list"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M14 8A6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14 2v4h-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Plugin list */}
+                      <div className="curated-list">
+                        {filteredCurated.length === 0 ? (
+                          <div className="empty-state-inline" style={{ padding: "20px" }}>
+                            {curatedSearch || curatedCollection ? "No matching plugins" : "No curated plugins available"}
+                          </div>
+                        ) : (
+                          filteredCurated.map((p) => {
+                            const isInstalled = installedPluginIds.has(p.pluginId);
+                            const isInstalling = curatedInstalling === p.pluginId;
+                            return (
+                              <div key={p.pluginId} className="curated-plugin-row">
+                                <div className="curated-plugin-info">
+                                  <div className="curated-plugin-name-row">
+                                    <span className="curated-plugin-name">{p.displayName}</span>
+                                    {p.verified && (
+                                      <span className="curated-verified-badge" title="Verified">
+                                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                                          <path d="M8 1L10 3.5L13 3L12.5 6L15 8L12.5 10L13 13L10 12.5L8 15L6 12.5L3 13L3.5 10L1 8L3.5 6L3 3L6 3.5L8 1Z" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" strokeWidth="1" strokeLinejoin="round"/>
+                                          <path d="M5.5 8L7 9.5L10.5 6" stroke="var(--accent)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="curated-plugin-desc">{p.description}</div>
+                                  <div className="curated-plugin-meta">
+                                    <span className="curated-plugin-source">{p.marketplace}</span>
+                                    {p.collections.map((c) => {
+                                      const col = curatedData.collections.find((x) => x.id === c);
+                                      return col ? (
+                                        <span
+                                          key={c}
+                                          className={`curated-tag clickable${curatedCollection === c ? " active" : ""}`}
+                                          onClick={() => setCuratedCollection(curatedCollection === c ? null : c)}
+                                        >
+                                          {col.icon} {col.name}
+                                        </span>
+                                      ) : null;
+                                    })}
+                                  </div>
+                                </div>
+                                <div className="curated-plugin-action">
+                                  {isInstalled ? (
+                                    <span className="curated-installed-label">Installed</span>
+                                  ) : (
+                                    <button
+                                      className="btn-primary curated-install-btn"
+                                      onClick={() => handleCuratedInstall(p.pluginId)}
+                                      disabled={isInstalling}
+                                    >
+                                      {isInstalling ? "Installing..." : "Install"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
               ) : pluginSubTab === "marketplaces" ? (
                 <div className="marketplace-tab">
                   <div className="marketplace-add-row">
