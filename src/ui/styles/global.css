@@ -613,6 +613,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding-bottom: 48px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ─── Projects tab ───────────────────────────────────────────────────────── */
@@ -704,6 +706,20 @@ body {
 .manage-project-detail {
   padding: 16px;
   overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-project-detail > .manage-section:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-project-detail > .manage-section:last-child .manage-claudemd-editor {
+  flex: 1;
+  min-height: 120px;
 }
 
 .manage-project-git {
