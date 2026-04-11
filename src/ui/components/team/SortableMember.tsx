@@ -1,7 +1,23 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TeamMember, Profile } from "../../../electron/types";
+import type { TeamMember, Profile, TeammateColour } from "../../../electron/types";
+
+const TEAMMATE_COLOURS: { name: TeammateColour; hex: string }[] = [
+  { name: "red", hex: "#ef4444" },
+  { name: "blue", hex: "#3b82f6" },
+  { name: "green", hex: "#22c55e" },
+  { name: "yellow", hex: "#eab308" },
+  { name: "purple", hex: "#a855f7" },
+  { name: "orange", hex: "#f97316" },
+  { name: "pink", hex: "#ec4899" },
+  { name: "cyan", hex: "#06b6d4" },
+];
+
+export function colourHex(colour?: TeammateColour): string | undefined {
+  if (!colour) return undefined;
+  return TEAMMATE_COLOURS.find((c) => c.name === colour)?.hex;
+}
 
 export function SortableMember({
   member,
@@ -11,6 +27,7 @@ export function SortableMember({
   onSetLead,
   onRoleChange,
   onInstructionsChange,
+  onColourChange,
   onNavigateToProfile,
 }: {
   member: TeamMember;
@@ -20,6 +37,7 @@ export function SortableMember({
   onSetLead: () => void;
   onRoleChange: (role: string) => void;
   onInstructionsChange: (instructions: string) => void;
+  onColourChange: (colour: TeammateColour | undefined) => void;
   onNavigateToProfile?: (name: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -65,6 +83,10 @@ export function SortableMember({
         </div>
       </div>
       <div className="te-member-fields">
+        {/* Colour picker hidden — Claude Code's spawn tool doesn't accept a color
+            input parameter yet (Xt() auto-assigns). The TeamMember.colour field and
+            TEAMMATE_COLOURS palette are ready; re-enable this UI block once Anthropic
+            adds color support to the Agent tool's spawn input schema. */}
         <div className="te-field-row">
           <span className="te-field-label">Role</span>
           <input

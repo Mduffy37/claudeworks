@@ -183,6 +183,18 @@ export function App() {
     setIsCreating(false);
   };
 
+  const handleToggleProfileFavourite = async (name: string) => {
+    const profile = profiles.find((p) => p.name === name);
+    if (!profile) return;
+    await updateProfile({ ...profile, favourite: !profile.favourite });
+  };
+
+  const handleToggleTeamFavourite = async (name: string) => {
+    const team = teams.find((t) => t.name === name);
+    if (!team) return;
+    await saveTeamHook({ ...team, favourite: !team.favourite });
+  };
+
   const handleCreateDefault = async () => {
     const defaultProfile: Profile = {
       name: "Default",
@@ -341,6 +353,7 @@ export function App() {
             onLaunch={handleLaunch}
             onSave={() => editorSaveRef.current?.()}
             dirty={dirty}
+            onToggleFavourite={handleToggleProfileFavourite}
           />
         ) : (
           <TeamList
@@ -350,6 +363,7 @@ export function App() {
             importedProjects={importedProjects}
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
+            onToggleFavourite={handleToggleTeamFavourite}
           />
         )}
         <div className="sidebar-dock">

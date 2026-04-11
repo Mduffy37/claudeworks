@@ -2020,6 +2020,7 @@ export function getAnalytics(since?: number): AnalyticsData {
 
     recentLaunches.push({
       project: projName,
+      directory: launch.directory,
       date: dateStr,
       messages: 0,
       sessionId: `${launch.timestamp}-${launch.name}`,

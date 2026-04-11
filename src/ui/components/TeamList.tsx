@@ -8,6 +8,7 @@ interface Props {
   importedProjects?: string[];
   onSelect: (name: string) => void;
   onNew: () => void;
+  onToggleFavourite?: (name: string) => void;
 }
 
 function shortPath(dir: string): string {
@@ -64,9 +65,9 @@ function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; import
   );
 }
 
-type SidebarSort = "name" | "members";
+type SidebarSort = "name" | "members" | "favourites";
 
-export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew }: Props) {
+export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onToggleFavourite }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
@@ -84,8 +85,14 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((t) => t.name.toLowerCase().includes(q));
     if (tagFilter) result = result.filter((t) => (t.tags ?? []).includes(tagFilter));
-    if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "favourites") {
+      result = result.filter((t) => t.favourite);
+    }
+    if (sortBy === "name" || sortBy === "favourites") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "members") result = [...result].sort((a, b) => b.members.length - a.members.length);
+    if (sortBy !== "favourites") {
+      result = [...result].sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
+    }
     return result;
   }, [teams, search, sortBy, tagFilter]);
 
@@ -133,6 +140,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
             >
               <option value="name">A-Z</option>
               <option value="members">Members</option>
+              <option value="favourites">Favourites</option>
             </select>
           </div>
         </div>
@@ -194,6 +202,15 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                     {lead ? ` · Lead: ${lead.profile}` : ""}
                   </div>
                 </div>
+                {onToggleFavourite && (
+                  <button
+                    className={`sidebar-fav-btn${t.favourite ? " active" : ""}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(t.name); }}
+                    title={t.favourite ? "Remove from favourites" : "Add to favourites"}
+                  >
+                    {t.favourite ? "\u2605" : "\u2606"}
+                  </button>
+                )}
                 <TeamSidebarLaunch team={t} importedProjects={importedProjects} />
               </div>
             );

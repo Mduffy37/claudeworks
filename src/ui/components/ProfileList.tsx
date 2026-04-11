@@ -11,6 +11,7 @@ interface Props {
   onLaunch: (name: string, directory?: string) => void;
   onSave?: () => Promise<void> | void;
   dirty?: boolean;
+  onToggleFavourite?: (name: string) => void;
 }
 
 // Deterministic single-letter avatar from profile name
@@ -85,9 +86,9 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
   );
 }
 
-type SidebarSort = "name" | "plugins" | "recent";
+type SidebarSort = "name" | "plugins" | "recent" | "favourites";
 
-export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty, onToggleFavourite }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
@@ -105,9 +106,16 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((p) => p.name.toLowerCase().includes(q));
     if (tagFilter) result = result.filter((p) => (p.tags ?? []).includes(tagFilter));
-    if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "favourites") {
+      result = result.filter((p) => p.favourite);
+    }
+    if (sortBy === "name" || sortBy === "favourites") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "plugins") result = [...result].sort((a, b) => b.plugins.length - a.plugins.length);
     else if (sortBy === "recent") result = [...result].sort((a, b) => (b.lastLaunched ?? 0) - (a.lastLaunched ?? 0));
+    // Favourites always float to the top (when not already filtering to favourites only)
+    if (sortBy !== "favourites") {
+      result = [...result].sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
+    }
     return result;
   }, [profiles, search, sortBy, tagFilter]);
 
@@ -156,6 +164,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
               <option value="name">A-Z</option>
               <option value="plugins">Plugins</option>
               <option value="recent">Recent</option>
+              <option value="favourites">Favourites</option>
             </select>
           </div>
         </div>
@@ -217,6 +226,15 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                   {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched)}` : ""}
                 </div>
               </div>
+              {onToggleFavourite && (
+                <button
+                  className={`sidebar-fav-btn${p.favourite ? " active" : ""}`}
+                  onClick={(e) => { e.stopPropagation(); onToggleFavourite(p.name); }}
+                  title={p.favourite ? "Remove from favourites" : "Add to favourites"}
+                >
+                  {p.favourite ? "\u2605" : "\u2606"}
+                </button>
+              )}
               <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} />
             </div>
           ))

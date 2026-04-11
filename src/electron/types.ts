@@ -94,7 +94,11 @@ export interface Profile {
   isDefault?: boolean; // only one profile can be true — intercepts bare `claude`
   disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
+  favourite?: boolean;
 }
+
+/** Named colours matching Claude Code's internal teammate palette. */
+export type TeammateColour = "red" | "blue" | "green" | "yellow" | "purple" | "orange" | "pink" | "cyan";
 
 /** A member of a team. */
 export interface TeamMember {
@@ -102,6 +106,7 @@ export interface TeamMember {
   role: string;
   instructions: string;
   isLead: boolean;
+  colour?: TeammateColour;
 }
 
 /** A named team of profiles. */
@@ -113,6 +118,7 @@ export interface Team {
   effortLevel?: "low" | "medium" | "high" | "max";
   customFlags?: string;
   tags?: string[];
+  favourite?: boolean;
 }
 
 /** Merge preview for a team. */
@@ -262,7 +268,7 @@ export interface AnalyticsData {
   dailyActivity: Array<{ date: string; messages: number }>;
   topProjects: Array<{ name: string; messages: number }>;
   profileUsage: Array<{ name: string; sessions: number; messages: number }>;
-  recentSessions: Array<{ project: string; date: string; messages: number; sessionId: string; profile?: string; type?: string }>;
+  recentSessions: Array<{ project: string; directory?: string; date: string; messages: number; sessionId: string; profile?: string; type?: string }>;
 }
 
 declare global {

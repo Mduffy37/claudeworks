@@ -150,6 +150,44 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
         </div>
       )}
 
+      {/* Favourites */}
+      {profiles.some((p) => p.favourite) && (
+        <div className="home-section">
+          <h3 className="home-section-title">Favourites</h3>
+          <div className="home-favourites">
+            {profiles.filter((p) => p.favourite).map((p) => (
+              <div
+                key={p.name}
+                className="home-fav-card"
+                onClick={() => onSelectProfile(p.name)}
+              >
+                <div className="home-profile-icon">
+                  {p.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="home-profile-info">
+                  <div className="home-profile-name">{p.name}</div>
+                  <div className="home-profile-meta">
+                    {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                <button
+                  className="home-launch-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    launchWithDirPicker(p.name, p.directory, onLaunch);
+                  }}
+                  title="Launch profile"
+                >
+                  <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats row */}
       <div className="home-stats">
         <div className="home-stat">
@@ -257,15 +295,33 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       <div className="home-section">
         <h3 className="home-section-title">Recent Sessions</h3>
         <div className="home-session-list">
-          {analytics.recentSessions.map((s) => (
-            <div key={s.sessionId} className="home-session-item">
-              <span className="home-session-project">{s.project}</span>
-              <span className="home-session-msgs">{s.messages} msgs</span>
-              <span className="home-session-date">
-                {new Date(s.date + "T12:00:00").toLocaleDateString("en", { month: "short", day: "numeric" })}
-              </span>
-            </div>
-          ))}
+          {analytics.recentSessions.map((s) => {
+            const sessionProfile = profiles.find((p) => p.name === s.profile);
+            return (
+              <div key={s.sessionId} className="home-session-item">
+                {sessionProfile && (
+                  <div className="home-profile-icon" style={{ width: 22, height: 22, fontSize: "0.692rem", borderRadius: 4 }}>
+                    {sessionProfile.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="home-session-project">{s.project}</span>
+                {s.profile && <span className="home-session-profile">{s.profile}</span>}
+                <span className="home-session-msgs">{s.messages} msgs</span>
+                <span className="home-session-date">
+                  {new Date(s.date + "T12:00:00").toLocaleDateString("en", { month: "short", day: "numeric" })}
+                </span>
+                {s.profile && s.directory && (
+                  <button
+                    className="home-session-launch"
+                    onClick={() => onLaunch(s.profile!, s.directory)}
+                    title={`Start new ${s.profile} session in ${s.project}`}
+                  >
+                    New session
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

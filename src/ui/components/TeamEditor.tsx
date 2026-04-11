@@ -182,10 +182,11 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
     });
   };
 
-  const handleMemberField = (profileName: string, field: "role" | "instructions", value: string) => {
+  const handleMemberField = (profileName: string, field: "role" | "instructions" | "colour", value: string) => {
+    const resolved = field === "colour" ? (value || undefined) : value;
     updateDraft({
       members: draft.members.map((m) =>
-        m.profile === profileName ? { ...m, [field]: value } : m
+        m.profile === profileName ? { ...m, [field]: resolved } : m
       ),
     });
   };
@@ -365,6 +366,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                     onSetLead={() => handleSetLead(m.profile)}
                     onRoleChange={(v) => handleMemberField(m.profile, "role", v)}
                     onInstructionsChange={(v) => handleMemberField(m.profile, "instructions", v)}
+                    onColourChange={(v) => handleMemberField(m.profile, "colour", v ?? "")}
                     onNavigateToProfile={onNavigateToProfile}
                   />
                 ))}

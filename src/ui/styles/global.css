@@ -3915,6 +3915,26 @@ body {
   font-weight: 500;
 }
 
+.te-colour-swatches {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.te-colour-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--transition-fast);
+}
+
+.te-colour-swatch:hover {
+  transform: scale(1.2);
+}
+
 .te-set-lead {
   background: none;
   border: none;
@@ -4712,11 +4732,78 @@ body {
   font-family: "SF Mono", monospace;
 }
 
+.home-session-profile {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+}
+
 .home-session-date {
   font-size: 0.769rem;
   color: var(--text-muted);
   min-width: 80px;
   text-align: right;
+}
+
+/* Home favourites */
+.home-favourites {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.home-fav-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  flex: 1;
+  min-width: 180px;
+}
+
+.home-fav-card:hover {
+  background: var(--bg-hover);
+}
+
+/* Sidebar favourite star */
+.sidebar-fav-btn {
+  background: none;
+  border: none;
+  color: var(--text-placeholder);
+  font-size: 0.923rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.sidebar-fav-btn:hover {
+  color: var(--text-secondary);
+}
+
+.sidebar-fav-btn.active {
+  color: #eab308;
+}
+
+/* Session re-launch button */
+.home-session-launch {
+  background: var(--accent-dim);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  color: var(--accent);
+  font-size: 0.769rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.home-session-launch:hover {
+  background: var(--accent);
+  color: white;
 }
 
 /* Home button in sidebar */
