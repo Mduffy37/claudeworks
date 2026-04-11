@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
+import { execFileSync } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -288,6 +289,15 @@ ipcMain.handle("get-team-merge-preview", (_event, team: Team) => {
 
 ipcMain.handle("check-team-health", () => {
   return checkAllTeamHealth(loadTeams());
+});
+
+ipcMain.handle("check-tmux-installed", () => {
+  try {
+    execFileSync("which", ["tmux"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
 });
 
 ipcMain.handle("launch-team", async (_event, team: Team, directory?: string) => {

@@ -238,6 +238,7 @@ export interface ElectronAPI {
   saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
   getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }>;
   saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }) => Promise<void>;
+  checkTmuxInstalled: () => Promise<boolean>;
   launchProfileWithOptions: (name: string, directory?: string, options?: LaunchOptions) => Promise<void>;
   launchTeamWithOptions: (team: Team, directory?: string, options?: LaunchOptions) => Promise<void>;
   // Projects

@@ -456,6 +456,7 @@ function GlobalSettingsTab() {
   const [showPromptPicker, setShowPromptPicker] = useState(false);
   const [terminalApp, setTerminalApp] = useState("");
   const [tmuxMode, setTmuxMode] = useState("");
+  const [tmuxInstalled, setTmuxInstalled] = useState(true);
 
   useEffect(() => {
     window.api.getGlobalClaudeMd().then((content) => {
@@ -471,12 +472,16 @@ function GlobalSettingsTab() {
       setEnv(e);
       setEnvDirty(false);
     });
-    window.api.getGlobalDefaults().then((d) => {
+    Promise.all([
+      window.api.getGlobalDefaults(),
+      window.api.checkTmuxInstalled(),
+    ]).then(([d, hasTmux]) => {
+      setTmuxInstalled(hasTmux);
       setModel(d.model);
       setEffort(d.effortLevel);
       setCustomFlags(d.customFlags ?? "");
       setTerminalApp(d.terminalApp ?? "iterm2");
-      setTmuxMode(d.tmuxMode ?? "cc");
+      setTmuxMode(hasTmux ? (d.tmuxMode ?? "cc") : "none");
       setDefaultsDirty(false);
     });
   }, []);
@@ -705,11 +710,15 @@ function GlobalSettingsTab() {
           </div>
           <div className="field">
             <label>tmux Mode</label>
-            <select value={tmuxMode} onChange={(e) => { setTmuxMode(e.target.value); setDefaultsDirty(true); }}>
-              <option value="cc">-CC (iTerm integration)</option>
-              <option value="plain">Plain tmux</option>
-              <option value="none">No tmux</option>
-            </select>
+            {tmuxInstalled ? (
+              <select value={tmuxMode} onChange={(e) => { setTmuxMode(e.target.value); setDefaultsDirty(true); }}>
+                <option value="cc">-CC (iTerm integration)</option>
+                <option value="plain">Plain tmux</option>
+                <option value="none">No tmux</option>
+              </select>
+            ) : (
+              <div className="field-hint" style={{ margin: 0 }}>tmux not installed — defaulting to no tmux</div>
+            )}
           </div>
         </div>
       </div>

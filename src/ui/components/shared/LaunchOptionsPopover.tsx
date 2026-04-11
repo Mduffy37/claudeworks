@@ -12,12 +12,21 @@ export function LaunchOptionsPopover({ defaultDangerous, onLaunch, onClose }: Pr
   const [tmuxMode, setTmuxMode] = useState<"cc" | "plain" | "none">("cc");
   const [customFlags, setCustomFlags] = useState("");
   const [dangerous, setDangerous] = useState(defaultDangerous ?? false);
+  const [tmuxInstalled, setTmuxInstalled] = useState(true);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    window.api.getGlobalDefaults().then((d) => {
+    Promise.all([
+      window.api.getGlobalDefaults(),
+      window.api.checkTmuxInstalled(),
+    ]).then(([d, hasTmux]) => {
+      setTmuxInstalled(hasTmux);
+      if (!hasTmux) {
+        setTmuxMode("none");
+      } else {
+        if (d.tmuxMode) setTmuxMode(d.tmuxMode as "cc" | "plain" | "none");
+      }
       if (d.terminalApp) setTerminalApp(d.terminalApp);
-      if (d.tmuxMode) setTmuxMode(d.tmuxMode as "cc" | "plain" | "none");
     });
   }, []);
 
@@ -45,11 +54,17 @@ export function LaunchOptionsPopover({ defaultDangerous, onLaunch, onClose }: Pr
 
         <div className="launch-popover-field">
           <label>tmux Mode</label>
-          <select value={tmuxMode} onChange={(e) => setTmuxMode(e.target.value as any)}>
-            <option value="cc">-CC (iTerm integration)</option>
-            <option value="plain">Plain tmux</option>
-            <option value="none">No tmux</option>
-          </select>
+          {tmuxInstalled ? (
+            <select value={tmuxMode} onChange={(e) => setTmuxMode(e.target.value as any)}>
+              <option value="cc">-CC (iTerm integration)</option>
+              <option value="plain">Plain tmux</option>
+              <option value="none">No tmux</option>
+            </select>
+          ) : (
+            <div className="launch-popover-hint" style={{ margin: 0, padding: "5px 0" }}>
+              tmux not installed — defaulting to no tmux
+            </div>
+          )}
         </div>
 
         <div className="launch-popover-field">

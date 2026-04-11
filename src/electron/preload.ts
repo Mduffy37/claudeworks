@@ -38,6 +38,7 @@ const api: ElectronAPI = {
   launchTeam: (team, directory) => ipcRenderer.invoke("launch-team", team, directory),
   launchTeamWithOptions: (team, directory, options) => ipcRenderer.invoke("launch-team-with-options", team, directory, options),
   launchProfileWithOptions: (name, directory, options) => ipcRenderer.invoke("launch-profile-with-options", name, directory, options),
+  checkTmuxInstalled: () => ipcRenderer.invoke("check-tmux-installed"),
   // Global settings
   getGlobalClaudeMd: () => ipcRenderer.invoke("get-global-claude-md"),
   saveGlobalClaudeMd: (content) => ipcRenderer.invoke("save-global-claude-md", content),
