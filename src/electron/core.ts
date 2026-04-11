@@ -1222,7 +1222,7 @@ export function assembleProfile(profile: Profile): string {
   }
 
   settings.enabledPlugins = Object.fromEntries(
-    profile.plugins.map((name) => [name, true])
+    [...profile.plugins, BUILTIN_PLUGIN_NAME].map((name) => [name, true])
   );
 
   // Apply profile-specific overrides, falling back to global defaults
@@ -1324,7 +1324,11 @@ export function assembleProfile(profile: Profile): string {
   // Symlink shared resources
   symlinkShared(configDir, profile);
 
-  // Copy auto-skills (commands/skills/agents that ship with every profile)
+  // Clean up stale auto-skills from old system (commands/profiles/, commands/start-team.md, etc.)
+  const staleAutoSkills = path.join(configDir, "commands", "profiles");
+  if (fs.existsSync(staleAutoSkills)) fs.rmSync(staleAutoSkills, { recursive: true });
+
+  // Ensure built-in plugin is installed in the global cache
   ensureBuiltinPlugin();
 
   // Generate baseline mcp.json for CLI alias usage.
@@ -1461,13 +1465,18 @@ function copyDirRecursive(src: string, dest: string): void {
   }
 }
 
-const BUILTIN_PLUGIN_NAME = "profiles-manager@builtin";
+const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
 const BUILTIN_PLUGIN_VERSION = "1.0.0";
 
 export function ensureBuiltinPlugin(): string {
-  // Install the built-in plugin into the global plugin cache so it appears
-  // as a normal installed plugin. Returns the install path.
-  const cacheDir = path.join(CLAUDE_HOME, "plugins", "cache", "builtin", "profiles-manager", BUILTIN_PLUGIN_VERSION);
+  // Install the built-in profiles-manager plugin so it appears as a normal
+  // marketplace plugin. Three things need to exist:
+  //   1. Plugin files in the cache: ~/.claude/plugins/cache/claude-profiles/profiles-manager/<version>/
+  //   2. Marketplace manifest: ~/.claude/plugins/marketplaces/claude-profiles/.claude-plugin/marketplace.json
+  //   3. Entry in ~/.claude/plugins/known_marketplaces.json
+  //   4. Entry in ~/.claude/plugins/installed_plugins.json
+  const marketplaceRoot = path.join(CLAUDE_HOME, "plugins", "marketplaces", "claude-profiles");
+  const cacheDir = path.join(CLAUDE_HOME, "plugins", "cache", "claude-profiles", "profiles-manager", BUILTIN_PLUGIN_VERSION);
 
   // Source: check dev path first, then production path
   const devPath = path.join(__dirname, "..", "..", "src", "builtin-plugin");
@@ -1475,31 +1484,70 @@ export function ensureBuiltinPlugin(): string {
   const src = fs.existsSync(devPath) ? devPath : prodPath;
   if (!fs.existsSync(src)) return cacheDir;
 
-  // Always overwrite to get latest version
+  const now = new Date().toISOString();
+
+  // 1. Copy plugin files to cache (always overwrite to get latest)
   if (fs.existsSync(cacheDir)) fs.rmSync(cacheDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
   copyDirRecursive(src, cacheDir);
 
-  // Add to installed_plugins.json if not already present
+  // 2. Create marketplace manifest with plugin source pointing to cache
+  const pluginMetaDir = path.join(marketplaceRoot, ".claude-plugin");
+  fs.mkdirSync(pluginMetaDir, { recursive: true });
+  // Also put plugin files under marketplaces/ so Claude can resolve the source path
+  const mktPluginDir = path.join(marketplaceRoot, "plugins", "profiles-manager");
+  if (fs.existsSync(mktPluginDir)) fs.rmSync(mktPluginDir, { recursive: true });
+  fs.mkdirSync(mktPluginDir, { recursive: true });
+  copyDirRecursive(src, mktPluginDir);
+  fs.writeFileSync(path.join(pluginMetaDir, "marketplace.json"), JSON.stringify({
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    name: "claude-profiles",
+    description: "Built-in plugins for the Claude Profiles app",
+    owner: { name: "Claude Profiles" },
+    plugins: [{
+      name: "profiles-manager",
+      description: "Self-management skills — list add-ons, create profiles and teams, check status, discover plugins.",
+      source: "./plugins/profiles-manager",
+      category: "productivity",
+    }],
+  }, null, 2));
+
+  // 3. Register in known_marketplaces.json
+  const knownPath = path.join(CLAUDE_HOME, "plugins", "known_marketplaces.json");
+  let known: any = {};
+  if (fs.existsSync(knownPath)) {
+    try { known = JSON.parse(fs.readFileSync(knownPath, "utf-8")); } catch {}
+  }
+  if (!known["claude-profiles"] || known["claude-profiles"].installLocation !== marketplaceRoot) {
+    known["claude-profiles"] = {
+      source: { source: "directory", path: marketplaceRoot },
+      installLocation: marketplaceRoot,
+      lastUpdated: now,
+    };
+    fs.writeFileSync(knownPath, JSON.stringify(known, null, 2));
+  }
+
+  // 4. Register in installed_plugins.json
   const manifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
   let manifest: any = { plugins: {} };
   if (fs.existsSync(manifestPath)) {
     try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch {}
   }
-
   if (!manifest.plugins[BUILTIN_PLUGIN_NAME]) {
     manifest.plugins[BUILTIN_PLUGIN_NAME] = [{
       scope: "user",
       installPath: cacheDir,
       version: BUILTIN_PLUGIN_VERSION,
+      installedAt: now,
+      lastUpdated: now,
     }];
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   } else {
-    // Update installPath and version in case they changed
     const entry = manifest.plugins[BUILTIN_PLUGIN_NAME][0];
     if (entry.installPath !== cacheDir || entry.version !== BUILTIN_PLUGIN_VERSION) {
       entry.installPath = cacheDir;
       entry.version = BUILTIN_PLUGIN_VERSION;
+      entry.lastUpdated = now;
       fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     }
   }
