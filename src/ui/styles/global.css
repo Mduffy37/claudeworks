@@ -544,9 +544,7 @@ body {
 
 .manage-dialog {
   width: 90vw;
-  max-width: 900px;
-  height: 80vh;
-  max-height: 600px;
+  height: 85vh;
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
