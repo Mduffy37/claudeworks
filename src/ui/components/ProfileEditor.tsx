@@ -693,6 +693,18 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                   Insert Prompt
                 </button>
+                {customClaudeMd.trim() && (
+                  <button className="insert-prompt-btn" onClick={async () => {
+                    const id = `prompt-${Date.now()}`;
+                    const now = Date.now();
+                    const prompts = await window.api.getPrompts();
+                    const newPrompt = { id, name: name || "Untitled", description: `Saved from profile "${name}"`, tags: [], content: customClaudeMd, createdAt: now, updatedAt: now };
+                    await window.api.savePrompts([...prompts, newPrompt]);
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                    Save as Prompt
+                  </button>
+                )}
               </div>
               {showPromptPicker && (
                 <PromptPicker
