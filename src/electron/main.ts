@@ -58,12 +58,31 @@ import type { Profile, Team } from "./types";
 
 let mainWindow: BrowserWindow | null = null;
 
+const PREFS_PATH = path.join(os.homedir(), ".claude-profiles", "global-defaults.json");
+
+function loadWindowBounds(): { x?: number; y?: number; width: number; height: number } {
+  try {
+    const data = JSON.parse(fs.readFileSync(PREFS_PATH, "utf-8"));
+    if (data.windowBounds?.width && data.windowBounds?.height) {
+      return data.windowBounds;
+    }
+  } catch {}
+  return { width: 1280, height: 820 };
+}
+
+function saveWindowBounds(bounds: { x: number; y: number; width: number; height: number }): void {
+  let data: any = {};
+  try { data = JSON.parse(fs.readFileSync(PREFS_PATH, "utf-8")); } catch {}
+  data.windowBounds = bounds;
+  try { fs.writeFileSync(PREFS_PATH, JSON.stringify(data, null, 2)); } catch {}
+}
+
 function createWindow(): void {
+  const bounds = loadWindowBounds();
   mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 750,
-    minWidth: 800,
-    minHeight: 500,
+    ...bounds,
+    minWidth: 900,
+    minHeight: 550,
     titleBarStyle: "hiddenInset",
     backgroundColor: "#1a1a2e",
     webPreferences: {
@@ -72,6 +91,19 @@ function createWindow(): void {
       nodeIntegration: false,
     },
   });
+
+  // Persist window bounds on resize/move (debounced)
+  let boundsTimer: ReturnType<typeof setTimeout> | null = null;
+  const persistBounds = () => {
+    if (boundsTimer) clearTimeout(boundsTimer);
+    boundsTimer = setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        saveWindowBounds(mainWindow.getBounds());
+      }
+    }, 500);
+  };
+  mainWindow.on("resize", persistBounds);
+  mainWindow.on("move", persistBounds);
 
   if (process.env.NODE_ENV === "development") {
     mainWindow.loadURL("http://localhost:5173");
