@@ -242,8 +242,8 @@ ipcMain.handle("list-marketplaces", () => {
   return listMarketplaces();
 });
 
-ipcMain.handle("get-analytics", (_event, since?: number) => {
-  return getAnalytics(since);
+ipcMain.handle("get-analytics", (_event, since?: number, project?: string) => {
+  return getAnalytics(since, project);
 });
 
 ipcMain.handle("get-active-sessions", () => {

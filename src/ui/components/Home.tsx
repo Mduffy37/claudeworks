@@ -97,21 +97,33 @@ async function launchWithDirPicker(name: string, directory: string | undefined, 
 export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [allProjects, setAllProjects] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<TimePeriod>("30d");
+  const [projectFilter, setProjectFilter] = useState<string>("");
   const [updateInfo, setUpdateInfo] = useState<{ available: boolean; current: string; latest: string } | null>(null);
+
+  // Fetch the full project list once (unfiltered) so the dropdown is always populated
+  useEffect(() => {
+    window.api.getAnalytics(periodToSince(period)).then((data) => {
+      setAllProjects((prev) => {
+        const names = data.topProjects.map((p) => p.name);
+        return names.length > prev.length ? names : prev;
+      });
+    });
+  }, [period]);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      window.api.getAnalytics(periodToSince(period)),
+      window.api.getAnalytics(periodToSince(period), projectFilter || undefined),
       window.api.getActiveSessions(),
     ]).then(([analyticsData, sessions]) => {
       setAnalytics(analyticsData);
       setActiveSessions(sessions);
       setLoading(false);
     });
-  }, [period]);
+  }, [period, projectFilter]);
 
   useEffect(() => {
     window.api.checkForAppUpdate().then(setUpdateInfo);
@@ -129,7 +141,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
   return (
     <div className="home">
-      {/* Time period toggle */}
+      {/* Filters row */}
       <div className="home-period-toggle">
         {(["7d", "30d", "all"] as const).map((p) => (
           <button
@@ -140,6 +152,18 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
             {p === "all" ? "All Time" : p === "7d" ? "7 Days" : "30 Days"}
           </button>
         ))}
+        {allProjects.length > 0 && (
+          <select
+            className="home-project-filter"
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.target.value)}
+          >
+            <option value="">All Projects</option>
+            {allProjects.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Update banner */}

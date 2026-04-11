@@ -4394,7 +4394,20 @@ body {
 .home-period-toggle {
   display: flex;
   gap: 4px;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.home-project-filter {
+  margin-left: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-size: 0.769rem;
+  cursor: pointer;
+  max-width: 160px;
 }
 
 .home-period-btn {

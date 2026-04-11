@@ -249,7 +249,7 @@ export interface ElectronAPI {
   revealInFinder: (path: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;
   getClaudeHome: () => Promise<string>;
-  getAnalytics: (since?: number) => Promise<AnalyticsData>;
+  getAnalytics: (since?: number, project?: string) => Promise<AnalyticsData>;
   getActiveSessions: () => Promise<ActiveSession[]>;
   checkForAppUpdate: () => Promise<{ available: boolean; current: string; latest: string }>;
 }

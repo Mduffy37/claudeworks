@@ -2001,9 +2001,12 @@ export function getActiveSessions(): ActiveSession[] {
 // Analytics
 // ---------------------------------------------------------------------------
 
-export function getAnalytics(since?: number): AnalyticsData {
+export function getAnalytics(since?: number, project?: string): AnalyticsData {
   // Launch log — app-launched sessions only
-  const launches = getLaunchLog(since);
+  let launches = getLaunchLog(since);
+  if (project) {
+    launches = launches.filter((l) => path.basename(l.directory) === project);
+  }
   const totalSessions = launches.length;
 
   // Daily launch counts
@@ -2047,6 +2050,7 @@ export function getAnalytics(since?: number): AnalyticsData {
         for (const line of lines) {
           const entry = JSON.parse(line);
           if (since && entry.timestamp < since) continue;
+          if (project && entry.project && path.basename(entry.project) !== project) continue;
           profileMsgs++;
           if (entry.sessionId) sessions.add(entry.sessionId);
           if (entry.timestamp) {
