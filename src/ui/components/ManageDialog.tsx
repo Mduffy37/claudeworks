@@ -1193,7 +1193,7 @@ export function ManageDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Discover view state
-  type PluginSubTab = "installed" | "curated" | "discover" | "marketplaces";
+  type PluginSubTab = "installed" | "browse" | "sources";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
   const [marketplaces, setMarketplaces] = useState<Array<{ name: string; repo: string; lastUpdated: string }>>([]);
 
@@ -1204,6 +1204,9 @@ export function ManageDialog({
   const [curatedCollection, setCuratedCollection] = useState<string | null>(null);
   const [curatedSearch, setCuratedSearch] = useState("");
   const [curatedInstalling, setCuratedInstalling] = useState<string | null>(null);
+  const [showMarketplacePlugins, setShowMarketplacePlugins] = useState(false);
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
+  const [sourcesPluginsLoaded, setSourcesPluginsLoaded] = useState(false);
 
   const loadCurated = async () => {
     setCuratedLoading(true);
@@ -1234,6 +1237,14 @@ export function ManageDialog({
   const handleCuratedInstall = async (pluginId: string) => {
     setCuratedInstalling(pluginId);
     try {
+      // Auto-add the marketplace source if not already registered
+      const plugin = curatedData?.plugins.find((p) => p.pluginId === pluginId);
+      if (plugin?.marketplace) {
+        const currentMarketplaces = await window.api.listMarketplaces();
+        if (!currentMarketplaces.some((m) => m.name === plugin.marketplace)) {
+          await window.api.addMarketplace(plugin.marketplace);
+        }
+      }
       await window.api.installPlugin(pluginId);
       onPluginsChanged?.();
     } catch (err: any) {
@@ -1412,7 +1423,7 @@ export function ManageDialog({
         </div>
         <div className="manage-dialog-body">
           {activeTab === "plugins" && (
-            <>
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <div className="discover-toggle">
                 <button
                   className={`discover-toggle-btn${pluginSubTab === "installed" ? " active" : ""}`}
@@ -1421,31 +1432,22 @@ export function ManageDialog({
                   Installed
                 </button>
                 <button
-                  className={`discover-toggle-btn${pluginSubTab === "curated" ? " active" : ""}`}
+                  className={`discover-toggle-btn${pluginSubTab === "browse" ? " active" : ""}`}
                   onClick={() => {
-                    setPluginSubTab("curated");
+                    setPluginSubTab("browse");
                     if (!curatedData && !curatedLoading) loadCurated();
                   }}
                 >
-                  Curated
+                  Browse
                 </button>
                 <button
-                  className={`discover-toggle-btn${pluginSubTab === "discover" ? " active" : ""}`}
+                  className={`discover-toggle-btn${pluginSubTab === "sources" ? " active" : ""}`}
                   onClick={() => {
-                    setPluginSubTab("discover");
-                    if (!discoverLoaded && !discoverLoading) loadAvailablePlugins();
-                  }}
-                >
-                  Discover
-                </button>
-                <button
-                  className={`discover-toggle-btn${pluginSubTab === "marketplaces" ? " active" : ""}`}
-                  onClick={() => {
-                    setPluginSubTab("marketplaces");
+                    setPluginSubTab("sources");
                     loadMarketplaces();
                   }}
                 >
-                  Marketplaces
+                  Sources
                 </button>
               </div>
               {pluginSubTab === "installed" ? (
@@ -1481,7 +1483,7 @@ export function ManageDialog({
                     </div>
                   </div>
                 </>
-              ) : pluginSubTab === "curated" ? (
+              ) : pluginSubTab === "browse" ? (
                 <div className="curated-tab">
                   {curatedLoading ? (
                     <div className="discover-loading">Loading curated plugins...</div>
@@ -1650,8 +1652,51 @@ export function ManageDialog({
                       </div>
                     </>
                   ) : null}
+
+                  {/* Collapsible: plugins from installed marketplaces */}
+                  <div className="browse-marketplace-toggle" onClick={() => {
+                    setShowMarketplacePlugins(!showMarketplacePlugins);
+                    if (!showMarketplacePlugins && !discoverLoaded && !discoverLoading) loadAvailablePlugins();
+                  }}>
+                    <span className={`browse-marketplace-arrow${showMarketplacePlugins ? " open" : ""}`}>&#9654;</span>
+                    <span className="browse-marketplace-label">
+                      Plugins available from installed marketplaces
+                      {availablePlugins.length > 0 && ` (${availablePlugins.length})`}
+                    </span>
+                  </div>
+                  {showMarketplacePlugins && (
+                    <div className="browse-marketplace-content">
+                      {discoverLoading ? (
+                        <div className="discover-loading">Loading available plugins...</div>
+                      ) : discoverError ? (
+                        <div className="discover-error">
+                          <span>{discoverError}</span>
+                          <button className="btn-secondary" onClick={loadAvailablePlugins}>Retry</button>
+                        </div>
+                      ) : (
+                        <div className="manage-dialog-split">
+                          <div className="manage-dialog-sidebar">
+                            <DiscoverList
+                              plugins={availablePlugins}
+                              installedIds={installedPluginIds}
+                              selectedId={selectedDiscoverPlugin}
+                              onSelect={setSelectedDiscoverPlugin}
+                            />
+                          </div>
+                          <div className="manage-dialog-content">
+                            <DiscoverDetail
+                              key={selectedDiscoverPlugin ?? "none"}
+                              plugin={availablePlugins.find((p) => p.pluginId === selectedDiscoverPlugin) ?? null}
+                              isInstalled={selectedDiscoverPlugin ? installedPluginIds.has(selectedDiscoverPlugin) : false}
+                              onInstall={handleInstallPlugin}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : pluginSubTab === "marketplaces" ? (
+              ) : (
                 <div className="marketplace-tab">
                   <div className="marketplace-add-row">
                     <input
@@ -1676,82 +1721,106 @@ export function ManageDialog({
                   )}
                   <div className="marketplace-list">
                     {marketplaces.length === 0 ? (
-                      <div className="empty-state-inline">No marketplaces registered</div>
+                      <div className="empty-state-inline">No marketplace sources registered</div>
                     ) : (
-                      marketplaces.map((mp) => (
-                        <div key={mp.name} className="marketplace-item">
-                          <div className="marketplace-item-body">
-                            <div className="marketplace-item-name">{mp.name}</div>
-                            <div className="marketplace-item-repo">{mp.repo}</div>
+                      marketplaces.map((mp) => {
+                        const isExpanded = expandedSources.has(mp.name);
+                        const sourcePlugins = availablePlugins.filter((p) => p.marketplaceName === mp.name);
+                        return (
+                          <div key={mp.name} className="marketplace-source-group">
+                            <div className="marketplace-item">
+                              <div
+                                className="marketplace-item-body"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  const next = new Set(expandedSources);
+                                  if (isExpanded) next.delete(mp.name); else next.add(mp.name);
+                                  setExpandedSources(next);
+                                  if (!sourcesPluginsLoaded && !discoverLoading) {
+                                    loadAvailablePlugins();
+                                    setSourcesPluginsLoaded(true);
+                                  }
+                                }}
+                              >
+                                <div className="marketplace-item-name">
+                                  <span className={`browse-marketplace-arrow${isExpanded ? " open" : ""}`}>&#9654;</span>
+                                  {" "}{mp.name}
+                                </div>
+                                <div className="marketplace-item-repo">{mp.repo}</div>
+                              </div>
+                              {mp.name !== "claude-plugins-official" && (
+                                <button
+                                  className="btn-danger-small"
+                                  onClick={() => handleRemoveMarketplace(mp.name)}
+                                  disabled={marketplaceLoading}
+                                  title="Remove source"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            {isExpanded && (() => {
+                              const installedFromSource = plugins.filter((p) => p.marketplace === mp.name);
+                              const installedNames = new Set(installedFromSource.map((p) => p.name));
+                              const allFromSource = [
+                                ...installedFromSource.map((p) => ({
+                                  id: p.name,
+                                  displayName: p.pluginName,
+                                  description: "",
+                                  installed: true,
+                                })),
+                                ...sourcePlugins
+                                  .filter((sp) => !installedNames.has(sp.pluginId))
+                                  .map((sp) => ({
+                                    id: sp.pluginId,
+                                    displayName: sp.name,
+                                    description: sp.description,
+                                    installed: false,
+                                  })),
+                              ];
+                              return (
+                                <div className="source-plugins-list">
+                                  {discoverLoading ? (
+                                    <div className="discover-loading" style={{ padding: "8px 12px" }}>Loading plugins...</div>
+                                  ) : allFromSource.length === 0 ? (
+                                    <div className="empty-state-inline" style={{ padding: "8px 12px" }}>No plugins from this source</div>
+                                  ) : (
+                                    allFromSource.map((sp) => (
+                                      <div key={sp.id} className="source-plugin-row">
+                                        <div className="source-plugin-info">
+                                          <span className="source-plugin-name">{sp.displayName}</span>
+                                          {sp.description && <span className="source-plugin-desc">{sp.description}</span>}
+                                        </div>
+                                        {sp.installed ? (
+                                          <button
+                                            className="btn-danger-small"
+                                            onClick={() => onUninstall(sp.id)}
+                                            title="Uninstall"
+                                          >
+                                            Uninstall
+                                          </button>
+                                        ) : (
+                                          <button
+                                            className="btn-primary curated-install-btn"
+                                            onClick={() => handleInstallPlugin(sp.id)}
+                                          >
+                                            Install
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
-                          {mp.name !== "claude-plugins-official" && (
-                            <button
-                              className="btn-danger-small"
-                              onClick={() => handleRemoveMarketplace(mp.name)}
-                              disabled={marketplaceLoading}
-                              title="Remove marketplace"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div className="marketplace-add-row" style={{ padding: "8px 12px 0" }}>
-                    <input
-                      type="text"
-                      className="marketplace-input"
-                      placeholder="Install by ID (e.g. name@owner/repo)"
-                      value={manualInstallInput}
-                      onChange={(e) => setManualInstallInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleManualInstall(); }}
-                      disabled={manualInstallLoading}
-                    />
-                    <button
-                      className="btn-primary"
-                      onClick={handleManualInstall}
-                      disabled={!manualInstallInput.trim() || manualInstallLoading}
-                    >
-                      {manualInstallLoading ? "Installing..." : "Install"}
-                    </button>
-                  </div>
-                  {manualInstallError && (
-                    <div className="marketplace-error" style={{ padding: "0 12px" }}>{manualInstallError}</div>
-                  )}
-                  {discoverLoading ? (
-                    <div className="discover-loading">Loading available plugins...</div>
-                  ) : discoverError ? (
-                    <div className="discover-error">
-                      <span>{discoverError}</span>
-                      <button className="btn-secondary" onClick={loadAvailablePlugins}>Retry</button>
-                    </div>
-                  ) : (
-                    <div className="manage-dialog-split">
-                      <div className="manage-dialog-sidebar">
-                        <DiscoverList
-                          plugins={availablePlugins}
-                          installedIds={installedPluginIds}
-                          selectedId={selectedDiscoverPlugin}
-                          onSelect={setSelectedDiscoverPlugin}
-                        />
-                      </div>
-                      <div className="manage-dialog-content">
-                        <DiscoverDetail
-                          key={selectedDiscoverPlugin ?? "none"}
-                          plugin={availablePlugins.find((p) => p.pluginId === selectedDiscoverPlugin) ?? null}
-                          isInstalled={selectedDiscoverPlugin ? installedPluginIds.has(selectedDiscoverPlugin) : false}
-                          onInstall={handleInstallPlugin}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
               )}
-            </>
+            </div>
           )}
 
           {activeTab === "projects" && <ProjectsTab />}
