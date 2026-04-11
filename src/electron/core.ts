@@ -2131,6 +2131,49 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 // Launch
 // ---------------------------------------------------------------------------
 
+async function launchInTerminal(shellCmd: string, terminalApp: string): Promise<void> {
+  if (terminalApp === "terminal") {
+    const script = [
+      'tell application "Terminal"',
+      "  activate",
+      `  do script "${shellCmd.replace(/"/g, '\\"')}"`,
+      "end tell",
+    ].join("\n");
+    await execFileAsync("osascript", ["-e", script]);
+    return;
+  }
+
+  // Default: iTerm2
+  const script = [
+    'tell application "iTerm2"',
+    "  activate",
+    "  if (count of windows) = 0 then",
+    "    create window with default profile",
+    "  else",
+    "    tell current window",
+    "      create tab with default profile",
+    "    end tell",
+    "  end if",
+    "  tell current session of current window",
+    `    write text "${shellCmd.replace(/"/g, '\\"')}"`,
+    "  end tell",
+    "end tell",
+  ].join("\n");
+
+  try {
+    await execFileAsync("osascript", ["-e", script]);
+  } catch (err: any) {
+    const msg = String(err?.stderr ?? err?.message ?? "");
+    if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
+      throw new Error("iTerm2 is not running. Open iTerm2 and try again.");
+    }
+    if (msg.includes("Not authorized")) {
+      throw new Error("macOS denied AppleScript access to iTerm2. Grant permission in System Settings > Privacy & Security > Automation.");
+    }
+    throw new Error(`Launch failed: ${msg || "Unknown AppleScript error"}`);
+  }
+}
+
 export async function launchProfile(profile: Profile, directory?: string, options?: LaunchOptions): Promise<void> {
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
   const workDir = directory ?? profile.directory ?? os.homedir();
@@ -2152,36 +2195,11 @@ export async function launchProfile(profile: Profile, directory?: string, option
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();
+  const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr}`;
+  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
 
-  const script = [
-    'tell application "iTerm2"',
-    "  activate",
-    "  if (count of windows) = 0 then",
-    "    create window with default profile",
-    "  else",
-    "    tell current window",
-    "      create tab with default profile",
-    "    end tell",
-    "  end if",
-    "  tell current session of current window",
-    `    write text "cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr}"`,
-    "  end tell",
-    "end tell",
-  ].join("\n");
-
-  try {
-    await execFileAsync("osascript", ["-e", script]);
-    recordLaunch({ type: "profile", name: profile.name, directory: workDir, timestamp: Date.now() });
-  } catch (err: any) {
-    const msg = String(err?.stderr ?? err?.message ?? "");
-    if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
-      throw new Error("iTerm2 is not running. Open iTerm2 and try again.");
-    }
-    if (msg.includes("Not authorized")) {
-      throw new Error("macOS denied AppleScript access to iTerm2. Grant permission in System Settings > Privacy & Security > Automation.");
-    }
-    throw new Error(`Launch failed: ${msg || "Unknown AppleScript error"}`);
-  }
+  await launchInTerminal(shellCmd, terminal);
+  recordLaunch({ type: "profile", name: profile.name, directory: workDir, timestamp: Date.now() });
 }
 
 // ---------------------------------------------------------------------------
@@ -2475,35 +2493,9 @@ export async function launchTeam(team: Team, directory?: string, options?: Launc
     shellCmd = `tmux -CC new-session '${escSh(launcherPath)}'`;
   }
 
-  const script = [
-    'tell application "iTerm2"',
-    "  activate",
-    "  if (count of windows) = 0 then",
-    "    create window with default profile",
-    "  else",
-    "    tell current window",
-    "      create tab with default profile",
-    "    end tell",
-    "  end if",
-    "  tell current session of current window",
-    `    write text "${shellCmd}"`,
-    "  end tell",
-    "end tell",
-  ].join("\n");
-
-  try {
-    await execFileAsync("osascript", ["-e", script]);
-    recordLaunch({ type: "team", name: team.name, directory: workDir, timestamp: Date.now() });
-  } catch (err: any) {
-    const msg = String(err?.stderr ?? err?.message ?? "");
-    if (msg.includes("iTerm2 got an error") || msg.includes("Application isn't running")) {
-      throw new Error("iTerm2 is not running. Open iTerm2 and try again.");
-    }
-    if (msg.includes("Not authorized")) {
-      throw new Error("macOS denied AppleScript access to iTerm2. Grant permission in System Settings > Privacy & Security > Automation.");
-    }
-    throw new Error(`Team launch failed: ${msg || "Unknown AppleScript error"}`);
-  }
+  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
+  await launchInTerminal(shellCmd, terminal);
+  recordLaunch({ type: "team", name: team.name, directory: workDir, timestamp: Date.now() });
 }
 
 export function getTeamMergePreview(team: Team): MergePreview {

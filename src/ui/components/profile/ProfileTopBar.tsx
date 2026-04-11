@@ -141,6 +141,7 @@ export function ProfileTopBar({
               {showLaunchOptions && onLaunchWithOptions && (
                 <LaunchOptionsPopover
                   defaultDangerous={profile?.launchFlags?.dangerouslySkipPermissions}
+                  showTmux={false}
                   onLaunch={(opts) => { setShowLaunchOptions(false); onLaunchWithOptions(opts); }}
                   onClose={() => setShowLaunchOptions(false)}
                 />

@@ -3,11 +3,12 @@ import type { LaunchOptions } from "../../../electron/types";
 
 interface Props {
   defaultDangerous?: boolean;
+  showTmux?: boolean;
   onLaunch: (options: LaunchOptions) => void;
   onClose: () => void;
 }
 
-export function LaunchOptionsPopover({ defaultDangerous, onLaunch, onClose }: Props) {
+export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaunch, onClose }: Props) {
   const [terminalApp, setTerminalApp] = useState("iterm2");
   const [tmuxMode, setTmuxMode] = useState<"cc" | "plain" | "none">("cc");
   const [customFlags, setCustomFlags] = useState("");
@@ -47,25 +48,31 @@ export function LaunchOptionsPopover({ defaultDangerous, onLaunch, onClose }: Pr
 
         <div className="launch-popover-field">
           <label>Terminal</label>
-          <select value={terminalApp} onChange={(e) => setTerminalApp(e.target.value)}>
+          <select value={terminalApp} onChange={(e) => {
+            setTerminalApp(e.target.value);
+            if (e.target.value !== "iterm2" && tmuxMode === "cc") setTmuxMode("plain");
+          }}>
             <option value="iterm2">iTerm2</option>
+            <option value="terminal">Terminal.app</option>
           </select>
         </div>
 
-        <div className="launch-popover-field">
-          <label>tmux Mode</label>
-          {tmuxInstalled ? (
-            <select value={tmuxMode} onChange={(e) => setTmuxMode(e.target.value as any)}>
-              <option value="cc">-CC (iTerm integration)</option>
-              <option value="plain">Plain tmux</option>
-              <option value="none">No tmux</option>
-            </select>
-          ) : (
-            <div className="launch-popover-hint" style={{ margin: 0, padding: "5px 0" }}>
-              tmux not installed — defaulting to no tmux
-            </div>
-          )}
-        </div>
+        {showTmux && (
+          <div className="launch-popover-field">
+            <label>tmux Mode</label>
+            {tmuxInstalled ? (
+              <select value={tmuxMode} onChange={(e) => setTmuxMode(e.target.value as any)}>
+                {terminalApp === "iterm2" && <option value="cc">-CC (iTerm integration)</option>}
+                <option value="plain">Plain tmux</option>
+                <option value="none">No tmux</option>
+              </select>
+            ) : (
+              <div className="launch-popover-hint" style={{ margin: 0, padding: "5px 0" }}>
+                tmux not installed — defaulting to no tmux
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="launch-popover-field">
           <label>Custom Flags</label>

@@ -706,6 +706,7 @@ function GlobalSettingsTab() {
             <label>Terminal App</label>
             <select value={terminalApp} onChange={(e) => { setTerminalApp(e.target.value); setDefaultsDirty(true); }}>
               <option value="iterm2">iTerm2</option>
+              <option value="terminal">Terminal.app</option>
             </select>
           </div>
           <div className="field">
