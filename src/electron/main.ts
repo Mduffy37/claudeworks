@@ -53,6 +53,7 @@ import {
   getProfileConfigDir,
   getClaudeHome,
   ensureDefaultProfile,
+  ensureBuiltinPlugin,
   getCuratedMarketplace,
   refreshCuratedMarketplace,
 } from "./core";
@@ -490,6 +491,7 @@ ipcMain.handle("refresh-curated-marketplace", () => refreshCuratedMarketplace())
 // ---------------------------------------------------------------------------
 
 app.whenReady().then(() => {
+  ensureBuiltinPlugin();
   ensureDefaultProfile();
   createWindow();
 });

@@ -1325,7 +1325,7 @@ export function assembleProfile(profile: Profile): string {
   symlinkShared(configDir, profile);
 
   // Copy auto-skills (commands/skills/agents that ship with every profile)
-  installAutoSkills(configDir);
+  ensureBuiltinPlugin();
 
   // Generate baseline mcp.json for CLI alias usage.
   // Launch through the app regenerates this with the actual working directory.
@@ -1461,37 +1461,50 @@ function copyDirRecursive(src: string, dest: string): void {
   }
 }
 
-function installAutoSkills(configDir: string): void {
-  // Auto-skills source: check dev path first, then production path
-  const devPath = path.join(__dirname, "..", "..", "src", "auto-skills");
-  const prodPath = path.join(__dirname, "..", "auto-skills");
-  const autoSkillsSrc = fs.existsSync(devPath) ? devPath : prodPath;
-  if (!fs.existsSync(autoSkillsSrc)) return;
+const BUILTIN_PLUGIN_NAME = "profiles-manager@builtin";
+const BUILTIN_PLUGIN_VERSION = "1.0.0";
 
-  // Copy each subdirectory (commands/, skills/, agents/) into the config dir
-  for (const subdir of ["commands", "skills", "agents"]) {
-    const srcDir = path.join(autoSkillsSrc, subdir);
-    if (!fs.existsSync(srcDir)) continue;
+export function ensureBuiltinPlugin(): string {
+  // Install the built-in plugin into the global plugin cache so it appears
+  // as a normal installed plugin. Returns the install path.
+  const cacheDir = path.join(CLAUDE_HOME, "plugins", "cache", "builtin", "profiles-manager", BUILTIN_PLUGIN_VERSION);
 
-    const tgtDir = path.join(configDir, subdir);
-    fs.mkdirSync(tgtDir, { recursive: true });
+  // Source: check dev path first, then production path
+  const devPath = path.join(__dirname, "..", "..", "src", "builtin-plugin");
+  const prodPath = path.join(__dirname, "..", "builtin-plugin");
+  const src = fs.existsSync(devPath) ? devPath : prodPath;
+  if (!fs.existsSync(src)) return cacheDir;
 
-    for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
-      const srcPath = path.join(srcDir, entry.name);
-      const tgtPath = path.join(tgtDir, entry.name);
+  // Always overwrite to get latest version
+  if (fs.existsSync(cacheDir)) fs.rmSync(cacheDir, { recursive: true });
+  fs.mkdirSync(cacheDir, { recursive: true });
+  copyDirRecursive(src, cacheDir);
 
-      // Remove existing so we always get the latest version
-      if (fs.existsSync(tgtPath)) {
-        fs.rmSync(tgtPath, { recursive: true, force: true });
-      }
+  // Add to installed_plugins.json if not already present
+  const manifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
+  let manifest: any = { plugins: {} };
+  if (fs.existsSync(manifestPath)) {
+    try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch {}
+  }
 
-      if (entry.isDirectory()) {
-        copyDirRecursive(srcPath, tgtPath);
-      } else {
-        fs.copyFileSync(srcPath, tgtPath);
-      }
+  if (!manifest.plugins[BUILTIN_PLUGIN_NAME]) {
+    manifest.plugins[BUILTIN_PLUGIN_NAME] = [{
+      scope: "user",
+      installPath: cacheDir,
+      version: BUILTIN_PLUGIN_VERSION,
+    }];
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  } else {
+    // Update installPath and version in case they changed
+    const entry = manifest.plugins[BUILTIN_PLUGIN_NAME][0];
+    if (entry.installPath !== cacheDir || entry.version !== BUILTIN_PLUGIN_VERSION) {
+      entry.installPath = cacheDir;
+      entry.version = BUILTIN_PLUGIN_VERSION;
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     }
   }
+
+  return cacheDir;
 }
 
 function symlinkShared(configDir: string, profile: Profile): void {
@@ -2372,8 +2385,8 @@ export function assembleTeamProfile(team: Team): string {
   // Symlink shared resources (auth, CLAUDE.md, projects, local add-ons, marketplaces)
   symlinkShared(configDir, leadProfile);
 
-  // Install auto-skills (e.g. commands/profiles/check.md)
-  installAutoSkills(configDir);
+  // Ensure built-in profiles-manager plugin is installed in the global cache
+  ensureBuiltinPlugin();
 
   // Track add-on ownership: which member contributed each add-on
   const pluginsWithItems = getPluginsWithItems();
