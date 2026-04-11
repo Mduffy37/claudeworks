@@ -2132,11 +2132,13 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 // ---------------------------------------------------------------------------
 
 async function launchInTerminal(shellCmd: string, terminalApp: string): Promise<void> {
+  const fullCmd = shellCmd;
+
   if (terminalApp === "terminal") {
     const script = [
       'tell application "Terminal"',
       "  activate",
-      `  do script "${shellCmd.replace(/"/g, '\\"')}"`,
+      `  do script "${fullCmd.replace(/"/g, '\\"')}"`,
       "end tell",
     ].join("\n");
     await execFileAsync("osascript", ["-e", script]);
@@ -2155,7 +2157,7 @@ async function launchInTerminal(shellCmd: string, terminalApp: string): Promise<
     "    end tell",
     "  end if",
     "  tell current session of current window",
-    `    write text "${shellCmd.replace(/"/g, '\\"')}"`,
+    `    write text "${fullCmd.replace(/"/g, '\\"')}"`,
     "  end tell",
     "end tell",
   ].join("\n");
@@ -2195,7 +2197,9 @@ export async function launchProfile(profile: Profile, directory?: string, option
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();
-  const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config${flagStr}`;
+  const projectName = path.basename(workDir);
+  const sessionName = `${profile.name} — ${projectName}`;
+  const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --name '${escSh(sessionName)}'${flagStr}`;
   const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
 
   await launchInTerminal(shellCmd, terminal);
@@ -2479,7 +2483,9 @@ export async function launchTeam(team: Team, directory?: string, options?: Launc
   const claudeBin = findRealClaudeBinary();
 
   // Write a launcher script to avoid nested escaping issues with tmux + AppleScript
-  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux${flagStr} '/start-team'`;
+  const projectName = path.basename(workDir);
+  const sessionName = `Team: ${team.name} — ${projectName}`;
+  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux --name '${escSh(sessionName)}'${flagStr} '/start-team'`;
   const launcherPath = path.join(configDir, ".team-launch.sh");
   fs.writeFileSync(launcherPath, `#!/bin/bash\n${innerCmd}\n`, { mode: 0o755 });
 
