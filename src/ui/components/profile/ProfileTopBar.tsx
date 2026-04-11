@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import type { Profile } from "../../../electron/types";
+import type { Profile, LaunchOptions } from "../../../electron/types";
+import { LaunchOptionsPopover } from "../shared/LaunchOptionsPopover";
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ interface ProfileTopBarProps {
   onSetOverviewOpen: (v: boolean) => void;
   onSave: () => void;
   onLaunch: () => void;
+  onLaunchWithOptions?: (options: LaunchOptions) => void;
 }
 
 export function ProfileTopBar({
@@ -74,8 +76,10 @@ export function ProfileTopBar({
   onSetOverviewOpen,
   onSave,
   onLaunch,
+  onLaunchWithOptions,
 }: ProfileTopBarProps) {
   const [showOverflow, setShowOverflow] = useState(false);
+  const [showLaunchOptions, setShowLaunchOptions] = useState(false);
   const enabledCount = selectedPlugins.length;
   const subtitle = isNew
     ? "Configure plugins and skills for this profile"
@@ -112,17 +116,36 @@ export function ProfileTopBar({
                 <option key={dir} value={dir}>{shortPath(dir)}</option>
               ))}
             </select>
-            <button
-              className={`btn-launch${launching ? " launching" : ""}`}
-              disabled={launching}
-              onClick={onLaunch}
-              aria-label="Launch profile in iTerm2"
-            >
-              <span className="btn-launch-icon">
-                <LaunchIcon spinning={launching} />
-              </span>
-              {launching ? "Launching\u2026" : "Launch"}
-            </button>
+            <div className="btn-launch-group">
+              <button
+                className={`btn-launch${launching ? " launching" : ""}`}
+                disabled={launching}
+                onClick={onLaunch}
+                aria-label="Launch profile in iTerm2"
+              >
+                <span className="btn-launch-icon">
+                  <LaunchIcon spinning={launching} />
+                </span>
+                {launching ? "Launching\u2026" : "Launch"}
+              </button>
+              <button
+                className="btn-launch-settings"
+                onClick={() => setShowLaunchOptions(true)}
+                aria-label="Launch settings"
+                title="Launch settings"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 3.5l3 3 3-3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {showLaunchOptions && onLaunchWithOptions && (
+                <LaunchOptionsPopover
+                  defaultDangerous={profile?.launchFlags?.dangerouslySkipPermissions}
+                  onLaunch={(opts) => { setShowLaunchOptions(false); onLaunchWithOptions(opts); }}
+                  onClose={() => setShowLaunchOptions(false)}
+                />
+              )}
+            </div>
           </div>
         )}
 

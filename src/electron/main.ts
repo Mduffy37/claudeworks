@@ -167,13 +167,25 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   } catch (err: any) {
     throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
   }
-  // Refresh credentials from default keychain entry so profiles don't launch
-  // with stale/expired OAuth tokens.
   if (profile.useDefaultAuth !== false) await syncCredentials(profile, "launch");
-  // Track last launch time
   profile.lastLaunched = Date.now();
   saveProfile(profile);
   await launchProfile(profile, directory);
+});
+
+ipcMain.handle("launch-profile-with-options", async (_event, name: string, directory?: string, options?: any) => {
+  const profiles = loadProfiles();
+  const profile = profiles.find((p) => p.name === name);
+  if (!profile) throw new Error(`Profile "${name}" not found`);
+  try {
+    assembleProfile(profile);
+  } catch (err: any) {
+    throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
+  }
+  if (profile.useDefaultAuth !== false) await syncCredentials(profile, "launch");
+  profile.lastLaunched = Date.now();
+  saveProfile(profile);
+  await launchProfile(profile, directory, options);
 });
 
 ipcMain.handle("select-directory", async () => {
@@ -280,6 +292,10 @@ ipcMain.handle("check-team-health", () => {
 
 ipcMain.handle("launch-team", async (_event, team: Team, directory?: string) => {
   await launchTeam(team, directory);
+});
+
+ipcMain.handle("launch-team-with-options", async (_event, team: Team, directory?: string, options?: any) => {
+  await launchTeam(team, directory, options);
 });
 
 // Global settings

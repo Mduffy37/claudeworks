@@ -4226,7 +4226,7 @@ body {
 
 .marketplace-input {
   flex: 1;
-  background: var(--bg-input);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 6px 10px;
@@ -4835,5 +4835,171 @@ body {
 .sidebar-home-btn.active {
   color: var(--accent);
   background: var(--bg-hover);
+}
+
+/* ─── Launch options popover ──────────────────────────────────────────────── */
+
+.btn-launch-group {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+.btn-launch-group .btn-launch {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-launch-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  background: var(--color-launch);
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  cursor: pointer;
+  color: white;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.btn-launch-settings:hover {
+  opacity: 1;
+}
+
+.launch-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+.launch-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 14px 16px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.launch-popover-title {
+  font-size: 0.923rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.launch-popover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.launch-popover-field label {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.launch-popover-field select,
+.launch-popover-field input {
+  font-size: 0.923rem;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.launch-popover-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.923rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.launch-popover-checkbox input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.launch-popover-hint {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.launch-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.launch-popover-actions .btn-launch {
+  font-size: 0.846rem;
+  padding: 5px 14px;
+  min-width: auto;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+}
+
+.launch-popover-actions .btn-secondary {
+  font-size: 0.846rem;
+  padding: 5px 14px;
+}
+
+/* ─── Health tab ──────────────────────────────────────────────────────────── */
+
+.health-done-flash {
+  font-size: 0.769rem;
+  color: var(--color-skill);
+  animation: health-flash-in 0.2s ease-out, health-flash-out 0.3s ease-in 1.7s forwards;
+}
+
+@keyframes health-flash-in {
+  from { opacity: 0; transform: translateX(4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes health-flash-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.health-issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.health-issue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.923rem;
+  color: var(--text-primary);
+  padding: 4px 0;
+  line-height: 1.4;
+}
+
+.health-issue-icon {
+  font-size: 0.692rem;
+  flex-shrink: 0;
+  margin-top: 3px;
 }
 

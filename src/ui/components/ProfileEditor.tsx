@@ -4,6 +4,7 @@ import type {
   PluginWithItems,
   PluginItem,
   StandaloneMcp,
+  LaunchOptions,
 } from "../../../src/electron/types";
 import { PluginPicker } from "./PluginPicker";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
@@ -344,6 +345,34 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     }
   };
 
+  const handleLaunchWithOptions = async (options: LaunchOptions) => {
+    if (!profile) return;
+    setLaunchError(null);
+    setLaunching(true);
+    try {
+      if (dirty) {
+        try {
+          await handleSave();
+        } catch (err: any) {
+          setLaunchError(`Save failed: ${err?.message ?? "Unknown error"}`);
+          setLaunching(false);
+          return;
+        }
+      }
+      let dir = launchDir || undefined;
+      if (!dir) {
+        const picked = await window.api.selectDirectory();
+        if (!picked) { setLaunching(false); return; }
+        dir = picked;
+      }
+      await window.api.launchProfileWithOptions(profile.name, dir, options);
+    } catch (err: any) {
+      setLaunchError(`Launch failed: ${err?.message ?? "Unknown error"}`);
+    } finally {
+      setLaunching(false);
+    }
+  };
+
   // ─── Tab counts ────────────────────────────────────────────────────────────
 
   const tabCounts = useMemo<Partial<Record<TabId, string>>>(() => {
@@ -435,6 +464,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         onSetOverviewOpen={setOverviewOpen}
         onSave={handleSave}
         onLaunch={handleLaunch}
+        onLaunchWithOptions={handleLaunchWithOptions}
       />
 
       {isDefault && (

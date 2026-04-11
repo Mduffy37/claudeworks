@@ -23,6 +23,7 @@ import type {
   MergePreview,
   AnalyticsData,
   ActiveSession,
+  LaunchOptions,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -2130,7 +2131,7 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 // Launch
 // ---------------------------------------------------------------------------
 
-export async function launchProfile(profile: Profile, directory?: string): Promise<void> {
+export async function launchProfile(profile: Profile, directory?: string, options?: LaunchOptions): Promise<void> {
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
   const workDir = directory ?? profile.directory ?? os.homedir();
 
@@ -2139,13 +2140,15 @@ export async function launchProfile(profile: Profile, directory?: string): Promi
 
   const mcpConfigPath = path.join(configDir, "mcp.json");
 
-  // Build launch flags — global defaults first, profile overrides on top
+  // Build launch flags — global defaults first, profile overrides on top, then one-shot overrides
   const flagParts: string[] = [];
   const globalDefs = getGlobalDefaults();
   if (globalDefs.customFlags?.trim()) flagParts.push(globalDefs.customFlags.trim());
-  if (profile.launchFlags?.dangerouslySkipPermissions) flagParts.push("--dangerously-skip-permissions");
+  const skipPerms = options?.dangerouslySkipPermissions ?? profile.launchFlags?.dangerouslySkipPermissions;
+  if (skipPerms) flagParts.push("--dangerously-skip-permissions");
   if (profile.launchFlags?.verbose) flagParts.push("--verbose");
   if (profile.customFlags?.trim()) flagParts.push(profile.customFlags.trim());
+  if (options?.customFlags?.trim()) flagParts.push(options.customFlags.trim());
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();
@@ -2416,7 +2419,7 @@ export function assembleTeamProfile(team: Team): string {
   return configDir;
 }
 
-export async function launchTeam(team: Team, directory?: string): Promise<void> {
+export async function launchTeam(team: Team, directory?: string, options?: LaunchOptions): Promise<void> {
   const lead = team.members.find((m) => m.isLead);
   if (!lead) throw new Error("Team has no lead member");
   const profiles = loadProfiles();
@@ -2444,13 +2447,15 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
 
   const mcpConfigPath = path.join(configDir, "mcp.json");
 
-  // Build launch flags — global defaults first, then team/lead overrides
+  // Build launch flags — global defaults first, then team/lead overrides, then one-shot overrides
   const flagParts: string[] = [];
   const globalDefs = getGlobalDefaults();
   if (globalDefs.customFlags?.trim()) flagParts.push(globalDefs.customFlags.trim());
-  if (leadProfile.launchFlags?.dangerouslySkipPermissions) flagParts.push("--dangerously-skip-permissions");
+  const skipPerms = options?.dangerouslySkipPermissions ?? leadProfile.launchFlags?.dangerouslySkipPermissions;
+  if (skipPerms) flagParts.push("--dangerously-skip-permissions");
   if (leadProfile.launchFlags?.verbose) flagParts.push("--verbose");
   if (team.customFlags?.trim()) flagParts.push(team.customFlags.trim());
+  if (options?.customFlags?.trim()) flagParts.push(options.customFlags.trim());
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();
@@ -2459,6 +2464,16 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
   const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux${flagStr} '/start-team'`;
   const launcherPath = path.join(configDir, ".team-launch.sh");
   fs.writeFileSync(launcherPath, `#!/bin/bash\n${innerCmd}\n`, { mode: 0o755 });
+
+  const tmuxMode = options?.tmuxMode ?? globalDefs.tmuxMode ?? "cc";
+  let shellCmd: string;
+  if (tmuxMode === "none") {
+    shellCmd = `'${escSh(launcherPath)}'`;
+  } else if (tmuxMode === "plain") {
+    shellCmd = `tmux new-session '${escSh(launcherPath)}'`;
+  } else {
+    shellCmd = `tmux -CC new-session '${escSh(launcherPath)}'`;
+  }
 
   const script = [
     'tell application "iTerm2"',
@@ -2471,7 +2486,7 @@ export async function launchTeam(team: Team, directory?: string): Promise<void> 
     "    end tell",
     "  end if",
     "  tell current session of current window",
-    `    write text "tmux -CC new-session '${escSh(launcherPath)}'"`,
+    `    write text "${shellCmd}"`,
     "  end tell",
     "end tell",
   ].join("\n");
@@ -2671,16 +2686,16 @@ export function saveGlobalClaudeMd(content: string): void {
   fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
 }
 
-export function getGlobalDefaults(): { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string } {
+export function getGlobalDefaults(): { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string } {
   try {
     const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
-    return { model: data.model ?? "", effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags };
+    return { model: data.model ?? "", effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags, terminalApp: data.terminalApp, tmuxMode: data.tmuxMode };
   } catch {
     return { model: "", effortLevel: "" };
   }
 }
 
-export function saveGlobalDefaults(defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }): void {
+export function saveGlobalDefaults(defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }): void {
   fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(defaults, null, 2));
 }
 

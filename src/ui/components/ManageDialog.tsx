@@ -6,7 +6,7 @@ import { DiscoverDetail } from "./DiscoverDetail";
 import type { PluginWithItems, Profile, Prompt, AvailablePlugin } from "../../electron/types";
 import { PromptPicker } from "./PromptPicker";
 
-type ManageTab = "plugins" | "projects" | "global" | "prompts";
+type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health";
 
 interface Props {
   plugins: PluginWithItems[];
@@ -440,7 +440,6 @@ function ProjectsTab() {
 // ─── Global settings tab ────────────────────────────────────────────────────
 
 function GlobalSettingsTab() {
-  const [credStatus, setCredStatus] = useState<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> } | null>(null);
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [model, setModel] = useState("");
@@ -455,9 +454,10 @@ function GlobalSettingsTab() {
   const [hooksDirty, setHooksDirty] = useState(false);
   const [hooksError, setHooksError] = useState("");
   const [showPromptPicker, setShowPromptPicker] = useState(false);
+  const [terminalApp, setTerminalApp] = useState("");
+  const [tmuxMode, setTmuxMode] = useState("");
 
   useEffect(() => {
-    window.api.checkCredentialStatus().then(setCredStatus);
     window.api.getGlobalClaudeMd().then((content) => {
       setClaudeMd(content);
       setClaudeMdDirty(false);
@@ -475,6 +475,8 @@ function GlobalSettingsTab() {
       setModel(d.model);
       setEffort(d.effortLevel);
       setCustomFlags(d.customFlags ?? "");
+      setTerminalApp(d.terminalApp ?? "iterm2");
+      setTmuxMode(d.tmuxMode ?? "cc");
       setDefaultsDirty(false);
     });
   }, []);
@@ -500,6 +502,8 @@ function GlobalSettingsTab() {
       model,
       effortLevel: effort,
       customFlags: customFlags.trim() || undefined,
+      terminalApp: terminalApp || undefined,
+      tmuxMode: tmuxMode || undefined,
     });
     setDefaultsDirty(false);
   };
@@ -682,10 +686,98 @@ function GlobalSettingsTab() {
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Authentication</span>
-          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.checkCredentialStatus().then(setCredStatus)}>
-            Refresh
-          </button>
+          <span className="manage-section-label">Launch Defaults</span>
+          {defaultsDirty && (
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
+              Save
+            </button>
+          )}
+        </div>
+        <div className="manage-section-hint">
+          Default terminal and tmux settings used by the launch popover.
+        </div>
+        <div className="manage-defaults-row">
+          <div className="field">
+            <label>Terminal App</label>
+            <select value={terminalApp} onChange={(e) => { setTerminalApp(e.target.value); setDefaultsDirty(true); }}>
+              <option value="iterm2">iTerm2</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>tmux Mode</label>
+            <select value={tmuxMode} onChange={(e) => { setTmuxMode(e.target.value); setDefaultsDirty(true); }}>
+              <option value="cc">-CC (iTerm integration)</option>
+              <option value="plain">Plain tmux</option>
+              <option value="none">No tmux</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Health tab ─────────────────────────────────────────────────────────────
+
+function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: PluginWithItems[] }) {
+  const [credStatus, setCredStatus] = useState<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> } | null>(null);
+  const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
+  const [diagnostics, setDiagnostics] = useState<{ version: string; configDir: string; claudeHome: string; profileCount: number; teamCount: number; issues: string[] } | null>(null);
+  const [refreshing, setRefreshing] = useState<string | null>(null);
+  const [doneFlash, setDoneFlash] = useState<string | null>(null);
+
+  const flashDone = (key: string) => {
+    setDoneFlash(key);
+    setTimeout(() => setDoneFlash((prev) => prev === key ? null : prev), 2000);
+  };
+
+  const refreshCreds = () => {
+    setRefreshing("creds");
+    window.api.checkCredentialStatus().then((s) => { setCredStatus(s); setRefreshing(null); flashDone("creds"); });
+  };
+
+  const refreshDiagnostics = () => {
+    setRefreshing("diag");
+    window.api.runDiagnostics().then((d) => { setDiagnostics(d); setRefreshing(null); flashDone("diag"); });
+  };
+
+  useEffect(() => {
+    window.api.checkCredentialStatus().then(setCredStatus);
+    window.api.checkProfileHealth().then(setProfileHealth);
+    window.api.runDiagnostics().then(setDiagnostics);
+  }, []);
+
+  const staleProfiles = useMemo(() => {
+    const threshold = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return profiles.filter((p) => p.lastLaunched && p.lastLaunched < threshold);
+  }, [profiles]);
+
+  const neverLaunched = useMemo(() => {
+    return profiles.filter((p) => !p.lastLaunched);
+  }, [profiles]);
+
+  const unusedPlugins = useMemo(() => {
+    const usedPlugins = new Set<string>();
+    for (const p of profiles) {
+      for (const plugin of p.plugins) usedPlugins.add(plugin);
+    }
+    return plugins.filter((p) => !usedPlugins.has(p.name)).map((p) => p.name);
+  }, [profiles, plugins]);
+
+  const healthEntries = Object.entries(profileHealth);
+  const totalIssues = (diagnostics?.issues.length ?? 0) + healthEntries.length + staleProfiles.length + unusedPlugins.length;
+
+  return (
+    <div className="manage-global-settings">
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Credentials</span>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            {doneFlash === "creds" && <span className="health-done-flash">Updated</span>}
+            <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={refreshCreds} disabled={refreshing === "creds"}>
+              {refreshing === "creds" ? "Refreshing..." : "Refresh"}
+            </button>
+          </span>
         </div>
         {credStatus ? (
           <div className="modal-fields" style={{ marginTop: "8px" }}>
@@ -722,6 +814,128 @@ function GlobalSettingsTab() {
           </div>
         ) : (
           <div className="manage-section-hint">Loading credential status...</div>
+        )}
+      </div>
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">Profile Issues</span>
+        </div>
+        {healthEntries.length > 0 ? (
+          <div className="health-issue-list">
+            {healthEntries.map(([name, missing]) => (
+              <div key={name} className="health-issue-item">
+                <span className="health-issue-icon" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                <span><strong>{name}</strong> — missing plugin{missing.length !== 1 ? "s" : ""}: {missing.join(", ")}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="manage-section-hint">No missing plugins detected.</div>
+        )}
+        {staleProfiles.length > 0 && (
+          <>
+            <div className="manage-section-header" style={{ marginTop: "12px" }}>
+              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>Stale Profiles (30+ days)</span>
+            </div>
+            <div className="health-issue-list">
+              {staleProfiles.map((p) => (
+                <div key={p.name} className="health-issue-item">
+                  <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span>{p.name} — last launched {new Date(p.lastLaunched!).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        {neverLaunched.length > 0 && (
+          <>
+            <div className="manage-section-header" style={{ marginTop: "12px" }}>
+              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>Never Launched</span>
+            </div>
+            <div className="health-issue-list">
+              {neverLaunched.map((p) => (
+                <div key={p.name} className="health-issue-item">
+                  <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span>{p.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {unusedPlugins.length > 0 && (
+        <div className="manage-section">
+          <div className="manage-section-header">
+            <span className="manage-section-label">Unused Plugins</span>
+          </div>
+          <div className="manage-section-hint">
+            Installed plugins not used by any profile.
+          </div>
+          <div className="health-issue-list">
+            {unusedPlugins.map((name) => (
+              <div key={name} className="health-issue-item">
+                <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                <span>{name.split("@")[0]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="manage-section">
+        <div className="manage-section-header">
+          <span className="manage-section-label">System Diagnostics</span>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            {doneFlash === "diag" && <span className="health-done-flash">Updated</span>}
+            <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={refreshDiagnostics} disabled={refreshing === "diag"}>
+              {refreshing === "diag" ? "Scanning..." : "Re-scan"}
+            </button>
+          </span>
+        </div>
+        {diagnostics ? (
+          <div className="modal-fields" style={{ marginTop: "8px" }}>
+            <div className="field">
+              <label>Version</label>
+              <div className="field-hint" style={{ margin: 0 }}>{diagnostics.version}</div>
+            </div>
+            <div className="field">
+              <label>Config Dir</label>
+              <div className="field-hint" style={{ margin: 0 }}>{diagnostics.configDir}</div>
+            </div>
+            <div className="field">
+              <label>Claude Home</label>
+              <div className="field-hint" style={{ margin: 0 }}>{diagnostics.claudeHome}</div>
+            </div>
+            <div className="field">
+              <label>Profiles / Teams</label>
+              <div className="field-hint" style={{ margin: 0 }}>{diagnostics.profileCount} profiles, {diagnostics.teamCount} teams</div>
+            </div>
+            {diagnostics.issues.length > 0 ? (
+              <>
+                <div className="field-divider" />
+                <div className="field">
+                  <label>Issues ({diagnostics.issues.length})</label>
+                </div>
+                {diagnostics.issues.map((issue, i) => (
+                  <div key={i} className="health-issue-item">
+                    <span className="health-issue-icon" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                    <span>{issue}</span>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <>
+                <div className="field-divider" />
+                <div className="field">
+                  <div className="field-hint" style={{ margin: 0, color: "var(--color-skill)" }}>No issues detected.</div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="manage-section-hint">Running diagnostics...</div>
         )}
       </div>
     </div>
@@ -1107,6 +1321,12 @@ export function ManageDialog({
             >
               Global
             </button>
+            <button
+              className={`manage-dialog-tab${activeTab === "health" ? " active" : ""}`}
+              onClick={() => setActiveTab("health")}
+            >
+              Health
+            </button>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1284,6 +1504,7 @@ export function ManageDialog({
           {activeTab === "prompts" && <PromptsTab />}
 
           {activeTab === "global" && <GlobalSettingsTab />}
+          {activeTab === "health" && <HealthTab profiles={profiles} plugins={plugins} />}
         </div>
       </div>
     </div>

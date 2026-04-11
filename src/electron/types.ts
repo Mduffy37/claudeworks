@@ -181,6 +181,14 @@ export interface TeamsStore {
   teams: Record<string, Team>;
 }
 
+/** One-shot launch overrides from the launch settings popover. */
+export interface LaunchOptions {
+  terminalApp?: string;
+  tmuxMode?: "cc" | "plain" | "none";
+  customFlags?: string;
+  dangerouslySkipPermissions?: boolean;
+}
+
 /** IPC API exposed to the renderer via contextBridge. */
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
@@ -228,8 +236,10 @@ export interface ElectronAPI {
   saveGlobalEnv: (env: Record<string, string>) => Promise<void>;
   getGlobalHooks: () => Promise<Record<string, any>>;
   saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
-  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }>;
-  saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string }) => Promise<void>;
+  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }>;
+  saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }) => Promise<void>;
+  launchProfileWithOptions: (name: string, directory?: string, options?: LaunchOptions) => Promise<void>;
+  launchTeamWithOptions: (team: Team, directory?: string, options?: LaunchOptions) => Promise<void>;
   // Projects
   getImportedProjects: () => Promise<string[]>;
   addImportedProject: (dir: string) => Promise<string[]>;

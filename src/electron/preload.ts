@@ -36,6 +36,8 @@ const api: ElectronAPI = {
   getTeamMergePreview: (team) => ipcRenderer.invoke("get-team-merge-preview", team),
   checkTeamHealth: () => ipcRenderer.invoke("check-team-health"),
   launchTeam: (team, directory) => ipcRenderer.invoke("launch-team", team, directory),
+  launchTeamWithOptions: (team, directory, options) => ipcRenderer.invoke("launch-team-with-options", team, directory, options),
+  launchProfileWithOptions: (name, directory, options) => ipcRenderer.invoke("launch-profile-with-options", name, directory, options),
   // Global settings
   getGlobalClaudeMd: () => ipcRenderer.invoke("get-global-claude-md"),
   saveGlobalClaudeMd: (content) => ipcRenderer.invoke("save-global-claude-md", content),

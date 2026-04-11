@@ -16,12 +16,13 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import type { Team, TeamMember, Profile, MergePreview as MergePreviewType } from "../../electron/types";
+import type { Team, TeamMember, Profile, MergePreview as MergePreviewType, LaunchOptions } from "../../electron/types";
 import { MergePreview } from "./MergePreview";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 import { InfoCard } from "./profile/InfoCard";
 import { DraggableProfile } from "./team/DraggableProfile";
 import { SortableMember } from "./team/SortableMember";
+import { LaunchOptionsPopover } from "./shared/LaunchOptionsPopover";
 
 interface Props {
   team: Team | null;
@@ -51,6 +52,30 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [launchDir, setLaunchDir] = useState("");
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
+  const [showLaunchOptions, setShowLaunchOptions] = useState(false);
+
+  const handleLaunchWithOptions = async (options: LaunchOptions) => {
+    const lead = draft.members.find((m) => m.isLead);
+    if (!lead) return;
+    if (dirty) await onSave(draft);
+
+    let dir = launchDir || undefined;
+    if (!dir) {
+      const picked = await window.api.selectDirectory();
+      if (!picked) return;
+      dir = picked;
+    }
+
+    setLaunching(true);
+    setLaunchError(null);
+    try {
+      await window.api.launchTeamWithOptions(draft, dir, options);
+    } catch (err: any) {
+      setLaunchError(err?.message ?? "Team launch failed");
+    } finally {
+      setLaunching(false);
+    }
+  };
 
   const handleLaunch = async () => {
     const lead = draft.members.find((m) => m.isLead);
@@ -257,14 +282,32 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
                 ))}
               </select>
-              <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead) || launching} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch team" : "Set a lead profile first"}>
-                <span className="btn-launch-icon">
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="btn-launch-group">
+                <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead) || launching} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch team" : "Set a lead profile first"}>
+                  <span className="btn-launch-icon">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  {launching ? "Launching..." : "Launch Team"}
+                </button>
+                <button
+                  className="btn-launch-settings"
+                  onClick={() => setShowLaunchOptions(true)}
+                  aria-label="Launch settings"
+                  title="Launch settings"
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 3.5l3 3 3-3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </span>
-                {launching ? "Launching..." : "Launch Team"}
-              </button>
+                </button>
+                {showLaunchOptions && (
+                  <LaunchOptionsPopover
+                    onLaunch={(opts) => { setShowLaunchOptions(false); handleLaunchWithOptions(opts); }}
+                    onClose={() => setShowLaunchOptions(false)}
+                  />
+                )}
+              </div>
             </div>
           )}
 
