@@ -31,7 +31,11 @@ console.log(JSON.stringify({installed,profileNames:Object.keys(profiles)}));
 
 5. **Ask for a profile name** (short, no spaces preferred).
 
-6. **Ask about settings** — model preference (opus/sonnet/haiku), effort level, any custom CLAUDE.md instructions.
+6. **Ask about settings** — model preference (opus/sonnet/haiku), effort level, and authoring slots:
+   - **Always-on instructions** (optional): appended to CLAUDE.md — Claude reads this every turn of every session.
+   - **Workflow command** (optional): body of a `/workflow` command the user can invoke explicitly to run a predefined orchestration of the profile's tools. Unlike always-on instructions, this is dormant until typed.
+
+   These are separate slots with different delivery mechanisms. Ask about them individually and skip either one if the user doesn't want it. If the user is unclear on the difference, explain: always-on is context Claude always has, workflow is a command Claude only runs when you type `/workflow`.
 
 7. **Create the profile** by writing to profiles.json:
 
@@ -47,6 +51,7 @@ const profile={
   model: process.env.P_MODEL || undefined,
   effortLevel: process.env.P_EFFORT || undefined,
   customClaudeMd: process.env.P_INSTRUCTIONS || '',
+  workflow: process.env.P_WORKFLOW || undefined,
   useDefaultAuth: true,
 };
 store.profiles[profile.name]=profile;
@@ -54,7 +59,7 @@ fs.writeFileSync(pfPath,JSON.stringify(store,null,2));
 console.log('Profile created: '+profile.name);
 " 2>&1`
 
-Set the environment variables P_NAME, P_PLUGINS (JSON array of plugin IDs), P_DESC, P_MODEL, P_EFFORT, and P_INSTRUCTIONS based on the user's choices before running.
+Set the environment variables P_NAME, P_PLUGINS (JSON array of plugin IDs), P_DESC, P_MODEL, P_EFFORT, P_INSTRUCTIONS, and P_WORKFLOW based on the user's choices before running. Leave P_WORKFLOW unset if the user didn't provide a workflow.
 
 8. **Report** the created profile configuration back to the user.
 

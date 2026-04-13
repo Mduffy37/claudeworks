@@ -28,6 +28,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [effortLevel, setEffortLevel] = useState<string>("");
   const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
   const [customClaudeMd, setCustomClaudeMd] = useState("");
+  const [workflow, setWorkflow] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -62,6 +63,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
         voiceEnabled,
         customClaudeMd: customClaudeMd || undefined,
+        workflow: workflow.trim() ? workflow : undefined,
         disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
         launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
         customFlags: customFlags.trim() || undefined,
@@ -75,7 +77,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -92,6 +94,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setEffortLevel(profile.effortLevel ?? "");
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
+      setWorkflow(profile.workflow ?? "");
       setDisabledMcpServers(profile.disabledMcpServers ?? {});
       setLaunchFlags(profile.launchFlags ?? {});
       setCustomFlags(profile.customFlags ?? "");
@@ -115,6 +118,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setEffortLevel("");
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
+      setWorkflow("");
       setDisabledMcpServers({});
       setLaunchFlags({});
       setCustomFlags("");
@@ -191,6 +195,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     effortLevel, setEffortLevel,
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
+    workflow, setWorkflow,
     activeTab, setActiveTab,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,

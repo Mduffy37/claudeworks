@@ -1361,6 +1361,16 @@ export function assembleProfile(profile: Profile): string {
     try { fs.unlinkSync(claudeMdTarget); } catch {}
   }
 
+  // Handle per-profile /workflow command
+  const workflowPath = path.join(configDir, "commands", "workflow.md");
+  if (profile.workflow && profile.workflow.trim()) {
+    fs.mkdirSync(path.dirname(workflowPath), { recursive: true });
+    const frontmatter = `---\ndescription: Run this profile's predefined workflow\n---\n\n`;
+    fs.writeFileSync(workflowPath, frontmatter + profile.workflow);
+  } else {
+    try { fs.unlinkSync(workflowPath); } catch {}
+  }
+
   // Scan plugins once for cache setup and exclusions
   const installedPlugins = scanInstalledPlugins();
 

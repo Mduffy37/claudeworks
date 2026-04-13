@@ -2273,14 +2273,59 @@ body {
 .pe-instructions-tab {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 24px;
   max-width: 720px;
+}
+
+.pe-instructions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pe-instructions-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pe-instructions-heading {
+  font-size: 0.923rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pe-instructions-command {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.846rem;
+  font-weight: 500;
+  color: #67e8f9;
+  background: rgba(103, 232, 249, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.pe-instructions-section .pe-instructions-hint code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.846rem;
+  padding: 0 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
 }
 
 .pe-editor-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
