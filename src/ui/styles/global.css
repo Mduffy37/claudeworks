@@ -2955,6 +2955,21 @@ body {
   border: 1px solid rgba(167, 139, 250, 0.2);
 }
 
+/* Install-source provenance indicator — sits inline next to the plugin name,
+   same shape as .plugin-version but in a muted cyan so it reads as "source" not "version". */
+.plugin-source {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.769rem;
+  font-weight: 400;
+  flex-shrink: 0;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+.plugin-source-skillfish {
+  color: #67e8f9;
+}
+
 .mcp-servers {
   padding-top: 8px;
   border-top: 1px solid var(--border);

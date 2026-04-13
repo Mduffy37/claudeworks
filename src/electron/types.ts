@@ -40,11 +40,19 @@ export interface PluginMcp {
   plugin: string; // parent plugin name
 }
 
+/** Provenance marker detected on a local plugin (e.g. a `.skillfish.json` file). */
+export interface PluginSource {
+  type: "skillfish";
+  metadata?: Record<string, any>;
+}
+
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
   hooks: PluginHook[];
   mcpServers: PluginMcp[];
+  /** Optional install-source provenance for local plugins (e.g. skillfish). */
+  source?: PluginSource;
 }
 
 /** A standalone MCP server from ~/.claude.json (user or project level). */

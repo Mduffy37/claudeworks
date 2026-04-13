@@ -542,11 +542,22 @@ export function isGsdInstalled(): boolean {
  * Returns grouped synthetic PluginWithItems[] — each skill and command namespace
  * becomes its own plugin; loose commands and agents get catch-all plugins.
  */
+/** Read a skill folder's `.skillfish.json` provenance marker, or null if absent/invalid. */
+function readSkillfishMarker(skillDir: string): Record<string, any> | null {
+  const markerPath = path.join(skillDir, ".skillfish.json");
+  if (!fs.existsSync(markerPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(markerPath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
 export function scanUserLocalPlugins(): PluginWithItems[] {
   const claudeHome = path.join(os.homedir(), ".claude");
   const plugins: PluginWithItems[] = [];
 
-  const makePlugin = (name: string, items: PluginItem[]): PluginWithItems => ({
+  const makePlugin = (name: string, items: PluginItem[], source?: import("./types").PluginSource): PluginWithItems => ({
     name: `${LOCAL_PLUGIN_PREFIX}${name}`,
     scope: "user",
     installPath: claudeHome,
@@ -556,6 +567,7 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
     items,
     hooks: [],
     mcpServers: [],
+    ...(source ? { source } : {}),
   });
 
   const gsdDetected = isGsdInstalled();
@@ -586,6 +598,9 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
           dependencies: [],
         });
       } else {
+        const skillDir = path.join(skillsDir, entry.name);
+        const marker = readSkillfishMarker(skillDir);
+        const source = marker ? { type: "skillfish" as const, metadata: marker } : undefined;
         plugins.push(makePlugin(pluginName, [{
           name: skillName,
           description: fm.description ?? "",
@@ -594,7 +609,7 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
           path: skillMd,
           userInvocable: true,
           dependencies: [],
-        }]));
+        }], source));
       }
     }
   }

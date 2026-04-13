@@ -117,6 +117,18 @@ export function PluginPicker({
               {plugin.marketplace !== "local" && (
                 <span className="plugin-version">v{plugin.version}</span>
               )}
+              {plugin.source?.type === "skillfish" && (
+                <span
+                  className="plugin-source plugin-source-skillfish"
+                  title={
+                    plugin.source.metadata?.owner && plugin.source.metadata?.repo
+                      ? `Installed by skillfish from ${plugin.source.metadata.owner}/${plugin.source.metadata.repo}`
+                      : "Installed by skillfish"
+                  }
+                >
+                  skillfish
+                </span>
+              )}
             </span>
 
             {/* Badge row — always visible type breakdown */}
