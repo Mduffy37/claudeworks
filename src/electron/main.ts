@@ -56,6 +56,8 @@ import {
   ensureBuiltinPlugin,
   getCuratedMarketplace,
   refreshCuratedMarketplace,
+  getCuratedIndex,
+  refreshCuratedIndex,
   fetchUpstreamMarketplace,
   fetchPluginItems,
   fetchRepoReadme,
@@ -489,6 +491,8 @@ ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileCon
 ipcMain.handle("get-claude-home", () => getClaudeHome());
 ipcMain.handle("get-curated-marketplace", () => getCuratedMarketplace());
 ipcMain.handle("refresh-curated-marketplace", () => refreshCuratedMarketplace());
+ipcMain.handle("get-curated-index", () => getCuratedIndex());
+ipcMain.handle("refresh-curated-index", () => refreshCuratedIndex());
 ipcMain.handle("fetch-upstream-marketplace", (_event, source: string) => fetchUpstreamMarketplace(source));
 ipcMain.handle("fetch-plugin-items", (_event, source: string, pluginPath: string) => fetchPluginItems(source, pluginPath));
 ipcMain.handle("fetch-repo-readme", (_event, source: string) => fetchRepoReadme(source));

@@ -3,13 +3,95 @@ import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
 import { DiscoverList } from "./DiscoverList";
 import { DiscoverDetail } from "./DiscoverDetail";
-import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, CuratedMarketplace, CuratedCollection, CuratedMarketplaceData } from "../../electron/types";
+import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, CuratedMarketplace, CuratedCollection, CuratedMarketplaceData, CuratedIndex, CuratedIndexEntry } from "../../electron/types";
 import { PromptPicker } from "./PromptPicker";
 import { CuratedDetailModal } from "./CuratedDetailModal";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 type CuratedDetailTarget =
   | { kind: "marketplace"; entry: CuratedMarketplace }
   | { kind: "plugin"; entry: CuratedPlugin };
+
+/**
+ * Renders a small SVG glyph for a collection icon name. Keeps each icon
+ * self-contained — no icon library dep, matches the existing stroke-based
+ * style (1.3px strokes, currentColor) used elsewhere in the app.
+ * Unknown names fall back to a generic dot so collections with a new icon
+ * still render something rather than literal text.
+ */
+function CollectionIcon({ name, size = 12 }: { name: string; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 16 16",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.3,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "curated-collection-icon",
+  };
+  switch (name) {
+    case "bolt":
+      return (
+        <svg {...common}>
+          <path d="M9 1L3 9h4l-1 6 6-8H8l1-6z" />
+        </svg>
+      );
+    case "arrows":
+      return (
+        <svg {...common}>
+          <path d="M3 6h10M13 6l-2-2M13 6l-2 2" />
+          <path d="M13 10H3M3 10l2-2M3 10l2 2" />
+        </svg>
+      );
+    case "code":
+      return (
+        <svg {...common}>
+          <path d="M5 4L2 8l3 4M11 4l3 4-3 4M9 3l-2 10" />
+        </svg>
+      );
+    case "palette":
+      return (
+        <svg {...common}>
+          <path d="M8 1.5a6.5 6.5 0 000 13c1 0 1.5-.5 1.5-1.2 0-.6-.3-.8-.3-1.2 0-.5.4-.9.9-.9h1.4c1.7 0 3-1.3 3-3A6.5 6.5 0 008 1.5z" />
+          <circle cx="5" cy="7" r=".7" fill="currentColor" />
+          <circle cx="8" cy="4.5" r=".7" fill="currentColor" />
+          <circle cx="11" cy="7" r=".7" fill="currentColor" />
+        </svg>
+      );
+    case "brush":
+      return (
+        <svg {...common}>
+          <path d="M12 2l2 2-7 7-2.5.5.5-2.5 7-7z" />
+          <path d="M3 13c1 0 2 1 2 2 0-1-1-2-2-2z" />
+        </svg>
+      );
+    case "git":
+      return (
+        <svg {...common}>
+          <circle cx="4" cy="4" r="1.5" />
+          <circle cx="4" cy="12" r="1.5" />
+          <circle cx="12" cy="8" r="1.5" />
+          <path d="M4 5.5v5M5.5 11.5c4 0 5-2 5-3.5" />
+        </svg>
+      );
+    case "layers":
+      return (
+        <svg {...common}>
+          <path d="M8 2L2 5l6 3 6-3-6-3z" />
+          <path d="M2 8l6 3 6-3M2 11l6 3 6-3" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <circle cx="8" cy="8" r="2.5" />
+        </svg>
+      );
+  }
+}
 
 type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health";
 
@@ -1211,6 +1293,20 @@ export function ManageDialog({
   const [curatedInstalling, setCuratedInstalling] = useState<string | null>(null);
   const [curatedErrors, setCuratedErrors] = useState<Record<string, string>>({});
   const [curatedDetail, setCuratedDetail] = useState<CuratedDetailTarget | null>(null);
+
+  // A pending destructive action awaiting user confirmation. The ConfirmDialog
+  // renders based on this and shows the affected profile count before running.
+  type PendingConfirm =
+    | { kind: "remove-marketplace"; name: string; displayName?: string }
+    | { kind: "uninstall-plugin"; pluginId: string; displayName?: string };
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+
+  // Helpers: find profiles that reference a given plugin or any plugin from a marketplace.
+  // A profile is "affected" when removing the plugin/marketplace would leave it unhealthy.
+  const getProfilesUsingPlugin = (pluginId: string): Profile[] =>
+    profiles.filter((p) => p.plugins.includes(pluginId));
+  const getProfilesUsingMarketplace = (marketplaceName: string): Profile[] =>
+    profiles.filter((p) => p.plugins.some((pid) => pid.endsWith(`@${marketplaceName}`)));
   const [showMarketplacePlugins, setShowMarketplacePlugins] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
   const [sourcesPluginsLoaded, setSourcesPluginsLoaded] = useState(false);
@@ -1232,12 +1328,29 @@ export function ManageDialog({
     setCuratedLoading(true);
     setCuratedError(null);
     try {
-      const data = await window.api.refreshCuratedMarketplace();
+      const [data, idx] = await Promise.all([
+        window.api.refreshCuratedMarketplace(),
+        window.api.refreshCuratedIndex(),
+      ]);
       setCuratedData(data);
+      setCuratedIndex(idx);
     } catch (err: any) {
       setCuratedError(err?.message ?? "Failed to refresh curated plugins");
     } finally {
       setCuratedLoading(false);
+    }
+  };
+
+  // Curated search index — flat, pre-built snapshot of every marketplace,
+  // plugin, skill, command, and agent across all curated sources. Enables
+  // global in-app search without hitting GitHub per keystroke.
+  const [curatedIndex, setCuratedIndex] = useState<CuratedIndex | null>(null);
+  const loadCuratedIndex = async () => {
+    try {
+      const idx = await window.api.getCuratedIndex();
+      setCuratedIndex(idx);
+    } catch {
+      // Silently swallow — search will just fall back to the top-level list.
     }
   };
 
@@ -1324,6 +1437,47 @@ export function ManageDialog({
     }
   };
 
+  /**
+   * Open a confirmation dialog before removing a marketplace. The dialog shows
+   * how many profiles reference plugins from the marketplace so the user knows
+   * which profiles will become unhealthy after removal.
+   */
+  const requestRemoveMarketplace = (marketplaceName: string, displayName?: string) => {
+    setPendingConfirm({ kind: "remove-marketplace", name: marketplaceName, displayName });
+  };
+
+  /**
+   * Open a confirmation dialog before uninstalling a plugin. Shows affected
+   * profiles by exact plugin-id match.
+   */
+  const requestUninstallPlugin = (pluginId: string, displayName?: string) => {
+    setPendingConfirm({ kind: "uninstall-plugin", pluginId, displayName });
+  };
+
+  /**
+   * Run the pending destructive action. Called from the ConfirmDialog's
+   * "Confirm" button. Clears the pending state after completion.
+   */
+  const handleConfirmedAction = async () => {
+    if (!pendingConfirm) return;
+    const action = pendingConfirm;
+    setPendingConfirm(null);
+    try {
+      if (action.kind === "remove-marketplace") {
+        await window.api.removeMarketplace(action.name);
+        await loadMarketplaces();
+        onPluginsChanged?.();
+      } else if (action.kind === "uninstall-plugin") {
+        await onUninstall(action.pluginId);
+      }
+    } catch (err: any) {
+      // Surface via the existing marketplace-error or curated-error channels.
+      // For now just log — we don't have a toast system and the user will see
+      // the result in the list (or lack thereof) on the next refresh.
+      console.error("Destructive action failed:", err?.message ?? err);
+    }
+  };
+
   // Build a lookup set so row renders can check "is this marketplace registered?" in O(1).
   const registeredMarketplaceNames = useMemo(() => new Set(marketplaces.map((m) => m.name)), [marketplaces]);
 
@@ -1357,6 +1511,61 @@ export function ManageDialog({
   const featuredCurated = useMemo(() => {
     return allCuratedEntries.filter((t) => t.entry.featured);
   }, [allCuratedEntries]);
+
+  // Global search across the full pre-built index (marketplaces + plugins +
+  // skills + commands + agents). Tokenised with word-boundary awareness:
+  //
+  //   - Split the query by whitespace into tokens.
+  //   - Every token must match somewhere in the haystack (AND match).
+  //   - A "finished" token (followed by a space, or any token that isn't the
+  //     last one) requires a word-boundary match — so "ui " or "ui design"
+  //     won't match "build" or "guidance".
+  //   - The last token, if there's no trailing space, is treated as a substring
+  //     match so typing "eng" still matches "engineering" while the user is
+  //     still composing the word.
+  //
+  // Groups results by kind in a stable order for the UI.
+  const indexSearchResults = useMemo(() => {
+    const raw = curatedSearch;
+    if (!raw.trim() || !curatedIndex) return null;
+
+    const hasTrailingSpace = /\s$/.test(raw);
+    const parts = raw.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return null;
+
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const tokens = parts.map((text, i) => {
+      const isLast = i === parts.length - 1;
+      const finished = !isLast || hasTrailingSpace;
+      return {
+        text,
+        finished,
+        regex: finished ? new RegExp(`(^|\\W)${escapeRegex(text)}(\\W|$)`) : null,
+      };
+    });
+
+    const matches: CuratedIndexEntry[] = [];
+    for (const e of curatedIndex.entries) {
+      const haystack =
+        (
+          e.displayName + " " + e.description + " " + e.id + " " + e.path.join(" ")
+        ).toLowerCase();
+
+      const allTokensMatch = tokens.every((t) =>
+        t.finished && t.regex ? t.regex.test(haystack) : haystack.includes(t.text)
+      );
+      if (allTokensMatch) matches.push(e);
+    }
+
+    const order: CuratedIndexEntry["kind"][] = ["marketplace", "plugin", "skill", "command", "agent"];
+    const grouped: Array<{ kind: CuratedIndexEntry["kind"]; entries: CuratedIndexEntry[] }> = [];
+    for (const k of order) {
+      const entries = matches.filter((e) => e.kind === k);
+      if (entries.length > 0) grouped.push({ kind: k, entries });
+    }
+    return { grouped, total: matches.length };
+  }, [curatedSearch, curatedIndex]);
   const [marketplaceInput, setMarketplaceInput] = useState("");
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
@@ -1521,6 +1730,7 @@ export function ManageDialog({
                   onClick={() => {
                     setPluginSubTab("browse");
                     if (!curatedData && !curatedLoading) loadCurated();
+                    if (!curatedIndex) loadCuratedIndex();
                     // Also load the registered-marketplaces list so the Browse tab
                     // can mark curated marketplaces as "Added" when already registered.
                     loadMarketplaces();
@@ -1613,13 +1823,25 @@ export function ManageDialog({
                                       {t.entry.collections.slice(0, 2).map((c) => {
                                         const col = curatedData.collections.find((x) => x.id === c);
                                         return col ? (
-                                          <span key={c} className="curated-tag">{col.icon} {col.name}</span>
+                                          <span key={c} className="curated-tag">
+                                            <CollectionIcon name={col.icon} />
+                                            <span>{col.name}</span>
+                                          </span>
                                         ) : null;
                                       })}
                                     </div>
                                     {t.kind === "marketplace" ? (
                                       registeredMarketplaceNames.has(t.entry.id) ? (
-                                        <span className="curated-installed-label">Added</span>
+                                        <div className="curated-added-group">
+                                          <span className="curated-installed-label">Added</span>
+                                          <button
+                                            className="btn-danger-small"
+                                            onClick={(e) => { e.stopPropagation(); requestRemoveMarketplace(t.entry.id, t.entry.displayName); }}
+                                            title="Remove marketplace"
+                                          >
+                                            Remove
+                                          </button>
+                                        </div>
                                       ) : (
                                         <button
                                           className="btn-primary curated-install-btn"
@@ -1669,7 +1891,8 @@ export function ManageDialog({
                                 onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
                                 title={c.description}
                               >
-                                {c.icon} {c.name}
+                                <CollectionIcon name={c.icon} />
+                                <span>{c.name}</span>
                               </button>
                             ))}
                           </div>
@@ -1698,7 +1921,64 @@ export function ManageDialog({
                         </button>
                       </div>
 
-                      {/* Entry list — renders both marketplaces and plugins */}
+                      {/* Entry list — shows top-level curated entries normally,
+                          swaps to a grouped global search view when the user types. */}
+                      {indexSearchResults ? (
+                        <div className="curated-list curated-search-list">
+                          {indexSearchResults.total === 0 ? (
+                            <div className="empty-state-inline" style={{ padding: "20px" }}>
+                              No results for "{curatedSearch}" across {curatedIndex?.entries.length ?? 0} entries
+                            </div>
+                          ) : (
+                            <>
+                              <div className="curated-search-summary">
+                                {indexSearchResults.total} match{indexSearchResults.total !== 1 ? "es" : ""} across {indexSearchResults.grouped.length} kind{indexSearchResults.grouped.length !== 1 ? "s" : ""}
+                              </div>
+                              {indexSearchResults.grouped.map((group) => (
+                                <div key={group.kind} className="curated-search-group">
+                                  <div className="curated-search-group-title">
+                                    {group.kind}{group.entries.length !== 1 ? "s" : ""}
+                                    <span className="curated-search-group-count">{group.entries.length}</span>
+                                  </div>
+                                  {group.entries.map((e) => {
+                                    const breadcrumb = e.path.length > 0 ? e.path.join(" › ") : null;
+                                    const handleResultClick = () => {
+                                      if (e.kind === "marketplace") {
+                                        const m = curatedData?.marketplaces.find((x) => x.id === e.id);
+                                        if (m) { setCuratedDetail({ kind: "marketplace", entry: m }); return; }
+                                      } else if (e.kind === "plugin") {
+                                        const p = curatedData?.plugins.find((x) => x.pluginId === e.id);
+                                        if (p) { setCuratedDetail({ kind: "plugin", entry: p }); return; }
+                                      }
+                                      if (e.sourceUrl) window.api.openExternalUrl(e.sourceUrl);
+                                    };
+                                    return (
+                                      <div
+                                        key={e.id}
+                                        className="curated-search-result clickable"
+                                        onClick={handleResultClick}
+                                        role="button"
+                                        tabIndex={0}
+                                      >
+                                        <div className="curated-search-result-header">
+                                          <span className={`curated-kind-tag kind-${e.kind}`}>{e.kind}</span>
+                                          <span className="curated-search-result-name">{e.displayName}</span>
+                                        </div>
+                                        {e.description && (
+                                          <div className="curated-search-result-desc">{e.description}</div>
+                                        )}
+                                        {breadcrumb && (
+                                          <div className="curated-search-result-path">{breadcrumb}</div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      ) : (
                       <div className="curated-list">
                         {filteredCurated.length === 0 ? (
                           <div className="empty-state-inline" style={{ padding: "20px" }}>
@@ -1741,7 +2021,8 @@ export function ManageDialog({
                                             setCuratedCollection(curatedCollection === c ? null : c);
                                           }}
                                         >
-                                          {col.icon} {col.name}
+                                          <CollectionIcon name={col.icon} />
+                                          <span>{col.name}</span>
                                         </span>
                                       ) : null;
                                     })}
@@ -1750,7 +2031,16 @@ export function ManageDialog({
                                 <div className="curated-plugin-action" onClick={(e) => e.stopPropagation()}>
                                   {t.kind === "marketplace" ? (
                                     registeredMarketplaceNames.has(t.entry.id) ? (
-                                      <span className="curated-installed-label">Added</span>
+                                      <div className="curated-added-group">
+                                        <span className="curated-installed-label">Added</span>
+                                        <button
+                                          className="btn-danger-small"
+                                          onClick={() => requestRemoveMarketplace(t.entry.id, t.entry.displayName)}
+                                          title="Remove marketplace"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
                                     ) : (
                                       <button
                                         className="btn-primary curated-install-btn"
@@ -1780,6 +2070,7 @@ export function ManageDialog({
                           })
                         )}
                       </div>
+                      )}
                     </>
                   ) : null}
 
@@ -1881,7 +2172,7 @@ export function ManageDialog({
                               {mp.name !== "claude-plugins-official" && (
                                 <button
                                   className="btn-danger-small"
-                                  onClick={() => handleRemoveMarketplace(mp.name)}
+                                  onClick={(e) => { e.stopPropagation(); requestRemoveMarketplace(mp.name); }}
                                   disabled={marketplaceLoading}
                                   title="Remove source"
                                 >
@@ -1924,7 +2215,7 @@ export function ManageDialog({
                                         {sp.installed ? (
                                           <button
                                             className="btn-danger-small"
-                                            onClick={() => onUninstall(sp.id)}
+                                            onClick={() => requestUninstallPlugin(sp.id, sp.displayName)}
                                             title="Uninstall"
                                           >
                                             Uninstall
@@ -1974,6 +2265,35 @@ export function ManageDialog({
         curatedErrors={curatedErrors}
       />
     )}
+    {pendingConfirm && (() => {
+      const affected = pendingConfirm.kind === "remove-marketplace"
+        ? getProfilesUsingMarketplace(pendingConfirm.name)
+        : getProfilesUsingPlugin(pendingConfirm.pluginId);
+      const label = pendingConfirm.displayName ?? (pendingConfirm.kind === "remove-marketplace" ? pendingConfirm.name : pendingConfirm.pluginId);
+      const thingType = pendingConfirm.kind === "remove-marketplace" ? "marketplace" : "plugin";
+      const verb = pendingConfirm.kind === "remove-marketplace" ? "Remove" : "Uninstall";
+      const title = `${verb} ${thingType} "${label}"?`;
+      const description = affected.length > 0 ? (
+        <>
+          This {thingType} is used by <strong>{affected.length}</strong> profile{affected.length !== 1 ? "s" : ""}
+          : {affected.map((p) => p.name).join(", ")}.
+          <br />
+          {affected.length === 1 ? "It" : "They"} will show as unhealthy after {verb.toLowerCase()}.
+        </>
+      ) : (
+        `This ${thingType} is not used by any profiles.`
+      );
+      return (
+        <ConfirmDialog
+          title={title}
+          description={description}
+          confirmLabel={verb}
+          confirmVariant="danger"
+          onConfirm={handleConfirmedAction}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      );
+    })()}
     </>
   );
 }

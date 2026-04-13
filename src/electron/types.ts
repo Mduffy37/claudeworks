@@ -201,6 +201,31 @@ export interface CuratedMarketplaceData {
   collections: CuratedCollection[];
 }
 
+/** A single entry in the curated search index — flat, searchable, generated. */
+export interface CuratedIndexEntry {
+  kind: "marketplace" | "plugin" | "skill" | "command" | "agent";
+  id: string;
+  displayName: string;
+  description: string;
+  sourceUrl?: string;
+  /** Breadcrumb path: parent marketplace id, then parent plugin id for deeper items. */
+  path: string[];
+  /** Present on marketplaces — collections tagged on that marketplace. */
+  collections?: string[];
+  /** Present on marketplaces — maintainer featured flag. */
+  featured?: boolean;
+  /** Present on skills — whether the user can explicitly invoke it. */
+  userInvocable?: boolean;
+}
+
+/** Pre-built search index fetched from the curator repo. Generated snapshot — not hand-edited. */
+export interface CuratedIndex {
+  version: number;
+  generatedAt: string;
+  sourceCommit?: string;
+  entries: CuratedIndexEntry[];
+}
+
 /** An available (not yet installed) plugin from a configured marketplace. */
 export interface AvailablePlugin {
   pluginId: string;
@@ -317,6 +342,8 @@ export interface ElectronAPI {
   checkForAppUpdate: () => Promise<{ available: boolean; current: string; latest: string }>;
   getCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
   refreshCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
+  getCuratedIndex: () => Promise<CuratedIndex>;
+  refreshCuratedIndex: () => Promise<CuratedIndex>;
   fetchUpstreamMarketplace: (source: string) => Promise<Record<string, any>>;
   fetchPluginItems: (source: string, pluginPath: string) => Promise<PluginItem[]>;
   fetchRepoReadme: (source: string) => Promise<string>;

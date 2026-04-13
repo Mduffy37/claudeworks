@@ -4659,6 +4659,9 @@ body {
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .curated-collection-chip:hover {
@@ -4771,6 +4774,14 @@ body {
   border: 1px solid var(--border);
   color: var(--text-secondary);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.curated-collection-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .curated-tag.clickable {
@@ -4817,6 +4828,111 @@ body {
   word-break: break-word;
   white-space: pre-wrap;
 }
+
+/* "Added" label + small Remove button paired together in the curated row action slot. */
+.curated-added-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Curated search results (global index search) ───────────────────── */
+
+.curated-search-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 14px 16px;
+}
+
+.curated-search-summary {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  padding: 4px 2px;
+}
+
+.curated-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.curated-search-group-title {
+  font-size: 0.692rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 2px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.curated-search-group-count {
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 0.692rem;
+}
+
+.curated-search-result {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.curated-search-result:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+
+.curated-search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.curated-search-result-name {
+  font-size: 0.923rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.curated-search-result-desc {
+  font-size: 0.769rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.curated-search-result-path {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.692rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Kind-specific colours for the result-type tag (marketplace/plugin/skill/command/agent). */
+.curated-kind-tag.kind-marketplace { color: #67e8f9; background: rgba(103, 232, 249, 0.1); }
+.curated-kind-tag.kind-plugin      { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
+.curated-kind-tag.kind-skill       { color: #86efac; background: rgba(134, 239, 172, 0.10); }
+.curated-kind-tag.kind-command     { color: #d4a05a; background: rgba(212, 160, 90, 0.14); }
+.curated-kind-tag.kind-agent       { color: #c4b5fd; background: rgba(196, 181, 253, 0.12); }
 
 .curated-featured-card.clickable,
 .curated-plugin-row.clickable {
