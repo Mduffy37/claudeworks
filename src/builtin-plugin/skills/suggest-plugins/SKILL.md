@@ -33,7 +33,7 @@ console.log(JSON.stringify({installed,profilePlugins}));
 4. **Ask the user** what they're looking for or what kind of work they're doing. If they don't have a specific need, look at the current directory and suggest based on the project type.
 
 5. **Present recommendations**:
-   - Highlight plugins that are curated and verified
+   - Highlight curated plugins, surfacing featured ones first
    - Show which are already installed vs not
    - Show which are in the current profile vs just installed globally
    - Group by collection when it makes sense

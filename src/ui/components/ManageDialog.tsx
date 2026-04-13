@@ -1506,14 +1506,6 @@ export function ManageDialog({
                                 <div key={p.pluginId} className="curated-featured-card">
                                   <div className="curated-featured-card-header">
                                     <span className="curated-featured-name">{p.displayName}</span>
-                                    {p.verified && (
-                                      <span className="curated-verified-badge" title="Verified">
-                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                                          <path d="M8 1L10 3.5L13 3L12.5 6L15 8L12.5 10L13 13L10 12.5L8 15L6 12.5L3 13L3.5 10L1 8L3.5 6L3 3L6 3.5L8 1Z" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" strokeWidth="1" strokeLinejoin="round"/>
-                                          <path d="M5.5 8L7 9.5L10.5 6" stroke="var(--accent)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                      </span>
-                                    )}
                                   </div>
                                   <div className="curated-featured-desc">{p.description}</div>
                                   <div className="curated-featured-footer">
@@ -1606,14 +1598,6 @@ export function ManageDialog({
                                 <div className="curated-plugin-info">
                                   <div className="curated-plugin-name-row">
                                     <span className="curated-plugin-name">{p.displayName}</span>
-                                    {p.verified && (
-                                      <span className="curated-verified-badge" title="Verified">
-                                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                                          <path d="M8 1L10 3.5L13 3L12.5 6L15 8L12.5 10L13 13L10 12.5L8 15L6 12.5L3 13L3.5 10L1 8L3.5 6L3 3L6 3.5L8 1Z" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" strokeWidth="1" strokeLinejoin="round"/>
-                                          <path d="M5.5 8L7 9.5L10.5 6" stroke="var(--accent)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                      </span>
-                                    )}
                                   </div>
                                   <div className="curated-plugin-desc">{p.description}</div>
                                   <div className="curated-plugin-meta">

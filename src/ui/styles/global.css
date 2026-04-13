@@ -4684,12 +4684,6 @@ body {
   gap: 4px;
 }
 
-.curated-verified-badge {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
 .curated-installed-label {
   font-size: 0.692rem;
   color: var(--text-muted);

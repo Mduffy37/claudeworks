@@ -156,8 +156,10 @@ export interface CuratedPlugin {
   displayName: string;
   description: string;
   marketplace: string;
+  sourceUrl: string;
+  author: string;
+  addedAt: string;
   collections: string[];
-  verified: boolean;
   featured: boolean;
 }
 
