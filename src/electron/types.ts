@@ -40,9 +40,9 @@ export interface PluginMcp {
   plugin: string; // parent plugin name
 }
 
-/** Provenance marker detected on a local plugin (e.g. a `.skillfish.json` file). */
+/** Provenance marker detected on a local plugin (e.g. a `.skillfish.json` file or `.git/` dir). */
 export interface PluginSource {
-  type: "skillfish";
+  type: "skillfish" | "git";
   metadata?: Record<string, any>;
 }
 

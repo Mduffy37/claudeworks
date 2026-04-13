@@ -3015,6 +3015,10 @@ body {
   color: #67e8f9;
 }
 
+.plugin-source-git {
+  color: #c4b5fd;
+}
+
 .mcp-servers {
   padding-top: 8px;
   border-top: 1px solid var(--border);

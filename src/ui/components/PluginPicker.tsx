@@ -129,6 +129,19 @@ export function PluginPicker({
                   skillfish
                 </span>
               )}
+              {plugin.source?.type === "git" && (
+                <span
+                  className="plugin-source plugin-source-git"
+                  title={(() => {
+                    const m = plugin.source.metadata ?? {};
+                    const ownerRepo = m.owner && m.repo ? `${m.owner}/${m.repo}` : m.url ?? "unknown";
+                    const branch = m.branch ? ` · ${m.branch}` : "";
+                    return `Git-managed skill from ${ownerRepo}${branch}`;
+                  })()}
+                >
+                  git
+                </span>
+              )}
             </span>
 
             {/* Badge row — always visible type breakdown */}

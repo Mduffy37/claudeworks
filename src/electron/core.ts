@@ -553,6 +553,44 @@ function readSkillfishMarker(skillDir: string): Record<string, any> | null {
   }
 }
 
+/** Parse `owner/repo` out of a git remote URL. Returns null if we can't. */
+function parseRemoteOwnerRepo(url: string): { owner: string; repo: string } | null {
+  // https://github.com/owner/repo.git  |  git@github.com:owner/repo.git  |  https://gitlab.com/group/sub/repo
+  const clean = url.replace(/\.git$/, "").replace(/\/$/, "");
+  const sshMatch = clean.match(/^[^@]+@[^:]+:(.+)$/);
+  const path = sshMatch ? sshMatch[1] : clean.replace(/^[a-z]+:\/\/[^/]+\//, "");
+  const parts = path.split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+  return { owner: parts[parts.length - 2], repo: parts[parts.length - 1] };
+}
+
+/**
+ * Detect a git-managed skill folder by presence of `.git/`, and extract the remote
+ * URL, branch, and sha via subprocess. Returns null if anything fails.
+ */
+function detectGitSource(skillDir: string): Record<string, any> | null {
+  const gitDir = path.join(skillDir, ".git");
+  if (!fs.existsSync(gitDir)) return null;
+  try {
+    const run = (args: string[]) =>
+      execFileSync("git", ["-C", skillDir, ...args], { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const url = (() => { try { return run(["remote", "get-url", "origin"]); } catch { return ""; } })();
+    const branch = (() => { try { return run(["rev-parse", "--abbrev-ref", "HEAD"]); } catch { return ""; } })();
+    const sha = (() => { try { return run(["rev-parse", "HEAD"]); } catch { return ""; } })();
+    if (!url && !branch && !sha) return null;
+    const parsed = url ? parseRemoteOwnerRepo(url) : null;
+    return {
+      url: url || undefined,
+      branch: branch || undefined,
+      sha: sha || undefined,
+      owner: parsed?.owner,
+      repo: parsed?.repo,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function scanUserLocalPlugins(): PluginWithItems[] {
   const claudeHome = path.join(os.homedir(), ".claude");
   const plugins: PluginWithItems[] = [];
@@ -599,8 +637,14 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
         });
       } else {
         const skillDir = path.join(skillsDir, entry.name);
-        const marker = readSkillfishMarker(skillDir);
-        const source = marker ? { type: "skillfish" as const, metadata: marker } : undefined;
+        const skillfishMarker = readSkillfishMarker(skillDir);
+        let source: import("./types").PluginSource | undefined;
+        if (skillfishMarker) {
+          source = { type: "skillfish", metadata: skillfishMarker };
+        } else {
+          const gitMeta = detectGitSource(skillDir);
+          if (gitMeta) source = { type: "git", metadata: gitMeta };
+        }
         plugins.push(makePlugin(pluginName, [{
           name: skillName,
           description: fm.description ?? "",
