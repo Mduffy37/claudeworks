@@ -227,6 +227,43 @@ body {
   background: var(--bg-hover);
 }
 
+.app-refresh-btn {
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  position: absolute;
+  top: 50%;
+  right: 40px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.app-refresh-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.app-refresh-btn:disabled {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.app-refresh-btn .refresh-icon.spinning {
+  animation: app-refresh-spin 0.7s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes app-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
 .drag-bar-title {
   font-size: 0.923rem;
   font-weight: 600;

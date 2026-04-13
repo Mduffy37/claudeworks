@@ -28,6 +28,7 @@ export function App() {
   const [showManageDialog, setShowManageDialog] = useState(false);
   const [showBulkManage, setShowBulkManage] = useState(false);
   const [showAppSettings, setShowAppSettings] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [importedProjects, setImportedProjects] = useState<string[]>([]);
   const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
   const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook, renameTeam: renameTeamHook } =
@@ -62,6 +63,24 @@ export function App() {
   const refreshImportedProjects = useCallback(() => {
     window.api.getImportedProjects().then(setImportedProjects);
   }, []);
+
+  const handleHardRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        Promise.resolve(refreshPlugins()),
+        Promise.resolve(refresh()),
+        Promise.resolve(refreshTeams()),
+        Promise.resolve(refreshHealth()),
+        Promise.resolve(refreshTeamHealth()),
+        Promise.resolve(refreshImportedProjects()),
+        window.api.refreshCuratedMarketplace().catch(() => undefined),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, refreshPlugins, refresh, refreshTeams, refreshHealth, refreshTeamHealth, refreshImportedProjects]);
 
   useEffect(() => {
     refreshImportedProjects();
@@ -309,6 +328,23 @@ export function App() {
           <img src="./logo.svg" alt="" width="16" height="16" className="drag-bar-logo" />
           <span className="drag-bar-title">Claude Profiles</span>
         </div>
+        <button
+          className="app-refresh-btn"
+          onClick={handleHardRefresh}
+          disabled={isRefreshing}
+          title="Reload all plugins, profiles, and teams from disk"
+        >
+          <svg
+            className={`refresh-icon${isRefreshing ? " spinning" : ""}`}
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            <path d="M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         <button className="app-settings-btn" onClick={() => setShowAppSettings(true)} title="App Settings">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" fill="none" />
