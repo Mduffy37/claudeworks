@@ -159,12 +159,26 @@ export interface Prompt {
   updatedAt: number;
 }
 
+/** A curated marketplace listing from the marketplace repo (v2 schema). */
+export interface CuratedMarketplace {
+  id: string;              // upstream marketplace's internal `name` field, used for plugin ↔ marketplace filter matching
+  source: string;          // owner/repo — passed to `claude plugin marketplace add <source>`
+  displayName: string;
+  description: string;
+  author: string;
+  sourceUrl: string;       // browser-friendly GitHub URL
+  pluginCount: number;     // size indicator, allowed to be mildly stale
+  collections: string[];
+  addedAt: string;
+  featured: boolean;
+}
+
 /** A curated plugin listing from the marketplace repo. */
 export interface CuratedPlugin {
   pluginId: string;
   displayName: string;
   description: string;
-  marketplace: string;
+  marketplace: string;     // references a CuratedMarketplace.id when available, else informational
   sourceUrl: string;
   author: string;
   addedAt: string;
@@ -182,6 +196,7 @@ export interface CuratedCollection {
 
 /** Combined curated marketplace data. */
 export interface CuratedMarketplaceData {
+  marketplaces: CuratedMarketplace[];
   plugins: CuratedPlugin[];
   collections: CuratedCollection[];
 }
@@ -294,6 +309,7 @@ export interface ElectronAPI {
   getGitContext: (dir: string) => Promise<{ branch: string; dirty: boolean; isRepo: boolean }>;
   openInFinder: (path: string) => Promise<void>;
   revealInFinder: (path: string) => Promise<void>;
+  openExternalUrl: (url: string) => Promise<void>;
   getProfileConfigDir: (name: string) => Promise<string>;
   getClaudeHome: () => Promise<string>;
   getAnalytics: (since?: number, project?: string) => Promise<AnalyticsData>;
@@ -301,6 +317,9 @@ export interface ElectronAPI {
   checkForAppUpdate: () => Promise<{ available: boolean; current: string; latest: string }>;
   getCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
   refreshCuratedMarketplace: () => Promise<CuratedMarketplaceData>;
+  fetchUpstreamMarketplace: (source: string) => Promise<Record<string, any>>;
+  fetchPluginItems: (source: string, pluginPath: string) => Promise<PluginItem[]>;
+  fetchRepoReadme: (source: string) => Promise<string>;
 }
 
 export interface ActiveSession {

@@ -72,10 +72,14 @@ const api: ElectronAPI = {
   getGitContext: (dir) => ipcRenderer.invoke("get-git-context", dir),
   openInFinder: (path) => ipcRenderer.invoke("open-in-finder", path),
   revealInFinder: (path) => ipcRenderer.invoke("reveal-in-finder", path),
+  openExternalUrl: (url) => ipcRenderer.invoke("open-external-url", url),
   getProfileConfigDir: (name) => ipcRenderer.invoke("get-profile-config-dir", name),
   getClaudeHome: () => ipcRenderer.invoke("get-claude-home"),
   getCuratedMarketplace: () => ipcRenderer.invoke("get-curated-marketplace"),
   refreshCuratedMarketplace: () => ipcRenderer.invoke("refresh-curated-marketplace"),
+  fetchUpstreamMarketplace: (source) => ipcRenderer.invoke("fetch-upstream-marketplace", source),
+  fetchPluginItems: (source, pluginPath) => ipcRenderer.invoke("fetch-plugin-items", source, pluginPath),
+  fetchRepoReadme: (source) => ipcRenderer.invoke("fetch-repo-readme", source),
 };
 
 contextBridge.exposeInMainWorld("api", api);

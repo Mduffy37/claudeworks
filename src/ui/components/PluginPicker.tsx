@@ -117,6 +117,14 @@ export function PluginPicker({
               {plugin.marketplace !== "local" && (
                 <span className="plugin-version">v{plugin.version}</span>
               )}
+              {plugin.marketplace && plugin.marketplace !== "local" && plugin.marketplace !== "builtin" && (
+                <span
+                  className="plugin-source plugin-source-marketplace"
+                  title={`From marketplace: ${plugin.marketplace}`}
+                >
+                  {plugin.marketplace}
+                </span>
+              )}
               {plugin.source?.type === "skillfish" && (
                 <span
                   className="plugin-source plugin-source-skillfish"

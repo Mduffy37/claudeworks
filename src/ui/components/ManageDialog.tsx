@@ -3,8 +3,13 @@ import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
 import { DiscoverList } from "./DiscoverList";
 import { DiscoverDetail } from "./DiscoverDetail";
-import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, CuratedCollection, CuratedMarketplaceData } from "../../electron/types";
+import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, CuratedMarketplace, CuratedCollection, CuratedMarketplaceData } from "../../electron/types";
 import { PromptPicker } from "./PromptPicker";
+import { CuratedDetailModal } from "./CuratedDetailModal";
+
+type CuratedDetailTarget =
+  | { kind: "marketplace"; entry: CuratedMarketplace }
+  | { kind: "plugin"; entry: CuratedPlugin };
 
 type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health";
 
@@ -1204,6 +1209,8 @@ export function ManageDialog({
   const [curatedCollection, setCuratedCollection] = useState<string | null>(null);
   const [curatedSearch, setCuratedSearch] = useState("");
   const [curatedInstalling, setCuratedInstalling] = useState<string | null>(null);
+  const [curatedErrors, setCuratedErrors] = useState<Record<string, string>>({});
+  const [curatedDetail, setCuratedDetail] = useState<CuratedDetailTarget | null>(null);
   const [showMarketplacePlugins, setShowMarketplacePlugins] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
   const [sourcesPluginsLoaded, setSourcesPluginsLoaded] = useState(false);
@@ -1234,45 +1241,122 @@ export function ManageDialog({
     }
   };
 
+  // Extract `owner/repo` from a GitHub URL (HTTPS or SSH). Used as a fallback
+  // when a curated plugin entry has no matching marketplace in marketplaces[].
+  function parseOwnerRepoFromUrl(url: string): string | null {
+    if (!url) return null;
+    const clean = url.replace(/\.git$/, "").replace(/\/$/, "");
+    const match = clean.match(/github\.com[/:]([^/]+)\/([^/]+?)(?:\/.*)?$/);
+    return match ? `${match[1]}/${match[2]}` : null;
+  }
+
+  const clearCuratedError = (pluginId: string) => {
+    setCuratedErrors((prev) => {
+      if (!(pluginId in prev)) return prev;
+      const next = { ...prev };
+      delete next[pluginId];
+      return next;
+    });
+  };
+
   const handleCuratedInstall = async (pluginId: string) => {
     setCuratedInstalling(pluginId);
+    clearCuratedError(pluginId);
     try {
-      // Auto-add the marketplace source if not already registered
       const plugin = curatedData?.plugins.find((p) => p.pluginId === pluginId);
-      if (plugin?.marketplace) {
-        const currentMarketplaces = await window.api.listMarketplaces();
-        if (!currentMarketplaces.some((m) => m.name === plugin.marketplace)) {
-          await window.api.addMarketplace(plugin.marketplace);
-        }
+      if (!plugin) throw new Error(`Curated plugin not found: ${pluginId}`);
+
+      // Resolve the marketplace source (owner/repo) to pass to
+      // `claude plugin marketplace add`. Preference order:
+      //   1. If the plugin's `marketplace` field matches a curated CuratedMarketplace.id,
+      //      use that entry's `source` — this is the authoritative mapping.
+      //   2. Otherwise, parse owner/repo from the plugin's sourceUrl.
+      // Either way we fail loud (visible error) if nothing is resolvable.
+      let marketplaceSource: string | null = null;
+      if (plugin.marketplace && curatedData?.marketplaces) {
+        const m = curatedData.marketplaces.find((x) => x.id === plugin.marketplace);
+        if (m?.source) marketplaceSource = m.source;
       }
+      if (!marketplaceSource) {
+        marketplaceSource = parseOwnerRepoFromUrl(plugin.sourceUrl);
+      }
+      if (!marketplaceSource) {
+        throw new Error(
+          `Cannot resolve marketplace source for ${pluginId}. Add a matching entry to the curated marketplaces[] array, or make sure sourceUrl is a valid GitHub URL.`
+        );
+      }
+
+      const currentMarketplaces = await window.api.listMarketplaces();
+      const alreadyRegistered = currentMarketplaces.some((m) => m.name === plugin.marketplace);
+      if (!alreadyRegistered) {
+        await window.api.addMarketplace(marketplaceSource);
+      }
+
       await window.api.installPlugin(pluginId);
       onPluginsChanged?.();
     } catch (err: any) {
-      // Silently fail — the install button will reset
+      const message = err?.message ?? String(err);
+      setCuratedErrors((prev) => ({ ...prev, [pluginId]: message }));
     } finally {
       setCuratedInstalling(null);
     }
   };
 
-  const filteredCurated = useMemo(() => {
+  const handleCuratedMarketplaceAdd = async (marketplaceId: string) => {
+    const key = `mkt:${marketplaceId}`;
+    setCuratedInstalling(key);
+    clearCuratedError(key);
+    try {
+      const m = curatedData?.marketplaces.find((x) => x.id === marketplaceId);
+      if (!m) throw new Error(`Curated marketplace not found: ${marketplaceId}`);
+      const current = await window.api.listMarketplaces();
+      if (!current.some((x) => x.name === m.id)) {
+        await window.api.addMarketplace(m.source);
+      }
+      // Refresh the registered-marketplaces list so the row re-renders as "Added".
+      await loadMarketplaces();
+      onPluginsChanged?.();
+    } catch (err: any) {
+      const message = err?.message ?? String(err);
+      setCuratedErrors((prev) => ({ ...prev, [key]: message }));
+    } finally {
+      setCuratedInstalling(null);
+    }
+  };
+
+  // Build a lookup set so row renders can check "is this marketplace registered?" in O(1).
+  const registeredMarketplaceNames = useMemo(() => new Set(marketplaces.map((m) => m.name)), [marketplaces]);
+
+  // Unify marketplaces + plugins into a single list of CuratedDetailTarget entries
+  // so the UI can render them together. Each entry carries its kind so the row
+  // render can branch on marketplace vs plugin behaviour.
+  const allCuratedEntries = useMemo((): CuratedDetailTarget[] => {
     if (!curatedData) return [];
-    let result = curatedData.plugins;
+    const marketplaces: CuratedDetailTarget[] = curatedData.marketplaces.map((m) => ({ kind: "marketplace", entry: m }));
+    const plugins: CuratedDetailTarget[] = curatedData.plugins.map((p) => ({ kind: "plugin", entry: p }));
+    return [...marketplaces, ...plugins];
+  }, [curatedData]);
+
+  const filteredCurated = useMemo(() => {
+    let result = allCuratedEntries;
     if (curatedCollection) {
-      result = result.filter((p) => p.collections.includes(curatedCollection));
+      result = result.filter((t) => t.entry.collections.includes(curatedCollection));
     }
     const q = curatedSearch.toLowerCase().trim();
     if (q) {
-      result = result.filter(
-        (p) => p.displayName.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.pluginId.toLowerCase().includes(q)
-      );
+      result = result.filter((t) => {
+        const name = t.entry.displayName.toLowerCase();
+        const desc = t.entry.description.toLowerCase();
+        const idOrPid = t.kind === "marketplace" ? t.entry.id.toLowerCase() : t.entry.pluginId.toLowerCase();
+        return name.includes(q) || desc.includes(q) || idOrPid.includes(q);
+      });
     }
     return result;
-  }, [curatedData, curatedCollection, curatedSearch]);
+  }, [allCuratedEntries, curatedCollection, curatedSearch]);
 
   const featuredCurated = useMemo(() => {
-    if (!curatedData) return [];
-    return curatedData.plugins.filter((p) => p.featured);
-  }, [curatedData]);
+    return allCuratedEntries.filter((t) => t.entry.featured);
+  }, [allCuratedEntries]);
   const [marketplaceInput, setMarketplaceInput] = useState("");
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
@@ -1372,6 +1456,7 @@ export function ManageDialog({
   const selectedPluginData = plugins.find((p) => p.name === selectedPlugin) ?? null;
 
   return (
+    <>
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div
         className="manage-dialog"
@@ -1436,6 +1521,9 @@ export function ManageDialog({
                   onClick={() => {
                     setPluginSubTab("browse");
                     if (!curatedData && !curatedLoading) loadCurated();
+                    // Also load the registered-marketplaces list so the Browse tab
+                    // can mark curated marketplaces as "Added" when already registered.
+                    loadMarketplaces();
                   }}
                 >
                   Browse
@@ -1499,36 +1587,63 @@ export function ManageDialog({
                         <div className="curated-featured">
                           <div className="curated-section-title">Featured</div>
                           <div className="curated-featured-row">
-                            {featuredCurated.map((p) => {
-                              const isInstalled = installedPluginIds.has(p.pluginId);
-                              const isInstalling = curatedInstalling === p.pluginId;
+                            {featuredCurated.map((t) => {
+                              const key = t.kind === "marketplace" ? `mkt:${t.entry.id}` : t.entry.pluginId;
+                              const isInstalled = t.kind === "plugin" && installedPluginIds.has(t.entry.pluginId);
+                              const isInstalling = curatedInstalling === key;
                               return (
-                                <div key={p.pluginId} className="curated-featured-card">
+                                <div
+                                  key={key}
+                                  className="curated-featured-card clickable"
+                                  onClick={() => setCuratedDetail(t)}
+                                  role="button"
+                                  tabIndex={0}
+                                >
                                   <div className="curated-featured-card-header">
-                                    <span className="curated-featured-name">{p.displayName}</span>
+                                    <span className="curated-featured-name">{t.entry.displayName}</span>
+                                    <span className="curated-kind-tag">
+                                      {t.kind === "marketplace"
+                                        ? `marketplace · ${t.entry.pluginCount} plugins`
+                                        : "plugin"}
+                                    </span>
                                   </div>
-                                  <div className="curated-featured-desc">{p.description}</div>
+                                  <div className="curated-featured-desc">{t.entry.description}</div>
                                   <div className="curated-featured-footer">
                                     <div className="curated-collection-tags">
-                                      {p.collections.slice(0, 2).map((c) => {
+                                      {t.entry.collections.slice(0, 2).map((c) => {
                                         const col = curatedData.collections.find((x) => x.id === c);
                                         return col ? (
                                           <span key={c} className="curated-tag">{col.icon} {col.name}</span>
                                         ) : null;
                                       })}
                                     </div>
-                                    {isInstalled ? (
+                                    {t.kind === "marketplace" ? (
+                                      registeredMarketplaceNames.has(t.entry.id) ? (
+                                        <span className="curated-installed-label">Added</span>
+                                      ) : (
+                                        <button
+                                          className="btn-primary curated-install-btn"
+                                          onClick={(e) => { e.stopPropagation(); handleCuratedMarketplaceAdd(t.entry.id); }}
+                                          disabled={isInstalling}
+                                        >
+                                          {isInstalling ? "..." : "Add"}
+                                        </button>
+                                      )
+                                    ) : isInstalled ? (
                                       <span className="curated-installed-label">Installed</span>
                                     ) : (
                                       <button
                                         className="btn-primary curated-install-btn"
-                                        onClick={() => handleCuratedInstall(p.pluginId)}
+                                        onClick={(e) => { e.stopPropagation(); handleCuratedInstall(t.entry.pluginId); }}
                                         disabled={isInstalling}
                                       >
                                         {isInstalling ? "..." : "Install"}
                                       </button>
                                     )}
                                   </div>
+                                  {curatedErrors[key] && (
+                                    <div className="curated-install-error">{curatedErrors[key]}</div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -1583,32 +1698,48 @@ export function ManageDialog({
                         </button>
                       </div>
 
-                      {/* Plugin list */}
+                      {/* Entry list — renders both marketplaces and plugins */}
                       <div className="curated-list">
                         {filteredCurated.length === 0 ? (
                           <div className="empty-state-inline" style={{ padding: "20px" }}>
-                            {curatedSearch || curatedCollection ? "No matching plugins" : "No curated plugins available"}
+                            {curatedSearch || curatedCollection ? "No matching entries" : "No curated marketplaces or plugins available"}
                           </div>
                         ) : (
-                          filteredCurated.map((p) => {
-                            const isInstalled = installedPluginIds.has(p.pluginId);
-                            const isInstalling = curatedInstalling === p.pluginId;
+                          filteredCurated.map((t) => {
+                            const key = t.kind === "marketplace" ? `mkt:${t.entry.id}` : t.entry.pluginId;
+                            const isInstalled = t.kind === "plugin" && installedPluginIds.has(t.entry.pluginId);
+                            const isInstalling = curatedInstalling === key;
+                            const sourceLabel = t.kind === "marketplace"
+                              ? `marketplace · ${t.entry.pluginCount} plugins`
+                              : t.entry.marketplace;
                             return (
-                              <div key={p.pluginId} className="curated-plugin-row">
+                              <div
+                                key={key}
+                                className="curated-plugin-row clickable"
+                                onClick={() => setCuratedDetail(t)}
+                                role="button"
+                                tabIndex={0}
+                              >
                                 <div className="curated-plugin-info">
                                   <div className="curated-plugin-name-row">
-                                    <span className="curated-plugin-name">{p.displayName}</span>
+                                    <span className="curated-plugin-name">{t.entry.displayName}</span>
+                                    <span className="curated-kind-tag">
+                                      {t.kind === "marketplace" ? "marketplace" : "plugin"}
+                                    </span>
                                   </div>
-                                  <div className="curated-plugin-desc">{p.description}</div>
+                                  <div className="curated-plugin-desc">{t.entry.description}</div>
                                   <div className="curated-plugin-meta">
-                                    <span className="curated-plugin-source">{p.marketplace}</span>
-                                    {p.collections.map((c) => {
+                                    <span className="curated-plugin-source">{sourceLabel}</span>
+                                    {t.entry.collections.map((c) => {
                                       const col = curatedData.collections.find((x) => x.id === c);
                                       return col ? (
                                         <span
                                           key={c}
                                           className={`curated-tag clickable${curatedCollection === c ? " active" : ""}`}
-                                          onClick={() => setCuratedCollection(curatedCollection === c ? null : c)}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCuratedCollection(curatedCollection === c ? null : c);
+                                          }}
                                         >
                                           {col.icon} {col.name}
                                         </span>
@@ -1616,17 +1747,32 @@ export function ManageDialog({
                                     })}
                                   </div>
                                 </div>
-                                <div className="curated-plugin-action">
-                                  {isInstalled ? (
+                                <div className="curated-plugin-action" onClick={(e) => e.stopPropagation()}>
+                                  {t.kind === "marketplace" ? (
+                                    registeredMarketplaceNames.has(t.entry.id) ? (
+                                      <span className="curated-installed-label">Added</span>
+                                    ) : (
+                                      <button
+                                        className="btn-primary curated-install-btn"
+                                        onClick={() => handleCuratedMarketplaceAdd(t.entry.id)}
+                                        disabled={isInstalling}
+                                      >
+                                        {isInstalling ? "Adding..." : "Add"}
+                                      </button>
+                                    )
+                                  ) : isInstalled ? (
                                     <span className="curated-installed-label">Installed</span>
                                   ) : (
                                     <button
                                       className="btn-primary curated-install-btn"
-                                      onClick={() => handleCuratedInstall(p.pluginId)}
+                                      onClick={() => handleCuratedInstall(t.entry.pluginId)}
                                       disabled={isInstalling}
                                     >
                                       {isInstalling ? "Installing..." : "Install"}
                                     </button>
+                                  )}
+                                  {curatedErrors[key] && (
+                                    <div className="curated-install-error">{curatedErrors[key]}</div>
                                   )}
                                 </div>
                               </div>
@@ -1816,5 +1962,18 @@ export function ManageDialog({
         </div>
       </div>
     </div>
+    {curatedDetail && (
+      <CuratedDetailModal
+        target={curatedDetail}
+        installedPluginIds={installedPluginIds}
+        registeredMarketplaceIds={registeredMarketplaceNames}
+        onClose={() => setCuratedDetail(null)}
+        onInstallPlugin={(pid) => handleCuratedInstall(pid)}
+        onAddMarketplace={(mid) => handleCuratedMarketplaceAdd(mid)}
+        curatedInstalling={curatedInstalling}
+        curatedErrors={curatedErrors}
+      />
+    )}
+    </>
   );
 }

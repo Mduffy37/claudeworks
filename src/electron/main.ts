@@ -56,6 +56,9 @@ import {
   ensureBuiltinPlugin,
   getCuratedMarketplace,
   refreshCuratedMarketplace,
+  fetchUpstreamMarketplace,
+  fetchPluginItems,
+  fetchRepoReadme,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -481,10 +484,14 @@ ipcMain.handle("get-git-context", async (_event, dir: string) => {
 });
 ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(filePath));
 ipcMain.handle("reveal-in-finder", (_event, filePath: string) => shell.showItemInFolder(filePath));
+ipcMain.handle("open-external-url", (_event, url: string) => shell.openExternal(url));
 ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
 ipcMain.handle("get-claude-home", () => getClaudeHome());
 ipcMain.handle("get-curated-marketplace", () => getCuratedMarketplace());
 ipcMain.handle("refresh-curated-marketplace", () => refreshCuratedMarketplace());
+ipcMain.handle("fetch-upstream-marketplace", (_event, source: string) => fetchUpstreamMarketplace(source));
+ipcMain.handle("fetch-plugin-items", (_event, source: string, pluginPath: string) => fetchPluginItems(source, pluginPath));
+ipcMain.handle("fetch-repo-readme", (_event, source: string) => fetchRepoReadme(source));
 
 // ---------------------------------------------------------------------------
 // App lifecycle

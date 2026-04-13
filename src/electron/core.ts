@@ -95,27 +95,75 @@ function readPluginManifest(pluginRoot: string): Record<string, any> | null {
 }
 
 /**
- * Resolve a manifest-declared item path (relative to plugin root) into the
- * actual .md file on disk. Manifest entries can point at either:
- *   - a directory containing SKILL.md (for skills)
- *   - a single .md file (for commands/agents, or skills with an inline file)
- * Returns null if nothing resolvable exists.
+ * Normalise a plugin.json `skills`/`commands`/`agents` field to a list of strings.
+ * Accepts: an array (documented form), a single string (shorthand used by plugins
+ * with only one item of that kind), or anything else (→ null = "not declared").
  */
-function resolveManifestEntry(pluginRoot: string, entry: string, kind: "skill" | "command" | "agent"): string | null {
-  if (typeof entry !== "string" || !entry) return null;
-  // Refuse anything that escapes the plugin root.
+function normaliseManifestPaths(v: unknown): string[] | null {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+  if (typeof v === "string") return [v];
+  return null;
+}
+
+/**
+ * Resolve a manifest-declared SKILL entry into one or more concrete SKILL.md paths.
+ *
+ * The Claude Code plugin spec lets a manifest point at a directory. There are
+ * two legitimate interpretations of that:
+ *
+ *   1. The directory IS a skill (contains SKILL.md directly). One item.
+ *   2. The directory CONTAINS skills (has subdirectories with SKILL.md each).
+ *      Multiple items. This is how plugins group many related skills — e.g.
+ *      engineering-advanced-skills uses `"skills": "./"` with 44 subdirs.
+ *
+ * Resolution order: prefer subdirectories. If any immediate child subdirectory
+ * contains a SKILL.md, return all of them. Otherwise, if the directory itself
+ * has a SKILL.md, return that as a single item. Otherwise empty.
+ */
+function resolveSkillManifestEntry(pluginRoot: string, entry: string): string[] {
+  if (typeof entry !== "string") return [];
   const absolute = path.resolve(pluginRoot, entry);
-  if (!absolute.startsWith(path.resolve(pluginRoot) + path.sep) && absolute !== path.resolve(pluginRoot)) return null;
-  if (!fs.existsSync(absolute)) return null;
+  const rootResolved = path.resolve(pluginRoot);
+  // Refuse anything that escapes the plugin root.
+  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return [];
+  if (!fs.existsSync(absolute)) return [];
 
   const stat = fs.statSync(absolute);
-  if (stat.isDirectory()) {
-    if (kind === "skill") {
-      const skillMd = path.join(absolute, "SKILL.md");
-      return fs.existsSync(skillMd) ? skillMd : null;
+  if (stat.isFile() && absolute.endsWith(".md")) return [absolute];
+  if (!stat.isDirectory()) return [];
+
+  // Prefer subdirectories with SKILL.md (multi-skill container layout).
+  const subdirs: string[] = [];
+  try {
+    for (const child of fs.readdirSync(absolute, { withFileTypes: true })) {
+      if (!child.isDirectory()) continue;
+      const skillMd = path.join(absolute, child.name, "SKILL.md");
+      if (fs.existsSync(skillMd)) subdirs.push(skillMd);
     }
-    return null;
+  } catch {
+    // ignore
   }
+  if (subdirs.length > 0) return subdirs;
+
+  // Single-skill layout: the directory itself has SKILL.md.
+  const directSkillMd = path.join(absolute, "SKILL.md");
+  if (fs.existsSync(directSkillMd)) return [directSkillMd];
+
+  return [];
+}
+
+/**
+ * Resolve a manifest-declared command/agent entry into a single .md file path.
+ * Commands and agents don't support the container pattern — each entry points
+ * at exactly one file.
+ */
+function resolveSingleFileManifestEntry(pluginRoot: string, entry: string): string | null {
+  if (typeof entry !== "string") return null;
+  const absolute = path.resolve(pluginRoot, entry);
+  const rootResolved = path.resolve(pluginRoot);
+  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return null;
+  if (!fs.existsSync(absolute)) return null;
+  const stat = fs.statSync(absolute);
   if (stat.isFile() && absolute.endsWith(".md")) return absolute;
   return null;
 }
@@ -145,20 +193,26 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   if (!fs.existsSync(base)) return items;
 
   // Per the Claude Code plugin spec, plugin.json `skills` / `commands` / `agents`
-  // arrays REPLACE the corresponding conventional directory scan. They are not
+  // paths REPLACE the corresponding conventional directory scan. They are not
   // additive — when declared, the default directory is ignored entirely.
   // https://code.claude.com/docs/en/plugins-reference#path-behavior-rules
   const manifest = readPluginManifest(base);
-  const manifestSkillsDeclared = Array.isArray(manifest?.skills);
-  const manifestCommandsDeclared = Array.isArray(manifest?.commands);
-  const manifestAgentsDeclared = Array.isArray(manifest?.agents);
+  const manifestSkills = manifest ? normaliseManifestPaths(manifest.skills) : null;
+  const manifestCommands = manifest ? normaliseManifestPaths(manifest.commands) : null;
+  const manifestAgents = manifest ? normaliseManifestPaths(manifest.agents) : null;
 
-  // Skills
-  if (manifestSkillsDeclared) {
-    for (const entry of manifest!.skills) {
-      const resolved = resolveManifestEntry(base, entry, "skill");
-      if (!resolved) continue;
-      items.push(buildItem(plugin.name, resolved, "skill", path.basename(path.dirname(resolved))));
+  // Skills — manifest entries may resolve to multiple SKILL.md files when
+  // the declared path is a container directory (e.g. `"skills": "./"` in a
+  // plugin with 40+ nested skill subdirectories).
+  if (manifestSkills) {
+    const seenSkillPaths = new Set<string>();
+    for (const entry of manifestSkills) {
+      const resolvedPaths = resolveSkillManifestEntry(base, entry);
+      for (const skillMd of resolvedPaths) {
+        if (seenSkillPaths.has(skillMd)) continue;
+        seenSkillPaths.add(skillMd);
+        items.push(buildItem(plugin.name, skillMd, "skill", path.basename(path.dirname(skillMd))));
+      }
     }
   } else {
     const skillsDir = path.join(base, "skills");
@@ -173,9 +227,9 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   }
 
   // Commands
-  if (manifestCommandsDeclared) {
-    for (const entry of manifest!.commands) {
-      const resolved = resolveManifestEntry(base, entry, "command");
+  if (manifestCommands) {
+    for (const entry of manifestCommands) {
+      const resolved = resolveSingleFileManifestEntry(base, entry);
       if (!resolved) continue;
       items.push(buildItem(plugin.name, resolved, "command", path.basename(resolved, ".md")));
     }
@@ -190,9 +244,9 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   }
 
   // Agents
-  if (manifestAgentsDeclared) {
-    for (const entry of manifest!.agents) {
-      const resolved = resolveManifestEntry(base, entry, "agent");
+  if (manifestAgents) {
+    for (const entry of manifestAgents) {
+      const resolved = resolveSingleFileManifestEntry(base, entry);
       if (!resolved) continue;
       items.push(buildItem(plugin.name, resolved, "agent", path.basename(resolved, ".md")));
     }
@@ -3112,15 +3166,267 @@ import type { CuratedMarketplaceData } from "./types";
 
 let curatedCache: CuratedMarketplaceData | null = null;
 
+function ghBinary(): string {
+  return process.env.GH_PATH ?? "/opt/homebrew/bin/gh";
+}
+
 async function fetchGitHubFileContent(repoPath: string): Promise<string> {
-  const ghPath = process.env.GH_PATH ?? "/opt/homebrew/bin/gh";
-  const { stdout } = await execFileAsync(ghPath, [
+  const { stdout } = await execFileAsync(ghBinary(), [
     "api",
     `repos/Mduffy37/claude-profiles-marketplace/contents/${repoPath}`,
     "--jq", ".content",
   ], { timeout: 15000 });
-  // gh api returns base64-encoded content; strip whitespace before decoding
   return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+}
+
+/** Fetch a file's content (decoded) from any public GitHub repo via `gh api`. */
+async function fetchAnyRepoFile(source: string, filePath: string): Promise<string> {
+  const { stdout } = await execFileAsync(ghBinary(), [
+    "api",
+    `repos/${source}/contents/${filePath}`,
+    "--jq", ".content",
+  ], { timeout: 15000 });
+  return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+}
+
+/** List a directory's contents in any public GitHub repo. Returns entries with name/type/path. */
+async function fetchAnyRepoDir(source: string, dirPath: string): Promise<Array<{ name: string; type: string; path: string }>> {
+  const { stdout } = await execFileAsync(ghBinary(), [
+    "api",
+    `repos/${source}/contents/${dirPath}`,
+  ], { timeout: 15000 });
+  const data = JSON.parse(stdout);
+  if (!Array.isArray(data)) return [];
+  return data.map((e: any) => ({ name: e.name, type: e.type, path: e.path }));
+}
+
+/** Content-based frontmatter parser — mirrors readFrontmatter() but takes a string instead of a file path. */
+function parseFrontmatterString(content: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const lines = content.split("\n");
+  if (!lines[0] || lines[0].trim() !== "---") return result;
+
+  let currentKey: string | null = null;
+  let multilineValue: string[] = [];
+
+  const flushMultiline = () => {
+    if (currentKey && multilineValue.length > 0) {
+      result[currentKey] = multilineValue.join(" ").trim();
+    }
+    currentKey = null;
+    multilineValue = [];
+  };
+
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") { flushMultiline(); break; }
+    if (currentKey && lines[i].length > 0 && (lines[i][0] === " " || lines[i][0] === "\t")) {
+      multilineValue.push(lines[i].trim());
+      continue;
+    }
+    flushMultiline();
+    const colonIdx = lines[i].indexOf(":");
+    if (colonIdx !== -1) {
+      const key = lines[i].slice(0, colonIdx).trim();
+      const value = lines[i].slice(colonIdx + 1).trim();
+      if (value === ">" || value === "|" || value === ">-" || value === "|-") {
+        currentKey = key;
+        multilineValue = [];
+      } else {
+        result[key] = value.replace(/^["']|["']$/g, "");
+      }
+    }
+  }
+  return result;
+}
+
+/** Fetch a repo's README (rendered as raw markdown). Returns empty string on failure. */
+export async function fetchRepoReadme(source: string): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync(ghBinary(), [
+      "api",
+      `repos/${source}/readme`,
+      "--jq", ".content",
+    ], { timeout: 15000 });
+    return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Fetch an upstream Claude Code marketplace's manifest from GitHub without registering it.
+ * Returns the parsed `.claude-plugin/marketplace.json` — callers get the full upstream shape
+ * (typically `{ name, owner, plugins: [...] }`).
+ */
+export async function fetchUpstreamMarketplace(source: string): Promise<Record<string, any>> {
+  const raw = await fetchAnyRepoFile(source, ".claude-plugin/marketplace.json");
+  return JSON.parse(raw);
+}
+
+/**
+ * Fetch the list of skills/commands/agents inside a plugin without installing it.
+ * Mirrors the logic in scanPluginItems() for local plugins:
+ *   1. If `.claude-plugin/plugin.json` declares skills/commands/agents arrays, use those paths
+ *      (the spec says manifest paths REPLACE conventional directories).
+ *   2. Otherwise fall back to listing conventional `skills/`, `commands/`, `agents/` dirs.
+ * For each item file, fetches its contents and parses frontmatter for name/description.
+ *
+ * `pluginPath` is the plugin's path within the repo (as declared in the upstream marketplace's
+ * `plugins[].source` field — typically a relative path like `./` or `plugins/my-plugin`).
+ */
+export async function fetchPluginItems(source: string, pluginPath: string): Promise<PluginItem[]> {
+  const items: PluginItem[] = [];
+  // Normalise a path to have no leading "./" or leading/trailing slashes.
+  const normalise = (p: string) => p.replace(/^\.\//, "").replace(/^\/+|\/+$/g, "");
+  const basePath = normalise(pluginPath);
+  // Join parts, normalising each, so "./" + "SKILL.md" doesn't become "//SKILL.md".
+  const joinPath = (...parts: string[]) => parts.map(normalise).filter(Boolean).join("/");
+
+  // plugin.json can declare each item type as:
+  //   - an array of paths (the documented form)
+  //   - a single string path (shorthand when there's only one)
+  //   - missing entirely (fall back to conventional subdir)
+  // Normalise string → [string] so the downstream loop is uniform.
+  const asArray = (v: any): string[] | null => {
+    if (Array.isArray(v)) return v.filter((x) => typeof x === "string");
+    if (typeof v === "string") return [v];
+    return null;
+  };
+
+  // Attempt to read plugin.json manifest
+  let manifest: Record<string, any> | null = null;
+  try {
+    const manifestRaw = await fetchAnyRepoFile(source, joinPath(basePath, ".claude-plugin", "plugin.json"));
+    manifest = JSON.parse(manifestRaw);
+  } catch {
+    manifest = null;
+  }
+
+  const pluginDisplayName = manifest?.name ?? basePath ?? "unknown";
+
+  const buildItem = async (itemPath: string, type: "skill" | "command" | "agent", fallbackName: string): Promise<PluginItem | null> => {
+    try {
+      const content = await fetchAnyRepoFile(source, itemPath);
+      const fm = parseFrontmatterString(content);
+      return {
+        name: fm.name ?? fallbackName,
+        description: (fm.description ?? "").replace(/\s+/g, " ").trim().slice(0, 500),
+        type,
+        plugin: pluginDisplayName,
+        path: itemPath,
+        userInvocable: type === "skill" ? (fm["user-invocable"] ?? "true").toLowerCase() !== "false" : true,
+        dependencies: [],
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  // Helper: resolve a manifest-declared SKILL entry into an array of items.
+  // Mirrors resolveSkillManifestEntry on the local side: a directory entry
+  // can resolve to multiple skills (one per subdirectory with SKILL.md) OR
+  // a single skill (the directory itself has SKILL.md). Prefer subdirectories
+  // when both are present.
+  const resolveSkillEntry = async (entry: string): Promise<PluginItem[]> => {
+    const cleaned = normalise(entry);
+    const full = cleaned ? joinPath(basePath, cleaned) : basePath;
+    // Entry points directly at a .md file — single skill.
+    if (full.endsWith(".md")) {
+      const fallbackName = full.split("/").pop()?.replace(/\.md$/, "") ?? "unknown";
+      const item = await buildItem(full, "skill", fallbackName);
+      return item ? [item] : [];
+    }
+    // Entry points at a directory. Enumerate children and look for skill subdirs.
+    let children: Array<{ name: string; type: string; path: string }> = [];
+    try {
+      children = await fetchAnyRepoDir(source, full);
+    } catch {
+      return [];
+    }
+    const subdirResults: PluginItem[] = [];
+    for (const child of children) {
+      if (child.type !== "dir") continue;
+      const childSkillMd = joinPath(child.path, "SKILL.md");
+      const item = await buildItem(childSkillMd, "skill", child.name);
+      if (item) subdirResults.push(item);
+    }
+    if (subdirResults.length > 0) return subdirResults;
+    // No skill subdirectories — fall back to treating the directory itself as a skill.
+    const directSkillMd = joinPath(full, "SKILL.md");
+    const lastSegment = (cleaned ? cleaned : basePath).split("/").filter(Boolean).pop() ?? "unknown";
+    const directItem = await buildItem(directSkillMd, "skill", lastSegment);
+    return directItem ? [directItem] : [];
+  };
+
+  // Helper: resolve a manifest-declared command/agent entry into a single item (or null).
+  const resolveSingleFileEntry = async (entry: string, type: "command" | "agent"): Promise<PluginItem | null> => {
+    const cleaned = normalise(entry);
+    const full = cleaned ? joinPath(basePath, cleaned) : basePath;
+    if (!full.endsWith(".md")) return null;
+    const fallbackName = full.split("/").pop()?.replace(/\.md$/, "") ?? "unknown";
+    return buildItem(full, type, fallbackName);
+  };
+
+  // Helper: enumerate a conventional directory (skills/, commands/, agents/) and fetch items
+  const enumerateConventionalDir = async (subdir: string, type: "skill" | "command" | "agent"): Promise<PluginItem[]> => {
+    const dirPath = joinPath(basePath, subdir);
+    let entries: Array<{ name: string; type: string; path: string }> = [];
+    try {
+      entries = await fetchAnyRepoDir(source, dirPath);
+    } catch {
+      return [];
+    }
+    const result: PluginItem[] = [];
+    for (const e of entries) {
+      if (type === "skill") {
+        if (e.type !== "dir") continue;
+        const skillMd = joinPath(e.path, "SKILL.md");
+        const item = await buildItem(skillMd, "skill", e.name);
+        if (item) result.push(item);
+      } else {
+        if (e.type !== "file" || !e.name.endsWith(".md") || e.name === "README.md") continue;
+        const item = await buildItem(e.path, type, e.name.replace(/\.md$/, ""));
+        if (item) result.push(item);
+      }
+    }
+    return result;
+  };
+
+  const skillsDecl = manifest ? asArray(manifest.skills) : null;
+  const commandsDecl = manifest ? asArray(manifest.commands) : null;
+  const agentsDecl = manifest ? asArray(manifest.agents) : null;
+
+  if (skillsDecl) {
+    const seenPaths = new Set<string>();
+    for (const entry of skillsDecl) {
+      const resolved = await resolveSkillEntry(entry);
+      for (const item of resolved) {
+        if (seenPaths.has(item.path)) continue;
+        seenPaths.add(item.path);
+        items.push(item);
+      }
+    }
+  } else {
+    items.push(...(await enumerateConventionalDir("skills", "skill")));
+  }
+  if (commandsDecl) {
+    for (const entry of commandsDecl) {
+      const item = await resolveSingleFileEntry(entry, "command");
+      if (item) items.push(item);
+    }
+  } else {
+    items.push(...(await enumerateConventionalDir("commands", "command")));
+  }
+  if (agentsDecl) {
+    for (const entry of agentsDecl) {
+      const item = await resolveSingleFileEntry(entry, "agent");
+      if (item) items.push(item);
+    }
+  } else {
+    items.push(...(await enumerateConventionalDir("agents", "agent")));
+  }
+
+  return items;
 }
 
 export async function getCuratedMarketplace(): Promise<CuratedMarketplaceData> {
@@ -3130,21 +3436,23 @@ export async function getCuratedMarketplace(): Promise<CuratedMarketplaceData> {
 
 export async function refreshCuratedMarketplace(): Promise<CuratedMarketplaceData> {
   try {
-    const [pluginsJson, collectionsJson] = await Promise.all([
+    const [marketplaceJson, collectionsJson] = await Promise.all([
       fetchGitHubFileContent("marketplace.json"),
       fetchGitHubFileContent("collections.json"),
     ]);
-    const pluginsData = JSON.parse(pluginsJson);
+    const marketplaceData = JSON.parse(marketplaceJson);
     const collectionsData = JSON.parse(collectionsJson);
     curatedCache = {
-      plugins: pluginsData.plugins ?? [],
+      // v2 schema has both marketplaces[] and plugins[]; v1 has only plugins[].
+      // Missing arrays default to empty so both shapes work without branching.
+      marketplaces: marketplaceData.marketplaces ?? [],
+      plugins: marketplaceData.plugins ?? [],
       collections: collectionsData.collections ?? [],
     };
     return curatedCache;
   } catch (err: any) {
     console.error("Failed to fetch curated marketplace:", err?.message);
-    // Return empty data on failure so the UI can fall back gracefully
-    return { plugins: [], collections: [] };
+    return { marketplaces: [], plugins: [], collections: [] };
   }
 }
 
