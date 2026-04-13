@@ -83,88 +83,142 @@ export function scanInstalledPlugins(): PluginEntry[] {
   return entries;
 }
 
+/** Read a plugin's `.claude-plugin/plugin.json` manifest, or null if missing/invalid. */
+function readPluginManifest(pluginRoot: string): Record<string, any> | null {
+  const manifestPath = path.join(pluginRoot, ".claude-plugin", "plugin.json");
+  if (!fs.existsSync(manifestPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve a manifest-declared item path (relative to plugin root) into the
+ * actual .md file on disk. Manifest entries can point at either:
+ *   - a directory containing SKILL.md (for skills)
+ *   - a single .md file (for commands/agents, or skills with an inline file)
+ * Returns null if nothing resolvable exists.
+ */
+function resolveManifestEntry(pluginRoot: string, entry: string, kind: "skill" | "command" | "agent"): string | null {
+  if (typeof entry !== "string" || !entry) return null;
+  // Refuse anything that escapes the plugin root.
+  const absolute = path.resolve(pluginRoot, entry);
+  if (!absolute.startsWith(path.resolve(pluginRoot) + path.sep) && absolute !== path.resolve(pluginRoot)) return null;
+  if (!fs.existsSync(absolute)) return null;
+
+  const stat = fs.statSync(absolute);
+  if (stat.isDirectory()) {
+    if (kind === "skill") {
+      const skillMd = path.join(absolute, "SKILL.md");
+      return fs.existsSync(skillMd) ? skillMd : null;
+    }
+    return null;
+  }
+  if (stat.isFile() && absolute.endsWith(".md")) return absolute;
+  return null;
+}
+
+function buildItem(
+  pluginName: string,
+  itemPath: string,
+  type: "skill" | "command" | "agent",
+  fallbackName: string,
+): PluginItem {
+  const fm = readFrontmatter(itemPath);
+  const isSkill = type === "skill";
+  return {
+    name: fm.name ?? fallbackName,
+    description: cleanDescription(fm.description ?? ""),
+    type,
+    plugin: pluginName,
+    path: itemPath,
+    userInvocable: isSkill ? (fm["user-invocable"] ?? "true").toLowerCase() !== "false" : true,
+    dependencies: scanDependencies(itemPath),
+  };
+}
+
 export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   const items: PluginItem[] = [];
   const base = plugin.installPath;
   if (!fs.existsSync(base)) return items;
 
+  // Per the Claude Code plugin spec, plugin.json `skills` / `commands` / `agents`
+  // arrays REPLACE the corresponding conventional directory scan. They are not
+  // additive — when declared, the default directory is ignored entirely.
+  // https://code.claude.com/docs/en/plugins-reference#path-behavior-rules
+  const manifest = readPluginManifest(base);
+  const manifestSkillsDeclared = Array.isArray(manifest?.skills);
+  const manifestCommandsDeclared = Array.isArray(manifest?.commands);
+  const manifestAgentsDeclared = Array.isArray(manifest?.agents);
+
   // Skills
-  const skillsDir = path.join(base, "skills");
-  if (fs.existsSync(skillsDir)) {
-    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
-      if (!fs.existsSync(skillMd)) continue;
-      const fm = readFrontmatter(skillMd);
-      items.push({
-        name: fm.name ?? entry.name,
-        description: cleanDescription(fm.description ?? ""),
-        type: "skill",
-        plugin: plugin.name,
-        path: skillMd,
-        userInvocable: (fm["user-invocable"] ?? "true").toLowerCase() !== "false",
-        dependencies: scanDependencies(skillMd),
-      });
+  if (manifestSkillsDeclared) {
+    for (const entry of manifest!.skills) {
+      const resolved = resolveManifestEntry(base, entry, "skill");
+      if (!resolved) continue;
+      items.push(buildItem(plugin.name, resolved, "skill", path.basename(path.dirname(resolved))));
+    }
+  } else {
+    const skillsDir = path.join(base, "skills");
+    if (fs.existsSync(skillsDir)) {
+      for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
+        if (!fs.existsSync(skillMd)) continue;
+        items.push(buildItem(plugin.name, skillMd, "skill", entry.name));
+      }
     }
   }
 
   // Commands
-  const cmdsDir = path.join(base, "commands");
-  if (fs.existsSync(cmdsDir)) {
-    for (const file of fs.readdirSync(cmdsDir)) {
-      if (!file.endsWith(".md")) continue;
-      const cmdPath = path.join(cmdsDir, file);
-      const cmdFm = readFrontmatter(cmdPath);
-      items.push({
-        name: path.basename(file, ".md"),
-        description: cleanDescription(cmdFm.description ?? ""),
-        type: "command",
-        plugin: plugin.name,
-        path: cmdPath,
-        userInvocable: true,
-        dependencies: scanDependencies(cmdPath),
-      });
+  if (manifestCommandsDeclared) {
+    for (const entry of manifest!.commands) {
+      const resolved = resolveManifestEntry(base, entry, "command");
+      if (!resolved) continue;
+      items.push(buildItem(plugin.name, resolved, "command", path.basename(resolved, ".md")));
+    }
+  } else {
+    const cmdsDir = path.join(base, "commands");
+    if (fs.existsSync(cmdsDir)) {
+      for (const file of fs.readdirSync(cmdsDir)) {
+        if (!file.endsWith(".md")) continue;
+        items.push(buildItem(plugin.name, path.join(cmdsDir, file), "command", path.basename(file, ".md")));
+      }
     }
   }
 
-  // Agents — in agents/ subdirectory
-  const agentsDir = path.join(base, "agents");
-  if (fs.existsSync(agentsDir)) {
-    for (const file of fs.readdirSync(agentsDir)) {
-      if (!file.endsWith(".md") || file === "README.md") continue;
-      const agentPath = path.join(agentsDir, file);
-      const agentFm = readFrontmatter(agentPath);
-      items.push({
-        name: path.basename(file, ".md"),
-        description: cleanDescription(agentFm.description ?? ""),
-        type: "agent",
-        plugin: plugin.name,
-        path: agentPath,
-        userInvocable: true,
-        dependencies: scanDependencies(agentPath),
-      });
+  // Agents
+  if (manifestAgentsDeclared) {
+    for (const entry of manifest!.agents) {
+      const resolved = resolveManifestEntry(base, entry, "agent");
+      if (!resolved) continue;
+      items.push(buildItem(plugin.name, resolved, "agent", path.basename(resolved, ".md")));
+    }
+  } else {
+    const agentsDir = path.join(base, "agents");
+    if (fs.existsSync(agentsDir)) {
+      for (const file of fs.readdirSync(agentsDir)) {
+        if (!file.endsWith(".md") || file === "README.md") continue;
+        items.push(buildItem(plugin.name, path.join(agentsDir, file), "agent", path.basename(file, ".md")));
+      }
     }
   }
 
-  // Agents — root-level .md files (e.g. voltagent pattern)
-  if (items.length === 0) {
+  // Heuristic fallback for plugins that ship .md files at the root with no
+  // manifest declarations and no conventional subdirs. Not part of the official
+  // spec — kept for compatibility with plugins that predate or ignore it.
+  // Excludes well-known dev-doc filenames so we never invent phantom agents.
+  if (items.length === 0 && !manifest) {
     const hasSubdirs = ["skills", "agents", "commands"].some(
       (d) => fs.existsSync(path.join(base, d))
     );
     if (!hasSubdirs) {
+      const ROOT_AGENT_EXCLUDES = new Set(["README.md", "CLAUDE.md", "CHANGELOG.md", "LICENSE.md", "CONTRIBUTING.md"]);
       for (const file of fs.readdirSync(base)) {
-        if (!file.endsWith(".md") || file === "README.md") continue;
-        const rootAgentPath = path.join(base, file);
-        const rootFm = readFrontmatter(rootAgentPath);
-        items.push({
-          name: path.basename(file, ".md"),
-          description: cleanDescription(rootFm.description ?? ""),
-          type: "agent",
-          plugin: plugin.name,
-          path: rootAgentPath,
-          userInvocable: true,
-          dependencies: scanDependencies(rootAgentPath),
-        });
+        if (!file.endsWith(".md") || ROOT_AGENT_EXCLUDES.has(file)) continue;
+        items.push(buildItem(plugin.name, path.join(base, file), "agent", path.basename(file, ".md")));
       }
     }
   }
