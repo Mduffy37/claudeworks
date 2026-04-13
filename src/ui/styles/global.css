@@ -4882,14 +4882,28 @@ body {
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 12px;
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .curated-search-result:hover {
   background: var(--bg-hover);
   border-color: var(--border-focus);
+}
+
+.curated-search-result-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.curated-search-result-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .curated-search-result-header {

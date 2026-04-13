@@ -1415,6 +1415,79 @@ export function ManageDialog({
     }
   };
 
+  /**
+   * Resolve an index entry into the concrete install target:
+   *   - marketplaceId = the marketplace to register (claude plugin marketplace add)
+   *   - pluginId = the plugin to install (claude plugin install <name>@<marketplace>)
+   *
+   * For skill/command/agent entries we derive the parent plugin from the
+   * entry's `path` breadcrumb: path[0] is the marketplace id, path[1] is the
+   * plugin name. Clicking Install on a skill installs its parent plugin, which
+   * makes the skill available at runtime.
+   */
+  const resolveIndexInstallTarget = (
+    entry: CuratedIndexEntry
+  ): { marketplaceId: string | null; pluginId: string | null } => {
+    if (entry.kind === "marketplace") {
+      return { marketplaceId: entry.id, pluginId: null };
+    }
+    if (entry.kind === "plugin") {
+      // Plugin id is already in `name@marketplace` format; parent marketplace is path[0].
+      return { marketplaceId: entry.path[0] ?? null, pluginId: entry.id };
+    }
+    // skill / command / agent — derive from breadcrumb path
+    const marketplaceId = entry.path[0] ?? null;
+    const pluginName = entry.path[1] ?? null;
+    if (!marketplaceId || !pluginName) return { marketplaceId, pluginId: null };
+    return { marketplaceId, pluginId: `${pluginName}@${marketplaceId}` };
+  };
+
+  /**
+   * Resolve the `owner/repo` source for a curated marketplace id. Prefers the
+   * hand-curated `marketplace.json` entry (authoritative). Falls back to
+   * parsing `owner/repo` from the index entry's `sourceUrl` if needed.
+   */
+  const resolveMarketplaceSource = (marketplaceId: string): string | null => {
+    const curatedM = curatedData?.marketplaces.find((m) => m.id === marketplaceId);
+    if (curatedM?.source) return curatedM.source;
+    const indexM = curatedIndex?.entries.find((e) => e.kind === "marketplace" && e.id === marketplaceId);
+    if (indexM?.sourceUrl) return parseOwnerRepoFromUrl(indexM.sourceUrl);
+    return null;
+  };
+
+  /**
+   * Install handler for any search-result row. Adds the parent marketplace if
+   * not already registered, then installs the plugin that owns the entry.
+   * For marketplace entries, only the marketplace is added (no plugin install).
+   */
+  const handleIndexEntryInstall = async (entry: CuratedIndexEntry) => {
+    const { marketplaceId, pluginId } = resolveIndexInstallTarget(entry);
+    if (!marketplaceId) return;
+    const key = pluginId ?? `mkt:${marketplaceId}`;
+    setCuratedInstalling(key);
+    clearCuratedError(key);
+    try {
+      const source = resolveMarketplaceSource(marketplaceId);
+      if (!source) {
+        throw new Error(`Cannot resolve marketplace source for ${marketplaceId}`);
+      }
+      const current = await window.api.listMarketplaces();
+      if (!current.some((m) => m.name === marketplaceId)) {
+        await window.api.addMarketplace(source);
+      }
+      if (pluginId) {
+        await window.api.installPlugin(pluginId);
+      }
+      await loadMarketplaces();
+      onPluginsChanged?.();
+    } catch (err: any) {
+      const message = err?.message ?? String(err);
+      setCuratedErrors((prev) => ({ ...prev, [key]: message }));
+    } finally {
+      setCuratedInstalling(null);
+    }
+  };
+
   const handleCuratedMarketplaceAdd = async (marketplaceId: string) => {
     const key = `mkt:${marketplaceId}`;
     setCuratedInstalling(key);
@@ -1942,6 +2015,16 @@ export function ManageDialog({
                                   </div>
                                   {group.entries.map((e) => {
                                     const breadcrumb = e.path.length > 0 ? e.path.join(" › ") : null;
+                                    const target = resolveIndexInstallTarget(e);
+                                    const installKey = target.pluginId ?? (target.marketplaceId ? `mkt:${target.marketplaceId}` : `idx:${e.id}`);
+                                    const isInstalling = curatedInstalling === installKey;
+                                    const isPluginInstalled = target.pluginId ? installedPluginIds.has(target.pluginId) : false;
+                                    const isMarketplaceAdded = e.kind === "marketplace" && registeredMarketplaceNames.has(e.id);
+                                    // For skill/command/agent entries, "installed" means their parent plugin is installed.
+                                    const isParentInstalled = (e.kind === "skill" || e.kind === "command" || e.kind === "agent")
+                                      ? isPluginInstalled
+                                      : false;
+
                                     const handleResultClick = () => {
                                       if (e.kind === "marketplace") {
                                         const m = curatedData?.marketplaces.find((x) => x.id === e.id);
@@ -1952,6 +2035,42 @@ export function ManageDialog({
                                       }
                                       if (e.sourceUrl) window.api.openExternalUrl(e.sourceUrl);
                                     };
+
+                                    // Action button label and tooltip vary by kind.
+                                    let actionLabel = "Install";
+                                    let actionTitle = "";
+                                    if (e.kind === "marketplace") {
+                                      actionLabel = "Add";
+                                      actionTitle = `Add marketplace ${e.displayName}`;
+                                    } else if (e.kind === "plugin") {
+                                      actionLabel = "Install";
+                                      actionTitle = `Install plugin ${e.displayName} from ${target.marketplaceId ?? "marketplace"}`;
+                                    } else {
+                                      const pluginName = e.path[1] ?? "plugin";
+                                      actionLabel = "Install";
+                                      actionTitle = `Installs ${pluginName} from ${target.marketplaceId ?? "marketplace"} (provides this ${e.kind})`;
+                                    }
+
+                                    const renderAction = () => {
+                                      if (isPluginInstalled || isParentInstalled) {
+                                        return <span className="curated-installed-label">Installed</span>;
+                                      }
+                                      if (isMarketplaceAdded) {
+                                        return <span className="curated-installed-label">Added</span>;
+                                      }
+                                      if (!target.marketplaceId) return null;
+                                      return (
+                                        <button
+                                          className="btn-primary curated-install-btn"
+                                          onClick={(ev) => { ev.stopPropagation(); handleIndexEntryInstall(e); }}
+                                          disabled={isInstalling}
+                                          title={actionTitle}
+                                        >
+                                          {isInstalling ? "..." : actionLabel}
+                                        </button>
+                                      );
+                                    };
+
                                     return (
                                       <div
                                         key={e.id}
@@ -1960,16 +2079,24 @@ export function ManageDialog({
                                         role="button"
                                         tabIndex={0}
                                       >
-                                        <div className="curated-search-result-header">
-                                          <span className={`curated-kind-tag kind-${e.kind}`}>{e.kind}</span>
-                                          <span className="curated-search-result-name">{e.displayName}</span>
+                                        <div className="curated-search-result-content">
+                                          <div className="curated-search-result-header">
+                                            <span className={`curated-kind-tag kind-${e.kind}`}>{e.kind}</span>
+                                            <span className="curated-search-result-name">{e.displayName}</span>
+                                          </div>
+                                          {e.description && (
+                                            <div className="curated-search-result-desc">{e.description}</div>
+                                          )}
+                                          {breadcrumb && (
+                                            <div className="curated-search-result-path">{breadcrumb}</div>
+                                          )}
+                                          {curatedErrors[installKey] && (
+                                            <div className="curated-install-error">{curatedErrors[installKey]}</div>
+                                          )}
                                         </div>
-                                        {e.description && (
-                                          <div className="curated-search-result-desc">{e.description}</div>
-                                        )}
-                                        {breadcrumb && (
-                                          <div className="curated-search-result-path">{breadcrumb}</div>
-                                        )}
+                                        <div className="curated-search-result-action" onClick={(ev) => ev.stopPropagation()}>
+                                          {renderAction()}
+                                        </div>
                                       </div>
                                     );
                                   })}
