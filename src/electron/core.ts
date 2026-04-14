@@ -3542,6 +3542,7 @@ export function getProfilesDir(): string {
 function defaultStatusLineConfig(): StatusLineConfig {
   return {
     version: 1,
+    separators: { field: "│", section: "║" },
     sections: [
       {
         id: "environment",

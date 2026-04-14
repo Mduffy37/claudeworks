@@ -3,7 +3,16 @@
   flex-direction: column;
   gap: 16px;
   padding: 16px;
+  /* max-width removed — children handle their own widths so the preview
+     can span the full modal width while the controls stay narrow. */
+}
+
+.status-bar-tab-header,
+.status-bar-tab-sections,
+.status-bar-tab-footer,
+.status-bar-global-options {
   max-width: 720px;
+  width: 100%;
 }
 
 .status-bar-tab.loading {
@@ -185,6 +194,39 @@
 
 .widget-option-row input[type="number"] {
   width: 72px;
+}
+
+.widget-option-row input[type="text"] {
+  width: 120px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.widget-option-row input[type="color"] {
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+}
+
+.status-bar-separator-input {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: "SF Mono", Monaco, Menlo, monospace;
+  font-size: 14px;
+  text-align: center;
+  margin-left: 12px;
 }
 
 .status-bar-preview {

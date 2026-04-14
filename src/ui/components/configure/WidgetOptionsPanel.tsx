@@ -68,5 +68,14 @@ function renderInput(
       return (
         <input id={id} type="text" value={value as string} onChange={(e) => onChange(opt.key, e.target.value)} />
       );
+    case "color":
+      return (
+        <input
+          id={id}
+          type="color"
+          value={value as string}
+          onChange={(e) => onChange(opt.key, e.target.value)}
+        />
+      );
   }
 }

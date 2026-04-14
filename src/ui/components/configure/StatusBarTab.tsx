@@ -117,6 +117,17 @@ export function StatusBarTab() {
     }
   }
 
+  function changeSeparator(which: "field" | "section", value: string) {
+    if (!config) return;
+    const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
+    next.separators = { ...(next.separators ?? {}), [which]: value };
+    setConfig(next);
+    setDirty(true);
+  }
+
+  const fieldSep = config.separators?.field ?? "│";
+  const sectionSep = config.separators?.section ?? "║";
+
   return (
     <div className="status-bar-tab">
       <header className="status-bar-tab-header">
@@ -126,6 +137,36 @@ export function StatusBarTab() {
           Changes apply on the next Claude Code session restart.
         </p>
       </header>
+
+      <section className="status-bar-global-options status-bar-section">
+        <h3 className="status-bar-section-label">Global</h3>
+        <ul className="status-bar-widget-list">
+          <li className="status-bar-widget-row">
+            <label>
+              <span className="status-bar-widget-name">Field separator</span>
+              <input
+                type="text"
+                value={fieldSep}
+                maxLength={3}
+                onChange={(e) => changeSeparator("field", e.target.value)}
+                className="status-bar-separator-input"
+              />
+            </label>
+          </li>
+          <li className="status-bar-widget-row">
+            <label>
+              <span className="status-bar-widget-name">Section separator</span>
+              <input
+                type="text"
+                value={sectionSep}
+                maxLength={3}
+                onChange={(e) => changeSeparator("section", e.target.value)}
+                className="status-bar-separator-input"
+              />
+            </label>
+          </li>
+        </ul>
+      </section>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="status-bar-tab-sections">

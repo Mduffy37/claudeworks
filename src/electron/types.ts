@@ -285,9 +285,16 @@ export interface StatusLineSection {
   widgets: StatusLineWidget[];
 }
 
+/** Global separator characters used between widgets (field) and between sections. */
+export interface StatusLineSeparators {
+  field?: string;
+  section?: string;
+}
+
 /** Full status line config stored at ~/.claude/statusline-config.json. */
 export interface StatusLineConfig {
   version: number;
+  separators?: StatusLineSeparators;
   sections: StatusLineSection[];
 }
 
