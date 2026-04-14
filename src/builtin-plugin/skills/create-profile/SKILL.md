@@ -39,7 +39,9 @@ Run these commands and keep their outputs in mind throughout the rest of the flo
 
 ### 1a. Project inference (Layer 0)
 
-!`node "$CLAUDE_PLUGIN_ROOT/scripts/infer-project.js" "$PWD" 2>&1`
+Every shell command in this skill needs to reach files inside the plugin's own directory (`scripts/`, `data/`). In many Claude Code contexts the `$CLAUDE_PLUGIN_ROOT` env var is set to that directory automatically, but some contexts (including the Claude Profiles app's built-in plugin load path) leave it unset. To be robust in both cases, **every** `!` bash command below uses the POSIX parameter expansion `${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}` — it uses the env var if set, otherwise falls back to the stable installed-plugin path. Do not simplify this to a bare `$CLAUDE_PLUGIN_ROOT` or the skill will break on anyone whose runtime doesn't set it.
+
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/infer-project.js" "$PWD" 2>&1`
 
 This emits a single-line JSON signal bundle. Parse it and note:
 
@@ -51,7 +53,7 @@ This emits a single-line JSON signal bundle. Parse it and note:
 
 ### 1b. Workflow shapes
 
-!`cat "$CLAUDE_PLUGIN_ROOT/data/workflow-shapes.json"`
+!`cat "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/data/workflow-shapes.json"`
 
 This is the curated inventory of 12 workflow shapes. Each shape describes the *stages* of a kind of work (e.g. feature-development, code-review, security-audit), independent of tools or tech stack. You will match the user's intent to 1–2 shapes in Step 3. Shapes are **hints, not gates** — you may blend two shapes, synthesize a custom shape if nothing fits, or ignore them entirely for genuinely novel work.
 
@@ -61,7 +63,7 @@ Pay attention to each shape's `signals` (for user-intent matching), `stages` (fo
 
 The recommender needs two files from the `claude-profiles-marketplace` repo: `catalog.json` (plugin-level digest) and `items.ndjson` (item-level grep stream). They are cached locally at `~/.claude-profiles/marketplace-cache/` with a 24-hour TTL. Run the helper script to populate the cache if needed:
 
-!`node "$CLAUDE_PLUGIN_ROOT/scripts/fetch-marketplace-cache.js" 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/fetch-marketplace-cache.js" 2>&1`
 
 The script output is a single-line JSON object of the form `{"cacheDir": "...", "files": {"catalog.json": "<status>", "items.ndjson": "<status>"}}`. Possible status values per file:
 
@@ -79,7 +81,7 @@ Parse the output. If either file shows `UNAVAILABLE`, stop and tell the user tha
 
 Do not proceed without the catalog. Suggest the first option unless the user has a specific reason to prefer another.
 
-Save the `cacheDir` path. You will reference files inside it as `$CACHE/catalog.json` and `$CACHE/items.ndjson` in the commands below.
+The `cacheDir` is always at `~/.claude-profiles/marketplace-cache/`. Use that full path directly in the retrieval commands below — do not use a `$CACHE` placeholder, because Claude Code's `!` bash execution does not define that variable and it will expand to an empty string, breaking the path. The two files you will reference are `~/.claude-profiles/marketplace-cache/catalog.json` and `~/.claude-profiles/marketplace-cache/items.ndjson`.
 
 ### 1d. Installed plugins and existing profiles
 
@@ -167,11 +169,19 @@ Join each group with `|` to form a regex alternation. Example for the `implement
 
 ### 4b. Run the intersection grep
 
-Pipe Group A through Group B:
+For each stage, construct a command of the following shape, then run it via `!`. The command pipes Group A (stage keywords) through Group B (tech context), which is what gives the intersection its precision:
 
-!`grep -iE '<group-A>' "$CACHE/items.ndjson" | grep -iE '<group-B>' | head -30`
+```
+grep -iE '(<stage keyword 1>|<stage keyword 2>|...)' ~/.claude-profiles/marketplace-cache/items.ndjson \
+  | grep -iE '(<tech keyword 1>|<tech keyword 2>|...)' \
+  | head -30
+```
 
-(Replace `$CACHE` with the actual cache path from Step 1c.)
+**You must substitute the keyword groups with the actual words you built in Step 4a before running.** Do not run the command above with `<stage keyword 1>` literally — those angle brackets are placeholders, not shell tokens. Do not use a `$CACHE` variable anywhere; always write out `~/.claude-profiles/marketplace-cache/items.ndjson` literally.
+
+Concrete example for a TypeScript/React/Electron project's `implement` stage — run something like this (with *your* actual keywords, not these):
+
+!`grep -iE '(implement|write|code|wire|integrate|develop)' ~/.claude-profiles/marketplace-cache/items.ndjson | grep -iE '(typescript|react|electron|tsx|frontend)' | head -30`
 
 Only items that match **both** the stage intent and the tech context survive, which eliminates the "any matching keyword wins" problem of a single OR-grep. In practice this takes top hits from ~1000-item low-signal pools down to ~30 high-relevance candidates per stage.
 
@@ -179,7 +189,13 @@ Only items that match **both** the stage intent and the tech context survive, wh
 
 In **generic mode** (`mode: "generic"` in the Layer 0 bundle), or when Group B is empty because Layer 0 couldn't find any tech context, fall back to a single grep with only Group A:
 
-!`grep -iE '<group-A>' "$CACHE/items.ndjson" | head -30`
+```
+grep -iE '(<stage keyword 1>|<stage keyword 2>|...)' ~/.claude-profiles/marketplace-cache/items.ndjson | head -30
+```
+
+Concrete example for a `research` stage in generic mode — run something like this with *your* actual keywords:
+
+!`grep -iE '(research|investigate|compare|survey|evaluate|source|prior art)' ~/.claude-profiles/marketplace-cache/items.ndjson | head -30`
 
 Retrieval is broader per stage, but workflow shapes still constrain composition.
 
@@ -189,17 +205,27 @@ Retrieval is broader per stage, but workflow shapes still constrain composition.
 
 Each line of output is a JSON object with `{kind, id, plugin, desc, sourceUrl}`. Parse and collect them as candidate items for that stage. Cap at ~30 hits per stage. If a stage returns fewer than ~5 hits, either (a) broaden Group A with synonyms you derive from the stage's `intent` field, or (b) note the gap and continue — you will flag it explicitly in the self-critique and presentation steps.
 
-### 4c. Collect unique plugin IDs
+### 4e. Collect unique plugin IDs
 
-Across all stage retrievals, collect the **unique set of plugin IDs** that appeared in any hit. You will typically end up with 20–40 unique plugins across 4–6 stages. This is your candidate plugin pool.
+Across all stage retrievals, collect the **unique set of plugin IDs** that appeared in any hit. You will typically end up with 20–40 unique plugins across 4–6 stages. This is your candidate plugin pool for Step 5.
 
 ## Step 5 — Plugin-level lookup
 
-For each unique plugin ID from Step 4c, pull its full catalog entry from `catalog.json` using `jq`:
+For the unique plugin IDs you collected in Step 4e, pull their full catalog entries from `catalog.json` using `jq`. The command shape is:
 
-!`jq --arg ids '<comma-separated-ids>' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' "$CACHE/catalog.json"`
+```
+jq --arg ids '<plugin-id-1>,<plugin-id-2>,<plugin-id-3>' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/catalog.json
+```
 
-(Replace `<comma-separated-ids>` with the actual ID list and `$CACHE` with the actual cache path.)
+`--arg ids` passes a single comma-joined string into jq, which then splits it and membership-tests each plugin's id against the list.
+
+**Substitute the angle-bracketed placeholders with your actual comma-joined plugin ID list before running.** Do not run the command with `<plugin-id-1>` literally — those are placeholders. Do not use `$CACHE` anywhere; write out `~/.claude-profiles/marketplace-cache/catalog.json` literally.
+
+Concrete example — if your candidate pool happened to be `frontend-design@claude-plugins-official`, `chrome-devtools-mcp@chrome-devtools-plugins`, and `feature-dev@claude-plugins-official`, you would run:
+
+!`jq --arg ids 'frontend-design@claude-plugins-official,chrome-devtools-mcp@chrome-devtools-plugins,feature-dev@claude-plugins-official' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/catalog.json`
+
+Rebuild the `--arg ids '...'` string with *your* actual plugin IDs before running — the example above is illustrative.
 
 This gives you for each plugin: `displayName`, `description`, `featured`, `collections`, `counts` (how many skills/agents/commands it has), `topKeywords`, and `sourceUrl`. You now have enough plugin-level context to rank candidates within each stage and make informed composition decisions.
 
@@ -377,7 +403,7 @@ Build the `MISSING_PLUGINS` JSON array inline. For each missing plugin, include 
 
 Example — **inline the JSON directly in the command** rather than trying to reference a shell variable from a previous step:
 
-!`MISSING_PLUGINS='[{"id":"frontend-design@claude-plugins-official","marketplaceId":"claude-plugins-official","sourceUrl":"https://github.com/anthropics/claude-plugins"},{"id":"pw@claude-code-skills","marketplaceId":"claude-code-skills","sourceUrl":"https://github.com/someone/claude-code-skills"}]' node "$CLAUDE_PLUGIN_ROOT/scripts/install-plugins.js" 2>&1`
+!`MISSING_PLUGINS='[{"id":"frontend-design@claude-plugins-official","marketplaceId":"claude-plugins-official","sourceUrl":"https://github.com/anthropics/claude-plugins"},{"id":"pw@claude-code-skills","marketplaceId":"claude-code-skills","sourceUrl":"https://github.com/someone/claude-code-skills"}]' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/install-plugins.js" 2>&1`
 
 Use single quotes around the JSON array so the embedded double-quotes don't collide with bash's own double-quote parsing. Substitute the actual plugin metadata from the profile draft (not the example IDs above) when you run the command.
 
@@ -390,29 +416,18 @@ Once all installs are handled (success, skipped, or the user accepted the partia
 
 ## Step 8 — Write the profile
 
-Set environment variables and run the write command:
+The write is handled by `$CLAUDE_PLUGIN_ROOT/scripts/write-profile.js`. The script validates `P_NAME` before touching `profiles.json` and refuses to write if it's missing, empty, or contains path separators — mirroring the same guarantees the Electron app's `validateProfileName` enforces on its IPC path. This is load-bearing: the prior inline version silently wrote `store.profiles[undefined] = partialProfile` whenever `P_NAME` was unset, which broke the Electron app's `loadProfiles()` and left it hanging at "loading plugins".
 
-!`node -e "
-const fs=require('fs'),path=require('path'),os=require('os');
-const pfPath=path.join(os.homedir(),'.claude-profiles','profiles.json');
-let store=fs.existsSync(pfPath)?JSON.parse(fs.readFileSync(pfPath,'utf-8')):{profiles:{}};
-const profile={
-  name: process.env.P_NAME,
-  plugins: JSON.parse(process.env.P_PLUGINS || '[]'),
-  excludedItems: JSON.parse(process.env.P_EXCLUDED || '{}'),
-  description: process.env.P_DESC || '',
-  model: process.env.P_MODEL || undefined,
-  effortLevel: process.env.P_EFFORT || undefined,
-  customClaudeMd: process.env.P_INSTRUCTIONS || '',
-  workflow: process.env.P_WORKFLOW || undefined,
-  useDefaultAuth: true,
-};
-store.profiles[profile.name]=profile;
-fs.writeFileSync(pfPath,JSON.stringify(store,null,2));
-console.log('Profile created: '+profile.name);
-" 2>&1`
+**Inline all `P_*` variables on the same command line as the script invocation** — don't try to `export` them in a previous step and then run the script, because each `!` command runs in its own shell. Example:
 
-Set `P_NAME`, `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (optional JSON object of `{pluginId: {skills:[], agents:[], commands:[]}}` — skills/agents/commands to *exclude* from each plugin; leave empty to enable everything), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW` based on the user's final choices. Leave `P_WORKFLOW` unset if the user didn't want one.
+!`P_NAME='my-profile' P_PLUGINS='["frontend-design@claude-plugins-official"]' P_EXCLUDED='{}' P_DESC='Frontend work' P_MODEL='' P_EFFORT='' P_INSTRUCTIONS='' P_WORKFLOW='' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/write-profile.js" 2>&1`
+
+Substitute the actual values from the profile draft. Required: `P_NAME`. Optional (leave empty string if not used): `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (JSON object `{pluginId: {skills:[], agents:[], commands:[]}}` — items to *exclude* from each plugin; leave as `'{}'` to enable everything), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW`.
+
+The script outputs a single-line JSON object:
+
+- **Success** → `{"ok": true, "name": "<name>", "pfPath": "<path>"}` — proceed to Step 9.
+- **Failure** → `{"ok": false, "error": "<reason>"}` — stop and tell the user what went wrong. Common causes: `P_NAME` not set (you forgot to include it on the command line), `P_PLUGINS` not valid JSON (check the quoting), or the home directory is not writable.
 
 **Note on `excludedItems`:** the profile engine defaults to *including* all items from each enabled plugin. If the user wants only a subset, you express that as exclusions. In most cases you can leave `P_EXCLUDED` empty — only populate it when the user explicitly opted out of specific items during Step 7.
 

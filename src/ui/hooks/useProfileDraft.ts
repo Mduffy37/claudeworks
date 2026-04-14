@@ -105,7 +105,17 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setEnv(profile.env ?? {});
       setDisabledHooks(profile.disabledHooks ?? {});
       setStatusLineConfig(profile.statusLineConfig);
-      setLaunchDir(dirs[0] ?? "");
+      // Restore last-used launch directory for this profile from localStorage.
+      // Validate it's still in the current directories list (user may have
+      // removed it), and treat "" as the valid "None (choose at launch)" option.
+      const storedLaunchDir = typeof window !== "undefined"
+        ? window.localStorage.getItem(`launchDir:${profile.name}`)
+        : null;
+      const initialLaunchDir =
+        storedLaunchDir !== null && (storedLaunchDir === "" || dirs.includes(storedLaunchDir))
+          ? storedLaunchDir
+          : dirs[0] ?? "";
+      setLaunchDir(initialLaunchDir);
       onDirtyChange(false);
       setOverviewOpen(false);
       setConfirmDelete(false);
@@ -141,6 +151,15 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   useEffect(() => {
     window.api.isBinInPath().then(setBinInPath);
   }, []);
+
+  // Persist the user's last-used launch directory per profile to localStorage.
+  // Deliberately not stored on the Profile itself — this is a session preference,
+  // not part of the portable profile definition, and should not mark the draft dirty.
+  useEffect(() => {
+    if (!profile || isNew) return;
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(`launchDir:${profile.name}`, launchDir);
+  }, [launchDir, profile, isNew]);
 
   // Scan local items and MCP servers when selected launch directory or profile changes
   useEffect(() => {
