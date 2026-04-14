@@ -59,57 +59,17 @@ Pay attention to each shape's `signals` (for user-intent matching), `stages` (fo
 
 ### 1c. Marketplace catalog — cache and fetch
 
-The recommender needs two files from the `claude-profiles-marketplace` repo: `catalog.json` (plugin-level digest) and `items.ndjson` (item-level grep stream). They are cached locally at `~/.claude-profiles/marketplace-cache/` with a 24-hour TTL. Run this to populate the cache if needed:
+The recommender needs two files from the `claude-profiles-marketplace` repo: `catalog.json` (plugin-level digest) and `items.ndjson` (item-level grep stream). They are cached locally at `~/.claude-profiles/marketplace-cache/` with a 24-hour TTL. Run the helper script to populate the cache if needed:
 
-!`node -e "
-(async () => {
-  const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process');
-  const cacheDir=path.join(os.homedir(),'.claude-profiles','marketplace-cache');
-  fs.mkdirSync(cacheDir,{recursive:true});
-  const files=['catalog.json','items.ndjson'];
-  const TTL_MS=24*60*60*1000;
-  const REPO='Mduffy37/claude-profiles-marketplace';
-  // Discover an auth token from env or from the gh CLI, once. Anonymous fetch
-  // works for public repos; private repos need either GITHUB_TOKEN or gh auth.
-  let token=process.env.GITHUB_TOKEN||process.env.GH_TOKEN;
-  if(!token){
-    try{token=cp.execFileSync('gh',['auth','token'],{stdio:['ignore','pipe','ignore']}).toString().trim();}catch{}
-  }
-  async function fetchFile(name){
-    const dest=path.join(cacheDir,name);
-    // 1. Cache hit.
-    try{
-      const st=fs.statSync(dest);
-      if(Date.now()-st.mtimeMs<TTL_MS)return 'cache-hit';
-    }catch{}
-    // 2. HTTPS fetch to api.github.com with discovered auth (or anonymous).
-    try{
-      const headers={'Accept':'application/vnd.github.raw','User-Agent':'claude-profiles-recommender'};
-      if(token)headers['Authorization']='Bearer '+token;
-      const resp=await fetch(\`https://api.github.com/repos/\${REPO}/contents/\${name}\`,{headers});
-      if(resp.ok){
-        const text=await resp.text();
-        fs.writeFileSync(dest,text);
-        return token?'fetched-auth':'fetched-anon';
-      }
-    }catch{}
-    // 3. Sibling repo escape hatch (dev mode — opt-in via env var only).
-    if(process.env.CLAUDE_PROFILES_MARKETPLACE_DIR){
-      try{
-        const src=path.join(process.env.CLAUDE_PROFILES_MARKETPLACE_DIR,name);
-        if(fs.existsSync(src)){
-          fs.copyFileSync(src,dest);
-          return 'sibling-fallback';
-        }
-      }catch{}
-    }
-    return 'UNAVAILABLE';
-  }
-  const out={};
-  for(const name of files){out[name]=await fetchFile(name);}
-  console.log(JSON.stringify({cacheDir,files:out}));
-})();
-" 2>&1`
+!`node "$CLAUDE_PLUGIN_ROOT/scripts/fetch-marketplace-cache.js" 2>&1`
+
+The script output is a single-line JSON object of the form `{"cacheDir": "...", "files": {"catalog.json": "<status>", "items.ndjson": "<status>"}}`. Possible status values per file:
+
+- `cache-hit` — the file was already fresh in `~/.claude-profiles/marketplace-cache/` (within the 24h TTL); no fetch needed
+- `fetched-auth` — the file was freshly downloaded via `api.github.com` using an auth token discovered from `GITHUB_TOKEN` / `GH_TOKEN` / `gh auth token`
+- `fetched-anon` — the file was freshly downloaded anonymously (only works if the marketplace repo is public)
+- `sibling-fallback` — the file was copied from `$CLAUDE_PROFILES_MARKETPLACE_DIR` (developer escape hatch)
+- `UNAVAILABLE` — no fallback worked; the caller (you) must surface an actionable error
 
 Parse the output. If either file shows `UNAVAILABLE`, stop and tell the user that the marketplace catalog cannot be reached. The `claude-profiles-marketplace` repo is currently private, so anonymous access does not work. The user needs **one** of the following:
 
@@ -408,83 +368,20 @@ Otherwise, present the missing plugins and ask:
 
 ### Install block
 
-This inline node command mirrors the Electron app's `installPlugin` and `addMarketplace` functions from `src/electron/core.ts`. Two load-bearing details:
+The install is handled by a helper script at `$CLAUDE_PLUGIN_ROOT/scripts/install-plugins.js`. It mirrors the Electron app's `installPlugin` and `addMarketplace` functions from `src/electron/core.ts`, and encodes two load-bearing details:
 
-1. **It resolves the real `claude` binary by walking PATH and skipping `~/.claude-profiles/bin`.** The profiles bin directory contains alias scripts (including the `claude-default` alias, which is *designed* to intercept bare `claude` invocations) that hardcode their own `CLAUDE_CONFIG_DIR` inline on the command line. If you reach `claude` through PATH in this environment, the alias wins and the plugin installs into the wrong config dir. Always call the real binary by absolute path.
+1. **It resolves the real `claude` binary by walking PATH and skipping `~/.claude-profiles/bin`.** The profiles bin directory contains alias scripts (including the `claude-default` alias, which is *designed* to intercept bare `claude` invocations) that hardcode their own `CLAUDE_CONFIG_DIR` inline on the command line. If you reach `claude` through PATH in this environment, the alias wins and the plugin installs into the wrong config dir. The helper always calls the real binary by absolute path.
 2. **It sets `CLAUDE_CONFIG_DIR=$HOME/.claude`** on the subprocess env so installs land in the central `~/.claude/plugins/` location, which is where every profile sources plugins from. Without this override, installs would go to whatever profile-scoped `CLAUDE_CONFIG_DIR` the current session happens to have.
 
-Before running the command, set the `MISSING_PLUGINS` environment variable to a JSON array. For each missing plugin, include its `id`, its `marketplace` field (short id from catalog.json, e.g. `claude-plugins-official`), and its `sourceUrl` from catalog.json (used to derive the `owner/repo` to pass to `plugin marketplace add`):
+Build the `MISSING_PLUGINS` JSON array inline. For each missing plugin, include its `id`, its `marketplaceId` (short id from catalog.json, e.g. `claude-plugins-official`), and its `sourceUrl` from catalog.json (used to derive the `owner/repo` to pass to `plugin marketplace add`). Prefix the bash command with the variable assignment so the helper script sees it via `process.env.MISSING_PLUGINS`.
 
-```
-MISSING_PLUGINS='[
-  {"id":"frontend-design@claude-plugins-official","marketplaceId":"claude-plugins-official","sourceUrl":"https://github.com/anthropics/claude-plugins"},
-  {"id":"pw@claude-code-skills","marketplaceId":"claude-code-skills","sourceUrl":"https://github.com/someone/claude-code-skills"}
-]'
-```
+Example — **inline the JSON directly in the command** rather than trying to reference a shell variable from a previous step:
 
-Then run:
+!`MISSING_PLUGINS='[{"id":"frontend-design@claude-plugins-official","marketplaceId":"claude-plugins-official","sourceUrl":"https://github.com/anthropics/claude-plugins"},{"id":"pw@claude-code-skills","marketplaceId":"claude-code-skills","sourceUrl":"https://github.com/someone/claude-code-skills"}]' node "$CLAUDE_PLUGIN_ROOT/scripts/install-plugins.js" 2>&1`
 
-!`node -e "
-(async () => {
-  const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process');
+Use single quotes around the JSON array so the embedded double-quotes don't collide with bash's own double-quote parsing. Substitute the actual plugin metadata from the profile draft (not the example IDs above) when you run the command.
 
-  // 1. Resolve the real claude binary — walk PATH, skip the profiles bin dir.
-  //    See core.ts:findRealClaudeBinary for the original implementation.
-  const profilesBin = path.join(os.homedir(), '.claude-profiles', 'bin');
-  let realClaude = null;
-  for (const dir of (process.env.PATH || '').split(path.delimiter)) {
-    try {
-      if (path.resolve(dir) === profilesBin) continue;
-      const candidate = path.join(dir, 'claude');
-      fs.accessSync(candidate, fs.constants.X_OK);
-      realClaude = candidate;
-      break;
-    } catch {}
-  }
-  if (!realClaude) {
-    console.error(JSON.stringify({ok: false, error: 'Real claude binary not found in PATH outside ~/.claude-profiles/bin. Is Claude Code installed?'}));
-    process.exit(1);
-  }
-
-  // 2. Force CLAUDE_CONFIG_DIR to the central ~/.claude so installs land globally.
-  const claudeHome = path.join(os.homedir(), '.claude');
-  const env = { ...process.env, CLAUDE_CONFIG_DIR: claudeHome };
-
-  // 3. Load known_marketplaces.json to skip adding marketplaces that are already registered.
-  let known = {};
-  try {
-    known = JSON.parse(fs.readFileSync(path.join(claudeHome, 'plugins', 'known_marketplaces.json'), 'utf-8'));
-  } catch {}
-
-  const plugins = JSON.parse(process.env.MISSING_PLUGINS || '[]');
-  const results = [];
-
-  for (const p of plugins) {
-    try {
-      // 4. Add marketplace if not already known. Derive owner/repo from sourceUrl.
-      if (!known[p.marketplaceId] && p.sourceUrl) {
-        const m = p.sourceUrl.match(/github\\.com\\/([^/]+\\/[^/]+)/);
-        if (!m) throw new Error('Could not parse owner/repo from sourceUrl: ' + p.sourceUrl);
-        const source = m[1].replace(/\\.git$/, '').replace(/\\/$/, '');
-        cp.execFileSync(realClaude, ['plugin', 'marketplace', 'add', source], {
-          env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000
-        });
-        known[p.marketplaceId] = { source };
-      }
-      // 5. Install the plugin.
-      cp.execFileSync(realClaude, ['plugin', 'install', p.id], {
-        env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000
-      });
-      results.push({id: p.id, ok: true});
-    } catch (e) {
-      results.push({id: p.id, ok: false, error: String((e && e.message) || e).slice(0, 300)});
-    }
-  }
-  console.log(JSON.stringify({realClaude, results}, null, 2));
-})();
-" 2>&1`
-
-Parse the output. For each plugin:
+The script output is a JSON object of the form `{"ok": true, "realClaude": "<path>", "results": [{"id": "...", "ok": true|false, "error": "..."}]}`. Parse it and handle each plugin:
 
 - **Success** → confirm to the user (*"Installed `<plugin-id>` ✓"*)
 - **Failure** → show the error, then ask whether to (a) retry that plugin, (b) skip it and note in the profile that the install is pending, or (c) abort the whole write so the user can investigate before creating a half-broken profile
