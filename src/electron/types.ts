@@ -289,6 +289,10 @@ export interface StatusLineWidget {
 export interface StatusLineSeparators {
   field?: string;
   section?: string;
+  /** Hex color for the field separator glyph. Falls back to masterColor, then CB. */
+  fieldColor?: string;
+  /** Hex color for the section separator glyph. Falls back to masterColor, then CB. */
+  sectionColor?: string;
 }
 
 /**
@@ -300,6 +304,13 @@ export interface StatusLineSeparators {
  */
 export interface StatusLineConfig {
   version: number;
+  /**
+   * Optional top-level theme color. Applies to every widget's primary color
+   * AND to both separators, unless the widget/separator sets its own color
+   * override. Undefined means "fall back to CB (MC blue)" — this preserves
+   * the original default behavior for users who haven't set a theme.
+   */
+  masterColor?: string;
   separators?: StatusLineSeparators;
   widgets: StatusLineWidget[];
 }

@@ -289,6 +289,42 @@
   margin-left: 12px;
 }
 
+.status-bar-color-input {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.status-bar-color-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.status-bar-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.status-bar-separator-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.status-bar-separator-row .status-bar-widget-name {
+  flex: 1;
+}
+
+.status-bar-separator-row .status-bar-separator-input {
+  flex-shrink: 0;
+}
+
 .status-bar-preview {
   margin-top: 20px;
   padding: 12px 16px;

@@ -269,8 +269,27 @@ export function StatusBarTab() {
     setDirty(true);
   }
 
+  function changeSeparatorColor(which: "fieldColor" | "sectionColor", value: string) {
+    if (!config) return;
+    const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
+    next.separators = { ...(next.separators ?? {}), [which]: value };
+    setConfig(next);
+    setDirty(true);
+  }
+
+  function changeMasterColor(value: string) {
+    if (!config) return;
+    const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
+    next.masterColor = value;
+    setConfig(next);
+    setDirty(true);
+  }
+
   const fieldSep = config.separators?.field ?? "│";
   const sectionSep = config.separators?.section ?? "║";
+  const masterColor = config.masterColor ?? "#6cabdd";
+  const fieldSepColor = config.separators?.fieldColor ?? config.masterColor ?? "#6cabdd";
+  const sectionSepColor = config.separators?.sectionColor ?? config.masterColor ?? "#6cabdd";
 
   const selectedWidgetObj =
     selectedIndex !== null && config.widgets[selectedIndex]
@@ -300,7 +319,18 @@ export function StatusBarTab() {
             <h3 className="status-bar-section-label">Global</h3>
             <ul className="status-bar-widget-list">
               <li className="status-bar-widget-row">
-                <label>
+                <label className="status-bar-separator-row">
+                  <span className="status-bar-widget-name">Master color</span>
+                  <input
+                    type="color"
+                    value={masterColor}
+                    onChange={(e) => changeMasterColor(e.target.value)}
+                    className="status-bar-color-input"
+                  />
+                </label>
+              </li>
+              <li className="status-bar-widget-row">
+                <label className="status-bar-separator-row">
                   <span className="status-bar-widget-name">Field separator</span>
                   <input
                     type="text"
@@ -309,10 +339,16 @@ export function StatusBarTab() {
                     onChange={(e) => changeSeparator("field", e.target.value)}
                     className="status-bar-separator-input"
                   />
+                  <input
+                    type="color"
+                    value={fieldSepColor}
+                    onChange={(e) => changeSeparatorColor("fieldColor", e.target.value)}
+                    className="status-bar-color-input"
+                  />
                 </label>
               </li>
               <li className="status-bar-widget-row">
-                <label>
+                <label className="status-bar-separator-row">
                   <span className="status-bar-widget-name">Section separator</span>
                   <input
                     type="text"
@@ -320,6 +356,12 @@ export function StatusBarTab() {
                     maxLength={3}
                     onChange={(e) => changeSeparator("section", e.target.value)}
                     className="status-bar-separator-input"
+                  />
+                  <input
+                    type="color"
+                    value={sectionSepColor}
+                    onChange={(e) => changeSeparatorColor("sectionColor", e.target.value)}
+                    className="status-bar-color-input"
                   />
                 </label>
               </li>
