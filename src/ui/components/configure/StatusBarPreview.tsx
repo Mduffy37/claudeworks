@@ -44,7 +44,9 @@ export function StatusBarPreview({ config }: Props) {
         </div>
       )}
       <div className="status-bar-preview-hint">
-        Uses a mock session (Opus, 25% context, 30m uptime, $0.50 cost). The 5h/7d values reflect your real account usage.
+        <strong>Example data:</strong> model, context%, cost, uptime, lines, burn, and ctx-to-full use a mock session (Opus, 25% context, 30m, $0.50).
+        <br />
+        <strong>Real data:</strong> time, git, cwd, 5h/7d usage, active profile, and plugin count are queried live.
       </div>
     </div>
   );
