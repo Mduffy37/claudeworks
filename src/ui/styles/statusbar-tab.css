@@ -7,12 +7,31 @@
      can span the full modal width while the controls stay narrow. */
 }
 
-.status-bar-tab-header,
-.status-bar-tab-sections,
-.status-bar-tab-footer,
-.status-bar-global-options {
+.status-bar-tab-header {
   max-width: 720px;
   width: 100%;
+}
+
+.status-bar-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 20px;
+  align-items: start;
+  max-width: none;
+}
+
+.status-bar-list-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.status-bar-editor-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
 .status-bar-tab.loading {
@@ -71,10 +90,20 @@
   padding: 6px 8px;
   border-radius: 6px;
   transition: background 0.15s;
+  cursor: pointer;
 }
 
 .status-bar-widget-row:hover {
   background: var(--bg-hover);
+}
+
+.status-bar-widget-row.selected {
+  background: rgba(108, 171, 221, 0.18);
+  outline: 1px solid var(--accent, #6cabdd);
+}
+
+.status-bar-widget-row.selected .status-bar-widget-name {
+  color: var(--accent, #6cabdd);
 }
 
 .status-bar-widget-row label {
@@ -119,38 +148,45 @@
   cursor: grabbing;
 }
 
-.status-bar-widget-row-wrapper {
-  display: flex;
-  flex-direction: column;
+.status-bar-inspector {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
 }
 
-.status-bar-widget-expand {
-  background: none;
-  border: none;
+.status-bar-inspector-label {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
   color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 10px;
-  padding: 4px 8px;
-  margin-left: auto;
 }
 
-.status-bar-widget-expand:hover {
+.status-bar-inspector-title {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.status-bar-inspector-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 13px;
+  margin: 0;
 }
 
 .widget-options-panel {
-  padding: 8px 16px 12px 40px;
-  background: var(--bg-primary);
-  border-radius: 0 0 6px 6px;
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
+  padding: 0;
 }
 
 .widget-options-panel.empty {
   font-style: italic;
   color: var(--text-secondary);
   font-size: 12px;
-  opacity: 0.7;
+  padding: 8px 0;
 }
 
 .widget-options-description {

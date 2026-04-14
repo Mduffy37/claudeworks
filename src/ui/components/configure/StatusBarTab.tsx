@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import type { StatusLineConfig } from "../../../electron/types";
 import { SortableWidgetRow } from "./SortableWidgetRow";
+import { WidgetOptionsPanel } from "./WidgetOptionsPanel";
 import { StatusBarPreview } from "./StatusBarPreview";
 
 const WIDGET_LABELS: Record<string, string> = {
@@ -28,12 +29,20 @@ const WIDGET_LABELS: Record<string, string> = {
   usage7d: "7-day rate limit",
 };
 
+interface SelectedWidget {
+  sectionId: string;
+  widgetId: string;
+}
+
 export function StatusBarTab() {
   const [config, setConfig] = useState<StatusLineConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [selectedWidget, setSelectedWidget] = useState<SelectedWidget | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
 
   useEffect(() => {
     window.api.getStatusLineConfig().then(setConfig);
@@ -55,7 +64,12 @@ export function StatusBarTab() {
     setDirty(true);
   }
 
-  function changeOption(sectionId: string, widgetId: string, key: string, value: unknown) {
+  function changeOption(
+    sectionId: string,
+    widgetId: string,
+    key: string,
+    value: unknown,
+  ) {
     if (!config) return;
     const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
     const sec = next.sections.find((s) => s.id === sectionId);
@@ -65,6 +79,11 @@ export function StatusBarTab() {
     w.options = { ...w.options, [key]: value };
     setConfig(next);
     setDirty(true);
+  }
+
+  function changeSelectedOption(key: string, value: unknown) {
+    if (!selectedWidget) return;
+    changeOption(selectedWidget.sectionId, selectedWidget.widgetId, key, value);
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -112,6 +131,7 @@ export function StatusBarTab() {
       const fresh = await window.api.resetStatusLineConfig();
       setConfig(fresh);
       setDirty(false);
+      setSelectedWidget(null);
     } finally {
       setSaving(false);
     }
@@ -128,83 +148,124 @@ export function StatusBarTab() {
   const fieldSep = config.separators?.field ?? "│";
   const sectionSep = config.separators?.section ?? "║";
 
+  // Find the selected widget's current object (for rendering the inspector).
+  const selectedWidgetObj = selectedWidget
+    ? config.sections
+        .find((s) => s.id === selectedWidget.sectionId)
+        ?.widgets.find((w) => w.id === selectedWidget.widgetId)
+    : null;
+
+  const selectedWidgetLabel = selectedWidget
+    ? WIDGET_LABELS[selectedWidget.widgetId] ?? selectedWidget.widgetId
+    : null;
+
   return (
     <div className="status-bar-tab">
       <header className="status-bar-tab-header">
         <h2>Status Bar Widgets</h2>
         <p className="status-bar-tab-hint">
-          Toggle widgets on or off to customize your Claude Code status line.
-          Changes apply on the next Claude Code session restart.
+          Click a widget on the left to configure it in the inspector. Drag to
+          reorder. Changes apply on the next Claude Code session restart.
         </p>
       </header>
 
-      <section className="status-bar-global-options status-bar-section">
-        <h3 className="status-bar-section-label">Global</h3>
-        <ul className="status-bar-widget-list">
-          <li className="status-bar-widget-row">
-            <label>
-              <span className="status-bar-widget-name">Field separator</span>
-              <input
-                type="text"
-                value={fieldSep}
-                maxLength={3}
-                onChange={(e) => changeSeparator("field", e.target.value)}
-                className="status-bar-separator-input"
-              />
-            </label>
-          </li>
-          <li className="status-bar-widget-row">
-            <label>
-              <span className="status-bar-widget-name">Section separator</span>
-              <input
-                type="text"
-                value={sectionSep}
-                maxLength={3}
-                onChange={(e) => changeSeparator("section", e.target.value)}
-                className="status-bar-separator-input"
-              />
-            </label>
-          </li>
-        </ul>
-      </section>
+      <div className="status-bar-split">
+        <div className="status-bar-list-column">
+          <section className="status-bar-global-options status-bar-section">
+            <h3 className="status-bar-section-label">Global</h3>
+            <ul className="status-bar-widget-list">
+              <li className="status-bar-widget-row">
+                <label>
+                  <span className="status-bar-widget-name">Field separator</span>
+                  <input
+                    type="text"
+                    value={fieldSep}
+                    maxLength={3}
+                    onChange={(e) => changeSeparator("field", e.target.value)}
+                    className="status-bar-separator-input"
+                  />
+                </label>
+              </li>
+              <li className="status-bar-widget-row">
+                <label>
+                  <span className="status-bar-widget-name">Section separator</span>
+                  <input
+                    type="text"
+                    value={sectionSep}
+                    maxLength={3}
+                    onChange={(e) => changeSeparator("section", e.target.value)}
+                    className="status-bar-separator-input"
+                  />
+                </label>
+              </li>
+            </ul>
+          </section>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="status-bar-tab-sections">
-          {config.sections.map((section) => (
-            <section key={section.id} className="status-bar-section">
-              <h3 className="status-bar-section-label">{section.label}</h3>
-              <SortableContext
-                items={section.widgets.map((w) => `${section.id}:${w.id}`)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="status-bar-widget-list">
-                  {section.widgets.map((widget) => (
-                    <SortableWidgetRow
-                      key={`${section.id}:${widget.id}`}
-                      sectionId={section.id}
-                      widget={widget}
-                      label={WIDGET_LABELS[widget.id] ?? widget.id}
-                      onToggle={(enabled) => toggleWidget(section.id, widget.id, enabled)}
-                      onOptionChange={(key, value) => changeOption(section.id, widget.id, key, value)}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
-            </section>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="status-bar-tab-sections">
+              {config.sections.map((section) => (
+                <section key={section.id} className="status-bar-section">
+                  <h3 className="status-bar-section-label">{section.label}</h3>
+                  <SortableContext
+                    items={section.widgets.map((w) => `${section.id}:${w.id}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <ul className="status-bar-widget-list">
+                      {section.widgets.map((widget) => (
+                        <SortableWidgetRow
+                          key={`${section.id}:${widget.id}`}
+                          sectionId={section.id}
+                          widget={widget}
+                          label={WIDGET_LABELS[widget.id] ?? widget.id}
+                          selected={
+                            selectedWidget?.sectionId === section.id &&
+                            selectedWidget?.widgetId === widget.id
+                          }
+                          onToggle={(enabled) => toggleWidget(section.id, widget.id, enabled)}
+                          onSelect={() =>
+                            setSelectedWidget({ sectionId: section.id, widgetId: widget.id })
+                          }
+                        />
+                      ))}
+                    </ul>
+                  </SortableContext>
+                </section>
+              ))}
+            </div>
+          </DndContext>
         </div>
-      </DndContext>
 
-      <StatusBarPreview config={config} />
+        <div className="status-bar-editor-column">
+          <StatusBarPreview config={config} />
 
-      <footer className="status-bar-tab-footer">
-        <button className="btn-secondary" disabled={saving} onClick={handleReset}>
-          Reset to defaults
-        </button>
-        <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
-          {saving ? "Saving…" : dirty ? "Save" : "Saved"}
-        </button>
-      </footer>
+          <section className="status-bar-inspector">
+            <h3 className="status-bar-inspector-label">Inspector</h3>
+            {selectedWidgetObj && selectedWidgetLabel ? (
+              <>
+                <div className="status-bar-inspector-title">{selectedWidgetLabel}</div>
+                <WidgetOptionsPanel
+                  widgetId={selectedWidget!.widgetId}
+                  options={selectedWidgetObj.options}
+                  onChange={changeSelectedOption}
+                />
+              </>
+            ) : (
+              <p className="status-bar-inspector-empty">
+                Select a widget on the left to configure it.
+              </p>
+            )}
+          </section>
+
+          <footer className="status-bar-tab-footer">
+            <button className="btn-secondary" disabled={saving} onClick={handleReset}>
+              Reset to defaults
+            </button>
+            <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
+              {saving ? "Saving…" : dirty ? "Save" : "Saved"}
+            </button>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }
