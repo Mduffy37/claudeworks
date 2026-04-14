@@ -1,3 +1,5 @@
+@import "./statusbar-tab.css";
+
 :root {
   color-scheme: dark;
   /* Core backgrounds — neutral dark, not blue-purple */

@@ -7,6 +7,7 @@ import type { PluginWithItems, Profile, Prompt, AvailablePlugin, CuratedPlugin, 
 import { PromptPicker } from "./PromptPicker";
 import { CuratedDetailModal } from "./CuratedDetailModal";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
+import { StatusBarTab } from "./configure/StatusBarTab";
 
 type CuratedDetailTarget =
   | { kind: "marketplace"; entry: CuratedMarketplace }
@@ -93,7 +94,7 @@ function CollectionIcon({ name, size = 12 }: { name: string; size?: number }) {
   }
 }
 
-type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health";
+type ManageTab = "plugins" | "projects" | "global" | "prompts" | "health" | "statusbar";
 
 interface Props {
   plugins: PluginWithItems[];
@@ -1853,6 +1854,12 @@ export function ManageDialog({
             >
               Health
             </button>
+            <button
+              className={`manage-dialog-tab${activeTab === "statusbar" ? " active" : ""}`}
+              onClick={() => setActiveTab("statusbar")}
+            >
+              Status Bar
+            </button>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -2449,6 +2456,7 @@ export function ManageDialog({
 
           {activeTab === "global" && <GlobalSettingsTab />}
           {activeTab === "health" && <HealthTab profiles={profiles} plugins={plugins} />}
+          {activeTab === "statusbar" && <StatusBarTab />}
         </div>
       </div>
     </div>

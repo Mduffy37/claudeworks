@@ -104,6 +104,12 @@ export interface Profile {
   disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
   favourite?: boolean;
+  /**
+   * Optional per-profile status line config. When present, overrides the
+   * global `~/.claude/statusline-config.json` for sessions launched via
+   * this profile. When undefined, the global config is used.
+   */
+  statusLineConfig?: StatusLineConfig;
 }
 
 /** Named colours matching Claude Code's internal teammate palette. */
@@ -265,6 +271,50 @@ export interface LaunchOptions {
   dangerouslySkipPermissions?: boolean;
 }
 
+/**
+ * A single widget entry in a status line config.
+ *
+ * Special sentinel: an entry with `id: "break"` marks a section boundary
+ * in the flat widget list. The Python renderer groups widgets by break
+ * markers and joins the groups with the section separator. Break entries
+ * don't need `options`.
+ */
+export interface StatusLineWidget {
+  id: string;
+  enabled: boolean;
+  options?: Record<string, unknown>;
+}
+
+/** Global separator characters used between widgets (field) and between sections. */
+export interface StatusLineSeparators {
+  field?: string;
+  section?: string;
+  /** Hex color for the field separator glyph. Falls back to masterColor, then CB. */
+  fieldColor?: string;
+  /** Hex color for the section separator glyph. Falls back to masterColor, then CB. */
+  sectionColor?: string;
+}
+
+/**
+ * Full status line config stored at ~/.claude/statusline-config.json.
+ *
+ * v2 schema: flat widget list with "break" sentinel entries marking
+ * section boundaries. v1 configs (with `sections`) are migrated on read
+ * by `getStatusLineConfig` / Python `load_config`.
+ */
+export interface StatusLineConfig {
+  version: number;
+  /**
+   * Optional top-level theme color. Applies to every widget's primary color
+   * AND to both separators, unless the widget/separator sets its own color
+   * override. Undefined means "fall back to CB (MC blue)" — this preserves
+   * the original default behavior for users who haven't set a theme.
+   */
+  masterColor?: string;
+  separators?: StatusLineSeparators;
+  widgets: StatusLineWidget[];
+}
+
 /** IPC API exposed to the renderer via contextBridge. */
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
@@ -347,6 +397,11 @@ export interface ElectronAPI {
   fetchUpstreamMarketplace: (source: string) => Promise<Record<string, any>>;
   fetchPluginItems: (source: string, pluginPath: string) => Promise<PluginItem[]>;
   fetchRepoReadme: (source: string) => Promise<string>;
+  // Status line config
+  getStatusLineConfig: () => Promise<StatusLineConfig>;
+  setStatusLineConfig: (config: StatusLineConfig) => Promise<void>;
+  resetStatusLineConfig: () => Promise<StatusLineConfig>;
+  renderStatusLinePreview: (config: StatusLineConfig, mockSession?: Record<string, unknown>) => Promise<string>;
 }
 
 export interface ActiveSession {

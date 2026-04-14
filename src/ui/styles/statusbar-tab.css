@@ -1,0 +1,516 @@
+.status-bar-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  min-height: 0;
+  /* Fills whatever height the parent .manage-dialog-body gives us so the
+     two scroll columns inside .status-bar-split can scroll independently
+     without the Save/Reset footer falling off the modal. */
+}
+
+.status-bar-tab-header {
+  flex-shrink: 0;
+  max-width: 720px;
+  width: 100%;
+}
+
+.status-bar-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 20px;
+  flex: 1;
+  min-height: 0; /* allows children to shrink below their intrinsic height */
+  align-items: stretch;
+  max-width: none;
+}
+
+.status-bar-list-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.status-bar-editor-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.status-bar-tab.loading {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.status-bar-tab-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-bar-tab-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.status-bar-tab-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.status-bar-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+}
+
+.status-bar-section-label {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+}
+
+.status-bar-widget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-bar-widget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.status-bar-widget-row:hover {
+  background: var(--bg-hover);
+}
+
+.status-bar-widget-row.selected {
+  background: rgba(108, 171, 221, 0.18);
+  outline: 1px solid var(--accent, #6cabdd);
+}
+
+.status-bar-widget-row.selected .status-bar-widget-name {
+  color: var(--accent, #6cabdd);
+}
+
+/* The Global section reuses .status-bar-widget-row for separator inputs
+   inside a <label>, so we still need the label flex layout there. */
+.status-bar-widget-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.status-bar-widget-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.status-bar-tab-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-top: auto; /* pushes to the bottom of the editor flex column */
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+  /* sticky + bg keeps the footer visible when the editor column scrolls */
+}
+
+.status-bar-drag-handle {
+  display: inline-block;
+  padding: 4px 6px;
+  margin-right: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.status-bar-drag-handle:hover,
+.status-bar-widget-row:hover .status-bar-drag-handle {
+  opacity: 1;
+}
+
+.status-bar-drag-handle:active {
+  cursor: grabbing;
+}
+
+.status-bar-inspector {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.status-bar-inspector-label {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+}
+
+.status-bar-inspector-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.status-bar-inspector-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 13px;
+  margin: 0;
+}
+
+.widget-options-panel {
+  padding: 0;
+}
+
+.widget-options-panel.empty {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.widget-options-description {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.widget-options-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.widget-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.widget-option-row label {
+  font-size: 12px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.widget-option-row input[type="number"],
+.widget-option-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.widget-option-row input[type="number"] {
+  width: 72px;
+}
+
+.widget-option-row input[type="text"] {
+  width: 120px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.widget-option-row input[type="color"] {
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+}
+
+.status-bar-separator-input {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: "SF Mono", Monaco, Menlo, monospace;
+  font-size: 14px;
+  text-align: center;
+  margin-left: 12px;
+}
+
+.status-bar-color-input {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.status-bar-color-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.status-bar-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.status-bar-separator-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.status-bar-separator-row .status-bar-widget-name {
+  flex: 1;
+}
+
+.status-bar-separator-row .status-bar-separator-input {
+  flex-shrink: 0;
+}
+
+.status-bar-preview {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: "SF Mono", Monaco, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.status-bar-preview-label {
+  font-family: inherit;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.status-bar-preview-line {
+  white-space: nowrap;
+  overflow-x: auto;
+  padding: 4px 0;
+  color: #e0e0e0;
+}
+
+.status-bar-preview-error {
+  color: #ff6060;
+  font-size: 11px;
+}
+
+.status-bar-preview-hint {
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-family: system-ui, sans-serif;
+}
+
+/* ---- v2 schema: break sentinel + add-widget popover + preset menu ---- */
+
+.status-bar-break-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 10px;
+  background: transparent;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  margin: 4px 0;
+  cursor: default;
+}
+
+.status-bar-break-line {
+  flex: 1;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.status-bar-break-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+.status-bar-break-delete:hover {
+  color: #ff6060;
+}
+
+.status-bar-add-widget-wrap {
+  position: relative;
+}
+
+.status-bar-add-widget {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+
+.status-bar-add-widget:hover {
+  border-color: var(--accent, #6cabdd);
+  color: var(--accent, #6cabdd);
+}
+
+.status-bar-add-menu {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.status-bar-add-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.status-bar-add-menu button:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.status-bar-footer-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-bar-preset-wrap {
+  position: relative;
+}
+
+.status-bar-preset-menu {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.status-bar-preset-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.status-bar-preset-menu button:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.status-bar-row-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 6px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.status-bar-widget-row:hover .status-bar-row-delete {
+  opacity: 0.7;
+}
+
+.status-bar-row-delete:hover {
+  opacity: 1 !important;
+  color: #ff6060;
+}

@@ -82,6 +82,12 @@ const api: ElectronAPI = {
   fetchUpstreamMarketplace: (source) => ipcRenderer.invoke("fetch-upstream-marketplace", source),
   fetchPluginItems: (source, pluginPath) => ipcRenderer.invoke("fetch-plugin-items", source, pluginPath),
   fetchRepoReadme: (source) => ipcRenderer.invoke("fetch-repo-readme", source),
+  // Status line config
+  getStatusLineConfig: () => ipcRenderer.invoke("get-statusline-config"),
+  setStatusLineConfig: (config) => ipcRenderer.invoke("set-statusline-config", config),
+  resetStatusLineConfig: () => ipcRenderer.invoke("reset-statusline-config"),
+  renderStatusLinePreview: (config, mockSession) =>
+    ipcRenderer.invoke("render-statusline-preview", config, mockSession),
 };
 
 contextBridge.exposeInMainWorld("api", api);

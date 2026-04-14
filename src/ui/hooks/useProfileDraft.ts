@@ -3,6 +3,7 @@ import type {
   Profile,
   LocalItem,
   StandaloneMcp,
+  StatusLineConfig,
 } from "../../../src/electron/types";
 
 type TabId = "plugins" | "skills" | "agents" | "commands" | "mcp" | "local" | "instructions" | "settings";
@@ -42,6 +43,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
   const [useDefaultAuth, setUseDefaultAuth] = useState(true);
   const [env, setEnv] = useState<Record<string, string>>({});
   const [disabledHooks, setDisabledHooks] = useState<Record<string, number[]>>({});
+  const [statusLineConfig, setStatusLineConfig] = useState<StatusLineConfig | undefined>(undefined);
   const [isDefault, setIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
@@ -70,6 +72,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
         useDefaultAuth,
         env: Object.keys(env).length > 0 ? env : undefined,
         disabledHooks: Object.keys(disabledHooks).length > 0 ? disabledHooks : undefined,
+        statusLineConfig,
       });
       onDirtyChange(false);
       setSaveStatus("saved");
@@ -77,7 +80,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -101,6 +104,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setUseDefaultAuth(profile.useDefaultAuth !== false);
       setEnv(profile.env ?? {});
       setDisabledHooks(profile.disabledHooks ?? {});
+      setStatusLineConfig(profile.statusLineConfig);
       setLaunchDir(dirs[0] ?? "");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -125,6 +129,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       setUseDefaultAuth(true);
       setEnv({});
       setDisabledHooks({});
+      setStatusLineConfig(undefined);
       setLaunchDir("");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -209,6 +214,7 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
     useDefaultAuth, setUseDefaultAuth,
     env, setEnv,
     disabledHooks, setDisabledHooks,
+    statusLineConfig, setStatusLineConfig,
     saving,
     saveStatus,
     // Callbacks

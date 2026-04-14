@@ -24,11 +24,15 @@ import type {
   AnalyticsData,
   ActiveSession,
   LaunchOptions,
+  StatusLineConfig,
+  StatusLineWidget,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
+const STATUSLINE_CONFIG_PATH = path.join(os.homedir(), ".claude", "statusline-config.json");
+const STATUSLINE_RENDERER_PATH = path.join(os.homedir(), ".claude", "scripts", "statusline-render.py");
 
 function validateProfileName(name: string): void {
   if (!name || /[\/\\\0]|\.\./.test(name)) {
@@ -1489,6 +1493,20 @@ export function assembleProfile(profile: Profile): string {
     try { fs.unlinkSync(workflowPath); } catch {}
   }
 
+  // Handle per-profile status line config override (Phase 6)
+  // When set, the Python renderer picks this up via $CLAUDE_CONFIG_DIR and
+  // uses it instead of the global ~/.claude/statusline-config.json.
+  const profileStatuslineConfigPath = path.join(configDir, "statusline-config.json");
+  if (profile.statusLineConfig) {
+    fs.writeFileSync(
+      profileStatuslineConfigPath,
+      JSON.stringify(profile.statusLineConfig, null, 2) + "\n",
+      "utf-8",
+    );
+  } else {
+    try { fs.unlinkSync(profileStatuslineConfigPath); } catch {}
+  }
+
   // Scan plugins once for cache setup and exclusions
   const installedPlugins = scanInstalledPlugins();
 
@@ -2619,6 +2637,20 @@ export function assembleTeamProfile(team: Team): string {
     "utf-8"
   );
 
+  // Per-profile status line override for teams — inherit from the lead
+  // profile's override (if any). When absent, ensure any stale file is
+  // removed so the global config wins.
+  const teamStatuslineConfigPath = path.join(configDir, "statusline-config.json");
+  if (leadProfile.statusLineConfig) {
+    fs.writeFileSync(
+      teamStatuslineConfigPath,
+      JSON.stringify(leadProfile.statusLineConfig, null, 2) + "\n",
+      "utf-8",
+    );
+  } else {
+    try { fs.unlinkSync(teamStatuslineConfigPath); } catch {}
+  }
+
   // Symlink plugin caches for all merged plugins
   const installedPlugins = scanInstalledPlugins();
   symlinkSelectedCaches(
@@ -3612,4 +3644,119 @@ export function getClaudeHome(): string {
 
 export function getProfilesDir(): string {
   return PROFILES_DIR;
+}
+
+// ---------------------------------------------------------------------------
+// Status line config
+// ---------------------------------------------------------------------------
+
+function defaultStatusLineConfig(): StatusLineConfig {
+  return {
+    version: 2,
+    separators: { field: "│", section: "║" },
+    widgets: [
+      { id: "model", enabled: true, options: {} },
+    ],
+  };
+}
+
+/**
+ * Migrate a v1 config (nested `sections`) to the v2 flat widget list.
+ * Inserts an implicit `break` widget between sections so the renderer
+ * still produces the original grouping. Returns null if `parsed` is not
+ * an old-shape config.
+ */
+function migrateV1StatusLineConfig(parsed: any): StatusLineConfig | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  if (!Array.isArray(parsed.sections) || Array.isArray(parsed.widgets)) return null;
+  const flat: StatusLineWidget[] = [];
+  parsed.sections.forEach((section: any, idx: number) => {
+    if (idx > 0) {
+      flat.push({ id: "break", enabled: true, options: {} });
+    }
+    for (const w of section?.widgets || []) {
+      flat.push(w as StatusLineWidget);
+    }
+  });
+  return {
+    version: 2,
+    separators: parsed.separators,
+    widgets: flat,
+  };
+}
+
+export async function getStatusLineConfig(): Promise<StatusLineConfig> {
+  try {
+    const raw = await fs.promises.readFile(STATUSLINE_CONFIG_PATH, "utf-8");
+    const parsed = JSON.parse(raw);
+    const migrated = migrateV1StatusLineConfig(parsed);
+    if (migrated) {
+      // Old configs may contain widgets with `enabled: false` representing
+      // "in the list but hidden". The UI no longer supports that state —
+      // widgets are either present (shown) or removed. Drop disabled ones
+      // on load so old configs clean up on first open.
+      migrated.widgets = migrated.widgets.filter(
+        (w) => w && (w as { enabled?: boolean }).enabled !== false,
+      );
+      return migrated;
+    }
+    if (parsed && typeof parsed === "object" && Array.isArray(parsed.widgets)) {
+      parsed.widgets = parsed.widgets.filter(
+        (w: { enabled?: boolean } | null | undefined) =>
+          w && w.enabled !== false,
+      );
+      return parsed as StatusLineConfig;
+    }
+  } catch {
+    // File missing or unreadable — fall through to default.
+  }
+  return defaultStatusLineConfig();
+}
+
+export async function setStatusLineConfig(config: StatusLineConfig): Promise<void> {
+  await fs.promises.mkdir(path.dirname(STATUSLINE_CONFIG_PATH), { recursive: true });
+  await fs.promises.writeFile(
+    STATUSLINE_CONFIG_PATH,
+    JSON.stringify(config, null, 2) + "\n",
+    "utf-8",
+  );
+}
+
+export async function resetStatusLineConfig(): Promise<StatusLineConfig> {
+  const fresh = defaultStatusLineConfig();
+  await setStatusLineConfig(fresh);
+  return fresh;
+}
+
+export async function renderStatusLinePreview(
+  config: StatusLineConfig,
+  mockSession?: Record<string, unknown>,
+): Promise<string> {
+  const tmpConfig = path.join(os.tmpdir(), `claude-statusline-preview-${process.pid}-${Date.now()}.json`);
+  await fs.promises.writeFile(tmpConfig, JSON.stringify(config) + "\n", "utf-8");
+  const mock = JSON.stringify(mockSession ?? {
+    model: { display_name: "Opus" },
+    context_window: { context_window_size: 200000, used_percentage: 25 },
+    cost: {
+      total_cost_usd: 0.5,
+      total_lines_added: 42,
+      total_lines_removed: 10,
+      total_duration_ms: 1800000,
+    },
+  });
+  const env = { ...process.env, CLAUDE_STATUSLINE_CONFIG_OVERRIDE: tmpConfig };
+  return new Promise((resolve, reject) => {
+    const child = execFile(
+      "python3",
+      [STATUSLINE_RENDERER_PATH],
+      { env, timeout: 10000, maxBuffer: 1024 * 1024 },
+      (err, stdout) => {
+        fs.promises.unlink(tmpConfig).catch(() => undefined);
+        if (err) return reject(err);
+        resolve(stdout);
+      },
+    );
+    child.stdin?.write(mock);
+    child.stdin?.end();
+  });
 }
