@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import type { StatusLineConfig } from "../../../electron/types";
 import { SortableWidgetRow } from "./SortableWidgetRow";
+import { StatusBarPreview } from "./StatusBarPreview";
 
 const WIDGET_LABELS: Record<string, string> = {
   time: "Current time",
@@ -152,6 +153,8 @@ export function StatusBarTab() {
           ))}
         </div>
       </DndContext>
+
+      <StatusBarPreview config={config} />
 
       <footer className="status-bar-tab-footer">
         <button className="btn-secondary" disabled={saving} onClick={handleReset}>

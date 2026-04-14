@@ -186,3 +186,43 @@
 .widget-option-row input[type="number"] {
   width: 72px;
 }
+
+.status-bar-preview {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: "SF Mono", Monaco, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.status-bar-preview-label {
+  font-family: inherit;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.status-bar-preview-line {
+  white-space: nowrap;
+  overflow-x: auto;
+  padding: 4px 0;
+  color: #e0e0e0;
+}
+
+.status-bar-preview-error {
+  color: #ff6060;
+  font-size: 11px;
+}
+
+.status-bar-preview-hint {
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-family: system-ui, sans-serif;
+}
