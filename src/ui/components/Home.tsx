@@ -102,6 +102,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
   const [period, setPeriod] = useState<TimePeriod>("30d");
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [updateInfo, setUpdateInfo] = useState<{ available: boolean; current: string; latest: string } | null>(null);
+  const [showAllRecent, setShowAllRecent] = useState(false);
 
   // Fetch the full project list once (unfiltered) so the dropdown is always populated
   useEffect(() => {
@@ -319,7 +320,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       <div className="home-section">
         <h3 className="home-section-title">Recent Sessions</h3>
         <div className="home-session-list">
-          {analytics.recentSessions.map((s) => {
+          {(showAllRecent ? analytics.recentSessions : analytics.recentSessions.slice(0, 10)).map((s) => {
             const sessionProfile = profiles.find((p) => p.name === s.profile);
             return (
               <div key={s.sessionId} className="home-session-item">
@@ -347,6 +348,16 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
             );
           })}
         </div>
+        {analytics.recentSessions.length > 10 && (
+          <button
+            className="home-session-more"
+            onClick={() => setShowAllRecent((v) => !v)}
+          >
+            {showAllRecent
+              ? "Show less"
+              : `View all ${analytics.recentSessions.length}`}
+          </button>
+        )}
       </div>
 
       {/* Profile usage */}

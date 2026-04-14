@@ -5441,58 +5441,75 @@ body {
 
 .home-stats {
   display: flex;
-  gap: 16px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .home-stat {
   flex: 1;
   background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 64px;
+  text-align: left;
 }
 
 .home-stat-value {
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .home-stat-label {
-  font-size: 0.769rem;
+  font-size: 0.692rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .home-section {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+/* Subtle dividers between stacked dashboard sections. The columns row is not a
+   .home-section itself but wraps two sections, so we handle it separately. */
+.home-section + .home-section,
+.home-stats + .home-section,
+.home-columns + .home-section,
+.home-section + .home-columns,
+.home-stats + .home-columns {
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .home-section-title {
-  font-size: 0.846rem;
+  font-size: 0.692rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
 }
 
 /* Activity chart */
 .home-chart {
   background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 12px 8px;
+  padding: 20px 16px 10px;
 }
 
 .home-chart-bars {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 100px;
+  height: 180px;
 }
 
 .home-chart-col {
@@ -5745,6 +5762,23 @@ body {
   color: var(--text-muted);
   min-width: 80px;
   text-align: right;
+}
+
+.home-session-more {
+  display: inline-block;
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 0.769rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.home-session-more:hover {
+  background: var(--bg-secondary);
 }
 
 /* Home favourites */
