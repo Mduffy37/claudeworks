@@ -83,6 +83,33 @@ try {
   if (excludedItems === null || typeof excludedItems !== "object" || Array.isArray(excludedItems)) {
     throw new Error("P_EXCLUDED must be a JSON object");
   }
+  // Each value must be a flat array of strings. applyExclusions() in
+  // core.ts treats excludedNames as `string[]` and calls
+  // `excludedNames.includes(item.name)` — so a nested object like
+  // `{skills:[], agents:[], commands:[]}` (which earlier SKILL.md docs
+  // incorrectly suggested) would silently no-op. Catch that here with
+  // a loud error so the skill can't generate a broken profile.
+  for (const [pluginId, value] of Object.entries(excludedItems)) {
+    if (!Array.isArray(value)) {
+      throw new Error(
+        `excludedItems["${pluginId}"] must be a flat array of item-name strings, ` +
+        `not ${value === null ? "null" : typeof value}. ` +
+        `Example: {"${pluginId}": ["skill-a", "skill-b"]}. ` +
+        `If you were using the nested {skills:[], agents:[], commands:[]} format, ` +
+        `that's out of date — applyExclusions in core.ts reads a flat list of bare ` +
+        `item names and filters all kinds (skills, agents, commands) against the same set.`,
+      );
+    }
+    for (const entry of value) {
+      if (typeof entry !== "string") {
+        throw new Error(
+          `excludedItems["${pluginId}"] contains a non-string value: ${JSON.stringify(entry)}. ` +
+          `Every entry must be a bare item name (string). ` +
+          `Example: {"${pluginId}": ["skill-a", "skill-b"]}.`,
+        );
+      }
+    }
+  }
 } catch (e) {
   fail("Failed to parse P_EXCLUDED: " + String(e.message || e));
 }
@@ -109,6 +136,7 @@ const profile = {
   effortLevel: process.env.P_EFFORT || undefined,
   customClaudeMd: process.env.P_INSTRUCTIONS || "",
   workflow: process.env.P_WORKFLOW || undefined,
+  tools: process.env.P_TOOLS || undefined,
   useDefaultAuth: true,
 };
 store.profiles[name] = profile;

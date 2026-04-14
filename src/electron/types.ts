@@ -89,6 +89,7 @@ export interface Profile {
   statusLine?: { type: "command"; command: string } | null;
   customClaudeMd?: string; // per-profile CLAUDE.md content (appended to global)
   workflow?: string; // body of the /workflow command, written to <config>/commands/workflow.md
+  tools?: string; // body of the /tools command — a persistent tool-set reference with rationale, written to <config>/commands/tools.md
   disabledMcpServers?: Record<string, string[]>;
   // key:   directory path (e.g. "/Users/me/Documents/The Vault")
   // value: array of disabled MCP server names for that directory

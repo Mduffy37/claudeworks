@@ -1493,6 +1493,18 @@ export function assembleProfile(profile: Profile): string {
     try { fs.unlinkSync(workflowPath); } catch {}
   }
 
+  // Handle per-profile /tools command — a persistent tool-set reference the
+  // user can invoke at any time to see what's in this profile and why.
+  // Mirror of the workflow block above; different file, different field.
+  const toolsPath = path.join(configDir, "commands", "tools.md");
+  if (profile.tools && profile.tools.trim()) {
+    fs.mkdirSync(path.dirname(toolsPath), { recursive: true });
+    const frontmatter = `---\ndescription: Show all tools in this profile with rationale\n---\n\n`;
+    fs.writeFileSync(toolsPath, frontmatter + profile.tools);
+  } else {
+    try { fs.unlinkSync(toolsPath); } catch {}
+  }
+
   // Handle per-profile status line config override (Phase 6)
   // When set, the Python renderer picks this up via $CLAUDE_CONFIG_DIR and
   // uses it instead of the global ~/.claude/statusline-config.json.

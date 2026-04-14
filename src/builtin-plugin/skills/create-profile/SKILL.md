@@ -97,6 +97,23 @@ console.log(JSON.stringify({installed,profileNames:Object.keys(profiles)}));
 
 This tells you which plugins are already locally installed (so you can flag "already installed" vs. "needs install from Browse tab") and which profile names are taken (so you don't collide in Step 7).
 
+### 1e. Local skills, agents, and commands
+
+The user may have **local** skills, agents, or commands installed directly under `~/.claude/skills/`, `~/.claude/agents/`, `~/.claude/commands/` — these are real, first-class items that are *not* in the curated marketplace index. They can be referenced in profiles as `local:<name>` plugin IDs (matching the `LOCAL_PLUGIN_PREFIX` constant in the Electron app's `core.ts`), and the profile loader wires them up correctly at session launch.
+
+**Always enumerate them at the start of Step 1** — a session that ignores the local scan will present the user with "here are some curated plugins" while silently missing tools they already installed and rely on. Run:
+
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-local-plugins.js" 2>&1`
+
+The script writes two files alongside the marketplace cache and prints a single-line summary to stdout:
+
+- `~/.claude-profiles/marketplace-cache/local-catalog.json` — plugin-level digest in the same shape as `catalog.json`, with `marketplace: "local"` on every entry and IDs like `local:uiux-toolkit`
+- `~/.claude-profiles/marketplace-cache/local-items.ndjson` — item-level NDJSON stream in the same shape as `items.ndjson`, one JSON object per line
+
+Both files are rebuilt on every invocation (no TTL), because local items can be added or removed between sessions and are cheap to re-scan.
+
+From Step 4 onward, treat these two files as a **second retrieval source** alongside the marketplace `items.ndjson` / `catalog.json` — every grep and jq against the marketplace cache should also hit the local cache in the same pass. Commands later in the skill will show this concretely.
+
 ## Step 2 — Adaptive clarification (Layer 1)
 
 How much you ask depends on what Layer 0 already told you. **Do not ask questions the project has already answered.** That's ceremony, and ceremony kills adoption.
@@ -169,41 +186,58 @@ Join each group with `|` to form a regex alternation. Example for the `implement
 
 ### 4b. Run the intersection grep
 
-For each stage, construct a command of the following shape, then run it via `!`. The command pipes Group A (stage keywords) through Group B (tech context), which is what gives the intersection its precision:
+For each stage, construct a command of the following shape, then run it via `!`. The command pipes Group A (stage keywords) through Group B (tech context), which is what gives the intersection its precision. It grep-reads **two** NDJSON files together — the local `local-items.ndjson` Step 1e generated *and* the marketplace `items.ndjson` — with `local-items.ndjson` listed **first** so local items always appear in the head before marketplace items crowd them out:
 
 ```
-grep -iE '(<stage keyword 1>|<stage keyword 2>|...)' ~/.claude-profiles/marketplace-cache/items.ndjson \
+grep -hiE '(<stage keyword 1>|<stage keyword 2>|...)' \
+  ~/.claude-profiles/marketplace-cache/local-items.ndjson \
+  ~/.claude-profiles/marketplace-cache/items.ndjson \
   | grep -iE '(<tech keyword 1>|<tech keyword 2>|...)' \
-  | head -30
+  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" '<all keywords from both groups, joined with |>' \
+  | head -60
 ```
 
-**You must substitute the keyword groups with the actual words you built in Step 4a before running.** Do not run the command above with `<stage keyword 1>` literally — those angle brackets are placeholders, not shell tokens. Do not use a `$CACHE` variable anywhere; always write out `~/.claude-profiles/marketplace-cache/items.ndjson` literally.
+**Load-bearing details:**
+
+- `grep -h` (the `h` flag) suppresses grep's default "filename:" prefix when reading multiple files. Without it, each line gets `<path>:` prepended, which breaks JSON parsing downstream. Always use `-h` on the first grep. The second grep in the pipe doesn't need `-h` because its input is stdin, not multiple files.
+- **File order matters as a tiebreaker.** `local-items.ndjson` MUST come first, `items.ndjson` second. `rank-items.js` uses a stable sort, so items with the same keyword-match score preserve their input order — which means local items stay ahead of alphabetically-earlier marketplace items on ties. Without the local-first ordering, local items would lose all ties to marketplace items from `aaa`-prefixed marketplace IDs, which is how iteration-1 testing lost `local:uiux-toolkit` from its candidate pool.
+- **`rank-items.js` is the critical stage** that prevents alphabetical pollution. Without it, `head -60` takes the first 60 matches in *file order* — meaning early-alphabet marketplace IDs systematically crowd out late-alphabet ones, regardless of relevance. With it, every line is scored by **distinct keyword match count against the `desc` + `id` fields** (case-insensitive), sorted descending, and THEN head-capped — so the top 60 are genuinely the top 60 by relevance. Do not remove this stage or the retrieval pipeline silently reverts to alphabetical ordering.
+- **The keyword argument to `rank-items.js` must be the UNION of both groups**, joined with `|`. If Group A is `(implement|code|wire)` and Group B is `(react|typescript|electron)`, then pass `'implement|code|wire|react|typescript|electron'` to rank-items. The script then scores each grep-matched line by how many of those 6 distinct keywords appear in its `desc`/`id`/`plugin` fields.
+- **You must substitute the keyword groups with the actual words you built in Step 4a before running.** Do not run the command above with `<stage keyword 1>` literally — those angle brackets are placeholders, not shell tokens. Do not use a `$CACHE` variable anywhere; always write out the full cache paths literally.
 
 Concrete example for a TypeScript/React/Electron project's `implement` stage — run something like this (with *your* actual keywords, not these):
 
-!`grep -iE '(implement|write|code|wire|integrate|develop)' ~/.claude-profiles/marketplace-cache/items.ndjson | grep -iE '(typescript|react|electron|tsx|frontend)' | head -30`
+!`grep -hiE '(implement|write|code|wire|integrate|develop)' ~/.claude-profiles/marketplace-cache/local-items.ndjson ~/.claude-profiles/marketplace-cache/items.ndjson | grep -iE '(typescript|react|electron|tsx|frontend)' | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" 'implement|write|code|wire|integrate|develop|typescript|react|electron|tsx|frontend' | head -60`
 
-Only items that match **both** the stage intent and the tech context survive, which eliminates the "any matching keyword wins" problem of a single OR-grep. In practice this takes top hits from ~1000-item low-signal pools down to ~30 high-relevance candidates per stage.
+Only items that match **both** the stage intent and the tech context survive the two greps, and the 60 that reach the head cap are the 60 with the highest distinct-keyword match counts — so you see the *best* matches regardless of which marketplace letter they come from. In practice this narrows a ~6000-entry index (plus however many local items the user has) to 60 candidates sorted by relevance.
+
+**You can still double-check in Step 6a.** The scoring formula there applies additional signals (featured status, collection alignment, multi-stage leverage, local nudge) on top of the raw keyword count `rank-items.js` computes. The pre-sort gives you a good starting order; Step 6a refines it.
 
 ### 4c. Fallback for generic mode and cross-cutting staples
 
-In **generic mode** (`mode: "generic"` in the Layer 0 bundle), or when Group B is empty because Layer 0 couldn't find any tech context, fall back to a single grep with only Group A:
+In **generic mode** (`mode: "generic"` in the Layer 0 bundle), or when Group B is empty because Layer 0 couldn't find any tech context, fall back to a single grep with only Group A — but still read both files with `local-items.ndjson` first for tiebreaker ordering, and still pipe through `rank-items.js` so the head cap preserves relevance:
 
 ```
-grep -iE '(<stage keyword 1>|<stage keyword 2>|...)' ~/.claude-profiles/marketplace-cache/items.ndjson | head -30
+grep -hiE '(<stage keyword 1>|<stage keyword 2>|...)' \
+  ~/.claude-profiles/marketplace-cache/local-items.ndjson \
+  ~/.claude-profiles/marketplace-cache/items.ndjson \
+  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" '<stage keywords, joined with |>' \
+  | head -60
 ```
+
+Note: in generic mode the keywords passed to `rank-items.js` are just the stage keywords — there's no Group B to merge in, because Layer 0 didn't produce tech context.
 
 Concrete example for a `research` stage in generic mode — run something like this with *your* actual keywords:
 
-!`grep -iE '(research|investigate|compare|survey|evaluate|source|prior art)' ~/.claude-profiles/marketplace-cache/items.ndjson | head -30`
+!`grep -hiE '(research|investigate|compare|survey|evaluate|source|prior art)' ~/.claude-profiles/marketplace-cache/local-items.ndjson ~/.claude-profiles/marketplace-cache/items.ndjson | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" 'research|investigate|compare|survey|evaluate|source|prior art' | head -60`
 
-Retrieval is broader per stage, but workflow shapes still constrain composition.
+Retrieval is broader per stage, but workflow shapes still constrain composition. The same alphabetical-order warning from 4b applies — rank in Step 6a, never trust file order.
 
 **Also use the single-grep fallback when retrieving cross-cutting staples in Step 6b** — staples like planning, git workflow, and debugging tools are meant to be general-purpose, so narrowing them by tech context is counterproductive.
 
 ### 4d. Parse and collect
 
-Each line of output is a JSON object with `{kind, id, plugin, desc, sourceUrl}`. Parse and collect them as candidate items for that stage. Cap at ~30 hits per stage. If a stage returns fewer than ~5 hits, either (a) broaden Group A with synonyms you derive from the stage's `intent` field, or (b) note the gap and continue — you will flag it explicitly in the self-critique and presentation steps.
+Each line of output is a JSON object with `{kind, id, plugin, desc, sourceUrl}`. Parse and collect them as candidate items for that stage. Cap at ~60 hits per stage — this is deliberately more than you'll eventually use, because the scoring step in Step 6a trims to the top ~15 based on relevance (not file order). If a stage returns fewer than ~5 hits, either (a) broaden Group A with synonyms you derive from the stage's `intent` field, or (b) note the gap and continue — you will flag it explicitly in the self-critique and presentation steps.
 
 ### 4e. Collect unique plugin IDs
 
@@ -211,35 +245,102 @@ Across all stage retrievals, collect the **unique set of plugin IDs** that appea
 
 ## Step 5 — Plugin-level lookup
 
-For the unique plugin IDs you collected in Step 4e, pull their full catalog entries from `catalog.json` using `jq`. The command shape is:
+For the unique plugin IDs you collected in Step 4e, pull their full catalog entries using `jq`. **Split the candidate pool into two groups by source before looking up:**
+
+- **Marketplace plugin IDs** — the format is `<pluginName>@<marketplaceId>` (e.g. `frontend-design@claude-plugins-official`). Look these up in `catalog.json`.
+- **Local plugin IDs** — the format starts with `local:` (e.g. `local:uiux-toolkit`, `local:gsd`). Look these up in `local-catalog.json` (the file Step 1e wrote).
+
+Run jq once per source with the same shape of command, using `--arg ids` to pass a comma-joined string into jq, which splits it and membership-tests each plugin's `id`.
+
+### 5a. Marketplace lookup
 
 ```
-jq --arg ids '<plugin-id-1>,<plugin-id-2>,<plugin-id-3>' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/catalog.json
+jq --arg ids '<marketplace-plugin-id-1>,<marketplace-plugin-id-2>' \
+   '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' \
+   ~/.claude-profiles/marketplace-cache/catalog.json
 ```
 
-`--arg ids` passes a single comma-joined string into jq, which then splits it and membership-tests each plugin's id against the list.
+**Substitute the angle-bracketed placeholders with your actual comma-joined plugin ID list before running.** Do not run the command with `<marketplace-plugin-id-1>` literally — those are placeholders.
 
-**Substitute the angle-bracketed placeholders with your actual comma-joined plugin ID list before running.** Do not run the command with `<plugin-id-1>` literally — those are placeholders. Do not use `$CACHE` anywhere; write out `~/.claude-profiles/marketplace-cache/catalog.json` literally.
-
-Concrete example — if your candidate pool happened to be `frontend-design@claude-plugins-official`, `chrome-devtools-mcp@chrome-devtools-plugins`, and `feature-dev@claude-plugins-official`, you would run:
+Concrete example — if your marketplace candidates were `frontend-design@claude-plugins-official`, `chrome-devtools-mcp@chrome-devtools-plugins`, and `feature-dev@claude-plugins-official`, you would run:
 
 !`jq --arg ids 'frontend-design@claude-plugins-official,chrome-devtools-mcp@chrome-devtools-plugins,feature-dev@claude-plugins-official' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/catalog.json`
 
-Rebuild the `--arg ids '...'` string with *your* actual plugin IDs before running — the example above is illustrative.
+### 5b. Local lookup
 
-This gives you for each plugin: `displayName`, `description`, `featured`, `collections`, `counts` (how many skills/agents/commands it has), `topKeywords`, and `sourceUrl`. You now have enough plugin-level context to rank candidates within each stage and make informed composition decisions.
+Same command shape against `local-catalog.json`:
+
+```
+jq --arg ids '<local-plugin-id-1>,<local-plugin-id-2>' \
+   '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' \
+   ~/.claude-profiles/marketplace-cache/local-catalog.json
+```
+
+Concrete example — if your local candidates were `local:uiux-toolkit` and `local:gsd`, you would run:
+
+!`jq --arg ids 'local:uiux-toolkit,local:gsd' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/local-catalog.json`
+
+Merge the results from 5a and 5b into a single candidate-pool list. For each plugin, you now have `displayName`, `description`, `featured` (always `false` for locals), `collections` (always `[]` for locals), `counts`, `topKeywords` (may be empty for locals), and `sourceUrl` (a `file://` path for locals). You have enough plugin-level context to rank candidates within each stage and make informed composition decisions.
+
+Skip 5a entirely if no marketplace candidates surfaced. Skip 5b if no local candidates surfaced. It's normal for either to be empty depending on the user's tech stack and what they've installed locally.
 
 ## Step 6 — Composition and self-critique (Layer 3)
 
-### 6a. Per-stage selection
+### 6a. Per-stage selection (explicit scoring, not file order)
 
-For each stage, pick 1 or 2 plugins that best fill it. Ranking rules, in priority order:
+For each stage, you have ~60 candidate items from Step 4b. **Do not pick winners based on the order they appeared in the grep output** — that's file order (alphabetical by marketplace ID), not relevance. Instead, compute an explicit score per *unique plugin* (aggregating the matched items across a plugin into a single plugin-level score), then pick the 1–2 highest-scoring plugins for the stage.
 
-1. **Featured plugins outrank non-featured** unless a non-featured plugin is a clearly better match for the stage's intent.
-2. **Strong keyword overlap outranks weak overlap.** A plugin whose description and topKeywords match multiple stage keywords is a stronger signal than one that matches a single keyword by coincidence.
-3. **Plugins that contribute items to multiple stages earn priority** — they are high-leverage and reduce total plugin count.
-4. **Prefer plugins with matching collections** (e.g. a "frontend" collection plugin for a React project) when the collection aligns with the user's project inference.
-5. **Prefer plugins with non-trivial `counts.skills + counts.agents + counts.commands`** over one-off single-skill plugins, unless the single-skill plugin is a clearly better fit.
+**Scoring formula** (compute this for every candidate plugin, then rank):
+
+```
+score = 0
+score += (distinct Group A keywords matched in any of the plugin's items)
+score += (distinct Group B keywords matched in any of the plugin's items)
+score += (distinct Group A keywords matched in the plugin's catalog description)
+score += (distinct Group B keywords matched in the plugin's catalog description)
+score += 2   if featured: true
+score += 1   if the plugin's `collections[]` in catalog.json contains a token that matches any Group B keyword
+score += 1   for each additional stage this plugin's items showed up in (multi-stage leverage)
+score += 1   if the plugin's id starts with `local:` (already installed = the user's own quality signal, small nudge only — does not override a clearly-better marketplace match)
+```
+
+Rank candidates by `score` descending. Pick the top 1 (or top 2 if two candidates tie or are both strong fits for different sub-aspects of the stage). Break ties in this order:
+
+1. **Featured beats non-featured.** `featured: true` wins. Local plugins never have `featured: true` (by convention), so a featured marketplace plugin will always beat a local one at equal score — but the local-plugin +1 nudge above gives local a fair shot when keyword match is equivalent.
+2. **Higher `counts.skills + counts.agents + counts.commands`** — prefer a richer plugin over a single-skill one, unless the single-skill plugin is the clearly better fit for this specific stage.
+3. **Collection alignment** — prefer plugins whose `collections[]` overlap with the user's project context.
+4. **Alphabetical** — last resort only, never the primary criterion.
+
+### Mega-bundle plugins — use exclusions, don't reject
+
+**This is the single most important rule in the ranking step, and the one most likely to trip Claude up:** do NOT reject large plugins on cognitive-load grounds. The profile engine supports per-item exclusions, and exclusions are **physical filesystem pruning**, not metadata hints — `applyExclusions()` in `src/electron/core.ts:1589` deletes the excluded skill directories from the profile's config dir before the session launches, and patches the plugin's own manifest to strip them from the `skills[]`/`agents[]`/`commands[]` arrays. So an unused skill inside an enabled plugin contributes **zero** context cost at session time: Claude Code never sees its SKILL.md, never reads its frontmatter, and never registers it in the `available_skills` list.
+
+**Concrete rule:**
+
+> When a candidate plugin has `counts.skills + counts.agents + counts.commands > 15` **AND** only 1–3 of its items actually matched retrieval in Step 4, **do not reject it for being "too big."** Instead, plan to include it with exclusions: keep the 1–3 matched items, exclude everything else. You will populate `excludedItems[<plugin-id>]` in Step 6c with the bare item names to remove. The effective cognitive load for that plugin is the count of items you kept, not the raw plugin size.
+
+Example: `antigravity-awesome-skills@antigravity-awesome-skills` ships 999 skills. If the user's project is a biomech research notebook and only the `pubmed` skill is load-bearing, the correct recommendation is:
+
+```jsonc
+"plugins": [ ..., "antigravity-awesome-skills@antigravity-awesome-skills" ],
+"excludedItems": {
+  "antigravity-awesome-skills@antigravity-awesome-skills": [
+    // every item name in the plugin except "pubmed" — see Step 6c on how to
+    // enumerate the full list via a targeted grep against items.ndjson
+  ]
+}
+```
+
+The user sees a profile with a single effective `pubmed` skill. The other 998 are physically absent from the session. No context bloat. No trade-off. The only cost is a few milliseconds of file deletion during profile assembly, which happens once at save/launch time, never per session.
+
+**Anti-pattern: the 999-skills-rejected failure mode.** In iteration-1 testing, Claude looked at `antigravity-awesome-skills` and reasoned "this is 999 skills, it'll bloat the context, reject it." That's wrong. Claude applied the cognitive-load rubric to raw plugin size instead of effective item count after exclusions. The right answer is always: *if the plugin has a small number of valuable items and many irrelevant ones, include with exclusions*. Use the `counts > 15` threshold as the trigger — anything above that is a mega-bundle that should flow through exclusion composition.
+
+**Anti-patterns to watch for (retrieval-level):**
+
+- **Marketplace-prefix clustering.** If all your winners across stages come from plugins whose marketplace IDs start with the same one or two letters (e.g. all `agenticnotetaking`, `agricidaniel-claude-ads`, `ai-research-skills`), that's a red flag — you ranked by file order, not by score. Recompute the scoring formula before continuing.
+- **Generic-verb false positives.** A plugin description that contains the word `implement` or `code` does not automatically mean it belongs in the `implement` stage — a note-taking plugin might have `"Use this to implement better notes"` in its description. Low Group B score (no tech-context match) should heavily penalize these.
+- **Over-scoring small plugins with one perfect keyword match.** A one-skill plugin that hits every Group A word gets a high score mechanically, but a larger, better-rounded plugin that hits 3 of 5 may serve the stage better. Use the tiebreakers above.
+- **Ignoring local plugins.** If your final picks for a stage include zero local candidates when the user has several plausible local skills (you can see them in the `local-catalog.json` Step 1e generated), double-check that you actually ran the grep against `local-items.ndjson` alongside `items.ndjson` in Step 4b. Missing the local file is a common bug, and the symptom is an all-marketplace final profile even when the user has perfect local matches installed.
 
 ### 6b. Cross-cutting staples
 
@@ -249,12 +350,50 @@ Beyond the workflow shape's stages, some tools are valuable regardless of stage 
 
 Build a draft plugin shell with:
 
-- **plugins[]** — the union of stage picks + staples, as an array of plugin IDs
-- **enabledItems{}** — for each plugin, enumerate which specific skills/agents/commands to enable. Use the items that actually matched in Step 4, plus any obviously-load-bearing items from the plugin that weren't in the retrieval results. Use your judgement.
+- **`plugins[]`** — the union of stage picks + staples, as an array of plugin IDs. Marketplace plugins use the `<name>@<marketplace>` format (e.g. `frontend-design@claude-plugins-official`); local plugins use `local:<name>` (e.g. `local:uiux-toolkit`); framework plugins use `framework:<name>`. Mix all three freely — the profile engine handles each correctly.
+- **`excludedItems{}`** — populated ONLY for plugins where you want to keep a subset of items. See the exclusion-computation recipe below. Leave the key out entirely for plugins where you want every item enabled (the default).
+- **`enabledItemsSummary`** (for your own mental bookkeeping, not a real field) — for each plugin, note which items are effectively enabled. This feeds into Step 7a's presentation, where you'll show the `(N of M enabled)` ratio for exclusion-heavy plugins.
 - **provisional model choice** — `claude-opus-4-6` for deep-reasoning workflows (feature-development, refactoring, security-audit, research, prompt-engineering), `claude-sonnet-4-6` for balanced work, `claude-haiku-4-5-20251001` for high-loop-count lightweight work. The user will confirm or override in Step 7e.
 - **provisional effort level** — `high` for research/refactoring/incident-investigation, `medium` for most feature work, `low` for lightweight loops. The user will confirm in Step 7e.
 
 **Do not draft the `/workflow` body here.** The `/workflow` body is not a composition artifact — it's the output of an interactive co-design step (7d) that runs only if the user explicitly opts in (7c). Leave `workflow` unset in the draft. Do not draft `customClaudeMd` either — that gets collected in Step 7e with an explicit opt-in and a recommendation based on whether the project already has a `CLAUDE.md`.
+
+### Computing `excludedItems` for mega-bundle plugins
+
+When you apply the mega-bundle rule from Step 6a — "include a plugin with `counts > 15` but keep only the 1–3 items that matched retrieval" — you need to build the `excludedItems[<plugin-id>]` array with every item name EXCEPT the ones you're keeping. Here is the exact procedure:
+
+1. **Enumerate all items in the plugin** by running a targeted grep against `items.ndjson` (or `local-items.ndjson` for local plugins). The `plugin` field in each NDJSON line is exactly the plugin ID you put in `plugins[]`:
+
+   ```
+   grep -hE '"plugin":"<plugin-id>"' ~/.claude-profiles/marketplace-cache/items.ndjson
+   ```
+
+   Replace `<plugin-id>` with the literal plugin ID, e.g. `antigravity-awesome-skills@antigravity-awesome-skills`.
+
+2. **Extract the bare item name** from each returned line. The item name is the last `/`-separated segment of the `id` field. For example, if the line's `id` is `"antigravity-awesome-skills/antigravity-awesome-skills/pubmed"`, the bare item name is `pubmed`. This matches the convention `scanPluginItems()` in `core.ts` uses when building its `item.name` field, which is what `applyExclusions` compares against via `excludedNames.includes(item.name)`.
+
+3. **Compute the exclude list** as (all bare item names from the grep) minus (the bare item names of items you're keeping from Step 6a's ranking).
+
+4. **Set** `excludedItems["<plugin-id>"] = [<sorted array of names to exclude>]`. Use the same plugin ID as the key — format matters, `core.ts:1594` does a strict string match via `plugins.find((p) => p.name === pluginName)` and a wrong key silently no-ops.
+
+**Schema reminder (CRITICAL):** `excludedItems[pluginId]` is a **flat array of item-name strings**. It is NOT the nested `{skills:[], agents:[], commands:[]}` form — that format does not exist and the write script rejects it. `applyExclusions` applies the same flat array uniformly to skills, agents, and commands.
+
+Concrete example — `antigravity-awesome-skills@antigravity-awesome-skills` (999 items, keeping only `pubmed`):
+
+```jsonc
+"plugins": [
+  "frontend-design@claude-plugins-official",
+  "antigravity-awesome-skills@antigravity-awesome-skills",
+  "superpowers@claude-plugins-official"
+],
+"excludedItems": {
+  "antigravity-awesome-skills@antigravity-awesome-skills": [
+    "skill-a", "skill-b", "skill-c", /* ... 995 more ... */ "skill-zzz"
+  ]
+}
+```
+
+You can omit the mega-bundle's `excludedItems` key if you're keeping *every* item — but for any plugin where you applied the mega-bundle rule in Step 6a, the key must be present.
 
 The draft is *provisional* — it's a proposal you will bring to the Step 7 discussion, not a final answer. Every field in it is subject to user revision.
 
@@ -279,57 +418,93 @@ This is where the skill stops making unilateral decisions and starts collaborati
 
 Step 7 has six sub-steps. Run them in order, don't skip, and don't batch questions — each sub-step is a distinct conversational beat.
 
-### 7a. Present plugins and skills by stage (compact format)
+### 7a. Present the tool set (flat, ranked by relevance)
 
-Lead with the locked profile description from Step 0 so the user always sees what they originally asked for. Then group the draft picks by workflow stage. For each pick, show a **compact 5–6 line block** with:
+Lead with the locked profile description from Step 0 so the user always sees what they originally asked for. Then present the draft picks as a **single flat list in Step 6a rank order**, highest-scoring tool first.
 
-1. **Plugin ID** in `name@marketplace` format (note `(featured)` if `featured: true` from the catalog)
-2. **One-line description** from `catalog.json` (truncated to ~80 chars)
-3. **Enabled items** — the specific skills/agents/commands that will be active from this plugin (the ones you retrieved in Step 4 plus any obviously-load-bearing siblings, not the full plugin contents)
-4. **How you'd use it** — one concrete usage example in plain language tied to the stage
-5. **Why picked** — one line on the match strength (e.g. "featured + 8 stage-keyword hits" or "only candidate whose description mentions the `contain-before-resolve` pattern")
+**Do NOT group the picks by workflow stage.** The stages exist as an internal retrieval and composition scaffold, but they are *not* a user-facing structure at this step. Grouping tools under `## Stage: <name>` headers implicitly promises the user a sequence they haven't asked for yet, and mis-frames the presentation for users whose profile has no workflow orientation at all. At this step the user wants to see *what tools they're getting*, not *what sequence Claude will run them in* — the sequence question only arrives in Step 7c, and the actual sequence design only happens in Step 7d for users who opt in.
 
-Example format:
+Lead the list with a simple framing line that tells the user how many tools they're about to see, then present each tool as a **compact 5–6 line block** with:
+
+1. **Plugin ID** in its canonical format, followed by one or more tags in parentheses:
+   - `(featured)` if `featured: true` from the catalog
+   - `(local)` if the plugin ID starts with `local:` — signals to the user that this one is already installed directly from their own `~/.claude/` directory, not from the curated marketplace
+   - `(<N> of <M> enabled)` if you're applying the mega-bundle exclusion rule — where `N` is the number of items you're keeping and `M` is the plugin's total `counts.skills + counts.agents + counts.commands`. Example: `(2 of 999 enabled)` for an `antigravity-awesome-skills` pick where you're keeping only `pubmed` and one sibling skill.
+2. **One-line description** from `catalog.json` / `local-catalog.json` (truncated to ~80 chars)
+3. **Enabled items** — the specific skills/agents/commands that will be active from this plugin. For plugins with no exclusions, list the items retrieved in Step 4 plus any obviously-load-bearing siblings. For mega-bundles with exclusions, list ONLY the kept items (the ones that won't be deleted by `applyExclusions`). Never list "all 999 skills" for an exclusion-heavy plugin — the user will panic.
+4. **When to use it** — one concrete usage example framed as *purpose*, not *sequence*. Write *"use when auditing a page for accessibility issues"* or *"reach for this when you need live DOM inspection"*, NOT *"fires during the analyze stage of code review."* The user should understand what the tool is FOR, independent of any workflow ordering.
+5. **Why picked** — one line on the match strength (e.g. "featured + 8 keyword matches", "only candidate with a purpose-built PubMed wrapper", or "local skill you installed yourself; matched 6 of the 7 UX-review keywords directly — strongest single-item score in the candidate pool")
+
+Example format showing all three tag types, flat layout:
 
 ```
-# Draft profile for: <profile_description>
+# Draft profile for: Systematic UX review of the Claude Profiles Electron app
 
-Workflow shape: <shape-id>   (or blended: <shape-a> + <shape-b>)
+Here are the 6 tools this profile would give you (ordered by relevance to your request):
 
-## Stage: load-context
+`local:uiux-toolkit` (local)
+  What it is: Comprehensive UX/UI evaluation meta-skill — Nielsen heuristics,
+    Gestalt principles, WCAG 2.2 compliance, Diátaxis doc framework.
+  Enabled items:
+    - skill: uiux-toolkit
+  When to use it: Reach for this when auditing a page or component for usability,
+    accessibility, and visual hierarchy issues. Covers 10+ evaluation methodologies.
+  Why picked: Local skill you installed yourself; matched 6 of 7 UX-review
+    keywords directly — strongest single-item score in the candidate pool.
+
+`chrome-devtools-mcp@chrome-devtools-plugins` (featured)
+  What it is: Browser devtools MCP server that lets Claude drive a running
+    Chrome/Electron instance via CDP — inspect DOM, read console, capture screenshots.
+  Enabled items:
+    - skill: inspect-dom
+    - skill: capture-screenshot
+  When to use it: When you need to actually see what the UI is doing — measure
+    spacing, capture visual state, inspect element trees, pull console errors.
+    Requires the app to be running with --remote-debugging-port.
+  Why picked: Only candidate with live browser inspection. Featured + 5 keyword matches.
+
+`antigravity-awesome-skills@antigravity-awesome-skills` (2 of 999 enabled)
+  What it is: Mega-bundle of 999 developer skills covering every language and tool.
+  Enabled items (998 excluded):
+    - skill: pubmed              — biomedical literature search via PubMed E-utilities
+    - skill: huggingface-papers  — arXiv + HF paper fetch and summarization
+  When to use it: Pubmed for biomedical literature lookup in your biomech research;
+    huggingface-papers for the ML side. The other 997 skills are physically removed
+    from the profile's config dir at launch — zero context cost.
+  Why picked: Only catalog entry with a purpose-built PubMed wrapper. Mega-bundle
+    rule applies: keep 2, exclude 997.
 
 `frontend-design@claude-plugins-official` (featured)
-  What it is: Production-grade React/Tailwind component patterns and design rubric.
-  Enabled items:
-    - skill: frontend-design
-    - agent: ui-audit
-  How you'd use it: When scaffolding a new component, invoke the skill for layout
-    and typography guidance. Run ui-audit before merging to catch a11y + visual drift.
-  Why picked: Featured, matched 8 keywords on this stage.
-
-## Stage: verify
   ...
 
-## Cross-cutting staples
+`superpowers@claude-plugins-official` (featured)
   ...
+
+[etc — one block per tool, flat, in rank order. No ## Stage headers. No
+separate "Cross-cutting staples" section. Cross-cutting tools (planning,
+git, debugging) just appear in the list wherever their rank score puts them.]
 ```
 
-**Do not yet show:** model choice, effort level, customClaudeMd, `/workflow` body, or profile name. Those come in Step 7e. Step 7a is focused purely on *"here are the tools I'd give you"* — keep it readable and purely about composition.
+**Do not yet show:** model choice, effort level, customClaudeMd, `/workflow` body, `/tools` command, or profile name. Those all come in Step 7e. Step 7a is focused purely on *"here are the tools you'd get"* — keep it readable and exclusively about composition.
+
+**If you applied the mega-bundle exclusion rule to any plugin**, explicitly mention the `(N of M enabled)` ratio and briefly explain the mechanism in the "When to use it" line (*"the other N skills are physically removed from the profile's config dir at launch — zero context cost"*). This prevents the user from reading "999 skills" and assuming the profile is bloated. The exclusion mechanism is counter-intuitive to anyone who hasn't seen it before; spell it out once per mega-bundle pick.
+
+**Ordering rule:** use your Step 6a score as the primary sort key, descending. For ties, prefer (in order): featured > local > highest item count > alphabetical. This matches the tiebreaker rules in Step 6a so the presentation order is consistent with how the ranking step actually chose the picks.
 
 ### 7b. Discussion beat
 
-After presenting, invite discussion explicitly:
+After presenting, invite discussion explicitly. The goal here is to converge on the final tool set **before** the optional `/workflow` sequence question in 7c — separate "what tools" from "what sequence":
 
-> *"That's the draft. Before I ask about a /workflow command, tell me: any picks you want to swap out, any stages you want more coverage on, anything obviously missing? You can also ask me why I picked a specific plugin over alternatives — I'll explain my reasoning or propose a different candidate from the retrieval pool."*
+> *"That's the tool set. Tell me: any tools you want to swap out, any gaps you want me to fill, anything obviously missing? You can also ask me why I picked any specific tool over alternatives — I'll explain my reasoning or propose a different candidate from the retrieval pool. Once you're happy with the tools, I'll ask whether you want a /workflow command to orchestrate them."*
 
 Handle the user's response patiently:
 
 - **"Looks good"** → proceed to 7c
-- **"Why X over Y?"** → re-run that stage's retrieval if needed, explain the ranking rules that put X ahead, offer to swap if Y is a better fit for the user's actual work
-- **"Swap X for Z"** → verify Z exists in `catalog.json`, confirm it's on-topic for the stage, swap it in, show the change
-- **"Add something for <topic>"** → derive new keywords from the topic, run a supplemental pipe-intersection grep, propose 1–3 candidates, let the user pick
-- **"Remove X"** → remove X, check whether its stage still has coverage, flag if it doesn't
-- **"Tell me more about X"** → pull X's full catalog entry, summarize its skills/agents/commands at more depth
+- **"Why X over Y?"** → re-run a supplemental retrieval if needed, explain the ranking rules that put X ahead (featured status, keyword match count, collection alignment, multi-stage leverage, local nudge), offer to swap if Y is a better fit for the user's actual work
+- **"Swap X for Z"** → verify Z exists in `catalog.json` or `local-catalog.json`, confirm it's on-topic, swap it in, show the change
+- **"Add something for <topic>"** → derive new keywords from the topic, run a supplemental pipe-intersection grep through `rank-items.js`, propose 1–3 candidates, let the user pick
+- **"Remove X"** → remove X, note any role coverage that's now weaker, flag if it matters
+- **"Tell me more about X"** → pull X's full catalog entry, summarize its skills/agents/commands at more depth, quote the `desc` field in full if helpful
 
 Stay in this loop until the user signals they're done. Do not proceed to 7c until the plugin composition is explicitly locked. Do not batch the next question onto the end of a swap — give the user a distinct conversational turn to say "anything else" before moving on.
 
@@ -343,19 +518,25 @@ Now and only now, ask. Never assume — always explicit, and explain what it is 
 - **User says yes** → proceed to 7d
 - **User asks "what would it look like?"** → sketch a one-paragraph version from the workflow shape's stages, then ask the question again
 
-### 7d. Co-design the `/workflow` body (only if 7c = yes)
+### 7d. Sequence the tool set into a `/workflow` body (only if 7c = yes)
 
-**Do not draft the body unilaterally.** Work it out with the user stage by stage.
+**This is the first time workflow stages appear in user-facing text.** Step 7a showed the user a flat tool list by design; now that they've opted into having a `/workflow` command, the sequence question finally matters, and the workflow shape's stages are the right scaffolding for it. Frame the transition explicitly so the user understands what's happening:
 
-1. **Propose the scaffolding.** Use the chosen workflow shape's stages as the skeleton. *"The shape has these stages: [list]. I'll propose one step per stage; you confirm, tweak, or add extra steps as we go."*
+> *"Great — let's turn your tool set into a sequence. The workflow shape I matched your work to (`<shape-id>`) has these stages: <list of stage names>. I'll propose one step per stage using the tools we just locked in, and you can confirm, tweak, or add extra steps as we go. The tool set doesn't change — we're just deciding what order Claude walks through them in when you type `/workflow`."*
 
-2. **For each stage, propose one concrete step in one sentence.** Ground it in the actual plugins you picked, not abstract "do the thing" language. Example: *"For the `implement` stage, I'd have Claude use `frontend-design`'s `frontend-design` skill to scaffold the component structure, then fill in the logic. Sound right, or do you do something different at this stage?"*
+Then work through the sequence stage by stage. **Do not draft the body unilaterally.**
+
+1. **Propose the scaffolding.** Use the chosen workflow shape's stages as the skeleton. *"The shape has these stages: [list]."*
+
+2. **For each stage, propose one concrete step in one sentence.** Ground it in the tools the user just locked in 7b, not in tools Claude might have considered earlier. Example: *"For the `implement` stage, I'd have Claude use `frontend-design`'s `frontend-design` skill to scaffold the component structure, then fill in the logic. Sound right, or do you do something different at this stage?"*
 
 3. **Confirm the step, then ask about additions.** After each stage is locked, ask: *"Anything else that should happen at this stage? Also anything between `<stage N>` and `<stage N+1>` that's not in the shape but is part of how you actually work?"* The user might want Claude to post a Slack summary after shipping, or check a changelog before starting, or always run `git pull` first. These aren't in the shape — let the user add them.
 
 4. **Once all stages are confirmed, assemble the `/workflow` body and show it back.** Format as a numbered list or bulleted list, whichever reads more naturally for this workflow. Ask: *"Here's the full /workflow body — anything to change before I lock it in?"*
 
 5. **Save the final body as `P_WORKFLOW` for Step 8's write.** If at any point the user says *"actually skip the workflow"*, respect that and proceed to 7e with `P_WORKFLOW` unset.
+
+**Remember:** the `/workflow` body is a sequence *over the existing tool set*. It does not add or remove tools — that was locked in 7b. If the user realises during 7d that they're missing a tool for a stage, pause, jump back to a mini-7b beat to add it, then resume sequencing. Don't silently smuggle new picks in through the workflow.
 
 ### 7e. Final settings (administrative)
 
@@ -367,11 +548,29 @@ After plugins and `/workflow` are locked, collect the remaining fields. Ask each
 4. **customClaudeMd** — opt-in, with a specific recommendation:
    - If `existingAIConfig.hasClaudeMd` is true: *"Your project already has a `CLAUDE.md`, so I'd leave the profile's custom instructions slot empty to avoid duplication. Keep it empty, or add something profile-specific the project CLAUDE.md doesn't cover?"*
    - Otherwise: *"The profile can carry its own always-on instructions appended to every session's context. Want me to draft something profile-specific based on the picks we made, or skip it?"*
-5. **Optional fields** — target directory, alias, tags, launch flags. Mention once, don't interrogate: *"Anything else — target directory, alias, tags, launch flags? Skip if you don't care."*
+5. **`/tools` command** — opt-in, default-leaning-yes:
+
+   > *"Optional: I can also generate a `/tools` command for this profile — a persistent slash command you can type in any session to see this exact tool breakdown. Think of it as a bookmark: the same 'here are your tools, what each one does, and when to use each' view you saw in Step 7a, always one command away. Useful if you come back to the profile weeks later and forget what's in it. Costs nothing at runtime — it's a dormant slash command that loads zero context until you invoke it. Want one?"*
+
+   - **User says yes** → build the `/tools` body. Reuse the same compact block format from Step 7a (plugin ID + tags, what it is, enabled items, when to use it) but **drop the "Why picked" line** — that's scoring meta-commentary the user doesn't need after the fact. Add a short header (`# Tools in this profile`, `Profile: <name> — <description>`) and a footer (`_Generated by create-profile on <ISO date>. Re-run the skill to rebuild this reference._`). Pass the full assembled markdown as `P_TOOLS` in the Step 8 write command, and the Electron app will write it to `commands/tools.md` during profile assembly so `/tools` is available from first launch.
+   - **User says skip** → leave `P_TOOLS` unset; no `/tools` command gets created. They can always re-run the skill later to generate one.
+
+6. **Optional fields** — target directory, alias, tags, launch flags. Mention once, don't interrogate: *"Anything else — target directory, alias, tags, launch flags? Skip if you don't care."*
 
 ### 7f. Final confirmation
 
-Show the complete profile as a compact summary — description, workflow shape, plugin count, model, effort, customClaudeMd status, `/workflow` status, name — and ask:
+Show the complete profile as a compact summary. Include all the locked fields so the user can see the full shape before the write happens:
+
+- description
+- workflow shape(s) used internally for retrieval + sequencing
+- plugin count (with a count of any mega-bundle exclusions applied)
+- model + effort
+- customClaudeMd status (set or empty, with one-line reason)
+- `/workflow` status (set or skipped)
+- `/tools` status (set or skipped)
+- profile name
+
+Then ask:
 
 > *"Here's the final profile. Anything to change before I check for missing plugin installs and write it?"*
 
@@ -379,7 +578,14 @@ Accept tweaks (jump back to the relevant sub-step if needed), then proceed to St
 
 ## Step 7.5 — Install missing plugins
 
-Before writing the profile, check whether any of the final plugin picks are not yet installed on this machine. From the `installed` list captured in Step 1d, subtract the final plugin IDs from Step 7f. If the difference is empty, skip this step entirely and go to Step 8.
+Before writing the profile, check whether any of the final plugin picks are not yet installed on this machine. Build the list of "missing plugins" by:
+
+1. Starting from the final plugin IDs from Step 7f
+2. **Filtering out every plugin ID that starts with `local:`** — local plugins live under `~/.claude/skills/`, `~/.claude/agents/`, or `~/.claude/commands/` by definition, so they are *already* on disk. Running `claude plugin install local:uiux-toolkit` is a nonsense operation and the install script would fail. Exclude them from the check entirely.
+3. **Filtering out every plugin ID that starts with `framework:`** — framework plugins (GSD, gstack, etc.) are synthetic wrappers around user-installed frameworks that are managed outside the standard plugin installer. The Electron app handles their activation via separate logic; they never flow through `claude plugin install`.
+4. Subtracting the `installed` list captured in Step 1d from the remaining marketplace-only plugin IDs.
+
+If the final "missing marketplace plugins" list is empty after the filters, skip this step entirely and go to Step 8.
 
 Otherwise, present the missing plugins and ask:
 
@@ -420,16 +626,21 @@ The write is handled by `$CLAUDE_PLUGIN_ROOT/scripts/write-profile.js`. The scri
 
 **Inline all `P_*` variables on the same command line as the script invocation** — don't try to `export` them in a previous step and then run the script, because each `!` command runs in its own shell. Example:
 
-!`P_NAME='my-profile' P_PLUGINS='["frontend-design@claude-plugins-official"]' P_EXCLUDED='{}' P_DESC='Frontend work' P_MODEL='' P_EFFORT='' P_INSTRUCTIONS='' P_WORKFLOW='' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/write-profile.js" 2>&1`
+!`P_NAME='my-profile' P_PLUGINS='["frontend-design@claude-plugins-official"]' P_EXCLUDED='{}' P_DESC='Frontend work' P_MODEL='' P_EFFORT='' P_INSTRUCTIONS='' P_WORKFLOW='' P_TOOLS='' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/write-profile.js" 2>&1`
 
-Substitute the actual values from the profile draft. Required: `P_NAME`. Optional (leave empty string if not used): `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (JSON object `{pluginId: {skills:[], agents:[], commands:[]}}` — items to *exclude* from each plugin; leave as `'{}'` to enable everything), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW`.
+Substitute the actual values from the profile draft. Required: `P_NAME`. Optional (leave empty string if not used): `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (JSON object `{"pluginId": ["item-name-1", "item-name-2", ...]}` — a **flat array of bare item names** per plugin ID; items to *exclude* from each plugin; leave as `'{}'` to enable everything in every plugin), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW`, `P_TOOLS` (markdown body of the `/tools` command if the user opted in at Step 7e; leave empty string to skip generating the command).
 
 The script outputs a single-line JSON object:
 
 - **Success** → `{"ok": true, "name": "<name>", "pfPath": "<path>"}` — proceed to Step 9.
 - **Failure** → `{"ok": false, "error": "<reason>"}` — stop and tell the user what went wrong. Common causes: `P_NAME` not set (you forgot to include it on the command line), `P_PLUGINS` not valid JSON (check the quoting), or the home directory is not writable.
 
-**Note on `excludedItems`:** the profile engine defaults to *including* all items from each enabled plugin. If the user wants only a subset, you express that as exclusions. In most cases you can leave `P_EXCLUDED` empty — only populate it when the user explicitly opted out of specific items during Step 7.
+**Note on `excludedItems`:** the profile engine defaults to *including* all items from each enabled plugin. Populate `P_EXCLUDED` in two cases:
+
+1. **The user explicitly opted out of specific items during Step 7b discussion.** Pass through whatever they asked for.
+2. **You applied the mega-bundle rule in Step 6a.** For every plugin where `counts > 15` and only 1–3 items matched retrieval, you should have built the exclude list in Step 6c using the enumeration recipe there (`grep -hE '"plugin":"<id>"' items.ndjson`, extract last segment of each `id`, subtract the kept items). Pass that exclude list through here — one entry per mega-bundle plugin, each value a flat array of bare item names.
+
+The write script validates the schema: each value must be a flat array of strings. The old nested `{skills:[], agents:[], commands:[]}` form is rejected — `applyExclusions` in the Electron app reads a flat list and filters skills, agents, and commands uniformly against the same set. If you accidentally construct the nested form, `write-profile.js` will fail with a descriptive error and the profile will not be written.
 
 ## Step 9 — Report back and flag the two-step flow
 
@@ -444,7 +655,10 @@ The skill has only written the profile entry to `profiles.json`. The profile is 
 
 ## Important notes
 
-- **Plugin IDs use the format `name@marketplace`** (e.g. `frontend-design@claude-plugins-official`). The catalog and items files already use this format; pass it through unchanged.
+- **Plugin IDs use one of three formats depending on source:** `<name>@<marketplace>` for curated marketplace plugins (e.g. `frontend-design@claude-plugins-official`), `local:<name>` for user-installed local skills/agents/commands from `~/.claude/` (e.g. `local:uiux-toolkit`), and `framework:<name>` for synthetic framework wrappers (e.g. `framework:gsd`). Mix all three freely in the same profile — `plugins[]` in `profiles.json` accepts any of them and the Electron app's plugin loader routes each format correctly at session launch.
+- **Local plugins are first-class citizens, not a fallback.** Every session must run Step 1e to enumerate local skills and include them in retrieval alongside the marketplace catalog. Missing the local scan produces all-marketplace profiles that silently skip tools the user already installed and relies on. The iteration-1 `ux-review` test run missed this exact case and had to verbally disclaim `local:uiux-toolkit` — don't repeat that.
+- **Mega-bundle plugins (total counts > 15) are first-class picks via the exclusion lever.** Do NOT reject them on cognitive-load grounds. `excludedItems` is physical filesystem pruning — `applyExclusions()` in `src/electron/core.ts:1589` deletes excluded items from disk before session launch, so unused skills contribute zero context. A 999-skill plugin with 997 exclusions has the same runtime footprint as a 2-skill plugin. The cognitive-load rubric applies to *effective item count after exclusions*, not raw plugin size. See Step 6a for the rule and Step 6c for the computation recipe.
+- **`excludedItems` is a flat array of bare item names per plugin ID.** `{"plugin@mkt": ["skill-a", "skill-b"]}`. The nested `{skills:[], agents:[], commands:[]}` form does not exist — `applyExclusions` filters all item kinds against the same flat set. `write-profile.js` validates the schema and refuses to write a profile with the wrong shape.
 - **The skill writes `profiles.json` and, with user consent, installs missing plugins.** Config directory assembly, credential seeding, and `/workflow` command file generation still happen when the profile is saved or launched from the Claude Profiles app — not when this skill runs. But plugin installation is now handled inline in Step 7.5 using the same CLI commands the app uses internally.
 - **Do not read the marketplace catalog in full.** Always filter via `grep` and `jq`. The full `items.ndjson` is ~2.6 MB; the full `catalog.json` is ~450 KB. Reading either whole will blow your context budget.
 - **Workflow shapes are hints, not gates.** If a user's work genuinely doesn't match any shape, synthesize a custom one with 4–6 stages. Do not force a bad fit.
