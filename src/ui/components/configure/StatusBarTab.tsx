@@ -35,7 +35,7 @@ const WIDGET_LABELS: Record<string, string> = {
   profile: "Active profile",
   plugins: "Plugin count",
   burn: "Burn rate ($/min)",
-  ctxEta: "Context time-to-full",
+  limitEta: "Rate limit time-to-full",
   // Special:
   break: "— Section break —",
 };

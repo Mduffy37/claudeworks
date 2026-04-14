@@ -203,14 +203,24 @@ export const WIDGET_SCHEMAS: Record<string, WidgetSchema> = {
       },
     ],
   },
-  ctxEta: {
-    id: "ctxEta",
-    label: "Context time-to-full",
-    description: "Estimated time until the context window hits 100% at the current burn rate. Try ⏳ as an icon.",
+  limitEta: {
+    id: "limitEta",
+    label: "Rate limit time-to-full",
+    description: "Estimated time until the selected rate limit bucket hits 100% at the current burn rate. Pick 5h or 7d window.",
     options: [
       { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
       { key: "icon", label: "Icon/prefix", type: "text", default: "" },
       { key: "showTier", label: "Color by risk tier", type: "boolean", default: true },
+      {
+        key: "bucket",
+        label: "Rate limit window",
+        type: "select",
+        default: "5h",
+        choices: [
+          { value: "5h", label: "5-hour window" },
+          { value: "7d", label: "7-day window" },
+        ],
+      },
     ],
   },
 };

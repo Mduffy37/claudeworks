@@ -3,11 +3,15 @@
   flex-direction: column;
   gap: 16px;
   padding: 16px;
-  /* max-width removed — children handle their own widths so the preview
-     can span the full modal width while the controls stay narrow. */
+  height: 100%;
+  min-height: 0;
+  /* Fills whatever height the parent .manage-dialog-body gives us so the
+     two scroll columns inside .status-bar-split can scroll independently
+     without the Save/Reset footer falling off the modal. */
 }
 
 .status-bar-tab-header {
+  flex-shrink: 0;
   max-width: 720px;
   width: 100%;
 }
@@ -16,7 +20,9 @@
   display: grid;
   grid-template-columns: minmax(260px, 320px) 1fr;
   gap: 20px;
-  align-items: start;
+  flex: 1;
+  min-height: 0; /* allows children to shrink below their intrinsic height */
+  align-items: stretch;
   max-width: none;
 }
 
@@ -24,14 +30,20 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-height: 0;
   min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .status-bar-editor-column {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-height: 0;
   min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .status-bar-tab.loading {
@@ -124,8 +136,14 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  margin-top: auto; /* pushes to the bottom of the editor flex column */
   padding-top: 12px;
   border-top: 1px solid var(--border);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+  /* sticky + bg keeps the footer visible when the editor column scrolls */
 }
 
 .status-bar-drag-handle {
