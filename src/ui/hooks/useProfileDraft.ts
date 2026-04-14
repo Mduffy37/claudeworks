@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   Profile,
   LocalItem,
@@ -11,12 +11,18 @@ type TabId = "plugins" | "skills" | "agents" | "commands" | "mcp" | "local" | "i
 interface UseProfileDraftArgs {
   profile: Profile | null;
   isNew: boolean;
+  importedProjects: string[];
   onSave: (profile: Profile) => void;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
 }
 
-export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }: UseProfileDraftArgs) {
+export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirty, onDirtyChange }: UseProfileDraftArgs) {
+  // Keep latest importedProjects in a ref so the hydration effect (keyed on profile)
+  // validates stored launchDir against the same union the sidebar writes with,
+  // without re-running hydration on every imported-projects change.
+  const importedProjectsRef = useRef(importedProjects);
+  useEffect(() => { importedProjectsRef.current = importedProjects; }, [importedProjects]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directories, setDirectories] = useState<string[]>([]);
@@ -111,8 +117,12 @@ export function useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange }
       const storedLaunchDir = typeof window !== "undefined"
         ? window.localStorage.getItem(`launchDir:${profile.name}`)
         : null;
+      // Validate against the union of profile dirs + imported projects — the same
+      // set the sidebar launch picker writes with. Validating against profile dirs
+      // alone would discard a stored imported-project selection.
+      const validDirs = [...new Set([...importedProjectsRef.current, ...dirs])];
       const initialLaunchDir =
-        storedLaunchDir !== null && (storedLaunchDir === "" || dirs.includes(storedLaunchDir))
+        storedLaunchDir !== null && (storedLaunchDir === "" || validDirs.includes(storedLaunchDir))
           ? storedLaunchDir
           : dirs[0] ?? "";
       setLaunchDir(initialLaunchDir);

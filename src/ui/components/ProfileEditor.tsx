@@ -259,7 +259,7 @@ function TabBar({
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
 export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange, onRegisterSave }: Props) {
-  const draft = useProfileDraft({ profile, isNew, onSave, dirty, onDirtyChange });
+  const draft = useProfileDraft({ profile, isNew, importedProjects, onSave, dirty, onDirtyChange });
 
   // Register the editor's save function so the sidebar can trigger it
   useEffect(() => {

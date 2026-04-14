@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { Profile } from "../../../src/electron/types";
 
 interface Props {
@@ -45,7 +45,31 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
 }) {
   const profileDirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const dirs = [...new Set([...importedProjects, ...profileDirs])];
-  const [selectedDir, setSelectedDir] = useState(profileDirs[0] ?? "");
+  const storageKey = `launchDir:${profile.name}`;
+  const [selectedDir, setSelectedDir] = useState(() => {
+    if (typeof window === "undefined") return profileDirs[0] ?? "";
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored && dirs.includes(stored)) return stored;
+    return profileDirs[0] ?? "";
+  });
+
+  // Re-sync if persisted value changes elsewhere (e.g. ProfileEditor topbar) or
+  // if the dropdown's list stops including the stored value.
+  useEffect(() => {
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored && dirs.includes(stored)) {
+      if (stored !== selectedDir) setSelectedDir(stored);
+    } else if (selectedDir && !dirs.includes(selectedDir)) {
+      setSelectedDir(profileDirs[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.name, dirs.join("|")]);
+
+  const updateSelectedDir = (dir: string) => {
+    setSelectedDir(dir);
+    if (dir) window.localStorage.setItem(storageKey, dir);
+    else window.localStorage.removeItem(storageKey);
+  };
 
   const handleLaunch = async () => {
     if (isSelectedAndDirty && onSave) {
@@ -65,7 +89,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
       <select
         className="sidebar-launch-select"
         value={selectedDir}
-        onChange={(e) => setSelectedDir(e.target.value)}
+        onChange={(e) => updateSelectedDir(e.target.value)}
       >
         <option value="">None</option>
         {dirs.map((dir) => (

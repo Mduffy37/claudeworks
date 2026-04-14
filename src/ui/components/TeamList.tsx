@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { Team } from "../../electron/types";
 
 interface Props {
@@ -17,9 +17,30 @@ function shortPath(dir: string): string {
 }
 
 function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; importedProjects?: string[] }) {
-  const [selectedDir, setSelectedDir] = useState("");
+  const storageKey = `teamLaunchDir:${team.name}`;
+  const [selectedDir, setSelectedDir] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const stored = window.localStorage.getItem(storageKey);
+    return stored && importedProjects.includes(stored) ? stored : "";
+  });
   const [launching, setLaunching] = useState(false);
   const lead = team.members.find((m) => m.isLead);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored && importedProjects.includes(stored)) {
+      if (stored !== selectedDir) setSelectedDir(stored);
+    } else if (selectedDir && !importedProjects.includes(selectedDir)) {
+      setSelectedDir("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team.name, importedProjects.join("|")]);
+
+  const updateSelectedDir = (dir: string) => {
+    setSelectedDir(dir);
+    if (dir) window.localStorage.setItem(storageKey, dir);
+    else window.localStorage.removeItem(storageKey);
+  };
 
   const handleLaunch = async () => {
     if (!lead) return;
@@ -43,7 +64,7 @@ function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; import
       <select
         className="sidebar-launch-select"
         value={selectedDir}
-        onChange={(e) => setSelectedDir(e.target.value)}
+        onChange={(e) => updateSelectedDir(e.target.value)}
       >
         <option value="">None</option>
         {importedProjects.map((dir) => (

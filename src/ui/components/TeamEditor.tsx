@@ -50,6 +50,25 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [search, setSearch] = useState("");
   const [showOverflow, setShowOverflow] = useState(false);
   const [launchDir, setLaunchDir] = useState("");
+
+  // Persist launch dir per team (shared with TeamList sidebar dropdown).
+  useEffect(() => {
+    if (!team?.name) {
+      setLaunchDir("");
+      return;
+    }
+    const stored = window.localStorage.getItem(`teamLaunchDir:${team.name}`);
+    setLaunchDir(stored && importedProjects.includes(stored) ? stored : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [team?.name, importedProjects.join("|")]);
+
+  const updateLaunchDir = (dir: string) => {
+    setLaunchDir(dir);
+    if (!team?.name) return;
+    const key = `teamLaunchDir:${team.name}`;
+    if (dir) window.localStorage.setItem(key, dir);
+    else window.localStorage.removeItem(key);
+  };
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [showLaunchOptions, setShowLaunchOptions] = useState(false);
@@ -276,7 +295,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           {/* Row 1: dir select + Launch */}
           {!isNew && (
             <div className="pe-topbar-controls-row">
-              <select className="pe-launch-dir-select" value={launchDir} onChange={(e) => setLaunchDir(e.target.value)}>
+              <select className="pe-launch-dir-select" value={launchDir} onChange={(e) => updateLaunchDir(e.target.value)}>
                 <option value="">None (choose at launch)</option>
                 {importedProjects.map((dir) => (
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
