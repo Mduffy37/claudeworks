@@ -146,4 +146,71 @@ export const WIDGET_SCHEMAS: Record<string, WidgetSchema> = {
       { key: "showTier", label: "Color by risk tier", type: "boolean", default: false },
     ],
   },
+  cwd: {
+    id: "cwd",
+    label: "Working directory",
+    description: "Current directory basename, or the last N path segments. Try 📁 as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+      { key: "depth", label: "Path segments to show", type: "number", default: 1, min: 1, max: 5 },
+    ],
+  },
+  gitAge: {
+    id: "gitAge",
+    label: "Git last commit age",
+    description: "Relative time since the most recent commit on the current branch. Try 🕰 as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+    ],
+  },
+  profile: {
+    id: "profile",
+    label: "Active profile",
+    description: "The claude-profiles profile the current session is running under. Try 👤 as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+    ],
+  },
+  plugins: {
+    id: "plugins",
+    label: "Plugin count",
+    description: "Number of plugins installed in the current profile. Try 🧩 as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+    ],
+  },
+  burn: {
+    id: "burn",
+    label: "Burn rate ($/min)",
+    description: "Cost per minute over the current session, using the cost widget's currency. Try 🔥 as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+      {
+        key: "currency",
+        label: "Currency",
+        type: "select",
+        default: "GBP",
+        choices: [
+          { value: "USD", label: "USD ($)" },
+          { value: "GBP", label: "GBP (£)" },
+          { value: "EUR", label: "EUR (€)" },
+        ],
+      },
+    ],
+  },
+  ctxEta: {
+    id: "ctxEta",
+    label: "Context time-to-full",
+    description: "Estimated time until the context window hits 100% at the current burn rate. Try ⏳ as an icon.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+      { key: "showTier", label: "Color by risk tier", type: "boolean", default: true },
+    ],
+  },
 };

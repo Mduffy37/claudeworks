@@ -25,6 +25,7 @@ import type {
   ActiveSession,
   LaunchOptions,
   StatusLineConfig,
+  StatusLineWidget,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -3541,37 +3542,36 @@ export function getProfilesDir(): string {
 
 function defaultStatusLineConfig(): StatusLineConfig {
   return {
-    version: 1,
+    version: 2,
     separators: { field: "│", section: "║" },
-    sections: [
-      {
-        id: "environment",
-        label: "Environment",
-        widgets: [
-          { id: "time", enabled: true, options: {} },
-          { id: "model", enabled: true, options: {} },
-          { id: "context", enabled: true, options: {} },
-        ],
-      },
-      {
-        id: "code",
-        label: "Code",
-        widgets: [
-          { id: "git", enabled: true, options: {} },
-          { id: "lines", enabled: true, options: {} },
-        ],
-      },
-      {
-        id: "budget",
-        label: "Budget",
-        widgets: [
-          { id: "uptime", enabled: true, options: {} },
-          { id: "cost", enabled: true, options: { currency: "GBP" } },
-          { id: "usage5h", enabled: true, options: { showReset: true, showTier: true } },
-          { id: "usage7d", enabled: true, options: {} },
-        ],
-      },
+    widgets: [
+      { id: "model", enabled: true, options: {} },
     ],
+  };
+}
+
+/**
+ * Migrate a v1 config (nested `sections`) to the v2 flat widget list.
+ * Inserts an implicit `break` widget between sections so the renderer
+ * still produces the original grouping. Returns null if `parsed` is not
+ * an old-shape config.
+ */
+function migrateV1StatusLineConfig(parsed: any): StatusLineConfig | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  if (!Array.isArray(parsed.sections) || Array.isArray(parsed.widgets)) return null;
+  const flat: StatusLineWidget[] = [];
+  parsed.sections.forEach((section: any, idx: number) => {
+    if (idx > 0) {
+      flat.push({ id: "break", enabled: true, options: {} });
+    }
+    for (const w of section?.widgets || []) {
+      flat.push(w as StatusLineWidget);
+    }
+  });
+  return {
+    version: 2,
+    separators: parsed.separators,
+    widgets: flat,
   };
 }
 
@@ -3579,7 +3579,11 @@ export async function getStatusLineConfig(): Promise<StatusLineConfig> {
   try {
     const raw = await fs.promises.readFile(STATUSLINE_CONFIG_PATH, "utf-8");
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && Array.isArray(parsed.sections)) {
+    const migrated = migrateV1StatusLineConfig(parsed);
+    if (migrated) {
+      return migrated;
+    }
+    if (parsed && typeof parsed === "object" && Array.isArray(parsed.widgets)) {
       return parsed as StatusLineConfig;
     }
   } catch {

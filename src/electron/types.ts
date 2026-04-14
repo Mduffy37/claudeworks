@@ -271,18 +271,18 @@ export interface LaunchOptions {
   dangerouslySkipPermissions?: boolean;
 }
 
-/** A single widget entry inside a status line section. */
+/**
+ * A single widget entry in a status line config.
+ *
+ * Special sentinel: an entry with `id: "break"` marks a section boundary
+ * in the flat widget list. The Python renderer groups widgets by break
+ * markers and joins the groups with the section separator. Break entries
+ * don't need `options`.
+ */
 export interface StatusLineWidget {
   id: string;
   enabled: boolean;
-  options: Record<string, unknown>;
-}
-
-/** A section (group) of status line widgets. */
-export interface StatusLineSection {
-  id: "environment" | "code" | "budget";
-  label: string;
-  widgets: StatusLineWidget[];
+  options?: Record<string, unknown>;
 }
 
 /** Global separator characters used between widgets (field) and between sections. */
@@ -291,11 +291,17 @@ export interface StatusLineSeparators {
   section?: string;
 }
 
-/** Full status line config stored at ~/.claude/statusline-config.json. */
+/**
+ * Full status line config stored at ~/.claude/statusline-config.json.
+ *
+ * v2 schema: flat widget list with "break" sentinel entries marking
+ * section boundaries. v1 configs (with `sections`) are migrated on read
+ * by `getStatusLineConfig` / Python `load_config`.
+ */
 export interface StatusLineConfig {
   version: number;
   separators?: StatusLineSeparators;
-  sections: StatusLineSection[];
+  widgets: StatusLineWidget[];
 }
 
 /** IPC API exposed to the renderer via contextBridge. */
