@@ -1472,6 +1472,20 @@ export function assembleProfile(profile: Profile): string {
     try { fs.unlinkSync(workflowPath); } catch {}
   }
 
+  // Handle per-profile status line config override (Phase 6)
+  // When set, the Python renderer picks this up via $CLAUDE_CONFIG_DIR and
+  // uses it instead of the global ~/.claude/statusline-config.json.
+  const profileStatuslineConfigPath = path.join(configDir, "statusline-config.json");
+  if (profile.statusLineConfig) {
+    fs.writeFileSync(
+      profileStatuslineConfigPath,
+      JSON.stringify(profile.statusLineConfig, null, 2) + "\n",
+      "utf-8",
+    );
+  } else {
+    try { fs.unlinkSync(profileStatuslineConfigPath); } catch {}
+  }
+
   // Scan plugins once for cache setup and exclusions
   const installedPlugins = scanInstalledPlugins();
 
@@ -2601,6 +2615,20 @@ export function assembleTeamProfile(team: Team): string {
     JSON.stringify(teamSettings, null, 2),
     "utf-8"
   );
+
+  // Per-profile status line override for teams — inherit from the lead
+  // profile's override (if any). When absent, ensure any stale file is
+  // removed so the global config wins.
+  const teamStatuslineConfigPath = path.join(configDir, "statusline-config.json");
+  if (leadProfile.statusLineConfig) {
+    fs.writeFileSync(
+      teamStatuslineConfigPath,
+      JSON.stringify(leadProfile.statusLineConfig, null, 2) + "\n",
+      "utf-8",
+    );
+  } else {
+    try { fs.unlinkSync(teamStatuslineConfigPath); } catch {}
+  }
 
   // Symlink plugin caches for all merged plugins
   const installedPlugins = scanInstalledPlugins();

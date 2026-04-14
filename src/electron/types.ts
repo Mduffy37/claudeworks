@@ -104,6 +104,12 @@ export interface Profile {
   disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
   favourite?: boolean;
+  /**
+   * Optional per-profile status line config. When present, overrides the
+   * global `~/.claude/statusline-config.json` for sessions launched via
+   * this profile. When undefined, the global config is used.
+   */
+  statusLineConfig?: StatusLineConfig;
 }
 
 /** Named colours matching Claude Code's internal teammate palette. */

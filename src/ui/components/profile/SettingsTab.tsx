@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Profile } from "../../../electron/types";
+import type { Profile, StatusLineConfig } from "../../../electron/types";
 
 interface HookEntry { event: string; index: number; command: string }
 
@@ -15,6 +15,7 @@ interface Props {
   env: Record<string, string>;
   profileName: string;
   disabledHooks: Record<string, number[]>;
+  statusLineConfig: StatusLineConfig | undefined;
   isDefault?: boolean;
   onSetAsDefault?: () => void;
   onChangeModel: (v: string) => void;
@@ -26,6 +27,7 @@ interface Props {
   onChangeUseDefaultAuth: (v: boolean) => void;
   onChangeEnv: (v: Record<string, string>) => void;
   onChangeDisabledHooks: (v: Record<string, number[]>) => void;
+  onChangeStatusLineConfig: (v: StatusLineConfig | undefined) => void;
   onAddToPath: () => void;
 }
 
@@ -33,9 +35,12 @@ export function SettingsTab(props: Props) {
   const {
     model, effortLevel, voiceEnabled, alias, isInPath,
     launchFlags, customFlags, useDefaultAuth, env, profileName, disabledHooks,
+    statusLineConfig,
     isDefault, onSetAsDefault,
     onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
-    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks, onAddToPath,
+    onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks,
+    onChangeStatusLineConfig,
+    onAddToPath,
   } = props;
 
   const [newKey, setNewKey] = useState("");
@@ -138,6 +143,37 @@ export function SettingsTab(props: Props) {
               <span className="field-toggle-label">
                 {voiceEnabled === undefined ? "Default" : voiceEnabled ? "Enabled" : "Disabled"}
               </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pe-settings-section">
+        <div className="pe-settings-section-label">Status Bar</div>
+        <div className="modal-fields">
+          <div className="field">
+            <div className="field-toggle">
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={!!statusLineConfig}
+                  onChange={async (e) => {
+                    if (e.target.checked) {
+                      const global = await window.api.getStatusLineConfig();
+                      onChangeStatusLineConfig(global);
+                    } else {
+                      onChangeStatusLineConfig(undefined);
+                    }
+                  }}
+                />
+                <span className="toggle-track"><span className="toggle-thumb" /></span>
+              </label>
+              <span className="field-toggle-label">Override global status bar for this profile</span>
+            </div>
+            <div className="field-hint">
+              {statusLineConfig
+                ? "This profile uses its own widget config, seeded from the global status bar. Edits made in Configure Claude \u2192 Status Bar apply to the global config only; per-profile overrides persist independently and take effect for sessions launched via this profile."
+                : "When off, sessions launched via this profile use the global status bar from Configure Claude \u2192 Status Bar."}
             </div>
           </div>
         </div>

@@ -299,6 +299,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     useDefaultAuth, setUseDefaultAuth,
     env, setEnv,
     disabledHooks, setDisabledHooks,
+    statusLineConfig, setStatusLineConfig,
     saving,
     saveStatus,
     handleSave,
@@ -802,8 +803,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               env={env}
               profileName={name}
               disabledHooks={disabledHooks}
+              statusLineConfig={statusLineConfig}
               onChangeEnv={(v) => { setEnv(v); markDirty(); }}
               onChangeDisabledHooks={(v) => { setDisabledHooks(v); markDirty(); }}
+              onChangeStatusLineConfig={(v) => { setStatusLineConfig(v); markDirty(); }}
               onAddToPath={async () => { await window.api.addBinToPath(); setBinInPath(true); }}
             />
           )}
