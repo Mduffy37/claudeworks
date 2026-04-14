@@ -1,0 +1,550 @@
+{
+  "version": 1,
+  "notes": "Curated workflow shapes used by the profile recommender (create-profile and suggest-plugins skills). Each shape describes the abstract stages of a kind of work, independent of tools or tech stack. At retrieval time, each stage is filled by searching the marketplace for plugins whose descriptions match the stage's intent, scoped further by the user's project context. Shapes are hints, not gates — the recommender may blend two shapes, synthesize a custom shape, or ignore them entirely when none fit. See docs/design/profile-recommender.md for the full design.",
+  "shapes": [
+    {
+      "id": "feature-development",
+      "tagline": "Building something new — the full plan → implement → test → ship loop",
+      "signals": ["build", "implement", "feature", "develop", "create", "add", "new endpoint", "new component"],
+      "stages": [
+        {
+          "name": "load-context",
+          "intent": "read existing code to understand conventions, architecture boundaries, and where new work fits",
+          "keywords": ["explore", "understand", "codebase", "architecture", "orient", "map"]
+        },
+        {
+          "name": "plan",
+          "intent": "decide what to build, break it into tasks, and identify integration points and risks",
+          "keywords": ["plan", "spec", "design", "tasks", "breakdown", "requirements"]
+        },
+        {
+          "name": "scaffold",
+          "intent": "generate skeleton files, types, interfaces, and a failing test harness before logic",
+          "keywords": ["scaffold", "generate", "skeleton", "bootstrap", "stub", "init"]
+        },
+        {
+          "name": "implement",
+          "intent": "write the logic, wire up integrations, and make the tests pass",
+          "keywords": ["implement", "write", "code", "wire", "integrate", "develop"]
+        },
+        {
+          "name": "verify",
+          "intent": "run tests, type checks, and linters to confirm the change is correct and clean",
+          "keywords": ["test", "verify", "validate", "check", "run", "lint", "type-check"]
+        },
+        {
+          "name": "deliver",
+          "intent": "commit, open a pull request, and summarize the change for reviewers",
+          "keywords": ["commit", "pull request", "PR", "review", "merge", "ship", "submit"]
+        }
+      ],
+      "commonBlends": ["code-review", "bug-fixing", "refactoring"],
+      "rationale": "Feature development is the primary loop described in Anthropic's Claude Code docs under 'Build features and fix bugs', and is the dominant category in every developer survey and plugin marketplace. It has a distinct scaffold stage that distinguishes it from bug-fixing (no scaffold) and refactoring (no implement-from-scratch). Every comprehensive framework — Superpowers, gstack, tombakerjr/claude-code-workflows — explicitly models this as the core loop.",
+      "evidence": [
+        "Anthropic Claude Code docs (code.claude.com/docs/en/overview): 'Build features and fix bugs — Describe what you want in plain language. Claude Code plans the approach, writes the code across multiple files, and verifies it works.'",
+        "Stack Overflow Developer Survey 2024: 'Writing code' is the top AI tool use case at 84.76% of professional developers; test-write-commit sequence implied throughout.",
+        "tombakerjr/claude-code-workflows README: explicit 5-stage flow Brainstorm → Plan → Implement → Verify → PR; model for this shape.",
+        "Awesome Claude Code Workflows (github.com/ithiria894/awesome-claude-code-workflows): 'Plan-Build-Review Pipelines' is the second major category, listing 6 distinct plugins all built around this same loop.",
+        "ComposioHQ/awesome-claude-plugins: 'feature-dev' is listed as the second official Claude Code plugin under the Official section."
+      ]
+    },
+    {
+      "id": "bug-fixing",
+      "tagline": "Something is broken — the reproduce → locate → fix → verify → close loop",
+      "signals": ["bug", "fix", "broken", "error", "crash", "failing", "regression", "not working", "issue"],
+      "stages": [
+        {
+          "name": "reproduce",
+          "intent": "confirm the defect is real and consistent by running the failing case reliably",
+          "keywords": ["reproduce", "replicate", "confirm", "failing", "test case", "symptom"]
+        },
+        {
+          "name": "locate",
+          "intent": "trace the failure through the codebase to find the root cause, not just the symptom",
+          "keywords": ["trace", "root cause", "locate", "inspect", "debug", "isolate", "stack trace", "bisect"]
+        },
+        {
+          "name": "fix",
+          "intent": "apply the minimal targeted change that addresses the root cause without side effects",
+          "keywords": ["fix", "patch", "correct", "repair", "resolve", "change"]
+        },
+        {
+          "name": "regression-test",
+          "intent": "write a test that would have caught this bug, ensuring it stays fixed",
+          "keywords": ["regression", "test", "coverage", "prevent", "guard", "spec"]
+        },
+        {
+          "name": "verify-and-close",
+          "intent": "confirm the fix passes all checks, then deliver the change with explanation to the reporter",
+          "keywords": ["verify", "confirm", "close", "resolve", "merge", "release note"]
+        }
+      ],
+      "commonBlends": ["feature-development", "code-review", "refactoring"],
+      "rationale": "Bug-fixing has a distinct structure: it begins with reproduction (not planning) and has a mandatory inspect/locate phase that feature development lacks. LaToza et al. (2023, Empirical Software Engineering) confirm that debugging involves significantly more 'inspecting' time (16%) than implementation work (2%). The pipeline is confirmed by Claude Code docs explicitly, by the 'Debug' command in rohitg00/awesome-claude-code-toolkit, and by Semgrep's triage-remediation workflow.",
+      "evidence": [
+        "LaToza (2023) 'What Constitutes Debugging' (cs.gmu.edu/~tlatoza/papers/WhatConstitutesDebugging.pdf): debugging episodes involve navigate, edit, test, inspect activities with inspecting at 16% vs 2% in implementation — distinct loop.",
+        "Anthropic Claude Code docs: 'For bugs, paste an error message or describe the symptom. Claude Code traces the issue through your codebase, identifies the root cause, and implements a fix.'",
+        "rohitg00/awesome-claude-code-toolkit: explicit 'Debug' command defined as 'Reproduce, hypothesize, fix root cause, regression test' — exact match to this shape.",
+        "Stack Overflow Developer Survey 2024: 'Debugging and getting help' is 3rd most common AI tool use case at 56.74% of professional developers."
+      ]
+    },
+    {
+      "id": "code-review",
+      "tagline": "Someone else's change — load it, analyze it, synthesize feedback, and deliver it clearly",
+      "signals": ["review", "PR", "pull request", "feedback", "approve", "check", "audit code", "critique"],
+      "stages": [
+        {
+          "name": "load-context",
+          "intent": "read the diff and surrounding code to understand intent, scope, and risk level of the change",
+          "keywords": ["diff", "load", "context", "scope", "intent", "understand", "PR"]
+        },
+        {
+          "name": "analyze",
+          "intent": "evaluate correctness, security, performance, test coverage, and architectural consistency",
+          "keywords": ["analyze", "check", "evaluate", "security", "correctness", "coverage", "performance"]
+        },
+        {
+          "name": "synthesize",
+          "intent": "group findings by severity, distinguish blockers from suggestions, and prioritize feedback",
+          "keywords": ["prioritize", "severity", "blocking", "suggest", "synthesize", "group"]
+        },
+        {
+          "name": "deliver",
+          "intent": "write actionable, specific review comments with explanations and suggested fixes",
+          "keywords": ["comment", "feedback", "explain", "suggest", "inline", "review", "deliver"]
+        },
+        {
+          "name": "track",
+          "intent": "monitor resolution of open items and approve or request further changes",
+          "keywords": ["track", "resolve", "follow-up", "approve", "re-review", "status"]
+        }
+      ],
+      "commonBlends": ["feature-development", "bug-fixing", "security-audit"],
+      "rationale": "Code review is independently confirmed in developer surveys (12.96% of professionals use AI for it already, 49.03% want to), in the Claude Code docs (GitHub Actions and code-review workflow), and is a first-class category in every marketplace listing. It pulls fundamentally different plugins than feature development: diff readers, PR comment writers, CI watchers. The deliver+track stages are absent from other shapes.",
+      "evidence": [
+        "Stack Overflow Developer Survey 2024 AI tools section: 'Committing and reviewing code' currently used by 12.96% of professional developers, with 49.03% interested in adopting it — the largest interest-vs-use gap.",
+        "GitHub Copilot code review docs (docs.github.com/copilot/concepts/code-review): defines code review as a distinct product category with load-analyze-comment-track loop.",
+        "Anthropic Claude Code docs: 'Automate PR reviews and issue triage' listed as a primary integration scenario; tombakerjr/claude-code-workflows has a 'staff-code-reviewer' agent explicitly for this shape.",
+        "ComposioHQ/awesome-claude-plugins: 'pr-review-toolkit' listed as a featured Official plugin — 'specializing in comments, tests, error handling, type design, code quality'."
+      ]
+    },
+    {
+      "id": "refactoring",
+      "tagline": "The code works but needs restructuring — the understand → transform → verify safety loop",
+      "signals": ["refactor", "clean up", "restructure", "technical debt", "simplify", "improve", "modernize", "migrate"],
+      "stages": [
+        {
+          "name": "map-impact",
+          "intent": "identify all call sites, dependents, and tests affected by the proposed change before touching anything",
+          "keywords": ["map", "impact", "call sites", "dependents", "scope", "affected", "search"]
+        },
+        {
+          "name": "plan-transformation",
+          "intent": "decide on the target structure, sequencing of changes, and safety invariants to preserve",
+          "keywords": ["plan", "target", "structure", "sequence", "transform", "invariant", "approach"]
+        },
+        {
+          "name": "transform",
+          "intent": "apply the structural changes incrementally, keeping behavior identical throughout",
+          "keywords": ["refactor", "rename", "extract", "inline", "move", "restructure", "transform"]
+        },
+        {
+          "name": "verify-parity",
+          "intent": "confirm all tests still pass and no behavior has changed despite the structural improvement",
+          "keywords": ["verify", "parity", "tests pass", "behavior", "regression", "confirm", "unchanged"]
+        },
+        {
+          "name": "document-rationale",
+          "intent": "record why the change was made and what architectural rule it enforces for future maintainers",
+          "keywords": ["document", "rationale", "why", "decision", "comment", "ADR", "explain"]
+        }
+      ],
+      "commonBlends": ["bug-fixing", "code-review", "documentation-writing"],
+      "rationale": "Refactoring is distinct from feature development (no new functionality) and bug-fixing (no defect). GitHub Copilot and Claude Code both treat it as a named category. The map-impact-first pattern is the critical distinguishing stage — refactoring without impact mapping causes regressions. JetBrains 2024 survey confirms 'technical debt' as the #1 developer frustration (62.4%), making this a high-frequency shape. GitHub Copilot docs have a dedicated 'Refactoring code with GitHub Copilot' page.",
+      "evidence": [
+        "Stack Overflow Developer Survey 2024: 'Technical debt' is the top frustration for professional developers at 62.4%, validating refactoring as a high-frequency standalone workflow.",
+        "GitHub Copilot docs (docs.github.com/copilot/using-github-copilot/guides-on-using-github-copilot/refactoring-code-with-github-copilot): dedicated page treating refactoring as a named, distinct workflow with understand → optimize → verify stages.",
+        "GitHub Copilot blog (github.blog/ai-and-ml/github-copilot/what-can-github-copilot-do-examples): 'Refactoring existing code' listed as a standalone use case alongside bug-fixing and documentation.",
+        "Anthropic Claude Code common-workflows page: 'Refactor code' listed as a dedicated top-level workflow section alongside 'Fix bugs efficiently' and 'Understand new codebases'."
+      ]
+    },
+    {
+      "id": "codebase-onboarding",
+      "tagline": "Entering an unfamiliar codebase — the orient → map → probe → synthesize → apply loop",
+      "signals": ["understand", "learn", "new codebase", "unfamiliar", "explore", "orient", "onboard", "legacy", "inherited"],
+      "stages": [
+        {
+          "name": "orient",
+          "intent": "get a quick top-level summary of the codebase's purpose, structure, and key entry points",
+          "keywords": ["overview", "summary", "structure", "orient", "purpose", "entry points"]
+        },
+        {
+          "name": "map",
+          "intent": "trace the data and control flow for the most important paths through the system",
+          "keywords": ["map", "trace", "flow", "path", "dependency", "relationship", "navigate"]
+        },
+        {
+          "name": "probe",
+          "intent": "ask targeted questions about specific components to validate and deepen the mental model",
+          "keywords": ["ask", "explain", "probe", "clarify", "deep dive", "component", "how does"]
+        },
+        {
+          "name": "synthesize",
+          "intent": "build a written summary, diagram, or set of notes that captures the understanding for reuse",
+          "keywords": ["document", "summarize", "diagram", "notes", "capture", "write up", "synthesize"]
+        },
+        {
+          "name": "apply",
+          "intent": "execute a small, bounded change to validate the mental model is correct before larger work",
+          "keywords": ["apply", "validate", "small change", "test understanding", "first task", "confirm"]
+        }
+      ],
+      "commonBlends": ["feature-development", "refactoring", "documentation-writing"],
+      "rationale": "Onboarding is validated as a high-frequency, distinct workflow in multiple independent sources. Stack Overflow 2024 shows 'Learning about a codebase' at 30.36% for professional AI tool use. Claude Code docs have a dedicated 'Understand new codebases' section as a top-level workflow. The awesome-claude-code-workflows list has 'cartographer' and 'claude-discover' plugins built specifically for this shape. The apply/validate stage distinguishes it from documentation-writing (which ends at synthesis).",
+      "evidence": [
+        "Stack Overflow Developer Survey 2024 AI tools section: 'Learning about a codebase' used by 30.36% of professional developers — confirming it as a real, frequent task separate from writing code.",
+        "Anthropic Claude Code common-workflows page: 'Understand new codebases' is the first named workflow section, with 'Get a quick codebase overview' and 'Find relevant code' as sub-workflows.",
+        "shinpr/claude-code-workflows README: 'claude-code-discover' plugin described as 'Turns feature ideas into evidence-backed PRDs' with explicit codebase exploration before any implementation.",
+        "Awesome Claude Code Workflows: 'cartographer' plugin described as 'maps and documents codebases of any size using parallel AI subagents' — purpose-built for this shape."
+      ]
+    },
+    {
+      "id": "security-audit",
+      "tagline": "Hardening a surface area — the scope → scan → triage → remediate → verify loop",
+      "signals": ["security", "audit", "vulnerability", "CVE", "dependency", "hardening", "threat", "pentest", "compliance", "secrets"],
+      "stages": [
+        {
+          "name": "scope",
+          "intent": "define the attack surface: which components, dependencies, data flows, and trust boundaries are in scope",
+          "keywords": ["scope", "attack surface", "trust boundary", "threat model", "inventory", "surface"]
+        },
+        {
+          "name": "scan",
+          "intent": "run automated analysis across the defined scope to surface vulnerability candidates",
+          "keywords": ["scan", "analyze", "detect", "audit", "static analysis", "dependency check", "secrets"]
+        },
+        {
+          "name": "triage",
+          "intent": "evaluate each finding for exploitability and false-positive status, then prioritize by real risk",
+          "keywords": ["triage", "evaluate", "prioritize", "false positive", "risk", "severity", "exploitability"]
+        },
+        {
+          "name": "remediate",
+          "intent": "apply targeted fixes for confirmed vulnerabilities, maintaining minimal diff for reviewer clarity",
+          "keywords": ["fix", "remediate", "patch", "harden", "upgrade", "rotate", "mitigate"]
+        },
+        {
+          "name": "verify",
+          "intent": "re-run the scan to confirm findings are closed and no regressions were introduced",
+          "keywords": ["verify", "rescan", "confirm", "closed", "regression", "passing", "gate"]
+        }
+      ],
+      "commonBlends": ["code-review", "codebase-onboarding", "dependency-management"],
+      "rationale": "Security audit has a triage stage that no other shape has — the need to distinguish true positives from false positives before acting. Semgrep's workflow documentation explicitly models this as scan → triage → remediate. The Anthropic Cybersecurity Skills repo (4,292 stars) covers 26 security domains as a standalone plugin category. ComposioHQ/awesome-claude-plugins lists 'Documentation & Security' as a major category. This shape pulls security scanning, SAST, and vulnerability tools that no other shape needs.",
+      "evidence": [
+        "Semgrep Workflows docs (semgrep.dev/docs/workflows/overview): 'detect, triage, and remediate security issues' — explicitly names the three middle stages of this shape as a complete workflow.",
+        "Anthropic-Cybersecurity-Skills repo (via quemsah/awesome-claude-plugins): '754 structured cybersecurity skills for AI agents, mapped to 26 security domains' — purpose-built plugin category for this shape.",
+        "ComposioHQ/awesome-claude-plugins README: 'Documentation & Security' is a named plugin category with security-guidance, audit-project, and owasp-security-scanner as distinct plugins.",
+        "Aikido AutoFix docs: describes a full scan → triage → autofix loop for SAST, dependency, IaC, container, and pentest findings — evidence that the industry has converged on this stage sequence."
+      ]
+    },
+    {
+      "id": "documentation-writing",
+      "tagline": "Making the code legible — the gather → structure → draft → review → publish loop",
+      "signals": ["docs", "document", "write documentation", "API docs", "README", "technical writing", "explain", "changelog"],
+      "stages": [
+        {
+          "name": "gather",
+          "intent": "collect source material by reading code, specs, changelogs, and existing notes the doc will describe",
+          "keywords": ["gather", "read", "collect", "source", "extract", "understand", "material"]
+        },
+        {
+          "name": "structure",
+          "intent": "choose the documentation type (tutorial, how-to, reference, explanation) and outline the content",
+          "keywords": ["structure", "outline", "type", "diataxis", "framework", "organize", "sections", "examples"]
+        },
+        {
+          "name": "draft",
+          "intent": "write the content with the target audience's knowledge level and goal in mind",
+          "keywords": ["draft", "write", "author", "content", "audience", "explain", "example"]
+        },
+        {
+          "name": "review",
+          "intent": "validate technical accuracy with subject matter experts and readability with target readers",
+          "keywords": ["review", "validate", "accuracy", "feedback", "edit", "proofread", "SME"]
+        },
+        {
+          "name": "publish",
+          "intent": "integrate the documentation into the delivery system and confirm it renders correctly",
+          "keywords": ["publish", "deploy", "integrate", "render", "site", "merge", "release"]
+        }
+      ],
+      "commonBlends": ["codebase-onboarding", "refactoring", "feature-development"],
+      "rationale": "Documentation writing is confirmed by Stack Overflow 2024 as the #1 future AI use case for professional developers at 81%, and is a primary named workflow in both Claude Code docs and GitHub Copilot use-case pages. It has a distinct structure+draft loop that pulls different plugins than any other shape (content generators, doc renderers, OpenAPI parsers). It is not a sub-task of feature development — many technical writers are not implementing any code.",
+      "evidence": [
+        "Stack Overflow Developer Survey 2024 AI tools section: 'Documenting code' is the #1 area developers want to use AI tools in future, at 81% (combined current users interested in expanding + non-users interested in adopting).",
+        "GitHub Copilot blog (github.blog/ai-and-ml/github-copilot/what-can-github-copilot-do-examples): 'Generate documentation' listed as a standalone use case with its own section.",
+        "Anthropic Claude Code docs: 'automate translations in CI, claude -p translate new strings into French and raise a PR' — documentation tasks treated as first-class automated workflows.",
+        "Tom Johnson idratherbewriting.com API doc course: defines a 5-stage writing process (planning, information gathering, writing, reviewing, publishing) that matches this shape exactly, with specific API doc context."
+      ]
+    },
+    {
+      "id": "incident-investigation",
+      "tagline": "Something is on fire in production — the detect → diagnose → contain → resolve → prevent loop",
+      "signals": ["incident", "outage", "flaky", "intermittent", "production", "deploy failing", "degraded", "monitoring", "alert", "investigate"],
+      "stages": [
+        {
+          "name": "detect",
+          "intent": "confirm the scope and impact of the incident by reading logs, metrics, and traces",
+          "keywords": ["logs", "metrics", "traces", "detect", "scope", "impact", "alerts", "monitor"]
+        },
+        {
+          "name": "diagnose",
+          "intent": "form and test hypotheses about the root cause using available signals and recent changes",
+          "keywords": ["hypothesize", "diagnose", "root cause", "correlate", "bisect", "changes", "timeline"]
+        },
+        {
+          "name": "contain",
+          "intent": "apply an immediate mitigation (rollback, feature flag, rate limit) to stop the bleeding",
+          "keywords": ["rollback", "revert", "flag", "mitigation", "contain", "stop", "disable", "limit"]
+        },
+        {
+          "name": "resolve",
+          "intent": "apply the correct fix and confirm the system returns to expected behavior",
+          "keywords": ["fix", "resolve", "deploy", "verify", "restore", "confirm", "healthy"]
+        },
+        {
+          "name": "post-mortem",
+          "intent": "document what happened, what was learned, and what changes prevent recurrence",
+          "keywords": ["post-mortem", "blameless", "document", "prevent", "recurrence", "action items", "learn"]
+        }
+      ],
+      "commonBlends": ["bug-fixing", "security-audit", "codebase-onboarding"],
+      "rationale": "Incident investigation is distinct from bug-fixing: it operates on running systems using logs/metrics/traces rather than source code, it has a mandatory contain-before-resolve step (not present in bug-fixing), and it ends with a post-mortem (not a regression test). Claude Code docs explicitly mention 'tail -200 app.log | claude -p Slack me if you see any anomalies' and scheduled CI failure analysis as primary workflows. The awesome-claude-code-workflows 'Ship and Deploy' and 'Monitoring and Dashboards' categories both confirm this as a real workflow shape requiring distinct tooling.",
+      "evidence": [
+        "Anthropic Claude Code docs (code.claude.com/docs/en/overview): 'tail -200 app.log | claude ... Analyze recent log output' and 'overnight CI failure analysis' explicitly named as primary CI/production use cases.",
+        "Anthropic Claude Code docs: 'Schedule recurring tasks' section lists 'overnight CI failure analysis' and 'morning PR reviews' as first-class scheduled workflow types.",
+        "Awesome Claude Code Workflows: 'Ship and Deploy' and 'Monitoring and Dashboards' are distinct categories with canary-deploy monitoring, rollback chains, and real-time dashboard plugins.",
+        "barkain/claude-code-workflow-orchestration: includes a 'devops-experience-architect' specialized agent defined as 'Infrastructure, deployment, CI/CD' — confirming distinct deployment/incident tooling."
+      ]
+    },
+    {
+      "id": "data-exploration",
+      "tagline": "A new dataset or signal — the load → profile → hypothesize → test → communicate loop",
+      "signals": ["explore", "data", "dataset", "anomaly", "analysis", "EDA", "investigate data", "query", "patterns", "insights"],
+      "stages": [
+        {
+          "name": "load-profile",
+          "intent": "ingest the data and produce summary statistics, schema, distributions, and missing-value counts",
+          "keywords": ["load", "profile", "schema", "statistics", "distribution", "missing", "shape"]
+        },
+        {
+          "name": "explore",
+          "intent": "visualize relationships, spot outliers and anomalies, and generate candidate hypotheses",
+          "keywords": ["visualize", "explore", "correlation", "outlier", "anomaly", "pattern", "chart"]
+        },
+        {
+          "name": "hypothesize",
+          "intent": "articulate specific, falsifiable questions the data might answer",
+          "keywords": ["hypothesis", "question", "test", "propose", "falsifiable", "claim", "investigate"]
+        },
+        {
+          "name": "test",
+          "intent": "run queries, statistical tests, or model fits to evaluate each hypothesis",
+          "keywords": ["query", "statistical test", "model", "evaluate", "run", "measure", "confirm"]
+        },
+        {
+          "name": "communicate",
+          "intent": "synthesize findings into a report or notebook that conveys conclusions and their confidence level",
+          "keywords": ["report", "communicate", "findings", "notebook", "summary", "confidence", "present"]
+        }
+      ],
+      "commonBlends": ["documentation-writing", "incident-investigation"],
+      "rationale": "Data exploration is the canonical EDA workflow, confirmed by Databricks docs, Jupyter notebook community standards, and the planning-with-files plugin (18K stars) which added an analytics template in v2.29.0 with exactly these four phases: Data Discovery, Exploratory Analysis, Hypothesis Testing, Synthesis. It requires distinct plugins — data profiling, visualization, statistical analysis, notebook management — that no other shape needs. The persona test is clear: a data scientist exploring a dataset for anomalies does not fit feature-development or bug-fixing.",
+      "evidence": [
+        "OthmanAdi/planning-with-files v2.29.0 release notes: 'Analytics workflow template with 4 analytics-specific phases: Data Discovery, Exploratory Analysis, Hypothesis Testing, Synthesis' — community convergence on this exact stage sequence.",
+        "Databricks EDA Tutorial (docs.databricks.com): describes a load → describe → visualize → hypothesis → test → schedule workflow as the canonical data exploration lifecycle.",
+        "JetBrains State of Developer Ecosystem 2024: 18% of developers are building AI integrations and ML capabilities; distinct tooling requirements from standard coding workflows confirmed.",
+        "Claude Code Skills Hub (claudecodeplugins.io): 'AI/ML Starter' is a named plugin pack category with 35 plugins distinct from 'DevOps Essentials' and 'Security Toolkit' — confirming separate plugin demand."
+      ]
+    },
+    {
+      "id": "prompt-engineering",
+      "tagline": "Tuning an AI system's behavior — the define → baseline → iterate → evaluate → harden loop",
+      "signals": ["prompt", "LLM", "agent", "system prompt", "tune", "evaluate", "evals", "model behavior", "AI system", "benchmark"],
+      "stages": [
+        {
+          "name": "define",
+          "intent": "specify the task, success criteria, and edge cases the prompt must handle before writing any text",
+          "keywords": ["define", "criteria", "success", "task", "scope", "edge cases", "specification", "rubric"]
+        },
+        {
+          "name": "baseline",
+          "intent": "write an initial prompt and run it against a representative dataset to establish a quality floor",
+          "keywords": ["baseline", "initial", "draft", "dataset", "representative", "zero-shot", "few-shot"]
+        },
+        {
+          "name": "iterate",
+          "intent": "revise the prompt based on failure analysis, testing variants and comparing scores",
+          "keywords": ["iterate", "revise", "variant", "compare", "improve", "experiment", "A/B", "failure mode"]
+        },
+        {
+          "name": "evaluate",
+          "intent": "run systematic evals to measure accuracy, faithfulness, latency, and regression risk",
+          "keywords": ["evaluate", "eval", "benchmark", "score", "measure", "faithfulness", "hallucination"]
+        },
+        {
+          "name": "harden",
+          "intent": "add guardrails, lock the prompt version, and wire evaluation into CI to prevent silent regressions",
+          "keywords": ["guardrail", "version", "CI", "regression", "protect", "monitor", "deploy", "lock"]
+        }
+      ],
+      "commonBlends": ["feature-development", "documentation-writing"],
+      "rationale": "Prompt engineering is an emerging but already distinct workflow confirmed by dedicated tooling (Braintrust, Maxim, Promptfoo), Anthropic's own prompt engineering docs, and the Claude Code plugins ecosystem. It requires eval runners, dataset managers, and prompt versioning tools that no other shape uses. The JetBrains 2024 survey confirms 18% of developers are building AI integrations. The persona test works: a prompt engineer tuning a production agent has a fundamentally different task sequence from a developer writing application code.",
+      "evidence": [
+        "Braintrust blog (braintrust.dev/articles/prompt-optimization-loop): defines a 5-step prompt optimization loop (baseline, score, identify failures, fix, re-score) matching this shape exactly.",
+        "Anthropic Claude Code Skills Hub: 'AI & Machine Learning' pack with 35 plugins covers 'LLM tools, ML pipelines, prompt engineering, and AI agent frameworks' as a distinct plugin category.",
+        "JetBrains State of Developer Ecosystem 2024: '18% of developers are involved in building integrations with AI, indicating that AI is steadily infiltrating developed products' — distinct work category.",
+        "Claude Code docs (code.claude.com/docs/en/overview): 'Connect your tools with MCP' section positions AI agent integration as a primary Claude Code use case alongside feature development and bug-fixing."
+      ]
+    },
+    {
+      "id": "dependency-management",
+      "tagline": "Keeping third-party code healthy — the inventory → assess → update → test → communicate loop",
+      "signals": ["dependency", "upgrade", "library", "package", "breaking change", "migrate", "adopt", "outdated", "version"],
+      "stages": [
+        {
+          "name": "inventory",
+          "intent": "enumerate all direct and transitive dependencies with their current versions and vulnerability status",
+          "keywords": ["inventory", "list", "dependencies", "versions", "outdated", "transitive", "audit"]
+        },
+        {
+          "name": "assess",
+          "intent": "evaluate the impact of each upgrade: breaking changes, migration effort, security improvement, compatibility",
+          "keywords": ["assess", "breaking changes", "changelog", "impact", "compatibility", "risk", "effort"]
+        },
+        {
+          "name": "update",
+          "intent": "apply version bumps and adapt call sites to the new API surface",
+          "keywords": ["update", "upgrade", "bump", "migrate", "adapt", "change", "replace"]
+        },
+        {
+          "name": "verify",
+          "intent": "run the full test suite and type checks to confirm the updated dependencies work correctly",
+          "keywords": ["test", "verify", "build", "run", "type-check", "CI", "green", "passing"]
+        },
+        {
+          "name": "communicate",
+          "intent": "document what was updated, why, and any behavior changes for downstream consumers",
+          "keywords": ["changelog", "release notes", "document", "communicate", "announce", "downstream"]
+        }
+      ],
+      "commonBlends": ["security-audit", "refactoring", "feature-development"],
+      "rationale": "Dependency management has a distinct assess stage (reading changelogs, evaluating breaking changes) that does not appear in any other shape. It is explicitly named as a scheduled Claude Code workflow ('weekly dependency audits'). The quemsah/awesome-claude-plugins listing mentions 'major upgrade to lodash' as a sample single-purpose plugin (10,922 stars). Security audit overlaps but focuses on vulnerability triage rather than upgrade assessment. A developer adopting an unfamiliar library maps to this shape plus codebase-onboarding. Most commonly encountered as a blend with security-audit or refactoring.",
+      "evidence": [
+        "Anthropic Claude Code docs: 'Schedule recurring tasks — weekly dependency audits' explicitly listed as a primary scheduled automation use case.",
+        "quemsah/awesome-claude-plugins: a 10,922-star plugin specifically for 'major upgrade to lodash' — confirming the community builds purpose-built dependency migration tooling.",
+        "Stack Overflow Developer Survey 2024: 'Patching/updating dependencies' listed as a top frustration for professional developers.",
+        "GitHub Copilot use cases: dependency migration and codebase modernization confirmed as standalone use cases in the Copilot blog alongside feature development and refactoring."
+      ]
+    },
+    {
+      "id": "research",
+      "tagline": "Answering a question before acting — the frame → survey → deep-dive → compare → conclude loop",
+      "signals": ["research", "investigate", "compare", "evaluate", "prior art", "survey", "decide", "literature", "analyze options", "trade-offs"],
+      "stages": [
+        {
+          "name": "frame",
+          "intent": "articulate the question, success criteria, and scope boundaries before starting to read",
+          "keywords": ["frame", "question", "scope", "criteria", "goal", "objective", "define"]
+        },
+        {
+          "name": "survey",
+          "intent": "do a broad scan of available sources, tools, or approaches to identify what's worth deeper investigation",
+          "keywords": ["survey", "scan", "search", "landscape", "sources", "overview", "broad", "canvass"]
+        },
+        {
+          "name": "deep-dive",
+          "intent": "read the highest-signal sources in detail to extract specific claims, evidence, and trade-offs",
+          "keywords": ["read", "deep dive", "extract", "study", "source", "paper", "doc", "primary"]
+        },
+        {
+          "name": "compare",
+          "intent": "structure findings across sources into a comparison, surface trade-offs, and note convergence or divergence",
+          "keywords": ["compare", "contrast", "trade-off", "matrix", "synthesize", "pattern", "evaluate", "rank"]
+        },
+        {
+          "name": "conclude",
+          "intent": "produce a recommendation, decision, or written summary that captures the learning and its confidence level",
+          "keywords": ["conclude", "recommend", "decide", "summary", "finding", "answer", "decision", "position"]
+        }
+      ],
+      "commonBlends": ["feature-development", "documentation-writing", "prompt-engineering"],
+      "rationale": "Research is distinct from codebase-onboarding (operates on external sources, not a specific codebase) and from documentation-writing (starts from questions, not content to explain, and may not produce a deliverable at all). Its compare stage — structured trade-off analysis across sources — has no analog in any other shape. Common Claude Code use cases: picking a library or vector DB, deciding between architectural approaches, surveying prior art before implementing a novel feature, comparing AI-agent frameworks before committing. Added to the inventory as a curator override after evidence-grounded research did not flag it independently, on the basis that pure-research-with-web-search is an emerging Claude Code use case the plugin ecosystem is beginning to tool for.",
+      "evidence": [
+        "Anthropic Claude Code docs: WebSearch and WebFetch are first-class tools, and the 'research agent' pattern appears in multiple Anthropic-published agent examples — suggesting research workflows are a supported use case even when plugin tooling is still thin.",
+        "Common developer decision tasks (choosing a vector DB, framework, or architectural approach) do not fit cleanly into feature-development (no build yet), codebase-onboarding (no specific codebase), or documentation-writing (no deliverable required) — implying a coverage gap the other shapes do not close.",
+        "Emerging 'deep research' agent tooling across the ecosystem (Perplexity, ChatGPT Deep Research, Claude with web search) signals that structured multi-source research is a rising workflow category, even if Claude Code's plugin marketplace has not yet caught up."
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "debugging",
+      "reason": "Same loop as bug-fixing under a different name. LaToza (2023) confirms debugging activities (navigate, edit, test, inspect) are the implementation of the bug-fixing shape. Merged."
+    },
+    {
+      "id": "testing",
+      "reason": "Cross-cutting staple. Test authoring is a stage inside feature-development (scaffold), bug-fixing (regression-test), and refactoring (verify-parity). A standalone 'testing' workflow would pull the same plugins as those shapes' verify stages."
+    },
+    {
+      "id": "frontend-development",
+      "reason": "A tech-context axis, not a workflow shape. A frontend engineer building a feature follows the feature-development shape; their tech stack (component libraries, CSS tooling) is handled by project context inference at retrieval time."
+    },
+    {
+      "id": "backend-development",
+      "reason": "Same as frontend-development — a tech-context axis. A backend engineer adding a REST endpoint uses feature-development. Stack differences handled at retrieval time."
+    },
+    {
+      "id": "mobile-development",
+      "reason": "Tech-context axis. Mobile developers use feature-development, bug-fixing, and other shapes. Platform-specific tools surface through tech-stack inference."
+    },
+    {
+      "id": "devops",
+      "reason": "Role label masquerading as a shape. DevOps engineers do incident-investigation (deploy flaking), security-audit (infrastructure hardening), dependency-management (image upgrades), and feature-development (pipeline features). No single unified loop."
+    },
+    {
+      "id": "planning",
+      "reason": "Cross-cutting staple. Planning is a stage inside feature-development, refactoring, and almost every other shape. It does not have a standalone stage sequence that would pull distinct plugins."
+    },
+    {
+      "id": "code-generation",
+      "reason": "Not a workflow shape — it is the mechanism by which every other shape implements its 'implement' or 'transform' stage. Subsumed by feature-development and refactoring."
+    },
+    {
+      "id": "data-science",
+      "reason": "Role label and domain. Data scientists use data-exploration, feature-development (for pipelines), and prompt-engineering. Covered by those shapes plus tech-context inference."
+    },
+    {
+      "id": "ci-cd-setup",
+      "reason": "Too narrow. Setting up CI/CD is a one-time feature-development task using infrastructure-as-code. Does not constitute a recurring workflow shape with a distinct stage loop."
+    },
+    {
+      "id": "staff-engineer",
+      "reason": "Role label. Staff engineers do code-review, feature-development, refactoring, and codebase-onboarding — the full shape inventory applies to them."
+    },
+    {
+      "id": "performance-optimization",
+      "reason": "Candidate considered but merged into refactoring. The loop (profile → identify hotspot → optimize → benchmark) is a specialization of refactoring's map-transform-verify loop. Would pull overlapping plugins; distinction not load-bearing enough to justify a separate shape."
+    },
+    {
+      "id": "api-integration",
+      "reason": "Candidate considered. Reading API docs and integrating a third-party service is a blend of codebase-onboarding (understand the API surface) and feature-development (implement the integration). Not a distinct loop at the stage level."
+    },
+    {
+      "id": "git-workflow",
+      "reason": "Cross-cutting staple. Commit, branch, PR, and merge operations appear as stages inside feature-development, bug-fixing, and refactoring. Not a standalone shape with a distinct purpose loop."
+    }
+  ],
+  "blendingNotes": "The most common co-occurring pairs in real usage are: (1) feature-development + code-review, which is the default developer loop — you build, then your code gets reviewed, and the signals are often indistinguishable; (2) bug-fixing + code-review, which is how maintainers handle bug reports from users outside the team; (3) refactoring + documentation-writing, because structural changes require updated docs and often appear together in the same PR; (4) security-audit + dependency-management, because most security remediations involve upgrading vulnerable packages; (5) research + feature-development, when a developer investigates prior art or tooling choices before building something new. The recommender should weight toward a primary shape and surface the secondary as an 'also common in your work' affordance. Multi-hat users (e.g. a solo developer who reviews their own code, implements features, and maintains CI) will present with 3-4 shapes simultaneously — the system should support multi-shape profiles rather than forcing a single selection."
+}
