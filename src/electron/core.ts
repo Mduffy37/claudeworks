@@ -24,11 +24,14 @@ import type {
   AnalyticsData,
   ActiveSession,
   LaunchOptions,
+  StatusLineConfig,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
+const STATUSLINE_CONFIG_PATH = path.join(os.homedir(), ".claude", "statusline-config.json");
+const STATUSLINE_RENDERER_PATH = path.join(os.homedir(), ".claude", "scripts", "statusline-render.py");
 
 function validateProfileName(name: string): void {
   if (!name || /[\/\\\0]|\.\./.test(name)) {
@@ -3502,4 +3505,104 @@ export function getClaudeHome(): string {
 
 export function getProfilesDir(): string {
   return PROFILES_DIR;
+}
+
+// ---------------------------------------------------------------------------
+// Status line config
+// ---------------------------------------------------------------------------
+
+function defaultStatusLineConfig(): StatusLineConfig {
+  return {
+    version: 1,
+    sections: [
+      {
+        id: "environment",
+        label: "Environment",
+        widgets: [
+          { id: "time", enabled: true, options: {} },
+          { id: "model", enabled: true, options: {} },
+          { id: "context", enabled: true, options: {} },
+        ],
+      },
+      {
+        id: "code",
+        label: "Code",
+        widgets: [
+          { id: "git", enabled: true, options: {} },
+          { id: "lines", enabled: true, options: {} },
+        ],
+      },
+      {
+        id: "budget",
+        label: "Budget",
+        widgets: [
+          { id: "uptime", enabled: true, options: {} },
+          { id: "cost", enabled: true, options: { currency: "GBP" } },
+          { id: "usage5h", enabled: true, options: { showReset: true, showTier: true } },
+          { id: "usage7d", enabled: true, options: {} },
+        ],
+      },
+    ],
+  };
+}
+
+export async function getStatusLineConfig(): Promise<StatusLineConfig> {
+  try {
+    const raw = await fs.promises.readFile(STATUSLINE_CONFIG_PATH, "utf-8");
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && Array.isArray(parsed.sections)) {
+      return parsed as StatusLineConfig;
+    }
+  } catch {
+    // File missing or unreadable — fall through to default.
+  }
+  return defaultStatusLineConfig();
+}
+
+export async function setStatusLineConfig(config: StatusLineConfig): Promise<void> {
+  await fs.promises.mkdir(path.dirname(STATUSLINE_CONFIG_PATH), { recursive: true });
+  await fs.promises.writeFile(
+    STATUSLINE_CONFIG_PATH,
+    JSON.stringify(config, null, 2) + "\n",
+    "utf-8",
+  );
+}
+
+export async function resetStatusLineConfig(): Promise<StatusLineConfig> {
+  const fresh = defaultStatusLineConfig();
+  await setStatusLineConfig(fresh);
+  return fresh;
+}
+
+export async function renderStatusLinePreview(
+  config: StatusLineConfig,
+  mockSession?: Record<string, unknown>,
+): Promise<string> {
+  const tmpConfig = path.join(os.tmpdir(), `claude-statusline-preview-${process.pid}-${Date.now()}.json`);
+  await fs.promises.writeFile(tmpConfig, JSON.stringify(config) + "\n", "utf-8");
+  const mock = JSON.stringify(mockSession ?? {
+    model: { display_name: "Opus" },
+    context_window: { context_window_size: 200000, used_percentage: 25 },
+    cost: {
+      total_cost_usd: 0.5,
+      total_lines_added: 42,
+      total_lines_removed: 10,
+      total_duration_ms: 1800000,
+    },
+  });
+  const env = { ...process.env, CLAUDE_STATUSLINE_CONFIG_OVERRIDE: tmpConfig };
+  return new Promise((resolve, reject) => {
+    const child = execFile(
+      "python3",
+      [STATUSLINE_RENDERER_PATH],
+      { env, timeout: 10000, maxBuffer: 1024 * 1024 },
+      (err, stdout) => {
+        fs.promises.unlink(tmpConfig).catch(() => undefined);
+        if (err) return reject(err);
+        resolve(stdout);
+      },
+    );
+    child.stdin?.write(mock);
+    child.stdin?.end();
+  });
 }

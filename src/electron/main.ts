@@ -61,6 +61,10 @@ import {
   fetchUpstreamMarketplace,
   fetchPluginItems,
   fetchRepoReadme,
+  getStatusLineConfig,
+  setStatusLineConfig,
+  resetStatusLineConfig,
+  renderStatusLinePreview,
 } from "./core";
 import type { Profile, Team } from "./types";
 
@@ -496,6 +500,14 @@ ipcMain.handle("refresh-curated-index", () => refreshCuratedIndex());
 ipcMain.handle("fetch-upstream-marketplace", (_event, source: string) => fetchUpstreamMarketplace(source));
 ipcMain.handle("fetch-plugin-items", (_event, source: string, pluginPath: string) => fetchPluginItems(source, pluginPath));
 ipcMain.handle("fetch-repo-readme", (_event, source: string) => fetchRepoReadme(source));
+
+// Status line config
+ipcMain.handle("get-statusline-config", () => getStatusLineConfig());
+ipcMain.handle("set-statusline-config", (_event, config) => setStatusLineConfig(config));
+ipcMain.handle("reset-statusline-config", () => resetStatusLineConfig());
+ipcMain.handle("render-statusline-preview", (_event, config, mockSession) =>
+  renderStatusLinePreview(config, mockSession),
+);
 
 // ---------------------------------------------------------------------------
 // App lifecycle

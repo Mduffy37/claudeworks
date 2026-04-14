@@ -265,6 +265,26 @@ export interface LaunchOptions {
   dangerouslySkipPermissions?: boolean;
 }
 
+/** A single widget entry inside a status line section. */
+export interface StatusLineWidget {
+  id: string;
+  enabled: boolean;
+  options: Record<string, unknown>;
+}
+
+/** A section (group) of status line widgets. */
+export interface StatusLineSection {
+  id: "environment" | "code" | "budget";
+  label: string;
+  widgets: StatusLineWidget[];
+}
+
+/** Full status line config stored at ~/.claude/statusline-config.json. */
+export interface StatusLineConfig {
+  version: number;
+  sections: StatusLineSection[];
+}
+
 /** IPC API exposed to the renderer via contextBridge. */
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
@@ -347,6 +367,11 @@ export interface ElectronAPI {
   fetchUpstreamMarketplace: (source: string) => Promise<Record<string, any>>;
   fetchPluginItems: (source: string, pluginPath: string) => Promise<PluginItem[]>;
   fetchRepoReadme: (source: string) => Promise<string>;
+  // Status line config
+  getStatusLineConfig: () => Promise<StatusLineConfig>;
+  setStatusLineConfig: (config: StatusLineConfig) => Promise<void>;
+  resetStatusLineConfig: () => Promise<StatusLineConfig>;
+  renderStatusLinePreview: (config: StatusLineConfig, mockSession?: Record<string, unknown>) => Promise<string>;
 }
 
 export interface ActiveSession {
