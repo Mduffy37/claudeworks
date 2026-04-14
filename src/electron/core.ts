@@ -120,6 +120,25 @@ function normaliseManifestPaths(v: unknown): string[] | null {
  * contains a SKILL.md, return all of them. Otherwise, if the directory itself
  * has a SKILL.md, return that as a single item. Otherwise empty.
  */
+/**
+ * True for both real directories and symlinks whose target is a directory.
+ * `fs.Dirent.isDirectory()` uses lstat semantics, so symlinks-to-dirs report false —
+ * every skill-scanner that reads directories with withFileTypes must use this helper
+ * to avoid skipping cross-published plugins (e.g. redis/agent-skills materialises
+ * `plugins/redis-development/skills/redis-development` as a symlink to `skills/redis-development`).
+ */
+function direntIsDirLike(entry: fs.Dirent, parentDir: string): boolean {
+  if (entry.isDirectory()) return true;
+  if (entry.isSymbolicLink()) {
+    try {
+      return fs.statSync(path.join(parentDir, entry.name)).isDirectory();
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 function resolveSkillManifestEntry(pluginRoot: string, entry: string): string[] {
   if (typeof entry !== "string") return [];
   const absolute = path.resolve(pluginRoot, entry);
@@ -128,6 +147,7 @@ function resolveSkillManifestEntry(pluginRoot: string, entry: string): string[] 
   if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return [];
   if (!fs.existsSync(absolute)) return [];
 
+  // fs.statSync follows symlinks, so a symlinked skill dir passes the isDirectory check.
   const stat = fs.statSync(absolute);
   if (stat.isFile() && absolute.endsWith(".md")) return [absolute];
   if (!stat.isDirectory()) return [];
@@ -136,7 +156,7 @@ function resolveSkillManifestEntry(pluginRoot: string, entry: string): string[] 
   const subdirs: string[] = [];
   try {
     for (const child of fs.readdirSync(absolute, { withFileTypes: true })) {
-      if (!child.isDirectory()) continue;
+      if (!direntIsDirLike(child, absolute)) continue;
       const skillMd = path.join(absolute, child.name, "SKILL.md");
       if (fs.existsSync(skillMd)) subdirs.push(skillMd);
     }
@@ -218,7 +238,7 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
     const skillsDir = path.join(base, "skills");
     if (fs.existsSync(skillsDir)) {
       for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
+        if (!direntIsDirLike(entry, skillsDir)) continue;
         const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
         if (!fs.existsSync(skillMd)) continue;
         items.push(buildItem(plugin.name, skillMd, "skill", entry.name));
@@ -514,7 +534,7 @@ export function scanLocalItems(directory: string): LocalItem[] {
   const skillsDir = path.join(claudeDir, "skills");
   if (fs.existsSync(skillsDir)) {
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      if (!direntIsDirLike(entry, skillsDir)) continue;
       const skillMd = path.join(skillsDir, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
       const fm = readFrontmatter(skillMd);
@@ -3197,14 +3217,78 @@ async function fetchAnyRepoFile(source: string, filePath: string): Promise<strin
   return stdout;
 }
 
-/** List a directory's contents in any public GitHub repo. Returns entries with name/type/path. */
-async function fetchAnyRepoDir(source: string, dirPath: string): Promise<Array<{ name: string; type: string; path: string }>> {
+/**
+ * Resolve a relative symlink target against the symlink's own location.
+ * Pure path math — no network. Returns null if the target escapes repo root.
+ */
+function resolveSymlinkTargetPath(symlinkPath: string, target: string): string | null {
+  const parentDir = path.posix.dirname(symlinkPath);
+  const joined = path.posix.join(parentDir, target);
+  const normalised = path.posix.normalize(joined);
+  if (
+    normalised.startsWith("..") ||
+    normalised.startsWith("/") ||
+    normalised === "" ||
+    normalised === "."
+  ) {
+    return null;
+  }
+  return normalised;
+}
+
+/**
+ * Chase a path through any symlinks via the GitHub contents API (JSON form).
+ * Returns the final non-symlink path, or null if broken/looping/escaping.
+ * Depth-capped at 3. If the input is not a symlink, returns it unchanged.
+ *
+ * GitHub's contents API does not follow symlinks server-side: fetching a path
+ * that traverses an intermediate symlink returns 404, and fetching a symlink
+ * blob directly returns `{type: "symlink", target: ...}`. This helper is the
+ * client-side workaround — without it, any plugin that cross-publishes via
+ * symlinks (e.g. redis/agent-skills) enumerates as empty.
+ */
+async function resolveSymlink(source: string, repoPath: string, depth = 0): Promise<string | null> {
+  if (depth >= 3) return null;
+  const cleanPath = repoPath.replace(/^\/+/, "");
+  try {
+    const { stdout } = await execFileAsync(ghBinary(), [
+      "api",
+      `repos/${source}/contents/${cleanPath}`,
+    ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
+    const parsed = JSON.parse(stdout);
+    if (Array.isArray(parsed)) return cleanPath;
+    if (parsed && parsed.type === "symlink" && typeof parsed.target === "string") {
+      const resolved = resolveSymlinkTargetPath(cleanPath, parsed.target);
+      if (!resolved) return null;
+      return resolveSymlink(source, resolved, depth + 1);
+    }
+    return cleanPath;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * List a directory's contents in any public GitHub repo. Returns entries with name/type/path.
+ * Transparently follows the case where `dirPath` is itself a symlink to another directory
+ * (depth-capped at 3). Symlink *children* inside the listing are returned as-is with
+ * type === "symlink" — callers that want to descend must call resolveSymlink on them.
+ */
+async function fetchAnyRepoDir(source: string, dirPath: string, depth = 0): Promise<Array<{ name: string; type: string; path: string }>> {
+  if (depth >= 3) return [];
   const { stdout } = await execFileAsync(ghBinary(), [
     "api",
     `repos/${source}/contents/${dirPath}`,
   ], { timeout: 15000 });
   const data = JSON.parse(stdout);
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) {
+    if (data && data.type === "symlink" && typeof data.target === "string") {
+      const resolved = resolveSymlinkTargetPath(dirPath.replace(/^\/+/, ""), data.target);
+      if (!resolved) return [];
+      return fetchAnyRepoDir(source, resolved, depth + 1);
+    }
+    return [];
+  }
   return data.map((e: any) => ({ name: e.name, type: e.type, path: e.path }));
 }
 
@@ -3353,8 +3437,17 @@ export async function fetchPluginItems(source: string, pluginPath: string): Prom
     }
     const subdirResults: PluginItem[] = [];
     for (const child of children) {
-      if (child.type !== "dir") continue;
-      const childSkillMd = joinPath(child.path, "SKILL.md");
+      let effectiveDir: string | null = null;
+      if (child.type === "dir") {
+        effectiveDir = child.path;
+      } else if (child.type === "symlink") {
+        effectiveDir = await resolveSymlink(source, child.path);
+        if (!effectiveDir) continue;
+      } else {
+        continue;
+      }
+      const childSkillMd = joinPath(effectiveDir, "SKILL.md");
+      // child.name preserves the symlink's own display name even when content comes from elsewhere.
       const item = await buildItem(childSkillMd, "skill", child.name);
       if (item) subdirResults.push(item);
     }
@@ -3387,13 +3480,30 @@ export async function fetchPluginItems(source: string, pluginPath: string): Prom
     const result: PluginItem[] = [];
     for (const e of entries) {
       if (type === "skill") {
-        if (e.type !== "dir") continue;
-        const skillMd = joinPath(e.path, "SKILL.md");
+        let effectiveDir: string | null = null;
+        if (e.type === "dir") {
+          effectiveDir = e.path;
+        } else if (e.type === "symlink") {
+          effectiveDir = await resolveSymlink(source, e.path);
+          if (!effectiveDir) continue;
+        } else {
+          continue;
+        }
+        const skillMd = joinPath(effectiveDir, "SKILL.md");
         const item = await buildItem(skillMd, "skill", e.name);
         if (item) result.push(item);
       } else {
-        if (e.type !== "file" || !e.name.endsWith(".md") || e.name === "README.md") continue;
-        const item = await buildItem(e.path, type, e.name.replace(/\.md$/, ""));
+        if (!e.name.endsWith(".md") || e.name === "README.md") continue;
+        let effectiveFile: string | null = null;
+        if (e.type === "file") {
+          effectiveFile = e.path;
+        } else if (e.type === "symlink") {
+          effectiveFile = await resolveSymlink(source, e.path);
+          if (!effectiveFile) continue;
+        } else {
+          continue;
+        }
+        const item = await buildItem(effectiveFile, type, e.name.replace(/\.md$/, ""));
         if (item) result.push(item);
       }
     }
