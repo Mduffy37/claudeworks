@@ -436,9 +436,9 @@ The script outputs a single-line JSON object:
 The skill has only written the profile entry to `profiles.json`. The profile is **not yet usable** until the user finishes setup in the Claude Profiles app. Tell the user clearly:
 
 1. The profile entry has been saved to `profiles.json`.
-2. To finish setup, they need to **open the Claude Profiles app** and either save or launch the profile. That is what actually assembles the config directory, seeds credentials, and writes the `/workflow` command file (if they added one).
-3. They may also want to set a **target directory** and any other fields the skill didn't cover (alias, tags, launch flags) from the profile editor.
-4. If the profile includes any plugins that are not yet installed (i.e. not in the `installed` list from Step 1d), remind them to **install those from the app's Browse tab first**, otherwise the profile will launch broken.
+2. **Open the Claude Profiles app.** If the app was already running while this skill wrote the profile, it's reading from an in-memory cache of `profiles.json` and won't know about the new entry yet — **click the refresh button next to the settings icon in the top-right of the sidebar** to force a re-read. Once the new profile shows up in the sidebar list, either save or launch it from the editor. That save/launch is what actually assembles the config directory, seeds credentials, and writes the `/workflow` command file (if they added one).
+3. They may also want to set a **target directory** and any other fields the skill didn't cover (alias, tags, launch flags) from the profile editor. The write script doesn't expose those, so the app is the only place to set them.
+4. If the profile includes any plugins that are not yet installed (i.e. not in the `installed` list from Step 1d), remind them to **install those from the app's Browse tab first**, otherwise the profile will launch broken. (If the user opted in at Step 7.5 and the installs succeeded, this is already handled.)
 
 ---
 
