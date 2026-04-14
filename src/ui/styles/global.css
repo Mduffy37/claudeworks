@@ -4943,12 +4943,46 @@ body {
   margin-top: 2px;
 }
 
-/* Kind-specific colours for the result-type tag (marketplace/plugin/skill/command/agent). */
+/* Kind-specific colours for the result-type tag (marketplace/plugin/skill/command/agent/mcpServer). */
 .curated-kind-tag.kind-marketplace { color: #67e8f9; background: rgba(103, 232, 249, 0.1); }
 .curated-kind-tag.kind-plugin      { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
 .curated-kind-tag.kind-skill       { color: #86efac; background: rgba(134, 239, 172, 0.10); }
 .curated-kind-tag.kind-command     { color: #d4a05a; background: rgba(212, 160, 90, 0.14); }
 .curated-kind-tag.kind-agent       { color: #c4b5fd; background: rgba(196, 181, 253, 0.12); }
+.curated-kind-tag.kind-mcpServer   { color: #5eead4; background: rgba(94, 234, 212, 0.12); }
+
+/* Transport chip rendered next to mcpServer kind tag in search results. */
+.curated-transport-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.615rem;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+/* Bundle badge — shown on cards whose collections[] includes "bundle". */
+.curated-bundle-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.615rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.14);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
 
 .curated-featured-card.clickable,
 .curated-plugin-row.clickable {

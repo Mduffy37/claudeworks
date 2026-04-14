@@ -209,7 +209,7 @@ export interface CuratedMarketplaceData {
 
 /** A single entry in the curated search index — flat, searchable, generated. */
 export interface CuratedIndexEntry {
-  kind: "marketplace" | "plugin" | "skill" | "command" | "agent";
+  kind: "marketplace" | "plugin" | "skill" | "command" | "agent" | "mcpServer";
   id: string;
   displayName: string;
   description: string;
@@ -222,6 +222,8 @@ export interface CuratedIndexEntry {
   featured?: boolean;
   /** Present on skills — whether the user can explicitly invoke it. */
   userInvocable?: boolean;
+  /** Present on mcpServer — how the server is launched/reached. */
+  transport?: "stdio" | "http" | "sse";
 }
 
 /** Pre-built search index fetched from the curator repo. Generated snapshot — not hand-edited. */

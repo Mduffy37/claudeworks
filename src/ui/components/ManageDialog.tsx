@@ -62,27 +62,133 @@ function CollectionIcon({ name, size = 12 }: { name: string; size?: number }) {
           <circle cx="11" cy="7" r=".7" fill="currentColor" />
         </svg>
       );
-    case "brush":
-      return (
-        <svg {...common}>
-          <path d="M12 2l2 2-7 7-2.5.5.5-2.5 7-7z" />
-          <path d="M3 13c1 0 2 1 2 2 0-1-1-2-2-2z" />
-        </svg>
-      );
-    case "git":
-      return (
-        <svg {...common}>
-          <circle cx="4" cy="4" r="1.5" />
-          <circle cx="4" cy="12" r="1.5" />
-          <circle cx="12" cy="8" r="1.5" />
-          <path d="M4 5.5v5M5.5 11.5c4 0 5-2 5-3.5" />
-        </svg>
-      );
     case "layers":
       return (
         <svg {...common}>
           <path d="M8 2L2 5l6 3 6-3-6-3z" />
           <path d="M2 8l6 3 6-3M2 11l6 3 6-3" />
+        </svg>
+      );
+    case "database":
+      return (
+        <svg {...common}>
+          <ellipse cx="8" cy="3.5" rx="5" ry="1.5" />
+          <path d="M3 3.5v9c0 .83 2.24 1.5 5 1.5s5-.67 5-1.5v-9" />
+          <path d="M3 8c0 .83 2.24 1.5 5 1.5s5-.67 5-1.5" />
+        </svg>
+      );
+    case "cloud":
+      return (
+        <svg {...common}>
+          <path d="M4.5 12a3 3 0 01.5-5.95A3.5 3.5 0 0111.5 6a3 3 0 01.5 6H4.5z" />
+        </svg>
+      );
+    case "smartphone":
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="2" width="7" height="12" rx="1" />
+          <path d="M7 12h2" />
+        </svg>
+      );
+    case "sparkles":
+      return (
+        <svg {...common}>
+          <path d="M5 1.5v3M3.5 3h3" />
+          <path d="M11 7.5v4M9 9.5h4" />
+          <path d="M11 2v1.5M10.25 2.75h1.5" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M8 1.5l5 1.5v5c0 3-2.2 5.5-5 6-2.8-.5-5-3-5-6v-5l5-1.5z" />
+        </svg>
+      );
+    case "bar-chart":
+      return (
+        <svg {...common}>
+          <path d="M2 14h12" />
+          <path d="M4 14V9M8 14V5M12 14V7" />
+        </svg>
+      );
+    case "credit-card":
+      return (
+        <svg {...common}>
+          <rect x="2" y="4" width="12" height="8" rx="1" />
+          <path d="M2 7h12M4.5 10h2" />
+        </svg>
+      );
+    case "target":
+      return (
+        <svg {...common}>
+          <circle cx="8" cy="8" r="6" />
+          <circle cx="8" cy="8" r="3.5" />
+          <circle cx="8" cy="8" r="1" fill="currentColor" />
+        </svg>
+      );
+    case "trending-up":
+      return (
+        <svg {...common}>
+          <path d="M2 12l4-4 3 3 5-5" />
+          <path d="M10 6h4v4" />
+        </svg>
+      );
+    case "edit":
+      return (
+        <svg {...common}>
+          <path d="M11 2l3 3-8 8H3v-3l8-8z" />
+          <path d="M10 3l3 3" />
+        </svg>
+      );
+    case "activity":
+      return (
+        <svg {...common}>
+          <path d="M2 8h3l2-5 3 10 2-5h2" />
+        </svg>
+      );
+    case "check-circle":
+      return (
+        <svg {...common}>
+          <circle cx="8" cy="8" r="6" />
+          <path d="M5.5 8l2 2 3.5-3.5" />
+        </svg>
+      );
+    case "scale":
+      return (
+        <svg {...common}>
+          <path d="M8 3v11M4 14h8M8 3h-2M8 3h2" />
+          <path d="M3 6l-1 4h2zM13 6l-1 4h2z" />
+          <path d="M3 6h10" />
+        </svg>
+      );
+    case "box":
+      return (
+        <svg {...common}>
+          <path d="M2 5l6-3 6 3v6l-6 3-6-3V5z" />
+          <path d="M2 5l6 3 6-3M8 8v6" />
+        </svg>
+      );
+    case "cpu":
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="8" height="8" rx="0.5" />
+          <rect x="6" y="6" width="4" height="4" />
+          <path d="M6 4V2M10 4V2M6 14v-2M10 14v-2M4 6H2M4 10H2M12 6h2M12 10h2" />
+        </svg>
+      );
+    case "wrench":
+      return (
+        <svg {...common}>
+          <path d="M10 3a3 3 0 013 3 3 3 0 01-.5 1.7l2.5 2.5-1.8 1.8-2.5-2.5A3 3 0 017 6a3 3 0 013-3z" />
+          <path d="M7 9l-5 5" />
+        </svg>
+      );
+    case "archive":
+      return (
+        <svg {...common}>
+          <rect x="2" y="3" width="12" height="3" rx="0.5" />
+          <path d="M3 6v8h10V6" />
+          <path d="M6 9h4" />
         </svg>
       );
     default:
@@ -1704,7 +1810,7 @@ export function ManageDialog({
       if (allTokensMatch) matches.push(e);
     }
 
-    const order: CuratedIndexEntry["kind"][] = ["marketplace", "plugin", "skill", "command", "agent"];
+    const order: CuratedIndexEntry["kind"][] = ["marketplace", "plugin", "skill", "command", "agent", "mcpServer"];
     const grouped: Array<{ kind: CuratedIndexEntry["kind"]; entries: CuratedIndexEntry[] }> = [];
     for (const k of order) {
       const entries = matches.filter((e) => e.kind === k);
@@ -1968,6 +2074,9 @@ export function ManageDialog({
                                         ? `marketplace · ${t.entry.pluginCount} plugins`
                                         : "plugin"}
                                     </span>
+                                    {t.entry.collections.includes("bundle") && (
+                                      <span className="curated-bundle-badge">Bundle</span>
+                                    )}
                                   </div>
                                   <div className="curated-featured-desc">{t.entry.description}</div>
                                   <div className="curated-featured-footer">
@@ -2099,8 +2208,8 @@ export function ManageDialog({
                                     const isInstalling = curatedInstalling === installKey;
                                     const isPluginInstalled = target.pluginId ? installedPluginIds.has(target.pluginId) : false;
                                     const isMarketplaceAdded = e.kind === "marketplace" && registeredMarketplaceNames.has(e.id);
-                                    // For skill/command/agent entries, "installed" means their parent plugin is installed.
-                                    const isParentInstalled = (e.kind === "skill" || e.kind === "command" || e.kind === "agent")
+                                    // For skill/command/agent/mcpServer entries, "installed" means their parent plugin is installed.
+                                    const isParentInstalled = (e.kind === "skill" || e.kind === "command" || e.kind === "agent" || e.kind === "mcpServer")
                                       ? isPluginInstalled
                                       : false;
 
@@ -2161,6 +2270,9 @@ export function ManageDialog({
                                         <div className="curated-search-result-content">
                                           <div className="curated-search-result-header">
                                             <span className={`curated-kind-tag kind-${e.kind}`}>{e.kind}</span>
+                                            {e.kind === "mcpServer" && e.transport && (
+                                              <span className="curated-transport-chip">{e.transport}</span>
+                                            )}
                                             <span className="curated-search-result-name">{e.displayName}</span>
                                           </div>
                                           {e.description && (
@@ -2212,6 +2324,9 @@ export function ManageDialog({
                                     <span className="curated-kind-tag">
                                       {t.kind === "marketplace" ? "marketplace" : "plugin"}
                                     </span>
+                                    {t.entry.collections.includes("bundle") && (
+                                      <span className="curated-bundle-badge">Bundle</span>
+                                    )}
                                   </div>
                                   <div className="curated-plugin-desc">{t.entry.description}</div>
                                   <div className="curated-plugin-meta">
