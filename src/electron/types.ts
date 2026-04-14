@@ -107,6 +107,7 @@ export interface Profile {
   disabledHooks?: Record<string, number[]>; // event name -> indices of hooks to skip from global
   lastLaunched?: number; // timestamp of last launch
   favourite?: boolean;
+  projects?: string[]; // imported project directory paths this profile is associated with (categorization, not launch targets)
   /**
    * Optional per-profile status line config. When present, overrides the
    * global `~/.claude/statusline-config.json` for sessions launched via
@@ -139,6 +140,7 @@ export interface Team {
   customFlags?: string;
   tags?: string[];
   favourite?: boolean;
+  projects?: string[]; // imported project directory paths this team is associated with
 }
 
 /** Merge preview for a team. */

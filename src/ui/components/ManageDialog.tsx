@@ -207,6 +207,7 @@ interface Props {
   profiles: Profile[];
   availableUpdates: Record<string, string>;
   hasDefaultProfile: boolean;
+  initialTab?: ManageTab;
   onUpdate: (name: string) => Promise<void>;
   onUninstall: (name: string) => Promise<void>;
   onNavigateToProfile: (profileName: string) => void;
@@ -1401,6 +1402,7 @@ export function ManageDialog({
   profiles,
   availableUpdates,
   hasDefaultProfile,
+  initialTab,
   onUpdate,
   onUninstall,
   onNavigateToProfile,
@@ -1409,7 +1411,7 @@ export function ManageDialog({
   onPluginsChanged,
   curatedRefreshKey,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<ManageTab>("plugins");
+  const [activeTab, setActiveTab] = useState<ManageTab>(initialTab ?? "plugins");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 

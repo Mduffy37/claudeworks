@@ -12,6 +12,9 @@ interface Props {
   onSave?: () => Promise<void> | void;
   dirty?: boolean;
   onToggleFavourite?: (name: string) => void;
+  onOpenProjectsConfig?: () => void;
+  onRequestFocusTagsOnSelected?: () => void;
+  onRequestFocusProjectsOnSelected?: () => void;
 }
 
 // Deterministic single-letter avatar from profile name
@@ -36,12 +39,13 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, importedProjects = [] }: {
+function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, importedProjects = [], onOpenProjectsConfig }: {
   profile: Profile;
   onLaunch: (name: string, directory?: string) => void;
   onSave?: () => Promise<void> | void;
   isSelectedAndDirty?: boolean;
   importedProjects?: string[];
+  onOpenProjectsConfig?: () => void;
 }) {
   const profileDirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const dirs = [...new Set([...importedProjects, ...profileDirs])];
@@ -90,6 +94,12 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
         className="sidebar-launch-select"
         value={selectedDir}
         onChange={(e) => updateSelectedDir(e.target.value)}
+        onMouseDown={(e) => {
+          if (importedProjects.length === 0) {
+            e.preventDefault();
+            onOpenProjectsConfig?.();
+          }
+        }}
       >
         <option value="">None</option>
         {dirs.map((dir) => (
@@ -112,10 +122,11 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
 
 type SidebarSort = "name" | "plugins" | "recent" | "favourites";
 
-export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty, onToggleFavourite }: Props) {
+export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty, onToggleFavourite, onOpenProjectsConfig, onRequestFocusTagsOnSelected, onRequestFocusProjectsOnSelected }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -125,11 +136,20 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
     return Array.from(tags).sort();
   }, [profiles]);
 
+  const allProjects = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of profiles) {
+      for (const dir of p.projects ?? []) set.add(dir);
+    }
+    return Array.from(set).sort();
+  }, [profiles]);
+
   const filtered = useMemo(() => {
     let result = profiles;
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((p) => p.name.toLowerCase().includes(q));
     if (tagFilter) result = result.filter((p) => (p.tags ?? []).includes(tagFilter));
+    if (projectFilter) result = result.filter((p) => (p.projects ?? []).includes(projectFilter));
     if (sortBy === "favourites") {
       result = result.filter((p) => p.favourite);
     }
@@ -141,7 +161,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
       result = [...result].sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
     }
     return result;
-  }, [profiles, search, sortBy, tagFilter]);
+  }, [profiles, search, sortBy, tagFilter, projectFilter]);
 
   return (
     <div className="profile-list">
@@ -166,7 +186,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
             />
           </div>
           <div className="pl-filters">
-            {allTags.length > 0 && (
+            {allTags.length > 0 ? (
               <select
                 className="pl-sort-select"
                 value={tagFilter}
@@ -178,6 +198,37 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
+            ) : (
+              <button
+                type="button"
+                className="sidebar-filter-empty"
+                onClick={() => onRequestFocusTagsOnSelected?.()}
+                title={selectedName ? "Add a tag to the selected profile" : "Select a profile first, then click to add a tag"}
+              >
+                + Tag
+              </button>
+            )}
+            {allProjects.length > 0 ? (
+              <select
+                className="pl-sort-select"
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                title="Filter by project"
+              >
+                <option value="">All projects</option>
+                {allProjects.map((p) => (
+                  <option key={p} value={p}>{shortPath(p)}</option>
+                ))}
+              </select>
+            ) : (
+              <button
+                type="button"
+                className="sidebar-filter-empty"
+                onClick={() => onRequestFocusProjectsOnSelected?.()}
+                title={selectedName ? "Add a project to the selected profile" : "Select a profile first, then click to add a project"}
+              >
+                + Project
+              </button>
             )}
             <select
               className="pl-sort-select"
@@ -259,7 +310,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                   {p.favourite ? "\u2605" : "\u2606"}
                 </button>
               )}
-              <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} />
+              <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />
             </div>
           ))
         )}

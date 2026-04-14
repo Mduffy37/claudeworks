@@ -20,6 +20,7 @@ import type { Team, TeamMember, Profile, MergePreview as MergePreviewType, Launc
 import { MergePreview } from "./MergePreview";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 import { InfoCard } from "./profile/InfoCard";
+import { TagsProjectsEditor } from "./shared/TagsProjectsEditor";
 import { DraggableProfile } from "./team/DraggableProfile";
 import { SortableMember } from "./team/SortableMember";
 import { LaunchOptionsPopover } from "./shared/LaunchOptionsPopover";
@@ -30,15 +31,19 @@ interface Props {
   isNew: boolean;
   brokenMembers: string[];
   importedProjects?: string[];
+  tagSuggestions?: string[];
   onSave: (team: Team) => void | Promise<void>;
   onDelete: (name: string) => void;
   onLaunch: (name: string, directory?: string) => void;
+  onOpenProjectsConfig?: () => void;
+  focusTagsSignal?: number;
+  focusProjectsSignal?: number;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
   onNavigateToProfile?: (name: string) => void;
 }
 
-export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], onSave, onDelete, onLaunch, dirty, onDirtyChange, onNavigateToProfile }: Props) {
+export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], tagSuggestions = [], onSave, onDelete, onLaunch, onOpenProjectsConfig, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onNavigateToProfile }: Props) {
   const [draft, setDraft] = useState<Team>({
     name: "",
     description: "",
@@ -295,7 +300,17 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           {/* Row 1: dir select + Launch */}
           {!isNew && (
             <div className="pe-topbar-controls-row">
-              <select className="pe-launch-dir-select" value={launchDir} onChange={(e) => updateLaunchDir(e.target.value)}>
+              <select
+                className="pe-launch-dir-select"
+                value={launchDir}
+                onChange={(e) => updateLaunchDir(e.target.value)}
+                onMouseDown={(e) => {
+                  if (importedProjects.length === 0) {
+                    e.preventDefault();
+                    onOpenProjectsConfig?.();
+                  }
+                }}
+              >
                 <option value="">None (choose at launch)</option>
                 {importedProjects.map((dir) => (
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
@@ -385,6 +400,18 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         description={draft.description}
         isNew={isNew}
         onChangeDescription={(v) => updateDraft({ description: v })}
+      />
+
+      <TagsProjectsEditor
+        tags={draft.tags ?? []}
+        projects={draft.projects ?? []}
+        tagSuggestions={tagSuggestions}
+        importedProjects={importedProjects}
+        onChangeTags={(v) => updateDraft({ tags: v.length > 0 ? v : undefined })}
+        onChangeProjects={(v) => updateDraft({ projects: v.length > 0 ? v : undefined })}
+        onOpenProjectsConfig={() => onOpenProjectsConfig?.()}
+        focusTagsSignal={focusTagsSignal}
+        focusProjectsSignal={focusProjectsSignal}
       />
 
       {/* Drag-and-drop split view */}

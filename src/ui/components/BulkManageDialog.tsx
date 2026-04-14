@@ -25,12 +25,13 @@ function ItemCheckbox({ checked, onChange, label }: { checked: boolean; onChange
 }
 
 type ManageTab = "profiles" | "teams";
-type BulkAction = "none" | "delete" | "tags" | "model" | "effort" | "plugin" | "auth";
+type BulkAction = "none" | "delete" | "tags" | "projects" | "model" | "effort" | "plugin" | "auth";
 
 interface Props {
   profiles: Profile[];
   teams: Team[];
   plugins: PluginWithItems[];
+  importedProjects: string[];
   defaultTab: ManageTab;
   onUpdateProfile: (profile: Profile) => Promise<void>;
   onDeleteProfile: (name: string) => Promise<void>;
@@ -39,10 +40,16 @@ interface Props {
   onClose: () => void;
 }
 
+function shortPath(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+}
+
 export function BulkManageDialog({
   profiles,
   teams,
   plugins,
+  importedProjects,
   defaultTab,
   onUpdateProfile,
   onDeleteProfile,
@@ -60,6 +67,8 @@ export function BulkManageDialog({
   // Action values
   const [tagInput, setTagInput] = useState("");
   const [tagMode, setTagMode] = useState<"add" | "remove">("add");
+  const [projectValue, setProjectValue] = useState("");
+  const [projectMode, setProjectMode] = useState<"add" | "remove">("add");
   const [modelValue, setModelValue] = useState("");
   const [effortValue, setEffortValue] = useState("");
   const [pluginName, setPluginName] = useState("");
@@ -154,6 +163,16 @@ export function BulkManageDialog({
               updated.tags = currentTags.filter((t) => t !== tagInput.trim());
               if (updated.tags.length === 0) updated.tags = undefined;
             }
+          } else if (action === "projects") {
+            const currentProjects = updated.projects ?? [];
+            if (projectMode === "add" && projectValue) {
+              if (!currentProjects.includes(projectValue)) {
+                updated.projects = [...currentProjects, projectValue];
+              }
+            } else if (projectMode === "remove" && projectValue) {
+              updated.projects = currentProjects.filter((p) => p !== projectValue);
+              if (updated.projects.length === 0) updated.projects = undefined;
+            }
           } else if (action === "model") {
             updated.model = (modelValue || undefined) as Profile["model"];
           } else if (action === "effort") {
@@ -188,14 +207,24 @@ export function BulkManageDialog({
               updated.tags = currentTags.filter((t) => t !== tagInput.trim());
               if (updated.tags.length === 0) updated.tags = undefined;
             }
+          } else if (action === "projects") {
+            const currentProjects = updated.projects ?? [];
+            if (projectMode === "add" && projectValue) {
+              if (!currentProjects.includes(projectValue)) {
+                updated.projects = [...currentProjects, projectValue];
+              }
+            } else if (projectMode === "remove" && projectValue) {
+              updated.projects = currentProjects.filter((p) => p !== projectValue);
+              if (updated.projects.length === 0) updated.projects = undefined;
+            }
           }
-          // Teams only support tags and delete for now
           await onUpdateTeam(updated);
         }
       }
 
       setAction("none");
       setTagInput("");
+      setProjectValue("");
     } finally {
       setApplying(false);
     }
@@ -226,6 +255,7 @@ export function BulkManageDialog({
     { value: "none", label: "Choose action..." },
     { value: "delete", label: "Delete selected" },
     { value: "tags", label: "Manage tags" },
+    { value: "projects", label: "Manage projects" },
     { value: "model", label: "Set model" },
     { value: "effort", label: "Set effort level" },
     { value: "plugin", label: "Toggle plugin" },
@@ -236,6 +266,7 @@ export function BulkManageDialog({
     { value: "none", label: "Choose action..." },
     { value: "delete", label: "Delete selected" },
     { value: "tags", label: "Manage tags" },
+    { value: "projects", label: "Manage projects" },
   ];
 
   const actions = activeTab === "profiles" ? profileActions : teamActions;
@@ -243,6 +274,7 @@ export function BulkManageDialog({
   const canApply = action !== "none" && selected.size > 0 && !applying && (
     action === "delete" ||
     (action === "tags" && tagInput.trim()) ||
+    (action === "projects" && projectValue) ||
     (action === "model") ||
     (action === "effort") ||
     (action === "plugin" && pluginName) ||
@@ -322,6 +354,21 @@ export function BulkManageDialog({
                     ))}
                   </datalist>
                 </div>
+              </div>
+            )}
+
+            {action === "projects" && (
+              <div className="bulk-action-inline">
+                <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as "add" | "remove")}>
+                  <option value="add">Add project</option>
+                  <option value="remove">Remove project</option>
+                </select>
+                <select value={projectValue} onChange={(e) => setProjectValue(e.target.value)}>
+                  <option value="">{importedProjects.length === 0 ? "No imported projects" : "Choose project..."}</option>
+                  {importedProjects.map((p) => (
+                    <option key={p} value={p}>{shortPath(p)}</option>
+                  ))}
+                </select>
               </div>
             )}
 

@@ -27,6 +27,9 @@ export function App() {
   const [activeTab, setActiveTab] = useState<"profiles" | "teams">("profiles");
   const [showHome, setShowHome] = useState(true);
   const [showManageDialog, setShowManageDialog] = useState(false);
+  const [manageDialogInitialTab, setManageDialogInitialTab] = useState<"plugins" | "projects" | "prompts" | "global" | "health" | "statusbar" | undefined>(undefined);
+  const [focusTagsSignal, setFocusTagsSignal] = useState(0);
+  const [focusProjectsSignal, setFocusProjectsSignal] = useState(0);
   const [showBulkManage, setShowBulkManage] = useState(false);
   const [showAppSettings, setShowAppSettings] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -61,8 +64,26 @@ export function App() {
 
   const handleCloseManageDialog = useCallback(() => {
     setShowManageDialog(false);
+    setManageDialogInitialTab(undefined);
     window.api.getImportedProjects().then(setImportedProjects);
   }, []);
+
+  const openProjectsConfig = useCallback(() => {
+    setManageDialogInitialTab("projects");
+    setShowManageDialog(true);
+  }, []);
+
+  const requestFocusTagsOnSelected = useCallback(() => {
+    setFocusTagsSignal((n) => n + 1);
+  }, []);
+
+  const requestFocusProjectsOnSelected = useCallback(() => {
+    if (importedProjects.length === 0) {
+      openProjectsConfig();
+      return;
+    }
+    setFocusProjectsSignal((n) => n + 1);
+  }, [importedProjects.length, openProjectsConfig]);
 
   // Load imported projects
   const refreshImportedProjects = useCallback(() => {
@@ -290,6 +311,13 @@ export function App() {
     [teams, selectedTeamName]
   );
 
+  const tagSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of profiles) for (const t of p.tags ?? []) set.add(t);
+    for (const t of teams) for (const tag of t.tags ?? []) set.add(tag);
+    return Array.from(set).sort();
+  }, [profiles, teams]);
+
   const handleDelete = async (name: string) => {
     try {
       await deleteProfile(name);
@@ -469,6 +497,9 @@ export function App() {
             onSave={() => editorSaveRef.current?.()}
             dirty={dirty}
             onToggleFavourite={handleToggleProfileFavourite}
+            onOpenProjectsConfig={openProjectsConfig}
+            onRequestFocusTagsOnSelected={requestFocusTagsOnSelected}
+            onRequestFocusProjectsOnSelected={requestFocusProjectsOnSelected}
           />
         ) : (
           <TeamList
@@ -479,6 +510,9 @@ export function App() {
             onSelect={handleSelectTeam}
             onNew={handleNewTeam}
             onToggleFavourite={handleToggleTeamFavourite}
+            onOpenProjectsConfig={openProjectsConfig}
+            onRequestFocusTagsOnSelected={requestFocusTagsOnSelected}
+            onRequestFocusProjectsOnSelected={requestFocusProjectsOnSelected}
           />
         )}
         <div className="sidebar-dock">
@@ -524,10 +558,14 @@ export function App() {
             isNew={isCreating}
             brokenPlugins={selectedProfile ? (profileHealth[selectedProfile.name] ?? []) : []}
             importedProjects={importedProjects}
+            tagSuggestions={tagSuggestions}
             onSave={handleSave}
             onLaunch={handleLaunch}
             onDelete={handleDelete}
             onDuplicate={handleDuplicate}
+            onOpenProjectsConfig={openProjectsConfig}
+            focusTagsSignal={focusTagsSignal}
+            focusProjectsSignal={focusProjectsSignal}
             dirty={dirty}
             onDirtyChange={setDirty}
             onRegisterSave={(fn) => { editorSaveRef.current = fn; }}
@@ -539,9 +577,13 @@ export function App() {
             isNew={isCreatingTeam}
             brokenMembers={selectedTeam ? (teamHealth[selectedTeam.name] ?? []) : []}
             importedProjects={importedProjects}
+            tagSuggestions={tagSuggestions}
             onSave={handleSaveTeam}
             onDelete={handleDeleteTeam}
             onLaunch={handleLaunch}
+            onOpenProjectsConfig={openProjectsConfig}
+            focusTagsSignal={focusTagsSignal}
+            focusProjectsSignal={focusProjectsSignal}
             dirty={dirty}
             onDirtyChange={setDirty}
             onNavigateToProfile={handleNavigateToProfile}
@@ -554,6 +596,7 @@ export function App() {
           profiles={profiles}
           availableUpdates={availableUpdates}
           hasDefaultProfile={hasDefaultProfile}
+          initialTab={manageDialogInitialTab}
           onUpdate={handlePluginUpdate}
           onUninstall={handlePluginUninstall}
           onNavigateToProfile={handleNavigateToProfile}
@@ -568,6 +611,7 @@ export function App() {
           profiles={profiles}
           teams={teams}
           plugins={plugins}
+          importedProjects={importedProjects}
           defaultTab={activeTab}
           onUpdateProfile={async (p) => { await updateProfile(p); }}
           onDeleteProfile={async (name) => {

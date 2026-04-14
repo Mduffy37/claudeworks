@@ -9,6 +9,9 @@ interface Props {
   onSelect: (name: string) => void;
   onNew: () => void;
   onToggleFavourite?: (name: string) => void;
+  onOpenProjectsConfig?: () => void;
+  onRequestFocusTagsOnSelected?: () => void;
+  onRequestFocusProjectsOnSelected?: () => void;
 }
 
 function shortPath(dir: string): string {
@@ -16,7 +19,7 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
-function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; importedProjects?: string[] }) {
+function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }: { team: Team; importedProjects?: string[]; onOpenProjectsConfig?: () => void }) {
   const storageKey = `teamLaunchDir:${team.name}`;
   const [selectedDir, setSelectedDir] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -65,6 +68,12 @@ function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; import
         className="sidebar-launch-select"
         value={selectedDir}
         onChange={(e) => updateSelectedDir(e.target.value)}
+        onMouseDown={(e) => {
+          if (importedProjects.length === 0) {
+            e.preventDefault();
+            onOpenProjectsConfig?.();
+          }
+        }}
       >
         <option value="">None</option>
         {importedProjects.map((dir) => (
@@ -88,10 +97,11 @@ function TeamSidebarLaunch({ team, importedProjects = [] }: { team: Team; import
 
 type SidebarSort = "name" | "members" | "favourites";
 
-export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onToggleFavourite }: Props) {
+export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onToggleFavourite, onOpenProjectsConfig, onRequestFocusTagsOnSelected, onRequestFocusProjectsOnSelected }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -101,11 +111,20 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
     return Array.from(tags).sort();
   }, [teams]);
 
+  const allProjects = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of teams) {
+      for (const dir of t.projects ?? []) set.add(dir);
+    }
+    return Array.from(set).sort();
+  }, [teams]);
+
   const filtered = useMemo(() => {
     let result = teams;
     const q = search.toLowerCase().trim();
     if (q) result = result.filter((t) => t.name.toLowerCase().includes(q));
     if (tagFilter) result = result.filter((t) => (t.tags ?? []).includes(tagFilter));
+    if (projectFilter) result = result.filter((t) => (t.projects ?? []).includes(projectFilter));
     if (sortBy === "favourites") {
       result = result.filter((t) => t.favourite);
     }
@@ -115,7 +134,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
       result = [...result].sort((a, b) => (b.favourite ? 1 : 0) - (a.favourite ? 1 : 0));
     }
     return result;
-  }, [teams, search, sortBy, tagFilter]);
+  }, [teams, search, sortBy, tagFilter, projectFilter]);
 
   return (
     <div className="team-list">
@@ -140,7 +159,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
             />
           </div>
           <div className="pl-filters">
-            {allTags.length > 0 && (
+            {allTags.length > 0 ? (
               <select
                 className="pl-sort-select"
                 value={tagFilter}
@@ -152,6 +171,37 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
+            ) : (
+              <button
+                type="button"
+                className="sidebar-filter-empty"
+                onClick={() => onRequestFocusTagsOnSelected?.()}
+                title={selectedTeam ? "Add a tag to the selected team" : "Select a team first, then click to add a tag"}
+              >
+                + Tag
+              </button>
+            )}
+            {allProjects.length > 0 ? (
+              <select
+                className="pl-sort-select"
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                title="Filter by project"
+              >
+                <option value="">All projects</option>
+                {allProjects.map((p) => (
+                  <option key={p} value={p}>{shortPath(p)}</option>
+                ))}
+              </select>
+            ) : (
+              <button
+                type="button"
+                className="sidebar-filter-empty"
+                onClick={() => onRequestFocusProjectsOnSelected?.()}
+                title={selectedTeam ? "Add a project to the selected team" : "Select a team first, then click to add a project"}
+              >
+                + Project
+              </button>
             )}
             <select
               className="pl-sort-select"
@@ -232,7 +282,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                     {t.favourite ? "\u2605" : "\u2606"}
                   </button>
                 )}
-                <TeamSidebarLaunch team={t} importedProjects={importedProjects} />
+                <TeamSidebarLaunch team={t} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />
               </div>
             );
           })

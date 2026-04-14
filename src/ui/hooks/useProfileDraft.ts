@@ -53,6 +53,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [disabledHooks, setDisabledHooks] = useState<Record<string, number[]>>({});
   const [statusLineConfig, setStatusLineConfig] = useState<StatusLineConfig | undefined>(undefined);
   const [isDefault, setIsDefault] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [projects, setProjects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
@@ -83,6 +85,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
         env: Object.keys(env).length > 0 ? env : undefined,
         disabledHooks: Object.keys(disabledHooks).length > 0 ? disabledHooks : undefined,
         statusLineConfig,
+        tags: tags.length > 0 ? tags : undefined,
+        projects: projects.length > 0 ? projects : undefined,
       });
       onDirtyChange(false);
       setSaveStatus("saved");
@@ -90,7 +94,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -117,6 +121,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setEnv(profile.env ?? {});
       setDisabledHooks(profile.disabledHooks ?? {});
       setStatusLineConfig(profile.statusLineConfig);
+      setTags(profile.tags ?? []);
+      setProjects(profile.projects ?? []);
       // Restore last-used launch directory for this profile from localStorage.
       // Validate it's still in the current directories list (user may have
       // removed it), and treat "" as the valid "None (choose at launch)" option.
@@ -158,6 +164,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setEnv({});
       setDisabledHooks({});
       setStatusLineConfig(undefined);
+      setTags([]);
+      setProjects([]);
       setLaunchDir("");
       onDirtyChange(false);
       setOverviewOpen(false);
@@ -254,6 +262,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     env, setEnv,
     disabledHooks, setDisabledHooks,
     statusLineConfig, setStatusLineConfig,
+    tags, setTags,
+    projects, setProjects,
     saving,
     saveStatus,
     // Callbacks

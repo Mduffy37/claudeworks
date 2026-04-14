@@ -13,6 +13,7 @@ import { useProfileDraft, type TabId } from "../hooks/useProfileDraft";
 import { usePluginToggles } from "../hooks/usePluginToggles";
 import { ProfileTopBar } from "./profile/ProfileTopBar";
 import { InfoCard } from "./profile/InfoCard";
+import { TagsProjectsEditor } from "./shared/TagsProjectsEditor";
 import { PromptPicker } from "./PromptPicker";
 import { McpTab } from "./profile/McpTab";
 import { SettingsTab } from "./profile/SettingsTab";
@@ -25,10 +26,14 @@ interface Props {
   isNew: boolean;
   brokenPlugins: string[];
   importedProjects?: string[];
+  tagSuggestions?: string[];
   onSave: (profile: Profile) => void;
   onLaunch: (name: string, directory?: string) => void;
   onDelete: (name: string) => void;
   onDuplicate?: (name: string) => void;
+  onOpenProjectsConfig?: () => void;
+  focusTagsSignal?: number;
+  focusProjectsSignal?: number;
   dirty: boolean;
   onDirtyChange: (v: boolean) => void;
   onRegisterSave?: (fn: () => Promise<void> | void) => void;
@@ -258,7 +263,7 @@ function TabBar({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], onSave, onLaunch, onDelete, onDuplicate, dirty, onDirtyChange, onRegisterSave }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], tagSuggestions = [], onSave, onLaunch, onDelete, onDuplicate, onOpenProjectsConfig, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onRegisterSave }: Props) {
   const draft = useProfileDraft({ profile, isNew, importedProjects, onSave, dirty, onDirtyChange });
 
   // Register the editor's save function so the sidebar can trigger it
@@ -302,6 +307,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     env, setEnv,
     disabledHooks, setDisabledHooks,
     statusLineConfig, setStatusLineConfig,
+    tags, setTags,
+    projects, setProjects,
     saving,
     saveStatus,
     handleSave,
@@ -460,6 +467,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         directories={[...new Set([...importedProjects, ...directories])]}
         launchDir={launchDir}
         launching={launching}
+        importedProjectsCount={importedProjects.length}
+        onOpenProjectsConfig={onOpenProjectsConfig}
         onChangeName={setName}
         markDirty={markDirty}
         onSetLaunchDir={setLaunchDir}
@@ -519,6 +528,18 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           description={description}
           isNew={isNew}
           onChangeDescription={(v) => { setDescription(v); markDirty(); }}
+        />
+
+        <TagsProjectsEditor
+          tags={tags}
+          projects={projects}
+          tagSuggestions={tagSuggestions}
+          importedProjects={importedProjects}
+          onChangeTags={(v) => { setTags(v); markDirty(); }}
+          onChangeProjects={(v) => { setProjects(v); markDirty(); }}
+          onOpenProjectsConfig={() => onOpenProjectsConfig?.()}
+          focusTagsSignal={focusTagsSignal}
+          focusProjectsSignal={focusProjectsSignal}
         />
 
         {/* Tab strip */}

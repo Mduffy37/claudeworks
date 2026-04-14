@@ -46,6 +46,8 @@ interface ProfileTopBarProps {
   directories: string[];
   launchDir: string;
   launching: boolean;
+  importedProjectsCount: number;
+  onOpenProjectsConfig?: () => void;
   onChangeName: (v: string) => void;
   markDirty: () => void;
   onSetLaunchDir: (dir: string) => void;
@@ -68,6 +70,8 @@ export function ProfileTopBar({
   directories,
   launchDir,
   launching,
+  importedProjectsCount,
+  onOpenProjectsConfig,
   onChangeName,
   markDirty,
   onSetLaunchDir,
@@ -110,6 +114,12 @@ export function ProfileTopBar({
               className="pe-launch-dir-select"
               value={launchDir}
               onChange={(e) => onSetLaunchDir(e.target.value)}
+              onMouseDown={(e) => {
+                if (importedProjectsCount === 0) {
+                  e.preventDefault();
+                  onOpenProjectsConfig?.();
+                }
+              }}
             >
               <option value="">None (choose at launch)</option>
               {directories.map((dir) => (
