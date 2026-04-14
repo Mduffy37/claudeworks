@@ -54,6 +54,18 @@ export function StatusBarTab() {
     setDirty(true);
   }
 
+  function changeOption(sectionId: string, widgetId: string, key: string, value: unknown) {
+    if (!config) return;
+    const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
+    const sec = next.sections.find((s) => s.id === sectionId);
+    if (!sec) return;
+    const w = sec.widgets.find((x) => x.id === widgetId);
+    if (!w) return;
+    w.options = { ...w.options, [key]: value };
+    setConfig(next);
+    setDirty(true);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     if (!config) return;
     const { active, over } = event;
@@ -131,6 +143,7 @@ export function StatusBarTab() {
                       widget={widget}
                       label={WIDGET_LABELS[widget.id] ?? widget.id}
                       onToggle={(enabled) => toggleWidget(section.id, widget.id, enabled)}
+                      onOptionChange={(key, value) => changeOption(section.id, widget.id, key, value)}
                     />
                   ))}
                 </ul>
