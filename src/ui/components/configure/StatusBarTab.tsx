@@ -158,16 +158,6 @@ export function StatusBarTab() {
     return <div className="status-bar-tab loading">Loading status bar config…</div>;
   }
 
-  function toggleWidget(idx: number, enabled: boolean) {
-    if (!config) return;
-    const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
-    const w = next.widgets[idx];
-    if (!w) return;
-    w.enabled = enabled;
-    setConfig(next);
-    setDirty(true);
-  }
-
   function changeOption(idx: number, key: string, value: unknown) {
     if (!config) return;
     const next = JSON.parse(JSON.stringify(config)) as StatusLineConfig;
@@ -356,7 +346,6 @@ export function StatusBarTab() {
                       widget={widget}
                       label={getLabel(widget.id)}
                       selected={selectedIndex === idx}
-                      onToggle={(enabled) => toggleWidget(idx, enabled)}
                       onSelect={() => setSelectedIndex(idx)}
                       onDelete={() => deleteWidget(idx)}
                     />

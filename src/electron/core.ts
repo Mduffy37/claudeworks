@@ -3581,9 +3581,20 @@ export async function getStatusLineConfig(): Promise<StatusLineConfig> {
     const parsed = JSON.parse(raw);
     const migrated = migrateV1StatusLineConfig(parsed);
     if (migrated) {
+      // Old configs may contain widgets with `enabled: false` representing
+      // "in the list but hidden". The UI no longer supports that state —
+      // widgets are either present (shown) or removed. Drop disabled ones
+      // on load so old configs clean up on first open.
+      migrated.widgets = migrated.widgets.filter(
+        (w) => w && (w as { enabled?: boolean }).enabled !== false,
+      );
       return migrated;
     }
     if (parsed && typeof parsed === "object" && Array.isArray(parsed.widgets)) {
+      parsed.widgets = parsed.widgets.filter(
+        (w: { enabled?: boolean } | null | undefined) =>
+          w && w.enabled !== false,
+      );
       return parsed as StatusLineConfig;
     }
   } catch {

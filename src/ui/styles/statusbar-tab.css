@@ -99,6 +99,7 @@
 .status-bar-widget-row {
   display: flex;
   align-items: center;
+  gap: 10px;
   padding: 6px 8px;
   border-radius: 6px;
   transition: background 0.15s;
@@ -118,6 +119,8 @@
   color: var(--accent, #6cabdd);
 }
 
+/* The Global section reuses .status-bar-widget-row for separator inputs
+   inside a <label>, so we still need the label flex layout there. */
 .status-bar-widget-row label {
   display: flex;
   align-items: center;
@@ -127,8 +130,10 @@
 }
 
 .status-bar-widget-name {
+  flex: 1;
   font-size: 14px;
   color: var(--text-primary);
+  user-select: none;
 }
 
 .status-bar-tab-footer {

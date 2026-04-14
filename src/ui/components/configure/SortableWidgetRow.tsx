@@ -11,7 +11,6 @@ interface Props {
   widget: StatusLineWidget;
   label: string;
   selected: boolean;
-  onToggle: (enabled: boolean) => void;
   onSelect: () => void;
   onDelete: () => void;
 }
@@ -21,7 +20,6 @@ export function SortableWidgetRow({
   widget,
   label,
   selected,
-  onToggle,
   onSelect,
   onDelete,
 }: Props) {
@@ -66,11 +64,9 @@ export function SortableWidgetRow({
       style={style}
       className={`status-bar-widget-row${selected ? " selected" : ""}`}
       onClick={(e) => {
-        // Don't select when clicking the drag handle, checkbox, or delete
-        // button — they have their own handlers via stopPropagation below.
         if (
           (e.target as HTMLElement).closest(
-            ".status-bar-drag-handle, .status-bar-row-delete, input",
+            ".status-bar-drag-handle, .status-bar-row-delete",
           )
         ) {
           return;
@@ -87,15 +83,7 @@ export function SortableWidgetRow({
       >
         ⋮⋮
       </span>
-      <label onClick={(e) => e.stopPropagation()}>
-        <input
-          type="checkbox"
-          checked={widget.enabled}
-          onChange={(e) => onToggle(e.target.checked)}
-          onClick={(e) => e.stopPropagation()}
-        />
-        <span className="status-bar-widget-name">{label}</span>
-      </label>
+      <span className="status-bar-widget-name">{label}</span>
       <button
         type="button"
         className="status-bar-row-delete"
