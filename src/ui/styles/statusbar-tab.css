@@ -88,3 +88,24 @@
   padding-top: 12px;
   border-top: 1px solid var(--border);
 }
+
+.status-bar-drag-handle {
+  display: inline-block;
+  padding: 4px 6px;
+  margin-right: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.status-bar-drag-handle:hover,
+.status-bar-widget-row:hover .status-bar-drag-handle {
+  opacity: 1;
+}
+
+.status-bar-drag-handle:active {
+  cursor: grabbing;
+}
