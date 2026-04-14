@@ -39,6 +39,8 @@ import {
   savePrompts,
   checkCredentialStatus,
   runDiagnostics,
+  // NOTE: runProfilesDoctor is imported separately from ./doctor below,
+  // not from ./core — keeps the doctor module's dependency surface small.
   getGlobalEnv,
   saveGlobalEnv,
   getGlobalHooks,
@@ -66,6 +68,7 @@ import {
   resetStatusLineConfig,
   renderStatusLinePreview,
 } from "./core";
+import { runProfilesDoctor } from "./doctor";
 import type { Profile, Team } from "./types";
 
 let mainWindow: BrowserWindow | null = null;
@@ -389,6 +392,7 @@ ipcMain.handle("import-prompt", async () => {
 });
 ipcMain.handle("check-credential-status", () => checkCredentialStatus());
 ipcMain.handle("run-diagnostics", () => runDiagnostics());
+ipcMain.handle("run-profiles-doctor", (_e, mode: "detect" | "repair") => runProfilesDoctor(mode));
 ipcMain.handle("get-app-preferences", () => {
   try {
     const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude-profiles", "global-defaults.json"), "utf-8"));

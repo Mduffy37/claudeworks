@@ -5983,3 +5983,290 @@ body {
   margin-top: 3px;
 }
 
+/* ─── Error panel on the loading page ─────────────────────────────────── */
+
+.app-error-panel {
+  max-width: 560px;
+  margin: 80px auto 0;
+  padding: 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.app-error-icon {
+  color: #f59e0b;
+  margin-bottom: 4px;
+}
+
+.app-error-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-error-subtitle {
+  font-size: 0.923rem;
+  color: var(--text-muted);
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.app-error-sources {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.846rem;
+  color: var(--text-primary);
+  font-family: "SF Mono", "Fira Code", monospace;
+  text-align: left;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.app-error-sources li {
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.app-error-sources strong {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.app-error-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ─── Profiles Doctor modal ───────────────────────────────────────────── */
+
+.doctor-modal {
+  width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.doctor-subtitle {
+  font-size: 0.846rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+  max-width: 460px;
+}
+
+.doctor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.doctor-running {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 0.923rem;
+}
+
+.doctor-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--text-primary);
+  animation: spin 0.9s linear infinite;
+}
+
+.doctor-error {
+  padding: 12px 14px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.923rem;
+  margin-bottom: 12px;
+}
+
+.doctor-summary {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.doctor-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 0.769rem;
+  font-weight: 500;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.doctor-summary-chip .doctor-summary-count {
+  font-weight: 700;
+}
+
+.doctor-summary-chip-healthy {
+  color: #86efac;
+  background: rgba(134, 239, 172, 0.12);
+}
+
+.doctor-summary-chip-fixed {
+  color: #67e8f9;
+  background: rgba(103, 232, 249, 0.12);
+}
+
+.doctor-summary-chip-detected {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.doctor-summary-chip-unfixable {
+  color: #fca5a5;
+  background: rgba(252, 165, 165, 0.14);
+}
+
+.doctor-summary-chip-skipped {
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.doctor-finding-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-finding {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+}
+
+.doctor-finding-healthy {
+  border-color: rgba(134, 239, 172, 0.28);
+}
+
+.doctor-finding-fixed {
+  border-color: rgba(103, 232, 249, 0.35);
+  background: rgba(103, 232, 249, 0.04);
+}
+
+.doctor-finding-detected {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.04);
+}
+
+.doctor-finding-unfixable {
+  border-color: rgba(252, 165, 165, 0.35);
+  background: rgba(252, 165, 165, 0.04);
+}
+
+.doctor-finding-skipped {
+  opacity: 0.7;
+}
+
+.doctor-finding-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doctor-finding-healthy .doctor-finding-icon { color: #86efac; }
+.doctor-finding-fixed .doctor-finding-icon { color: #67e8f9; }
+.doctor-finding-detected .doctor-finding-icon { color: #fbbf24; }
+.doctor-finding-unfixable .doctor-finding-icon { color: #fca5a5; }
+.doctor-finding-skipped .doctor-finding-icon { color: var(--text-muted); }
+
+.doctor-finding-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.doctor-finding-title {
+  font-size: 0.923rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.doctor-finding-detail {
+  font-size: 0.846rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.doctor-finding-items {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.769rem;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.doctor-finding-backup {
+  margin-top: 6px;
+  font-size: 0.769rem;
+  color: var(--text-muted);
+}
+
+.doctor-finding-backup code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.doctor-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.doctor-repaired-label {
+  flex: 1;
+  font-size: 0.846rem;
+  color: #86efac;
+}
+

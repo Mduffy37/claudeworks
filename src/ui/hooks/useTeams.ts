@@ -4,11 +4,20 @@ import type { Team } from "../../electron/types";
 export function useTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Same rationale as useProfiles/usePlugins: without the catch, a rejected
+  // getTeams() promise leaves loading=true forever and freezes the splash.
   const refresh = useCallback(async () => {
-    const data = await window.api.getTeams();
-    setTeams(data);
-    setLoading(false);
+    try {
+      const data = await window.api.getTeams();
+      setTeams(data);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -41,5 +50,5 @@ export function useTeams() {
     [refresh]
   );
 
-  return { teams, loading, refresh, saveTeam, deleteTeam, renameTeam };
+  return { teams, loading, error, refresh, reload: refresh, saveTeam, deleteTeam, renameTeam };
 }

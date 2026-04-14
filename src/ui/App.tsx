@@ -3,6 +3,7 @@ import { ConfirmDialog } from "./components/shared/ConfirmDialog";
 import { ManageDialog } from "./components/ManageDialog";
 import { BulkManageDialog } from "./components/BulkManageDialog";
 import { AppSettingsDialog } from "./components/AppSettingsDialog";
+import { DoctorModal } from "./components/DoctorModal";
 import { useProfiles } from "./hooks/useProfiles";
 import { usePlugins } from "./hooks/usePlugins";
 import { ProfileList } from "./components/ProfileList";
@@ -14,9 +15,9 @@ import { useTeams } from "./hooks/useTeams";
 import type { Profile, Team } from "../electron/types";
 
 export function App() {
-  const { profiles, loading: profilesLoading, createProfile, updateProfile, deleteProfile, refresh } =
+  const { profiles, loading: profilesLoading, error: profilesError, reload: reloadProfiles, createProfile, updateProfile, deleteProfile, refresh } =
     useProfiles();
-  const { plugins, loading: pluginsLoading, refresh: refreshPlugins, availableUpdates, checkForUpdates } =
+  const { plugins, loading: pluginsLoading, error: pluginsError, reload: reloadPlugins, refresh: refreshPlugins, availableUpdates, checkForUpdates } =
     usePlugins();
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -31,8 +32,12 @@ export function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [importedProjects, setImportedProjects] = useState<string[]>([]);
   const editorSaveRef = useRef<(() => Promise<void> | void) | null>(null);
-  const { teams, loading: teamsLoading, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook, renameTeam: renameTeamHook } =
+  const { teams, loading: teamsLoading, error: teamsError, reload: reloadTeams, refresh: refreshTeams, saveTeam: saveTeamHook, deleteTeam: deleteTeamHook, renameTeam: renameTeamHook } =
     useTeams();
+  const [showDoctor, setShowDoctor] = useState(false);
+  // Whether the doctor was opened from the error panel (hung splash) vs
+  // proactively from App Settings. Only affects the modal's header copy.
+  const [doctorFromError, setDoctorFromError] = useState(false);
   const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [teamHealth, setTeamHealth] = useState<Record<string, string[]>>({});
@@ -321,6 +326,72 @@ export function App() {
     await refresh();
   };
 
+  // Reload all three load hooks in parallel. Called after the doctor
+  // finishes a repair so the main UI re-fetches against the healed store.
+  const reloadAllStores = () => {
+    reloadProfiles();
+    reloadPlugins();
+    reloadTeams();
+    setShowDoctor(false);
+    setDoctorFromError(false);
+  };
+
+  // Errors take precedence over loading — if any hook rejected, transition
+  // straight to the error panel instead of leaving the splash up. Without
+  // this branch the user has no way to recover from a bad profiles.json.
+  const loadErrors = [
+    profilesError && { source: "profiles.json", message: profilesError },
+    pluginsError && { source: "plugins", message: pluginsError },
+    teamsError && { source: "teams.json", message: teamsError },
+  ].filter(Boolean) as Array<{ source: string; message: string }>;
+
+  if (loadErrors.length > 0) {
+    return (
+      <div className="app loading">
+        <div className="app-error-panel">
+          <div className="app-error-icon" aria-hidden>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M16 4l14 24H2L16 4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M16 13v7M16 23v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="app-error-title">Claude Profiles couldn't load</div>
+          <div className="app-error-subtitle">
+            One or more config files failed to read. Run the Profiles Doctor to find and repair known issues.
+          </div>
+          <ul className="app-error-sources">
+            {loadErrors.map((e, i) => (
+              <li key={i}>
+                <strong>{e.source}</strong>: {e.message}
+              </li>
+            ))}
+          </ul>
+          <div className="app-error-actions">
+            <button
+              className="btn-primary"
+              onClick={() => {
+                setDoctorFromError(true);
+                setShowDoctor(true);
+              }}
+            >
+              Run Profiles Doctor
+            </button>
+            <button className="btn-secondary" onClick={reloadAllStores}>
+              Retry
+            </button>
+          </div>
+        </div>
+        {showDoctor && (
+          <DoctorModal
+            fromErrorState={doctorFromError}
+            onReload={reloadAllStores}
+            onClose={() => setShowDoctor(false)}
+          />
+        )}
+      </div>
+    );
+  }
+
   if (profilesLoading || pluginsLoading || teamsLoading) {
     return (
       <div className="app loading">
@@ -512,7 +583,21 @@ export function App() {
         />
       )}
       {showAppSettings && (
-        <AppSettingsDialog onClose={() => setShowAppSettings(false)} />
+        <AppSettingsDialog
+          onClose={() => setShowAppSettings(false)}
+          onOpenDoctor={() => {
+            setShowAppSettings(false);
+            setDoctorFromError(false);
+            setShowDoctor(true);
+          }}
+        />
+      )}
+      {showDoctor && (
+        <DoctorModal
+          fromErrorState={doctorFromError}
+          onReload={reloadAllStores}
+          onClose={() => setShowDoctor(false)}
+        />
       )}
       {pendingNav && (
         <ConfirmDialog

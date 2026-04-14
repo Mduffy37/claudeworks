@@ -317,6 +317,45 @@ export interface StatusLineConfig {
   widgets: StatusLineWidget[];
 }
 
+/** Severity level for a doctor finding — drives icon + colour in the UI. */
+export type DoctorSeverity = "info" | "warn" | "error";
+
+/** Status of a doctor finding after a check runs. */
+export type DoctorStatus = "healthy" | "detected" | "fixed" | "unfixable" | "skipped";
+
+/** A single check result produced by the profiles doctor. */
+export interface DoctorFinding {
+  /** Stable identifier for the check — used as a React key. */
+  check: string;
+  /** Human-readable one-line title. */
+  title: string;
+  severity: DoctorSeverity;
+  status: DoctorStatus;
+  /** Detailed explanation for the user. */
+  detail: string;
+  /** Specific items (profile names, alias names, dir names) the finding applies to. */
+  itemsAffected?: string[];
+  /** If the check took a backup before fixing, the path to that backup. */
+  backupPath?: string;
+}
+
+/** Full report returned by runProfilesDoctor. */
+export interface DoctorReport {
+  /** ISO timestamp the report was generated. */
+  ranAt: string;
+  /** Whether this was a read-only detect run or a write-capable repair run. */
+  mode: "detect" | "repair";
+  findings: DoctorFinding[];
+  summary: {
+    total: number;
+    healthy: number;
+    detected: number;
+    fixed: number;
+    unfixable: number;
+    skipped: number;
+  };
+}
+
 /** IPC API exposed to the renderer via contextBridge. */
 export interface ElectronAPI {
   getPlugins: () => Promise<PluginWithItems[]>;
@@ -358,6 +397,7 @@ export interface ElectronAPI {
   importPrompt: () => Promise<Prompt | null>;
   checkCredentialStatus: () => Promise<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> }>;
   runDiagnostics: () => Promise<{ version: string; configDir: string; claudeHome: string; profileCount: number; teamCount: number; issues: string[] }>;
+  runProfilesDoctor: (mode: "detect" | "repair") => Promise<DoctorReport>;
   getAppPreferences: () => Promise<{ fontSize: number; theme?: string }>;
   saveAppPreferences: (prefs: { fontSize: number; theme?: string }) => Promise<void>;
   getGlobalEnv: () => Promise<Record<string, string>>;

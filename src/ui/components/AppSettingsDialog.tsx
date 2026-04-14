@@ -26,9 +26,11 @@ function applyTheme(mode: ThemeMode) {
 
 interface Props {
   onClose: () => void;
+  /** Open the Profiles Doctor (lifted to App so the modal can overlay everything). */
+  onOpenDoctor: () => void;
 }
 
-export function AppSettingsDialog({ onClose }: Props) {
+export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [diag, setDiag] = useState<DiagResult | null>(null);
@@ -144,9 +146,14 @@ export function AppSettingsDialog({ onClose }: Props) {
           <div className="manage-section">
             <div className="manage-section-header">
               <span className="manage-section-label">Diagnostics</span>
-              <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleRunDiagnostics} disabled={diagLoading}>
-                {diagLoading ? "Running..." : "Run Check"}
-              </button>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onOpenDoctor} title="Open Profiles Doctor — detailed checks with repair actions">
+                  Run Repair
+                </button>
+                <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleRunDiagnostics} disabled={diagLoading}>
+                  {diagLoading ? "Running..." : "Run Check"}
+                </button>
+              </div>
             </div>
             {diag ? (
               <div className="modal-fields" style={{ marginTop: "8px" }}>

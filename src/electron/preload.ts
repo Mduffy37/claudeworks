@@ -48,6 +48,7 @@ const api: ElectronAPI = {
   importPrompt: () => ipcRenderer.invoke("import-prompt"),
   checkCredentialStatus: () => ipcRenderer.invoke("check-credential-status"),
   runDiagnostics: () => ipcRenderer.invoke("run-diagnostics"),
+  runProfilesDoctor: (mode) => ipcRenderer.invoke("run-profiles-doctor", mode),
   getAppPreferences: () => ipcRenderer.invoke("get-app-preferences"),
   saveAppPreferences: (prefs) => ipcRenderer.invoke("save-app-preferences", prefs),
   getGlobalEnv: () => ipcRenderer.invoke("get-global-env"),
