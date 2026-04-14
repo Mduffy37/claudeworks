@@ -1300,6 +1300,29 @@ export async function deleteProfileByName(name: string): Promise<void> {
 // Profile assembly
 // ---------------------------------------------------------------------------
 
+// Resolve a model shorthand + context preference into an explicit Claude Code
+// model ID. Writing explicit IDs (rather than the "opus"/"sonnet" shorthand)
+// avoids Claude Code silently resolving the shorthand differently across
+// sessions — which is what caused Opus to sometimes land in 1M context and
+// sometimes not.
+function resolveModelId(
+  model: string,
+  opusContext: "200k" | "1m" | undefined,
+  sonnetContext: "200k" | "1m" | undefined,
+): string {
+  if (model === "opus") {
+    return opusContext === "200k" ? "claude-opus-4-6" : "claude-opus-4-6[1m]";
+  }
+  if (model === "sonnet") {
+    return sonnetContext === "1m" ? "claude-sonnet-4-6[1m]" : "claude-sonnet-4-6";
+  }
+  if (model === "haiku") {
+    return "claude-haiku-4-5-20251001";
+  }
+  // Unknown / already-explicit model ID — pass through unchanged.
+  return model;
+}
+
 export function assembleProfile(profile: Profile): string {
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
 
@@ -1419,9 +1442,9 @@ export function assembleProfile(profile: Profile): string {
   // Apply profile-specific overrides, falling back to global defaults
   const globalDefaults = getGlobalDefaults();
   if (profile.model) {
-    settings.model = profile.model;
+    settings.model = resolveModelId(profile.model, profile.opusContext, profile.sonnetContext);
   } else if (globalDefaults.model) {
-    settings.model = globalDefaults.model;
+    settings.model = resolveModelId(globalDefaults.model, globalDefaults.opusContext, globalDefaults.sonnetContext);
   }
   if (profile.effortLevel) {
     settings.effortLevel = profile.effortLevel;
@@ -2628,14 +2651,14 @@ export function assembleTeamProfile(team: Team): string {
   }
 
   // Apply lead profile overrides
-  if (leadProfile.model) teamSettings.model = leadProfile.model;
+  if (leadProfile.model) teamSettings.model = resolveModelId(leadProfile.model, leadProfile.opusContext, leadProfile.sonnetContext);
   if (leadProfile.effortLevel) teamSettings.effortLevel = leadProfile.effortLevel;
   if (leadProfile.env) {
     teamSettings.env = { ...(teamSettings.env ?? {}), ...leadProfile.env };
   }
 
   // Apply team-level overrides (these win over lead profile)
-  if (team.model) teamSettings.model = team.model;
+  if (team.model) teamSettings.model = resolveModelId(team.model, team.opusContext, team.sonnetContext);
   if (team.effortLevel) teamSettings.effortLevel = team.effortLevel;
 
   // Copy permissions from global settings
@@ -2986,16 +3009,16 @@ export function saveGlobalClaudeMd(content: string): void {
   fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
 }
 
-export function getGlobalDefaults(): { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string } {
+export function getGlobalDefaults(): { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string } {
   try {
     const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
-    return { model: data.model ?? "", effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags, terminalApp: data.terminalApp, tmuxMode: data.tmuxMode };
+    return { model: data.model ?? "", opusContext: data.opusContext, sonnetContext: data.sonnetContext, effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags, terminalApp: data.terminalApp, tmuxMode: data.tmuxMode };
   } catch {
     return { model: "", effortLevel: "" };
   }
 }
 
-export function saveGlobalDefaults(defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }): void {
+export function saveGlobalDefaults(defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }): void {
   fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(defaults, null, 2));
 }
 

@@ -412,7 +412,7 @@ ipcMain.handle("save-global-env", (_event, env: Record<string, string>) => saveG
 ipcMain.handle("get-global-hooks", () => getGlobalHooks());
 ipcMain.handle("save-global-hooks", (_event, hooks: Record<string, any>) => saveGlobalHooks(hooks));
 ipcMain.handle("get-global-defaults", () => getGlobalDefaults());
-ipcMain.handle("save-global-defaults", (_event, defaults: { model: string; effortLevel: string }) => saveGlobalDefaults(defaults));
+ipcMain.handle("save-global-defaults", (_event, defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string }) => saveGlobalDefaults(defaults));
 
 // Projects
 ipcMain.handle("get-imported-projects", () => getImportedProjects());

@@ -32,6 +32,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [localItems, setLocalItems] = useState<LocalItem[]>([]);
   const [mcpServers, setMcpServers] = useState<StandaloneMcp[]>([]);
   const [model, setModel] = useState<string>("");
+  const [opusContext, setOpusContext] = useState<"200k" | "1m" | undefined>(undefined);
+  const [sonnetContext, setSonnetContext] = useState<"200k" | "1m" | undefined>(undefined);
   const [effortLevel, setEffortLevel] = useState<string>("");
   const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
   const [customClaudeMd, setCustomClaudeMd] = useState("");
@@ -68,6 +70,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
         plugins: selectedPlugins,
         excludedItems,
         model: (model || undefined) as Profile["model"],
+        opusContext,
+        sonnetContext,
         effortLevel: (effortLevel || undefined) as Profile["effortLevel"],
         voiceEnabled,
         customClaudeMd: customClaudeMd || undefined,
@@ -86,7 +90,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -100,6 +104,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
       setModel(profile.model ?? "");
+      setOpusContext(profile.opusContext);
+      setSonnetContext(profile.sonnetContext);
       setEffortLevel(profile.effortLevel ?? "");
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
@@ -139,6 +145,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setExcludedItems({});
       setLocalItems([]);
       setModel("");
+      setOpusContext(undefined);
+      setSonnetContext(undefined);
       setEffortLevel("");
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
@@ -226,6 +234,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     localItems, setLocalItems,
     mcpServers, setMcpServers,
     model, setModel,
+    opusContext, setOpusContext,
+    sonnetContext, setSonnetContext,
     effortLevel, setEffortLevel,
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,

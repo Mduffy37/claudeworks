@@ -282,6 +282,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     localItems,
     mcpServers,
     model, setModel,
+    opusContext, setOpusContext,
+    sonnetContext, setSonnetContext,
     effortLevel, setEffortLevel,
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
@@ -780,6 +782,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           {activeTab === "settings" && (
             <SettingsTab
               model={model}
+              opusContext={opusContext}
+              sonnetContext={sonnetContext}
               effortLevel={effortLevel}
               voiceEnabled={voiceEnabled}
               alias={alias}
@@ -794,6 +798,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 markDirty();
               }}
               onChangeModel={(v) => { setModel(v); markDirty(); }}
+              onChangeOpusContext={(v) => { setOpusContext(v); markDirty(); }}
+              onChangeSonnetContext={(v) => { setSonnetContext(v); markDirty(); }}
               onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
               onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
               onChangeAlias={(v) => { setAlias(v); markDirty(); }}

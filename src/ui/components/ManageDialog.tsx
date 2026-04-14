@@ -639,6 +639,8 @@ function GlobalSettingsTab() {
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [model, setModel] = useState("");
+  const [opusContext, setOpusContext] = useState<"200k" | "1m" | undefined>(undefined);
+  const [sonnetContext, setSonnetContext] = useState<"200k" | "1m" | undefined>(undefined);
   const [effort, setEffort] = useState("");
   const [env, setEnv] = useState<Record<string, string>>({});
   const [envDirty, setEnvDirty] = useState(false);
@@ -674,6 +676,8 @@ function GlobalSettingsTab() {
     ]).then(([d, hasTmux]) => {
       setTmuxInstalled(hasTmux);
       setModel(d.model);
+      setOpusContext(d.opusContext);
+      setSonnetContext(d.sonnetContext);
       setEffort(d.effortLevel);
       setCustomFlags(d.customFlags ?? "");
       setTerminalApp(d.terminalApp ?? "iterm2");
@@ -701,6 +705,8 @@ function GlobalSettingsTab() {
   const handleSaveDefaults = async () => {
     await window.api.saveGlobalDefaults({
       model,
+      opusContext,
+      sonnetContext,
       effortLevel: effort,
       customFlags: customFlags.trim() || undefined,
       terminalApp: terminalApp || undefined,
@@ -797,6 +803,24 @@ function GlobalSettingsTab() {
               <option value="haiku">Haiku</option>
             </select>
           </div>
+          {model === "opus" && (
+            <div className="field">
+              <label>Opus Context</label>
+              <select value={opusContext ?? "1m"} onChange={(e) => { setOpusContext(e.target.value as "200k" | "1m"); setDefaultsDirty(true); }}>
+                <option value="1m">1M (default)</option>
+                <option value="200k">200k</option>
+              </select>
+            </div>
+          )}
+          {model === "sonnet" && (
+            <div className="field">
+              <label>Sonnet Context</label>
+              <select value={sonnetContext ?? "200k"} onChange={(e) => { setSonnetContext(e.target.value as "200k" | "1m"); setDefaultsDirty(true); }}>
+                <option value="200k">200k (default)</option>
+                <option value="1m">1M — billed as extra</option>
+              </select>
+            </div>
+          )}
           <div className="field">
             <label>Effort Level</label>
             <select value={effort} onChange={(e) => { setEffort(e.target.value); setDefaultsDirty(true); }}>

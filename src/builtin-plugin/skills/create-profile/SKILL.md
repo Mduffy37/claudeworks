@@ -360,21 +360,33 @@ Build a draft plugin shell with:
 
 ### Computing `excludedItems` for mega-bundle plugins
 
-When you apply the mega-bundle rule from Step 6a — "include a plugin with `counts > 15` but keep only the 1–3 items that matched retrieval" — you need to build the `excludedItems[<plugin-id>]` array with every item name EXCEPT the ones you're keeping. Here is the exact procedure:
+When you apply the mega-bundle rule from Step 6a — "include a plugin with `counts > 15` but keep only the 1–3 items that matched retrieval" — you need to build the `excludedItems[<plugin-id>]` array with every item name EXCEPT the ones you're keeping.
 
-1. **Enumerate all items in the plugin** by running a targeted grep against `items.ndjson` (or `local-items.ndjson` for local plugins). The `plugin` field in each NDJSON line is exactly the plugin ID you put in `plugins[]`:
+**Critical: enumerate from the installed plugin's actual on-disk directory, NOT from `items.ndjson`.** This is a subtle but load-bearing distinction. `items.ndjson` is built from the curated marketplace repo via `gh api` directory listings, and the GitHub Contents API silently caps directory reads at 1000 entries per folder. For mega-bundle plugins with more items than that, `items.ndjson` is truncated and missing hundreds of real items — you'll build a correct-looking exclude list that omits the invisible ones, and when `applyExclusions` runs at profile assembly, it'll prune the items you listed and leave the hundreds it never saw. The real antigravity-awesome-skills plugin has 1368 items installed but `items.ndjson` only has 999 for it — an exclude list built from `items.ndjson` would miss 369 of them and silently leave the profile bloated.
+
+The correct source of truth is the same source `applyExclusions` uses at prune time: the plugin's own `installPath` directory, walked with `scanPluginItems`-equivalent logic. A helper script at `scripts/list-plugin-items.js` does this — it reads `installed_plugins.json` to find the plugin's install path, walks `installPath/{skills,agents,commands}`, uses frontmatter `name:` with directory-basename fallback (exactly matching `core.ts:buildItem`), and returns the complete real item list.
+
+Here is the exact procedure:
+
+1. **Enumerate all items in the plugin** by running the helper script:
 
    ```
-   grep -hE '"plugin":"<plugin-id>"' ~/.claude-profiles/marketplace-cache/items.ndjson
+   node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-plugin-items.js" '<plugin-id>'
    ```
 
-   Replace `<plugin-id>` with the literal plugin ID, e.g. `antigravity-awesome-skills@antigravity-awesome-skills`.
+   Concrete example for antigravity:
 
-2. **Extract the bare item name** from each returned line. The item name is the last `/`-separated segment of the `id` field. For example, if the line's `id` is `"antigravity-awesome-skills/antigravity-awesome-skills/pubmed"`, the bare item name is `pubmed`. This matches the convention `scanPluginItems()` in `core.ts` uses when building its `item.name` field, which is what `applyExclusions` compares against via `excludedNames.includes(item.name)`.
+   !`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-plugin-items.js" 'antigravity-awesome-skills@antigravity-awesome-skills'`
 
-3. **Compute the exclude list** as (all bare item names from the grep) minus (the bare item names of items you're keeping from Step 6a's ranking).
+   The output is `{"ok": true, "pluginId": "...", "installPath": "...", "count": <N>, "items": [<sorted array>]}`. The `items` array is the full, real, on-disk item list — every name is guaranteed to match what `applyExclusions` will see at prune time, because this script uses the same frontmatter-name-with-dirname-fallback convention as `core.ts:buildItem`.
 
-4. **Set** `excludedItems["<plugin-id>"] = [<sorted array of names to exclude>]`. Use the same plugin ID as the key — format matters, `core.ts:1594` does a strict string match via `plugins.find((p) => p.name === pluginName)` and a wrong key silently no-ops.
+   If the script returns `{"ok": false, "error": ...}`, the plugin isn't installed yet (the user probably needs to run Step 7.5 first) or its install path is broken. Surface the error to the user and either rerun after install or skip the exclusion for that plugin (include it without exclusions, accept the cognitive load, note the tradeoff).
+
+2. **Compute the exclude list** as (every item name from the script output) minus (the bare item names of items you're keeping from Step 6a's ranking).
+
+3. **Set** `excludedItems["<plugin-id>"] = [<sorted array of names to exclude>]`. Use the same plugin ID as the key — format matters, `core.ts:1594` does a strict string match via `plugins.find((p) => p.name === pluginName)` and a wrong key silently no-ops.
+
+**Do NOT use a grep against `items.ndjson` for this step.** You can still grep `items.ndjson` in Step 4 for *retrieval* (it's the right source for broad keyword search across the whole marketplace, even if it's occasionally truncated for mega-plugins), but for exclude-list generation you must use `list-plugin-items.js` because the exclude list's correctness depends on byte-exact name matching against what `applyExclusions` sees, and `items.ndjson`'s pagination cap breaks that invariant for mega-bundles.
 
 **Schema reminder (CRITICAL):** `excludedItems[pluginId]` is a **flat array of item-name strings**. It is NOT the nested `{skills:[], agents:[], commands:[]}` form — that format does not exist and the write script rejects it. `applyExclusions` applies the same flat array uniformly to skills, agents, and commands.
 

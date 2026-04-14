@@ -5,6 +5,8 @@ interface HookEntry { event: string; index: number; command: string }
 
 interface Props {
   model: string;
+  opusContext: "200k" | "1m" | undefined;
+  sonnetContext: "200k" | "1m" | undefined;
   effortLevel: string;
   voiceEnabled: boolean | undefined;
   alias: string;
@@ -19,6 +21,8 @@ interface Props {
   isDefault?: boolean;
   onSetAsDefault?: () => void;
   onChangeModel: (v: string) => void;
+  onChangeOpusContext: (v: "200k" | "1m" | undefined) => void;
+  onChangeSonnetContext: (v: "200k" | "1m" | undefined) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
   onChangeAlias: (v: string) => void;
@@ -33,11 +37,11 @@ interface Props {
 
 export function SettingsTab(props: Props) {
   const {
-    model, effortLevel, voiceEnabled, alias, isInPath,
+    model, opusContext, sonnetContext, effortLevel, voiceEnabled, alias, isInPath,
     launchFlags, customFlags, useDefaultAuth, env, profileName, disabledHooks,
     statusLineConfig,
     isDefault, onSetAsDefault,
-    onChangeModel, onChangeEffort, onChangeVoice, onChangeAlias,
+    onChangeModel, onChangeOpusContext, onChangeSonnetContext, onChangeEffort, onChangeVoice, onChangeAlias,
     onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks,
     onChangeStatusLineConfig,
     onAddToPath,
@@ -121,6 +125,38 @@ export function SettingsTab(props: Props) {
               <option value="haiku">Haiku</option>
             </select>
           </div>
+          {model === "opus" && (
+            <>
+              <div className="field-divider" />
+              <div className="field">
+                <label>Context</label>
+                <select
+                  value={opusContext ?? "1m"}
+                  onChange={(e) => onChangeOpusContext(e.target.value as "200k" | "1m")}
+                >
+                  <option value="1m">1M (default)</option>
+                  <option value="200k">200k</option>
+                </select>
+                <div className="field-hint">Opus 1M context is included in your plan.</div>
+              </div>
+            </>
+          )}
+          {model === "sonnet" && (
+            <>
+              <div className="field-divider" />
+              <div className="field">
+                <label>Context</label>
+                <select
+                  value={sonnetContext ?? "200k"}
+                  onChange={(e) => onChangeSonnetContext(e.target.value as "200k" | "1m")}
+                >
+                  <option value="200k">200k (default)</option>
+                  <option value="1m">1M — billed as extra usage</option>
+                </select>
+                <div className="field-hint">Sonnet 1M context is billed as extra usage outside your plan.</div>
+              </div>
+            </>
+          )}
           <div className="field-divider" />
           <div className="field">
             <label>Effort Level</label>

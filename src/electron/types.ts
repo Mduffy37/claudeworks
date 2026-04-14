@@ -83,6 +83,8 @@ export interface Profile {
   alias?: string; // CLI alias (e.g. "claude-research")
   // Session settings
   model?: "opus" | "sonnet" | "haiku";
+  opusContext?: "200k" | "1m";   // default 1m
+  sonnetContext?: "200k" | "1m"; // default 200k — 1m is billed as extra usage
   effortLevel?: "low" | "medium" | "high" | "max";
   voiceEnabled?: boolean;
   env?: Record<string, string>;
@@ -131,6 +133,8 @@ export interface Team {
   description: string;
   members: TeamMember[];
   model?: "opus" | "sonnet" | "haiku";
+  opusContext?: "200k" | "1m";   // default 1m
+  sonnetContext?: "200k" | "1m"; // default 200k — 1m is billed as extra usage
   effortLevel?: "low" | "medium" | "high" | "max";
   customFlags?: string;
   tags?: string[];
@@ -405,8 +409,8 @@ export interface ElectronAPI {
   saveGlobalEnv: (env: Record<string, string>) => Promise<void>;
   getGlobalHooks: () => Promise<Record<string, any>>;
   saveGlobalHooks: (hooks: Record<string, any>) => Promise<void>;
-  getGlobalDefaults: () => Promise<{ model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }>;
-  saveGlobalDefaults: (defaults: { model: string; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }) => Promise<void>;
+  getGlobalDefaults: () => Promise<{ model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }>;
+  saveGlobalDefaults: (defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }) => Promise<void>;
   checkTmuxInstalled: () => Promise<boolean>;
   launchProfileWithOptions: (name: string, directory?: string, options?: LaunchOptions) => Promise<void>;
   launchTeamWithOptions: (team: Team, directory?: string, options?: LaunchOptions) => Promise<void>;
