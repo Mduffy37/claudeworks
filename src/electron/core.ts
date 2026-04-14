@@ -3171,23 +3171,30 @@ function ghBinary(): string {
   return process.env.GH_PATH ?? "/opt/homebrew/bin/gh";
 }
 
+// Uses the `application/vnd.github.raw` media type instead of the default JSON
+// contents representation. Two reasons: (1) the JSON contents endpoint has a
+// hard 1 MB limit — larger files return `content: ""` silently, which broke
+// index.json fetching once the search index grew past 1.7 MB; (2) raw bytes
+// skip the base64 round-trip. Explicit maxBuffer overrides Node's 1 MB
+// child-process default, which would otherwise re-introduce a silent truncate
+// at the same threshold. 50 MB ceiling gives plenty of headroom for index growth.
 async function fetchGitHubFileContent(repoPath: string): Promise<string> {
   const { stdout } = await execFileAsync(ghBinary(), [
     "api",
     `repos/Mduffy37/claude-profiles-marketplace/contents/${repoPath}`,
-    "--jq", ".content",
-  ], { timeout: 15000 });
-  return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+    "-H", "Accept: application/vnd.github.raw",
+  ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
+  return stdout;
 }
 
-/** Fetch a file's content (decoded) from any public GitHub repo via `gh api`. */
+/** Fetch a file's content from any public GitHub repo via `gh api`. See fetchGitHubFileContent for the media-type and maxBuffer rationale. */
 async function fetchAnyRepoFile(source: string, filePath: string): Promise<string> {
   const { stdout } = await execFileAsync(ghBinary(), [
     "api",
     `repos/${source}/contents/${filePath}`,
-    "--jq", ".content",
-  ], { timeout: 15000 });
-  return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+    "-H", "Accept: application/vnd.github.raw",
+  ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
+  return stdout;
 }
 
 /** List a directory's contents in any public GitHub repo. Returns entries with name/type/path. */

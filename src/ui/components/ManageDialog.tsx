@@ -106,6 +106,8 @@ interface Props {
   onCreateDefault: () => void;
   onClose: () => void;
   onPluginsChanged?: () => void;
+  /** Bumps each time the top-level hard refresh runs — triggers a re-read of curated caches. */
+  curatedRefreshKey?: number;
 }
 
 // ─── Projects tab ───────────────────────────────────────────────────────────
@@ -1274,6 +1276,7 @@ export function ManageDialog({
   onCreateDefault,
   onClose,
   onPluginsChanged,
+  curatedRefreshKey,
 }: Props) {
   const [activeTab, setActiveTab] = useState<ManageTab>("plugins");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
@@ -1353,6 +1356,19 @@ export function ManageDialog({
       // Silently swallow — search will just fall back to the top-level list.
     }
   };
+
+  // When the top-level hard refresh runs, App.tsx has already invalidated the
+  // main-process curated caches. Re-read them here so the local component
+  // state picks up the fresh data without waiting for the user to close and
+  // reopen the dialog. Only fires when curatedRefreshKey actually changes —
+  // the initial 0 value on first mount is a no-op because curatedData /
+  // curatedIndex are still null at that point.
+  useEffect(() => {
+    if (curatedRefreshKey === undefined || curatedRefreshKey === 0) return;
+    if (curatedData) loadCurated();
+    if (curatedIndex) loadCuratedIndex();
+    loadMarketplaces();
+  }, [curatedRefreshKey]);
 
   // Extract `owner/repo` from a GitHub URL (HTTPS or SSH). Used as a fallback
   // when a curated plugin entry has no matching marketplace in marketplaces[].
@@ -1600,7 +1616,7 @@ export function ManageDialog({
   // Groups results by kind in a stable order for the UI.
   const indexSearchResults = useMemo(() => {
     const raw = curatedSearch;
-    if (!raw.trim() || !curatedIndex) return null;
+    if (!raw.trim()) return null;
 
     const hasTrailingSpace = /\s$/.test(raw);
     const parts = raw.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -1618,8 +1634,64 @@ export function ManageDialog({
       };
     });
 
+    // Build the searchable haystack as a combination of:
+    //   1. The pre-built curated index (all kinds: marketplace/plugin/skill/command/agent)
+    //   2. The live curated marketplace.json data (top-level marketplaces + plugins only)
+    //
+    // (2) is important because marketplace.json is fresh on every load, whereas
+    // index.json is only regenerated when the curator runs build-index.js. Any
+    // marketplaces or plugins added to marketplace.json since the last index
+    // rebuild would otherwise be invisible to search. Dedupe by "kind:id" so
+    // entries present in both sources only appear once.
+    const combined: CuratedIndexEntry[] = [];
+    const seen = new Set<string>();
+
+    if (curatedIndex) {
+      for (const e of curatedIndex.entries) {
+        const key = `${e.kind}:${e.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        combined.push(e);
+      }
+    }
+
+    if (curatedData) {
+      for (const m of curatedData.marketplaces) {
+        const key = `marketplace:${m.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        combined.push({
+          kind: "marketplace",
+          id: m.id,
+          displayName: m.displayName,
+          description: m.description,
+          sourceUrl: m.sourceUrl,
+          path: [],
+          collections: m.collections,
+          featured: m.featured,
+        });
+      }
+      for (const p of curatedData.plugins) {
+        const key = `plugin:${p.pluginId}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        combined.push({
+          kind: "plugin",
+          id: p.pluginId,
+          displayName: p.displayName,
+          description: p.description,
+          sourceUrl: p.sourceUrl,
+          path: p.marketplace ? [p.marketplace] : [],
+          collections: p.collections,
+          featured: p.featured,
+        });
+      }
+    }
+
+    if (combined.length === 0) return null;
+
     const matches: CuratedIndexEntry[] = [];
-    for (const e of curatedIndex.entries) {
+    for (const e of combined) {
       const haystack =
         (
           e.displayName + " " + e.description + " " + e.id + " " + e.path.join(" ")
@@ -1638,7 +1710,7 @@ export function ManageDialog({
       if (entries.length > 0) grouped.push({ kind: k, entries });
     }
     return { grouped, total: matches.length };
-  }, [curatedSearch, curatedIndex]);
+  }, [curatedSearch, curatedIndex, curatedData]);
   const [marketplaceInput, setMarketplaceInput] = useState("");
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);

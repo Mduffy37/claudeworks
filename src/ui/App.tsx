@@ -64,6 +64,12 @@ export function App() {
     window.api.getImportedProjects().then(setImportedProjects);
   }, []);
 
+  // Bumped on every hard refresh so nested dialogs (like ManageDialog) know
+  // the main-process curated caches have been invalidated and they should
+  // re-read. Without this, ManageDialog's local `curatedIndex` state stays
+  // stale even after core.ts has a fresh cache.
+  const [curatedRefreshKey, setCuratedRefreshKey] = useState(0);
+
   const handleHardRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -76,7 +82,9 @@ export function App() {
         Promise.resolve(refreshTeamHealth()),
         Promise.resolve(refreshImportedProjects()),
         window.api.refreshCuratedMarketplace().catch(() => undefined),
+        window.api.refreshCuratedIndex().catch(() => undefined),
       ]);
+      setCuratedRefreshKey((k) => k + 1);
     } finally {
       setIsRefreshing(false);
     }
@@ -481,6 +489,7 @@ export function App() {
           onCreateDefault={handleCreateDefault}
           onClose={handleCloseManageDialog}
           onPluginsChanged={refreshPlugins}
+          curatedRefreshKey={curatedRefreshKey}
         />
       )}
       {showBulkManage && (
