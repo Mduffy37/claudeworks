@@ -1539,6 +1539,28 @@ export function ManageDialog({
   };
 
   /**
+   * Install a plugin whose parent marketplace is already registered. Unlike
+   * handleCuratedInstall this skips the curatedData.plugins lookup and the
+   * marketplace-source-resolution dance — it accepts any compound
+   * `name@marketplace` pluginId and shells straight out to the CLI. Used by
+   * the peer-plugin list inside CuratedDetailModal for plugins shipped by an
+   * already-added marketplace that aren't in the curated featured set.
+   */
+  const handlePeerInstall = async (pluginId: string) => {
+    setCuratedInstalling(pluginId);
+    clearCuratedError(pluginId);
+    try {
+      await window.api.installPlugin(pluginId);
+      onPluginsChanged?.();
+    } catch (err: any) {
+      const message = err?.message ?? String(err);
+      setCuratedErrors((prev) => ({ ...prev, [pluginId]: message }));
+    } finally {
+      setCuratedInstalling(null);
+    }
+  };
+
+  /**
    * Resolve an index entry into the concrete install target:
    *   - marketplaceId = the marketplace to register (claude plugin marketplace add)
    *   - pluginId = the plugin to install (claude plugin install <name>@<marketplace>)
@@ -2165,7 +2187,7 @@ export function ManageDialog({
                         <input
                           type="text"
                           className="curated-search"
-                          placeholder="Search curated plugins..."
+                          placeholder="Search"
                           value={curatedSearch}
                           onChange={(e) => setCuratedSearch(e.target.value)}
                         />
@@ -2583,6 +2605,8 @@ export function ManageDialog({
         onClose={() => setCuratedDetail(null)}
         onInstallPlugin={(pid) => handleCuratedInstall(pid)}
         onAddMarketplace={(mid) => handleCuratedMarketplaceAdd(mid)}
+        onInstallPeerPlugin={(pid) => handlePeerInstall(pid)}
+        onUninstallPlugin={(pid, name) => requestUninstallPlugin(pid, name)}
         curatedInstalling={curatedInstalling}
         curatedErrors={curatedErrors}
       />

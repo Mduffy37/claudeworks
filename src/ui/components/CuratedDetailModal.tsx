@@ -15,6 +15,15 @@ interface Props {
   onClose: () => void;
   onInstallPlugin: (pluginId: string) => Promise<void>;
   onAddMarketplace?: (marketplaceId: string) => Promise<void>;
+  /**
+   * Install a peer plugin from the currently open marketplace. Differs from
+   * onInstallPlugin in that it bypasses the curatedData.plugins lookup —
+   * peer plugins are sourced from the upstream marketplace manifest and are
+   * not necessarily in the curated featured list.
+   */
+  onInstallPeerPlugin: (pluginId: string) => Promise<void>;
+  /** Uninstall a plugin by its compound id. Opens the shared confirm dialog. */
+  onUninstallPlugin: (pluginId: string, displayName?: string) => void;
   curatedInstalling: string | null;
   curatedErrors: Record<string, string>;
 }
@@ -40,6 +49,8 @@ export function CuratedDetailModal({
   onClose,
   onInstallPlugin,
   onAddMarketplace,
+  onInstallPeerPlugin,
+  onUninstallPlugin,
   curatedInstalling,
   curatedErrors,
 }: Props) {
@@ -284,14 +295,61 @@ export function CuratedDetailModal({
                 {peerError && <div className="curated-detail-message">{peerError}</div>}
                 {!peerLoading && !peerError && peerPlugins.length > 0 && (
                   <ul className="curated-detail-peer-list">
-                    {peerPlugins.map((p) => (
-                      <li key={p.name} className="curated-detail-peer">
-                        <div className="curated-detail-peer-name">{p.name}</div>
-                        {p.description && (
-                          <div className="curated-detail-peer-desc">{p.description}</div>
-                        )}
-                      </li>
-                    ))}
+                    {peerPlugins.map((p) => {
+                      // Action buttons only render when the marketplace is
+                      // already registered with Claude. Before that, peer
+                      // plugins are view-only — the user's next step should
+                      // be the primary "Add marketplace" button above.
+                      const canAct =
+                        target.kind === "marketplace" && isAlreadyAdded;
+                      const peerPluginId =
+                        target.kind === "marketplace"
+                          ? `${p.name}@${target.entry.id}`
+                          : null;
+                      const isPeerInstalled =
+                        !!peerPluginId && installedPluginIds.has(peerPluginId);
+                      const isPeerBusy =
+                        !!peerPluginId && curatedInstalling === peerPluginId;
+                      const peerError = peerPluginId
+                        ? curatedErrors[peerPluginId]
+                        : undefined;
+
+                      return (
+                        <li key={p.name} className="curated-detail-peer">
+                          <div className="curated-detail-peer-info">
+                            <div className="curated-detail-peer-name">{p.name}</div>
+                            {p.description && (
+                              <div className="curated-detail-peer-desc">{p.description}</div>
+                            )}
+                            {peerError && (
+                              <div className="curated-install-error">{peerError}</div>
+                            )}
+                          </div>
+                          {canAct && peerPluginId && (
+                            <div className="curated-detail-peer-action">
+                              {isPeerInstalled ? (
+                                <button
+                                  className="btn-danger-small"
+                                  onClick={() => onUninstallPlugin(peerPluginId, p.name)}
+                                  title={`Uninstall ${p.name}`}
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <button
+                                  className="btn-primary curated-install-btn"
+                                  onClick={() => onInstallPeerPlugin(peerPluginId)}
+                                  disabled={isPeerBusy}
+                                  title={`Install ${p.name}`}
+                                >
+                                  {isPeerBusy ? "..." : "Install"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

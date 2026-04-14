@@ -5203,6 +5203,20 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.curated-detail-peer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.curated-detail-peer-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .curated-detail-peer-name {
