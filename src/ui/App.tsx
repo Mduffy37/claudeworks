@@ -45,6 +45,40 @@ export function App() {
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [teamHealth, setTeamHealth] = useState<Record<string, string[]>>({});
 
+  const SIDEBAR_MIN = 240;
+  const SIDEBAR_MAX = 480;
+  const SIDEBAR_STORAGE_KEY = "claude-profiles:sidebarWidth";
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(SIDEBAR_STORAGE_KEY) : null;
+    const parsed = raw ? parseInt(raw, 10) : NaN;
+    if (Number.isFinite(parsed)) return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, parsed));
+    return SIDEBAR_MIN;
+  });
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const sidebarDensity = sidebarWidth >= 360 ? "wide" : sidebarWidth >= 280 ? "comfortable" : "compact";
+
+  useEffect(() => {
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarWidth));
+  }, [sidebarWidth]);
+
+  const handleSidebarResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+    setIsResizingSidebar(true);
+    const onMove = (ev: PointerEvent) => {
+      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + (ev.clientX - startX)));
+      setSidebarWidth(next);
+    };
+    const onUp = () => {
+      setIsResizingSidebar(false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }, [sidebarWidth]);
+
   const refreshHealth = useCallback(() => {
     window.api.checkProfileHealth().then(setProfileHealth);
   }, []);
@@ -459,7 +493,17 @@ export function App() {
           </svg>
         </button>
       </div>
-      <div className="sidebar">
+      <div
+        className={`sidebar${isResizingSidebar ? " resizing" : ""}`}
+        style={{ width: sidebarWidth }}
+        data-density={sidebarDensity}
+      >
+        <div
+          className={`sidebar-resizer${isResizingSidebar ? " dragging" : ""}`}
+          onPointerDown={handleSidebarResizeStart}
+          title="Drag to resize sidebar"
+          aria-hidden="true"
+        />
         {/* Tab switcher */}
         <div className="sidebar-tabs">
           <button

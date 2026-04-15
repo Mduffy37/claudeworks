@@ -295,13 +295,47 @@ body {
 /* ─── Sidebar ─────────────────────────────────────────────────────────────── */
 
 .sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: var(--sidebar-width, 240px);
+  flex-shrink: 0;
+  position: relative;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding-top: 38px;
+}
+
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 5;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+.sidebar-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+.sidebar-resizer:hover::after,
+.sidebar-resizer.dragging::after {
+  background: var(--accent);
+}
+
+.sidebar.resizing,
+.sidebar.resizing * {
+  user-select: none !important;
 }
 
 /* ─── Drag bar brand lockup ───────────────────────────────────────────────── */
