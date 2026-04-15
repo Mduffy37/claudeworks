@@ -20,6 +20,18 @@ type CuratedDetailTarget =
  * Unknown names fall back to a generic dot so collections with a new icon
  * still render something rather than literal text.
  */
+/** Map a curated collection to a kind-class used by .curated-tag styling.
+ *  Matches by id or name so the earth-spectrum tints land on the four
+ *  primary kinds even though collection ids are free-form strings. */
+function collectionKindClass(col: { id: string; name: string; icon?: string }): string | null {
+  const key = `${col.id} ${col.name} ${col.icon ?? ""}`.toLowerCase();
+  if (/\bskills?\b|\bskill-/.test(key)) return "kind-skill";
+  if (/\bagents?\b|\bsubagents?\b|\bagent-/.test(key)) return "kind-agent";
+  if (/\bcommands?\b|\bcommand-|\bslash/.test(key)) return "kind-command";
+  if (/\bmcp\b|\bserver\b/.test(key)) return "kind-mcpServer";
+  return null;
+}
+
 function CollectionIcon({ name, size = 12 }: { name: string; size?: number }) {
   const common = {
     width: size,
@@ -2223,12 +2235,14 @@ export function ManageDialog({
                                     <div className="curated-collection-tags">
                                       {t.entry.collections.slice(0, 2).map((c) => {
                                         const col = curatedData.collections.find((x) => x.id === c);
-                                        return col ? (
-                                          <span key={c} className="curated-tag">
+                                        if (!col) return null;
+                                        const kindClass = collectionKindClass(col);
+                                        return (
+                                          <span key={c} className={`curated-tag${kindClass ? ` ${kindClass}` : ""}`}>
                                             <CollectionIcon name={col.icon} />
                                             <span>{col.name}</span>
                                           </span>
-                                        ) : null;
+                                        );
                                       })}
                                     </div>
                                     {t.kind === "marketplace" ? (
@@ -2299,17 +2313,20 @@ export function ManageDialog({
                               >
                                 All
                               </button>
-                              {primary.map((c) => (
+                              {primary.map((c) => {
+                                const kindClass = collectionKindClass(c);
+                                return (
                                 <button
                                   key={c.id}
-                                  className={`curated-collection-chip${curatedCollection === c.id ? " active" : ""}`}
+                                  className={`curated-collection-chip${kindClass ? ` ${kindClass}` : ""}${curatedCollection === c.id ? " active" : ""}`}
                                   onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
                                   title={c.description}
                                 >
                                   <CollectionIcon name={c.icon} />
                                   <span>{c.name}</span>
                                 </button>
-                              ))}
+                                );
+                              })}
                               {overflow > 0 && (
                                 <button
                                   type="button"
@@ -2486,10 +2503,12 @@ export function ManageDialog({
                                     <span className="curated-plugin-source">{sourceLabel}</span>
                                     {t.entry.collections.map((c) => {
                                       const col = curatedData.collections.find((x) => x.id === c);
-                                      return col ? (
+                                      if (!col) return null;
+                                      const kindClass = collectionKindClass(col);
+                                      return (
                                         <span
                                           key={c}
-                                          className={`curated-tag clickable${curatedCollection === c ? " active" : ""}`}
+                                          className={`curated-tag clickable${kindClass ? ` ${kindClass}` : ""}${curatedCollection === c ? " active" : ""}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setCuratedCollection(curatedCollection === c ? null : c);
@@ -2498,7 +2517,7 @@ export function ManageDialog({
                                           <CollectionIcon name={col.icon} />
                                           <span>{col.name}</span>
                                         </span>
-                                      ) : null;
+                                      );
                                     })}
                                   </div>
                                 </div>

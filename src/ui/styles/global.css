@@ -5780,6 +5780,33 @@ body {
   box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
+/* Earth-spectrum kind tints for the top-level collection filter chips */
+.curated-collection-chip.kind-skill     { color: var(--sage); }
+.curated-collection-chip.kind-agent     { color: var(--walnut); }
+.curated-collection-chip.kind-command   { color: var(--brass); }
+.curated-collection-chip.kind-mcpServer { color: var(--plum); }
+
+.curated-collection-chip.kind-skill.active {
+  background: rgba(122, 139, 110, 0.18);
+  border-color: var(--sage);
+  box-shadow: inset 0 0 0 1px var(--sage);
+}
+.curated-collection-chip.kind-agent.active {
+  background: rgba(154, 122, 94, 0.18);
+  border-color: var(--walnut);
+  box-shadow: inset 0 0 0 1px var(--walnut);
+}
+.curated-collection-chip.kind-command.active {
+  background: rgba(176, 138, 58, 0.18);
+  border-color: var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+.curated-collection-chip.kind-mcpServer.active {
+  background: rgba(152, 117, 133, 0.18);
+  border-color: var(--plum);
+  box-shadow: inset 0 0 0 1px var(--plum);
+}
+
 .curated-collection-chip.curated-collection-more {
   background: transparent;
   border-style: dashed;
@@ -5952,12 +5979,29 @@ body {
   transition: all 0.15s;
 }
 
-.curated-tag.clickable:hover,
-.curated-tag.clickable.active {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  color: var(--accent);
+.curated-tag.clickable:hover {
+  background: var(--bg-elevated);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
 }
+
+.curated-tag.clickable.active {
+  background: var(--bg-elevated);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Earth spectrum tints for known collection kinds — aligned with
+   .curated-kind-tag so the palette stays consistent across the tab. */
+.curated-tag.kind-skill       { color: var(--sage);    border-color: rgba(122, 139, 110, 0.50); }
+.curated-tag.kind-agent       { color: var(--walnut);  border-color: rgba(154, 122, 94, 0.50); }
+.curated-tag.kind-command     { color: var(--brass);   border-color: rgba(176, 138, 58, 0.50); }
+.curated-tag.kind-mcpServer   { color: var(--plum);    border-color: rgba(152, 117, 133, 0.50); }
+.curated-tag.kind-skill.active    { background: rgba(122, 139, 110, 0.16); border-color: var(--sage); }
+.curated-tag.kind-agent.active    { background: rgba(154, 122, 94, 0.16);  border-color: var(--walnut); }
+.curated-tag.kind-command.active  { background: rgba(176, 138, 58, 0.16);  border-color: var(--brass); }
+.curated-tag.kind-mcpServer.active{ background: rgba(152, 117, 133, 0.16); border-color: var(--plum); }
 
 .curated-collection-tags {
   display: flex;
