@@ -719,7 +719,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   onFilterChange={setItemFilter}
                   sort={itemSort}
                   onSortChange={setItemSort}
-                  placeholder={`Search ${activeTab}...`}
+                  placeholder={
+                    activeTab === "skills"
+                      ? "Search skills by name or plugin…"
+                      : activeTab === "agents"
+                        ? "Filter agents by name or plugin…"
+                        : "Search commands by name or plugin…"
+                  }
                 />
                 {items.length === 0 ? (
                   <div className="pe-tab-empty">
