@@ -832,24 +832,25 @@ body {
 }
 
 .manage-dialog-split {
-  display: flex;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
   height: 100%;
 }
 
 .manage-dialog-sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 260px;
+  min-width: 260px;
   border-right: 1px solid var(--border);
   overflow-y: auto;
   padding-bottom: 48px;
 }
 
 .manage-dialog-content {
-  flex: 1;
   overflow-y: auto;
   padding-bottom: 48px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 /* ─── Projects tab ───────────────────────────────────────────────────────── */
