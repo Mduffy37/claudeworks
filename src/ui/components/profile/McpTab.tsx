@@ -54,7 +54,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       {pluginMcps.length > 0 && (
         <div className="pe-mcp-section pe-mcp-section-plugins">
           <div className="pe-mcp-section-head">
-            <span className="pe-mcp-section-label">From Plugins</span>
+            <h3 className="pe-mcp-section-label">From plugins ({pluginMcps.length})</h3>
             <span className="pe-mcp-section-hint">Toggling a row disables the source plugin for this profile.</span>
           </div>
           {pluginMcps.map((mcp) => (
@@ -88,7 +88,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       {userMcps.length > 0 && (
         <div className="pe-mcp-section pe-mcp-section-user">
           <div className="pe-mcp-section-head">
-            <span className="pe-mcp-section-label">User <code>(~/.claude.json)</code></span>
+            <h3 className="pe-mcp-section-label">User ({userMcps.length}) <code>(~/.claude.json)</code></h3>
             <span className="pe-mcp-section-hint">Always on for every session.</span>
           </div>
           {userMcps.map((mcp) => (
@@ -103,7 +103,9 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       {projectMcps.length > 0 && (
         <div className="pe-mcp-section pe-mcp-section-project">
           <div className="pe-mcp-section-head">
-            <span className="pe-mcp-section-label">Project ({launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default"})</span>
+            <h3 className="pe-mcp-section-label">
+              Project {launchDir ? `· ${launchDir.split("/").pop() ?? launchDir}` : ""} ({projectMcps.length})
+            </h3>
             <span className="pe-mcp-section-hint">Toggles persist per directory.</span>
           </div>
           {projectMcps.map((mcp) => {

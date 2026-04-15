@@ -2436,6 +2436,7 @@ body {
 }
 
 .pe-mcp-section-label {
+  margin: 0;
   font-size: 0.846rem;
   font-weight: 600;
   text-transform: uppercase;
