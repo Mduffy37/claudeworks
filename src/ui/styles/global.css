@@ -3298,8 +3298,8 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  background: rgba(245, 244, 237, 0.12);
-  border: 1px solid rgba(245, 244, 237, 0.08);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
 }
@@ -3311,7 +3311,7 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: rgba(245, 244, 237, 0.55);
+  background: var(--text-secondary);
   transition: transform var(--transition), background var(--transition);
   pointer-events: none;
 }
@@ -3538,8 +3538,8 @@ body {
   width: 18px;
   height: 18px;
   border-radius: var(--radius-xs);
-  border: 1.5px solid rgba(245, 244, 237, 0.25);
-  background: transparent;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-surface);
   flex-shrink: 0;
   display: flex;
   align-items: center;
