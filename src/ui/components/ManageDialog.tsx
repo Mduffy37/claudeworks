@@ -905,7 +905,7 @@ function GlobalSettingsTab() {
         </div>
         <textarea
           className="manage-claudemd-editor"
-          style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "0.846rem", minHeight: "140px" }}
+          style={{ minHeight: "140px" }}
           value={hooksJson}
           onChange={(e) => { setHooksJson(e.target.value); setHooksDirty(true); setHooksError(""); }}
           placeholder={'{\n  "PreToolUse": [\n    { "matcher": "*", "hooks": [{ "type": "command", "command": "echo hello" }] }\n  ]\n}'}

@@ -1265,6 +1265,30 @@ body {
   flex: 1;
 }
 
+/* ─── Global tab: unified form + code surfaces ───────────────────────────── */
+/* Every input, select, and textarea in the Global tab shares one surface
+   token, one radius, and one padding step. HealthTab reuses
+   .manage-global-settings but renders no form controls, so these scoped
+   overrides only affect Global. */
+.manage-global-settings .field input,
+.manage-global-settings .field select,
+.manage-global-settings .env-var-row > input,
+.manage-global-settings .manage-claudemd-editor {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 0.923rem;
+}
+
+.manage-global-settings .field select {
+  background-color: var(--bg-surface);
+}
+
+.manage-global-settings .manage-claudemd-editor {
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
 /* ─── Bulk Manage Dialog ─────────────────────────────────────────────────── */
 
 .bulk-manage-dialog {
