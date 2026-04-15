@@ -409,8 +409,9 @@ body {
   letter-spacing: 0.04em;
   padding: 1px 5px;
   border-radius: 3px;
-  background: var(--accent);
-  color: var(--bg-primary);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
   margin-left: 6px;
   vertical-align: middle;
   line-height: 1;
