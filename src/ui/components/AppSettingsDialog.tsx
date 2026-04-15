@@ -129,7 +129,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
               <span className="manage-section-label">Text Size</span>
             </div>
             <div className="text-size-slider">
-              <span className="text-size-label-sm">A</span>
+              <span className="text-size-label-sm" aria-hidden="true">A</span>
               <input
                 type="range"
                 min={0.85}
@@ -137,8 +137,10 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
                 step={0.05}
                 value={scale}
                 onChange={(e) => handleScaleChange(Number(e.target.value))}
+                aria-label="Text size"
+                aria-valuetext={`${Math.round(scale * 100)}%`}
               />
-              <span className="text-size-label-lg">A</span>
+              <span className="text-size-label-lg" aria-hidden="true">A</span>
             </div>
           </div>
 
