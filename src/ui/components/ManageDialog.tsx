@@ -407,6 +407,9 @@ function ProjectsTab() {
           ) : (
             projects.map((dir) => {
               const isSelected = selected === dir;
+              const parts = dir.split("/").filter(Boolean);
+              const base = parts.length > 0 ? parts[parts.length - 1] : dir;
+              const prefix = parts.length > 1 ? "/" + parts.slice(0, -1).join("/") + "/" : "/";
               return (
                 <div
                   key={dir}
@@ -423,7 +426,10 @@ function ProjectsTab() {
                   }}
                 >
                   <div className="manage-project-name">{shortPath(dir)}</div>
-                  <div className="manage-project-path" title={dir}>{dir}</div>
+                  <div className="manage-project-path" title={dir}>
+                    <span className="manage-project-path-prefix">{prefix}</span>
+                    <span className="manage-project-path-base">{base}</span>
+                  </div>
                   <button
                     className="manage-project-remove"
                     onClick={(e) => { e.stopPropagation(); handleRemove(dir); }}
