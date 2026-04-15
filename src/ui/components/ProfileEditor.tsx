@@ -18,6 +18,16 @@ import { PromptPicker } from "./PromptPicker";
 import { McpTab } from "./profile/McpTab";
 import { SettingsTab } from "./profile/SettingsTab";
 
+// Convert kebab-case plugin slugs to Title Case display names.
+// e.g. "accessibility-compliance" → "Accessibility Compliance"
+function formatPluginTitle(slug: string): string {
+  return slug
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -757,7 +767,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                                   <svg className="pe-flat-group-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                                     <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
-                                  <span className="pe-flat-group-name">{item.pluginDisplayName}</span>
+                                  <span className="pe-flat-group-name" title={item.pluginDisplayName}>{formatPluginTitle(item.pluginDisplayName)}</span>
                                   <span className="pe-flat-group-count">{g.enabled}/{g.total}</span>
                                 </button>
                                 <button
@@ -807,7 +817,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                             <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
                               {type === "command" ? `/${item.name}` : item.name}
                             </span>
-                            {!groupCounts && <span className="pe-flat-item-source">{item.pluginDisplayName}</span>}
+                            {!groupCounts && <span className="pe-flat-item-source" title={item.pluginDisplayName}>{formatPluginTitle(item.pluginDisplayName)}</span>}
                             {!item.userInvocable && <span className="skill-badge internal">internal</span>}
                           </div>
                           )}
