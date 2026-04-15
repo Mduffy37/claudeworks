@@ -54,7 +54,10 @@ export function InfoCard({
         </span>
         <span className="pe-info-card-toggle-label" aria-hidden="true">Description</span>
         {!open && description && (
-          <span className="pe-info-card-toggle-preview" aria-hidden="true">{description}</span>
+          <>
+            <span className="pe-info-card-toggle-preview" aria-hidden="true">{description}</span>
+            <span className="pe-info-card-toggle-more" aria-hidden="true">Show more</span>
+          </>
         )}
       </button>
 

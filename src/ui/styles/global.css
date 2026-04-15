@@ -2051,12 +2051,27 @@ body {
 
 .pe-info-card-toggle-preview {
   flex: 1;
+  min-width: 0;
   font-size: 0.846rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-style: italic;
+}
+
+.pe-info-card-toggle-more {
+  flex-shrink: 0;
+  font-size: 0.769rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-left: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.pe-info-card-toggle:hover .pe-info-card-toggle-more {
+  text-decoration: underline;
 }
 
 .pe-info-card-toggle-chevron {
