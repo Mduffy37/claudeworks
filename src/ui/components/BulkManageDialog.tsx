@@ -392,7 +392,16 @@ export function BulkManageDialog({
         <div className="bulk-action-bar bulk-action-footer">
           <div className="bulk-select-all" onClick={toggleAll}>
             <ItemCheckbox checked={allSelected} onChange={toggleAll} label="Select all" />
-            <span>{selected.size > 0 ? `${selected.size} selected` : "Select all"}</span>
+            <span className="bulk-select-label">
+              {selected.size > 0 ? (
+                <>
+                  <strong className="bulk-select-count">{selected.size}</strong>
+                  {` ${activeTab === "profiles" ? "profile" : "team"}${selected.size === 1 ? "" : "s"} selected`}
+                </>
+              ) : (
+                "Select all"
+              )}
+            </span>
           </div>
 
           <div className="bulk-action-controls">
