@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import type { LaunchOptions } from "../../../electron/types";
 
 interface Props {
@@ -8,6 +8,8 @@ interface Props {
   onClose: () => void;
 }
 
+const POPOVER_MARGIN = 12;
+
 export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaunch, onClose }: Props) {
   const [terminalApp, setTerminalApp] = useState("iterm2");
   const [tmuxMode, setTmuxMode] = useState<"cc" | "plain" | "none">("cc");
@@ -15,6 +17,38 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
   const [dangerous, setDangerous] = useState(defaultDangerous ?? false);
   const [tmuxInstalled, setTmuxInstalled] = useState(true);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; arrowLeft: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const updatePos = () => {
+      const el = popoverRef.current;
+      if (!el) return;
+      const anchor = el.parentElement?.querySelector<HTMLElement>(".btn-launch-settings");
+      if (!anchor) return;
+      const anchorRect = anchor.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const popRect = el.getBoundingClientRect();
+      const popW = popRect.width || el.offsetWidth || 300;
+      const popH = popRect.height || el.offsetHeight || 300;
+      const idealLeft = anchorRect.right - popW;
+      const left = Math.min(Math.max(POPOVER_MARGIN, idealLeft), vw - popW - POPOVER_MARGIN);
+      let top = anchorRect.bottom + 10;
+      if (top + popH > vh - POPOVER_MARGIN) {
+        top = Math.max(POPOVER_MARGIN, anchorRect.top - popH - 10);
+      }
+      const anchorCenter = anchorRect.left + anchorRect.width / 2;
+      const arrowLeft = Math.min(Math.max(12, anchorCenter - left), popW - 12);
+      setPos({ top, left, arrowLeft });
+    };
+    updatePos();
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -43,7 +77,11 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
   return (
     <>
       <div className="launch-popover-backdrop" onClick={onClose} />
-      <div className="launch-popover" ref={popoverRef}>
+      <div
+        className="launch-popover"
+        ref={popoverRef}
+        style={pos ? { top: pos.top, left: pos.left, right: "auto", visibility: "visible", ["--popover-arrow-left" as any]: `${pos.arrowLeft}px` } : { visibility: "hidden" }}
+      >
         <div className="launch-popover-title">Launch Settings</div>
 
         <div className="launch-popover-field">
