@@ -47,13 +47,14 @@ export function InfoCard({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="profile-info-body"
+        aria-label="Description"
       >
-        <span className="pe-info-card-toggle-chevron">
+        <span className="pe-info-card-toggle-chevron" aria-hidden="true">
           <ChevronIcon open={open} />
         </span>
-        <span className="pe-info-card-toggle-label">Description</span>
+        <span className="pe-info-card-toggle-label" aria-hidden="true">Description</span>
         {!open && description && (
-          <span className="pe-info-card-toggle-preview">{description}</span>
+          <span className="pe-info-card-toggle-preview" aria-hidden="true">{description}</span>
         )}
       </button>
 
