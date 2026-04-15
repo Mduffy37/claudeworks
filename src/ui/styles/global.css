@@ -2075,8 +2075,12 @@ body {
 
 /* pe-topbar-actions removed — replaced by pe-topbar-action-cluster */
 
-.pe-topbar-secondary {
+.pe-topbar-identity-actions {
   position: relative;
+  flex-shrink: 0;
+  margin-left: 2px;
+  display: flex;
+  align-items: center;
 }
 
 .pe-overflow-btn {

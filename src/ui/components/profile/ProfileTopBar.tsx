@@ -137,6 +137,52 @@ export function ProfileTopBar({
               title="Unsaved changes"
             />
           )}
+          {!isNew && profile && (
+            <div className="pe-topbar-identity-actions">
+              <button
+                ref={overflowTriggerRef}
+                id="pe-overflow-trigger"
+                className="pe-overflow-btn"
+                type="button"
+                onClick={() => setShowOverflow(!showOverflow)}
+                aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={showOverflow}
+                aria-controls="pe-overflow-menu"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="3" cy="8" r="1.3" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+                  <circle cx="13" cy="8" r="1.3" fill="currentColor" />
+                </svg>
+              </button>
+              {showOverflow && (
+                <>
+                  <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
+                  <div
+                    ref={overflowMenuRef}
+                    id="pe-overflow-menu"
+                    className="pe-overflow-menu"
+                    role="menu"
+                    aria-labelledby="pe-overflow-trigger"
+                  >
+                    {onDuplicate && (
+                      <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onDuplicate(profile.name); }}>
+                        Duplicate
+                      </button>
+                    )}
+                    <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
+                      Overview
+                    </button>
+                    <div className="pe-overflow-divider" role="separator" />
+                    <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { setShowOverflow(false); onSetConfirmDelete(true); }}>
+                      Delete Profile
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <span className="pe-topbar-subtitle">
           {dirty && !isNew ? "Unsaved changes \u00B7 " : ""}{subtitle}
@@ -200,55 +246,8 @@ export function ProfileTopBar({
           </div>
         )}
 
-        {/* Row 2: ... + Settings + Save */}
+        {/* Row 2: Save */}
         <div className="pe-topbar-controls-row pe-topbar-controls-row-end">
-          {!isNew && profile && (
-            <div className="pe-topbar-secondary">
-              <button
-                ref={overflowTriggerRef}
-                id="pe-overflow-trigger"
-                className="pe-overflow-btn"
-                type="button"
-                onClick={() => setShowOverflow(!showOverflow)}
-                aria-label="More actions"
-                aria-haspopup="menu"
-                aria-expanded={showOverflow}
-                aria-controls="pe-overflow-menu"
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <circle cx="3" cy="8" r="1.3" fill="currentColor" />
-                  <circle cx="8" cy="8" r="1.3" fill="currentColor" />
-                  <circle cx="13" cy="8" r="1.3" fill="currentColor" />
-                </svg>
-              </button>
-              {showOverflow && (
-                <>
-                  <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
-                  <div
-                    ref={overflowMenuRef}
-                    id="pe-overflow-menu"
-                    className="pe-overflow-menu"
-                    role="menu"
-                    aria-labelledby="pe-overflow-trigger"
-                  >
-                    {onDuplicate && (
-                      <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onDuplicate(profile.name); }}>
-                        Duplicate
-                      </button>
-                    )}
-                    <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
-                      Overview
-                    </button>
-                    <div className="pe-overflow-divider" role="separator" />
-                    <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { setShowOverflow(false); onSetConfirmDelete(true); }}>
-                      Delete Profile
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
           <button
             className={`btn-primary${dirty && !saving ? " btn-primary-dirty" : ""}`}
             disabled={!name.trim() || !dirty || saving}
