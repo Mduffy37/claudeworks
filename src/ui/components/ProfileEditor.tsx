@@ -274,7 +274,16 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
   const [itemSearch, setItemSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<FilterOption>("all");
   const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow">(null);
-  const [itemSort, setItemSort] = useState<SortOption>("name");
+  const [itemSort, setItemSort] = useState<SortOption>("source");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (name: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
 
   const {
     name, setName,
@@ -585,6 +594,20 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 : a.name.localeCompare(b.name)
             );
 
+            // Pre-compute per-plugin counts once so we can show group headers in source sort.
+            const groupCounts = itemSort === "source"
+              ? (() => {
+                  const map = new Map<string, { total: number; enabled: number }>();
+                  for (const it of items) {
+                    const g = map.get(it.pluginDisplayName) ?? { total: 0, enabled: 0 };
+                    g.total++;
+                    if (it.enabled) g.enabled++;
+                    map.set(it.pluginDisplayName, g);
+                  }
+                  return map;
+                })()
+              : null;
+
             return (
               <>
                 <FilterBar
@@ -604,43 +627,66 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   </div>
                 ) : (
                   <div className="pe-flat-list">
-                    {items.map((item) => (
-                      <div
-                        key={`${item.pluginName}:${item.name}`}
-                        className="pe-flat-item"
-                        title={item.description || undefined}
-                      >
-                        <div
-                          className={`item-checkbox${item.enabled ? " checked" : ""}`}
-                          onClick={() => {
-                            if (!item.pluginEnabled && !item.enabled) {
-                              handleEnablePluginWithOnly(item.pluginName, item.name);
-                            } else {
-                              handleToggleItem(item.pluginName, item.name, !item.enabled);
-                            }
-                          }}
-                          role="checkbox"
-                          aria-checked={item.enabled}
-                          aria-label={type === "command" ? `/${item.name}` : item.name}
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === " " || e.key === "Enter") {
-                              e.preventDefault();
-                              if (!item.pluginEnabled && !item.enabled) {
-                                handleEnablePluginWithOnly(item.pluginName, item.name);
-                              } else {
-                                handleToggleItem(item.pluginName, item.name, !item.enabled);
-                              }
-                            }
-                          }}
-                        />
-                        <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
-                          {type === "command" ? `/${item.name}` : item.name}
-                        </span>
-                        <span className="pe-flat-item-source">{item.pluginDisplayName}</span>
-                        {!item.userInvocable && <span className="skill-badge internal">internal</span>}
-                      </div>
-                    ))}
+                    {items.map((item, idx) => {
+                      const prev = items[idx - 1];
+                      const showGroupHeader = groupCounts && (!prev || prev.pluginDisplayName !== item.pluginDisplayName);
+                      const collapsed = !!groupCounts && collapsedGroups.has(item.pluginDisplayName);
+                      const g = showGroupHeader ? groupCounts!.get(item.pluginDisplayName) : undefined;
+                      return (
+                        <React.Fragment key={`${item.pluginName}:${item.name}`}>
+                          {showGroupHeader && g && (
+                            <button
+                              type="button"
+                              className={`pe-flat-group-header${collapsed ? " collapsed" : ""}`}
+                              onClick={() => toggleGroup(item.pluginDisplayName)}
+                              aria-expanded={!collapsed}
+                            >
+                              <svg className="pe-flat-group-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              <span className="pe-flat-group-name">{item.pluginDisplayName}</span>
+                              <span className="pe-flat-group-count">{g.enabled}/{g.total}</span>
+                            </button>
+                          )}
+                          {!collapsed && (
+                          <div
+                            className="pe-flat-item"
+                            title={item.description || undefined}
+                          >
+                            <div
+                              className={`item-checkbox${item.enabled ? " checked" : ""}`}
+                              onClick={() => {
+                                if (!item.pluginEnabled && !item.enabled) {
+                                  handleEnablePluginWithOnly(item.pluginName, item.name);
+                                } else {
+                                  handleToggleItem(item.pluginName, item.name, !item.enabled);
+                                }
+                              }}
+                              role="checkbox"
+                              aria-checked={item.enabled}
+                              aria-label={type === "command" ? `/${item.name}` : item.name}
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (!item.pluginEnabled && !item.enabled) {
+                                    handleEnablePluginWithOnly(item.pluginName, item.name);
+                                  } else {
+                                    handleToggleItem(item.pluginName, item.name, !item.enabled);
+                                  }
+                                }
+                              }}
+                            />
+                            <span className={`pe-flat-item-name${type === "command" ? " command-name" : ""}${!item.enabled ? " muted" : ""}`}>
+                              {type === "command" ? `/${item.name}` : item.name}
+                            </span>
+                            {!groupCounts && <span className="pe-flat-item-source">{item.pluginDisplayName}</span>}
+                            {!item.userInvocable && <span className="skill-badge internal">internal</span>}
+                          </div>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 )}
               </>

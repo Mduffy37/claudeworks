@@ -2029,8 +2029,79 @@ body {
 }
 
 .pe-flat-item-source {
-  font-size: 0.846rem;
+  font-size: 0.769rem;
   color: var(--text-muted);
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--bg-surface);
+}
+
+.pe-flat-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.769rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pe-flat-group-header:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pe-flat-group-header:focus-visible {
+  outline: none;
+  background: var(--bg-hover);
+  box-shadow: inset 0 0 0 1px var(--border-focus);
+}
+
+.pe-flat-group-header:first-child {
+  margin-top: 0;
+}
+
+.pe-flat-group-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transform: rotate(90deg);
+  transition: transform 120ms ease;
+}
+
+.pe-flat-group-header.collapsed .pe-flat-group-chevron {
+  transform: rotate(0deg);
+}
+
+.pe-flat-group-name {
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pe-flat-group-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
   flex-shrink: 0;
 }
 
