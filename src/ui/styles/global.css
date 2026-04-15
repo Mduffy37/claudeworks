@@ -2333,7 +2333,7 @@ body {
   padding: 9px 16px;
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 4px solid transparent;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   margin-bottom: -1px;
   color: var(--text-muted);
@@ -2354,6 +2354,7 @@ body {
   color: var(--text-primary);
   border-bottom-color: var(--accent);
   background: var(--bg-elevated);
+  font-weight: 600;
 }
 
 .pe-tab-count {
