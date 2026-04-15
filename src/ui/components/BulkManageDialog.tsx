@@ -335,6 +335,10 @@ export function BulkManageDialog({
                 {items.map((item) => {
                   const isSelected = selected.has(item.name);
                   const tags = (item as any).tags as string[] | undefined;
+                  const countLabel = activeTab === "profiles"
+                    ? `${(item as Profile).plugins.length} plugin${(item as Profile).plugins.length === 1 ? "" : "s"}`
+                    : `${(item as Team).members.length} member${(item as Team).members.length === 1 ? "" : "s"}`;
+                  const checkboxLabel = `Select ${item.name} (${countLabel})`;
                   return (
                     <tr
                       key={item.name}
@@ -342,7 +346,7 @@ export function BulkManageDialog({
                       onClick={() => toggleItem(item.name)}
                     >
                       <td className="bulk-col-check">
-                        <ItemCheckbox checked={isSelected} onChange={() => toggleItem(item.name)} label={item.name} />
+                        <ItemCheckbox checked={isSelected} onChange={() => toggleItem(item.name)} label={checkboxLabel} />
                       </td>
                       <td className="bulk-col-name">
                         <div className="bulk-item-info">
