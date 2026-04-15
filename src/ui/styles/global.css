@@ -2133,7 +2133,7 @@ body {
 }
 
 .pe-settings-btn.has-overrides {
-  border-color: rgba(222, 115, 86, 0.35);
+  border-color: rgba(201, 100, 66, 0.35);
   color: var(--accent);
 }
 
@@ -2848,8 +2848,9 @@ body {
 }
 
 .pe-instructions-heading {
-  font-size: 0.923rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -2858,20 +2859,20 @@ body {
 
 .pe-instructions-command {
   font-family: var(--font-mono);
-  font-size: 0.846rem;
+  font-size: var(--fs-caption);
   font-weight: 500;
-  color: #67e8f9;
-  background: rgba(103, 232, 249, 0.08);
+  color: var(--sage);
+  background: rgba(122, 139, 110, 0.10);
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .pe-instructions-section .pe-instructions-hint code {
   font-family: var(--font-mono);
-  font-size: 0.846rem;
+  font-size: var(--fs-caption);
   padding: 0 3px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 3px;
+  background: rgba(245, 244, 237, 0.06);
+  border-radius: var(--radius-xs);
 }
 
 .pe-editor-toolbar {
@@ -2940,10 +2941,11 @@ body {
 
 .field label {
   display: block;
-  font-size: 0.846rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--ls-overline);
   color: var(--text-muted);
   margin-bottom: 5px;
 }
@@ -2967,7 +2969,7 @@ body {
 .field input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.20);
 }
 
 .field input:disabled {
