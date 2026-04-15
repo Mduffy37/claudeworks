@@ -1988,39 +1988,42 @@ body {
 .pe-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 8px;
+  padding: 9px 16px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   margin-bottom: -1px;
   color: var(--text-muted);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
   white-space: nowrap;
 }
 
 .pe-tab:hover {
   color: var(--text-secondary);
+  background: var(--bg-hover);
 }
 
 .pe-tab.active {
   color: var(--text-primary);
   border-bottom-color: var(--accent);
+  background: var(--accent-dim);
 }
 
 .pe-tab-count {
   font-size: 0.769rem;
   font-weight: 500;
   color: var(--text-muted);
-  background: var(--bg-surface);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 1px 6px;
+  padding: 1px 7px;
   min-width: 20px;
   text-align: center;
+  opacity: 0.75;
 }
 
 .pe-tab.active .pe-tab-count {
