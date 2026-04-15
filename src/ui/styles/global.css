@@ -1246,6 +1246,10 @@ body {
 .bulk-manage-dialog {
   display: flex;
   flex-direction: column;
+  height: auto;
+  max-height: 85vh;
+  min-height: 360px;
+  width: min(880px, 90vw);
 }
 
 .bulk-action-bar {
@@ -1256,6 +1260,13 @@ body {
   border-bottom: 1px solid var(--border);
   background: var(--bg-surface);
   flex-shrink: 0;
+}
+
+.bulk-action-bar.bulk-action-footer {
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
 }
 
 .bulk-select-all {
@@ -1328,31 +1339,80 @@ body {
 }
 
 .bulk-item-list {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
   padding: 0;
+  min-height: 0;
 }
 
 .bulk-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-height: 140px;
+  padding: 24px;
   color: var(--text-muted);
   font-size: 1rem;
 }
 
+.bulk-item-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.bulk-item-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-surface);
+}
+
+.bulk-item-table th {
+  text-align: left;
+  font-size: 0.769rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bulk-col-check {
+  width: 44px;
+  padding-right: 0;
+}
+
+.bulk-col-name {
+  width: auto;
+}
+
+.bulk-col-meta {
+  width: 30%;
+  text-align: right;
+}
+
 .bulk-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
   cursor: pointer;
   transition: background var(--transition-fast);
   border-bottom: 1px solid var(--border);
 }
 
-.bulk-item:last-of-type {
+.bulk-item > td {
+  padding: 10px 16px;
+  vertical-align: middle;
+}
+
+.bulk-item > td.bulk-col-check {
+  padding-right: 0;
+}
+
+.bulk-item > td.bulk-col-meta {
+  text-align: right;
+}
+
+.bulk-item:last-of-type > td {
   border-bottom: none;
 }
 
@@ -1407,6 +1467,8 @@ body {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .bulk-meta-badge {

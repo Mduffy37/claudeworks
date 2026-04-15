@@ -314,8 +314,78 @@ export function BulkManageDialog({
           </button>
         </div>
 
-        {/* Action bar */}
-        <div className="bulk-action-bar">
+        {/* Item list — table semantics so the surface isn't one giant onClick */}
+        <div className="bulk-item-list">
+          {items.length === 0 ? (
+            <div className="bulk-empty">
+              No {activeTab} yet.
+            </div>
+          ) : (
+            <table className="bulk-item-table">
+              <thead>
+                <tr>
+                  <th scope="col" className="bulk-col-check" aria-label="Select" />
+                  <th scope="col" className="bulk-col-name">Name</th>
+                  <th scope="col" className="bulk-col-meta">
+                    {activeTab === "profiles" ? "Model / Effort / Plugins" : "Members"}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const isSelected = selected.has(item.name);
+                  const tags = (item as any).tags as string[] | undefined;
+                  return (
+                    <tr
+                      key={item.name}
+                      className={`bulk-item${isSelected ? " selected" : ""}`}
+                      onClick={() => toggleItem(item.name)}
+                    >
+                      <td className="bulk-col-check">
+                        <ItemCheckbox checked={isSelected} onChange={() => toggleItem(item.name)} label={item.name} />
+                      </td>
+                      <td className="bulk-col-name">
+                        <div className="bulk-item-info">
+                          <span className="bulk-item-name">{item.name}</span>
+                          {item.description && (
+                            <span className="bulk-item-desc">{item.description}</span>
+                          )}
+                          {tags && tags.length > 0 && (
+                            <span className="bulk-item-tags">
+                              {tags.map((t) => (
+                                <span key={t} className="bulk-tag-chip">{t}</span>
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="bulk-col-meta">
+                        <div className="bulk-item-meta">
+                          {activeTab === "profiles" ? (
+                            <>
+                              {(item as Profile).model && <span className="bulk-meta-badge">{(item as Profile).model}</span>}
+                              {(item as Profile).effortLevel && <span className="bulk-meta-badge">{(item as Profile).effortLevel}</span>}
+                              {(item as Profile).plugins.length > 0 && (
+                                <span className="bulk-meta-badge">{(item as Profile).plugins.length} plugins</span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="bulk-meta-badge">{(item as Team).members.length} members</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Sticky footer — bulk-action bar lives here so Close stays top-right
+            and the apply controls are anchored where users expect commit-style
+            dialog actions. */}
+        <div className="bulk-action-bar bulk-action-footer">
           <div className="bulk-select-all" onClick={toggleAll}>
             <ItemCheckbox checked={allSelected} onChange={toggleAll} label="Select all" />
             <span>{selected.size > 0 ? `${selected.size} selected` : "Select all"}</span>
@@ -326,6 +396,7 @@ export function BulkManageDialog({
               value={action}
               onChange={(e) => setAction(e.target.value as BulkAction)}
               disabled={selected.size === 0}
+              aria-label="Bulk action"
             >
               {actions.map((a) => (
                 <option key={a.value} value={a.value}>{a.label}</option>
@@ -335,7 +406,7 @@ export function BulkManageDialog({
             {/* Action-specific controls */}
             {action === "tags" && (
               <div className="bulk-action-inline">
-                <select value={tagMode} onChange={(e) => setTagMode(e.target.value as "add" | "remove")}>
+                <select value={tagMode} onChange={(e) => setTagMode(e.target.value as "add" | "remove")} aria-label="Tag mode">
                   <option value="add">Add tag</option>
                   <option value="remove">Remove tag</option>
                 </select>
@@ -346,6 +417,7 @@ export function BulkManageDialog({
                     onChange={(e) => setTagInput(e.target.value)}
                     placeholder="Tag name..."
                     list="bulk-tag-suggestions"
+                    aria-label="Tag name"
                     onKeyDown={(e) => { if (e.key === "Enter" && canApply) handleApply(); }}
                   />
                   <datalist id="bulk-tag-suggestions">
@@ -359,11 +431,11 @@ export function BulkManageDialog({
 
             {action === "projects" && (
               <div className="bulk-action-inline">
-                <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as "add" | "remove")}>
+                <select value={projectMode} onChange={(e) => setProjectMode(e.target.value as "add" | "remove")} aria-label="Project mode">
                   <option value="add">Add project</option>
                   <option value="remove">Remove project</option>
                 </select>
-                <select value={projectValue} onChange={(e) => setProjectValue(e.target.value)}>
+                <select value={projectValue} onChange={(e) => setProjectValue(e.target.value)} aria-label="Project">
                   <option value="">{importedProjects.length === 0 ? "No imported projects" : "Choose project..."}</option>
                   {importedProjects.map((p) => (
                     <option key={p} value={p}>{shortPath(p)}</option>
@@ -373,7 +445,7 @@ export function BulkManageDialog({
             )}
 
             {action === "model" && (
-              <select value={modelValue} onChange={(e) => setModelValue(e.target.value)}>
+              <select value={modelValue} onChange={(e) => setModelValue(e.target.value)} aria-label="Model">
                 <option value="">Default (clear)</option>
                 <option value="opus">Opus</option>
                 <option value="sonnet">Sonnet</option>
@@ -382,7 +454,7 @@ export function BulkManageDialog({
             )}
 
             {action === "effort" && (
-              <select value={effortValue} onChange={(e) => setEffortValue(e.target.value)}>
+              <select value={effortValue} onChange={(e) => setEffortValue(e.target.value)} aria-label="Effort level">
                 <option value="">Default (clear)</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -393,11 +465,11 @@ export function BulkManageDialog({
 
             {action === "plugin" && (
               <div className="bulk-action-inline">
-                <select value={pluginMode} onChange={(e) => setPluginMode(e.target.value as "enable" | "disable")}>
+                <select value={pluginMode} onChange={(e) => setPluginMode(e.target.value as "enable" | "disable")} aria-label="Plugin mode">
                   <option value="enable">Enable</option>
                   <option value="disable">Disable</option>
                 </select>
-                <select value={pluginName} onChange={(e) => setPluginName(e.target.value)}>
+                <select value={pluginName} onChange={(e) => setPluginName(e.target.value)} aria-label="Plugin">
                   <option value="">Choose plugin...</option>
                   {plugins.map((p) => (
                     <option key={p.name} value={p.name}>{p.pluginName}</option>
@@ -407,7 +479,7 @@ export function BulkManageDialog({
             )}
 
             {action === "auth" && (
-              <select value={authValue ? "true" : "false"} onChange={(e) => setAuthValue(e.target.value === "true")}>
+              <select value={authValue ? "true" : "false"} onChange={(e) => setAuthValue(e.target.value === "true")} aria-label="Auth mode">
                 <option value="true">Use default auth</option>
                 <option value="false">Separate auth</option>
               </select>
@@ -421,56 +493,6 @@ export function BulkManageDialog({
               {applying ? "Applying..." : "Apply"}
             </button>
           </div>
-        </div>
-
-        {/* Item list */}
-        <div className="bulk-item-list">
-          {items.length === 0 ? (
-            <div className="bulk-empty">
-              No {activeTab} yet.
-            </div>
-          ) : (
-            items.map((item) => {
-              const isSelected = selected.has(item.name);
-              const tags = (item as any).tags as string[] | undefined;
-              return (
-                <div
-                  key={item.name}
-                  className={`bulk-item${isSelected ? " selected" : ""}`}
-                  onClick={() => toggleItem(item.name)}
-                >
-                  <ItemCheckbox checked={isSelected} onChange={() => toggleItem(item.name)} label={item.name} />
-                  <div className="bulk-item-info">
-                    <span className="bulk-item-name">{item.name}</span>
-                    {item.description && (
-                      <span className="bulk-item-desc">{item.description}</span>
-                    )}
-                    {tags && tags.length > 0 && (
-                      <span className="bulk-item-tags">
-                        {tags.map((t) => (
-                          <span key={t} className="bulk-tag-chip">{t}</span>
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                  {activeTab === "profiles" && (
-                    <div className="bulk-item-meta">
-                      {(item as Profile).model && <span className="bulk-meta-badge">{(item as Profile).model}</span>}
-                      {(item as Profile).effortLevel && <span className="bulk-meta-badge">{(item as Profile).effortLevel}</span>}
-                      {(item as Profile).plugins.length > 0 && (
-                        <span className="bulk-meta-badge">{(item as Profile).plugins.length} plugins</span>
-                      )}
-                    </div>
-                  )}
-                  {activeTab === "teams" && (
-                    <div className="bulk-item-meta">
-                      <span className="bulk-meta-badge">{(item as Team).members.length} members</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
         </div>
       </div>
 
