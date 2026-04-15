@@ -45,11 +45,14 @@
   --dark-surface:         #30302e;
   --dark-elevated:        #3d3d3a;
   --dark-elevated-strong: #4d4c48;
-  --dark-border:          #30302e;
-  --dark-border-strong:   #4d4c48;
+  /* Borders are deliberately LIGHTER than dark-surface so edges read on
+     card-on-card surfaces (plugin rows, team member cards, browse tags).
+     Strong border uses Stone Gray for prominent separators. */
+  --dark-border:          #45443f;
+  --dark-border-strong:   #5e5d59;
   --warm-silver:          #b0aea5;
-  --ring-dark:            #4d4c48;
-  --ring-dark-strong:     #5e5d59;
+  --ring-dark:            #5a5954;
+  --ring-dark-strong:     #6e6d67;
 
   /* Light-warm primitives */
   --parchment:     #f5f4ed;
@@ -1924,8 +1927,8 @@ body {
   display: flex;
   align-items: center;
   padding: 10px 16px 10px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--bg-primary);
   flex-shrink: 0;
   gap: 16px;
 }
@@ -2272,6 +2275,7 @@ body {
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   margin-bottom: -1px;
   color: var(--text-muted);
   font-family: var(--font-sans);
@@ -2810,10 +2814,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: var(--bg-surface);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
+  border-radius: var(--radius-md);
+  padding: 16px;
 }
 
 /* ─── Plugins tab — uses existing PluginPicker styles ────────────────────── */
@@ -4693,15 +4697,17 @@ body {
 }
 
 .te-member-card {
-  background: var(--bg-elevated);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   padding: 12px;
+  box-shadow: var(--ring);
 }
 
 .te-member-card.lead {
-  background: rgba(201, 100, 66, 0.06);
-  border-color: rgba(201, 100, 66, 0.25);
+  background: rgba(201, 100, 66, 0.08);
+  border-color: rgba(201, 100, 66, 0.32);
+  box-shadow: var(--ring-accent);
 }
 
 .te-member-card.broken {
@@ -5526,11 +5532,11 @@ body {
 
 .curated-collection-chip {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 100px;
   padding: 3px 10px;
-  font-size: 0.692rem;
-  color: var(--text-secondary);
+  font-size: var(--fs-label);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
@@ -5655,12 +5661,12 @@ body {
 
 /* Tags & badges */
 .curated-tag {
-  font-size: 0.615rem;
-  padding: 1px 6px;
+  font-size: var(--fs-overline);
+  padding: 2px 7px;
   border-radius: 100px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
