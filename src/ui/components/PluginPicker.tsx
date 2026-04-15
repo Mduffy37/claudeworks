@@ -87,8 +87,26 @@ export function PluginPicker({
       }
     };
 
+    const sourceLabel = plugin.marketplace && plugin.marketplace !== "local" && plugin.marketplace !== "builtin"
+      ? `from marketplace ${plugin.marketplace}`
+      : plugin.source?.type === "skillfish"
+        ? "installed via skillfish"
+        : plugin.source?.type === "git"
+          ? "git-managed"
+          : plugin.marketplace === "builtin"
+            ? "built-in"
+            : "local";
+    const versionLabel = plugin.marketplace !== "local" ? `version ${plugin.version}` : "";
+    const rowLabel = [plugin.pluginName, versionLabel, sourceLabel, enabled ? "enabled" : "disabled"]
+      .filter(Boolean)
+      .join(", ");
     return (
-      <div key={plugin.name} className={`plugin-row${enabled ? " enabled" : ""}`}>
+      <div
+        key={plugin.name}
+        role="listitem"
+        aria-label={rowLabel}
+        className={`plugin-row${enabled ? " enabled" : ""}`}
+      >
         <div className="plugin-header" onClick={() => toggleExpand(plugin.name)}>
           {/* Toggle switch — stop propagation so it doesn't also expand/collapse */}
           <label
@@ -261,7 +279,7 @@ export function PluginPicker({
         {globalPlugins.length === 0 ? (
           <div className="empty-state-inline">No global plugins installed</div>
         ) : (
-          globalPlugins.map(renderPlugin)
+          <div role="list" aria-label="Global plugins">{globalPlugins.map(renderPlugin)}</div>
         )}
       </div>
 
@@ -271,7 +289,7 @@ export function PluginPicker({
             <h3>Frameworks</h3>
             <span className="plugin-section-count">{frameworkPlugins.length}</span>
           </div>
-          {frameworkPlugins.map(renderPlugin)}
+          <div role="list" aria-label="Frameworks">{frameworkPlugins.map(renderPlugin)}</div>
         </div>
       )}
 
@@ -281,7 +299,7 @@ export function PluginPicker({
             <h3>Local</h3>
             <span className="plugin-section-count">{userLocalPlugins.length}</span>
           </div>
-          {userLocalPlugins.map(renderPlugin)}
+          <div role="list" aria-label="Local plugins">{userLocalPlugins.map(renderPlugin)}</div>
         </div>
       )}
 
@@ -298,7 +316,7 @@ export function PluginPicker({
               No plugins installed for {directory}
             </div>
           ) : (
-            localPlugins.map(renderPlugin)
+            <div role="list" aria-label="Project plugins">{localPlugins.map(renderPlugin)}</div>
           )}
         </div>
       )}
