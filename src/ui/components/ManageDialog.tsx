@@ -1403,10 +1403,21 @@ function PromptsTab() {
           <div className="pm-empty">
             <div className="empty-state">
               <div className="empty-state-icon">&#9998;</div>
-              <div className="empty-state-title">Select a prompt</div>
-              <div className="empty-state-body">
-                Choose a prompt from the list, or create a new one. Prompts can be inserted into profile instructions, project CLAUDE.md, or global CLAUDE.md.
+              <div className="empty-state-title">
+                {prompts.length === 0 ? "No prompts yet" : "Select a prompt"}
               </div>
+              <div className="empty-state-body">
+                {prompts.length === 0
+                  ? "Reusable snippets you can drop into profile instructions or CLAUDE.md files."
+                  : "Pick one from the list to edit, or create a new prompt."}
+              </div>
+              <button
+                className="btn-primary"
+                style={{ marginTop: "14px" }}
+                onClick={handleNew}
+              >
+                + New prompt
+              </button>
             </div>
           </div>
         )}
