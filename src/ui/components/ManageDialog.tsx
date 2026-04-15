@@ -1032,12 +1032,12 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
                 {credStatus.profiles.map((p) => (
                   <div className="field" key={p.name}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.923rem" }}>
-                      <span style={{ color: p.hasCredentials ? "var(--color-skill)" : "var(--text-muted)", fontSize: "0.769rem" }}>
+                      <span aria-hidden="true" style={{ color: p.hasCredentials ? "var(--color-skill)" : "var(--text-muted)", fontSize: "0.769rem" }}>
                         {p.hasCredentials ? "\u25CF" : "\u25CB"}
                       </span>
                       <span style={{ color: "var(--text-primary)" }}>{p.name}</span>
                       <span style={{ color: "var(--text-muted)", fontSize: "0.846rem" }}>
-                        {p.useDefaultAuth ? "default auth" : "separate auth"}
+                        {p.hasCredentials ? "active" : "missing"} · {p.useDefaultAuth ? "default auth" : "separate auth"}
                       </span>
                     </div>
                   </div>
@@ -1058,7 +1058,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
           <div className="health-issue-list">
             {healthEntries.map(([name, missing]) => (
               <div key={name} className="health-issue-item">
-                <span className="health-issue-icon" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
                 <span><strong>{name}</strong> — missing plugin{missing.length !== 1 ? "s" : ""}: {missing.join(", ")}</span>
               </div>
             ))}
@@ -1074,7 +1074,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             <div className="health-issue-list">
               {staleProfiles.map((p) => (
                 <div key={p.name} className="health-issue-item">
-                  <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
                   <span>{p.name} — last launched {new Date(p.lastLaunched!).toLocaleDateString()}</span>
                 </div>
               ))}
@@ -1089,7 +1089,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             <div className="health-issue-list">
               {neverLaunched.map((p) => (
                 <div key={p.name} className="health-issue-item">
-                  <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
                   <span>{p.name}</span>
                 </div>
               ))}
@@ -1109,7 +1109,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
           <div className="health-issue-list">
             {unusedPlugins.map((name) => (
               <div key={name} className="health-issue-item">
-                <span className="health-issue-icon" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
                 <span>{name.split("@")[0]}</span>
               </div>
             ))}
@@ -1153,7 +1153,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
                 </div>
                 {diagnostics.issues.map((issue, i) => (
                   <div key={i} className="health-issue-item">
-                    <span className="health-issue-icon" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                    <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
                     <span>{issue}</span>
                   </div>
                 ))}
