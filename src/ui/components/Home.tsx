@@ -180,10 +180,11 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {profiles.some((p) => p.favourite) && (
         <div className="home-section">
           <h2 className="home-section-title">Favourites</h2>
-          <div className="home-favourites">
+          <div className="home-favourites" role="list">
             {profiles.filter((p) => p.favourite).map((p) => (
               <div
                 key={p.name}
+                role="listitem"
                 className="home-fav-card"
                 onClick={() => onSelectProfile(p.name)}
               >
@@ -238,9 +239,9 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {activeSessions.length > 0 && (
         <div className="home-section">
           <h2 className="home-section-title">Active Sessions ({activeSessions.length})</h2>
-          <div className="home-active-list">
+          <div className="home-active-list" role="list">
             {activeSessions.map((s) => (
-              <div key={s.pid} className="home-active-item">
+              <div key={s.pid} role="listitem" className="home-active-item">
                 <div className="home-active-dot" />
                 <div className="home-active-info">
                   <span className="home-active-profile">{s.profile}</span>
@@ -264,12 +265,13 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
         {/* Profiles */}
         <div className="home-section">
           <h2 className="home-section-title">Profiles</h2>
-          <div className="home-profile-grid">
+          <div className="home-profile-grid" role="list">
             {profiles.map((p) => {
               const usage = analytics.profileUsage.find((u) => u.name === p.name);
               return (
                 <div
                   key={p.name}
+                  role="listitem"
                   className="home-profile-card"
                   onClick={() => onSelectProfile(p.name)}
                 >
@@ -306,9 +308,9 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
         {/* Top projects */}
         <div className="home-section">
           <h2 className="home-section-title">Top Projects</h2>
-          <div className="home-project-list">
+          <div className="home-project-list" role="list">
             {analytics.topProjects.map((p) => (
-              <div key={p.name} className="home-project-item">
+              <div key={p.name} role="listitem" className="home-project-item">
                 <span className="home-project-name">{p.name}</span>
                 <span className="home-project-count">{p.messages.toLocaleString()}</span>
               </div>
@@ -320,11 +322,11 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Recent sessions */}
       <div className="home-section">
         <h2 className="home-section-title">Recent Sessions</h2>
-        <div className="home-session-list">
+        <div className="home-session-list" role="list">
           {(showAllRecent ? analytics.recentSessions : analytics.recentSessions.slice(0, 10)).map((s) => {
             const sessionProfile = profiles.find((p) => p.name === s.profile);
             return (
-              <div key={s.sessionId} className="home-session-item">
+              <div key={s.sessionId} role="listitem" className="home-session-item">
                 {sessionProfile && (
                   <div className="home-profile-icon" style={{ width: 22, height: 22, fontSize: "0.692rem", borderRadius: 4 }}>
                     {sessionProfile.name.charAt(0).toUpperCase()}
@@ -365,12 +367,13 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {analytics.profileUsage.length > 0 && (
         <div className="home-section">
           <h2 className="home-section-title">Profile Activity</h2>
-          <div className="home-profile-grid">
+          <div className="home-profile-grid" role="list">
             {analytics.profileUsage.map((pu) => {
               const profile = profiles.find((p) => p.name === pu.name);
               return (
                 <div
                   key={pu.name}
+                  role="listitem"
                   className="home-profile-card"
                   onClick={() => onSelectProfile(pu.name)}
                 >
