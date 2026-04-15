@@ -107,12 +107,14 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
             <div className="manage-section-header">
               <span className="manage-section-label">Theme</span>
             </div>
-            <div className="theme-options">
+            <div className="theme-options" role="group" aria-label="Theme">
               {(["light", "dark", "auto"] as const).map((mode) => (
                 <button
                   key={mode}
+                  type="button"
                   className={`theme-option${theme === mode ? " active" : ""}`}
                   onClick={() => handleThemeChange(mode)}
+                  aria-pressed={theme === mode}
                 >
                   {mode === "light" && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2"/><path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14M3.8 3.8l1 1M11.2 11.2l1 1M3.8 12.2l1-1M11.2 4.8l1-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}
                   {mode === "dark" && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.4 10.4A6 6 0 015.6 2.6a6 6 0 107.8 7.8z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>}
