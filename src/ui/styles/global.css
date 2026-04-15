@@ -1944,6 +1944,8 @@ body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  --pe-max-width: clamp(720px, 70vw, 1200px);
+  --pe-gutter: 24px;
 }
 
 .profile-editor.empty {
@@ -1983,7 +1985,7 @@ body {
 .pe-topbar {
   display: flex;
   align-items: center;
-  padding: 10px 16px 10px 24px;
+  padding: 10px var(--pe-gutter);
   border-bottom: 1px solid var(--border-strong);
   background: var(--bg-primary);
   flex-shrink: 0;
@@ -2228,7 +2230,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 10px var(--pe-gutter);
   background: none;
   border: none;
   cursor: pointer;
@@ -2288,7 +2290,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 4px 24px 18px;
+  padding: 4px var(--pe-gutter) 18px;
 }
 
 /* ─── Tab bar ─────────────────────────────────────────────────────────────── */
@@ -2297,7 +2299,7 @@ body {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 8px 24px 0;
+  padding: 8px var(--pe-gutter) 0;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   background: var(--bg-primary);
@@ -2378,7 +2380,7 @@ body {
 
 .pe-tab-content {
   flex: 1;
-  padding: 20px 24px 48px;
+  padding: 20px var(--pe-gutter) 48px;
   overflow: visible;
 }
 
@@ -2600,7 +2602,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 720px;
+  max-width: var(--pe-max-width);
 }
 
 .pe-plugin-group {
@@ -2668,7 +2670,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 720px;
+  max-width: var(--pe-max-width);
 }
 
 .pe-mcp-context {
@@ -2881,14 +2883,14 @@ body {
 /* ─── Plugins tab — uses existing PluginPicker styles ────────────────────── */
 
 .pe-tab-content .plugin-picker {
-  max-width: 720px;
+  max-width: var(--pe-max-width);
 }
 
 .pe-instructions-tab {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 720px;
+  max-width: var(--pe-max-width);
 }
 
 .pe-instructions-section {
@@ -6372,7 +6374,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 720px;
+  max-width: var(--pe-max-width);
 }
 
 .pe-settings-section {
@@ -7400,7 +7402,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 6px 24px 2px;
+  padding: 6px var(--pe-gutter) 2px;
 }
 
 .pe-tp-row {
