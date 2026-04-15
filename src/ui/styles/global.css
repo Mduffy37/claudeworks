@@ -449,8 +449,8 @@ body {
   width: 100%;
   padding: 4px 8px;
   margin-top: 6px;
-  background: rgba(61, 186, 110, 0.1);
-  border: 1px solid rgba(61, 186, 110, 0.25);
+  background: rgba(222, 115, 86, 0.1);
+  border: 1px solid rgba(222, 115, 86, 0.25);
   border-radius: var(--radius-sm);
   color: var(--color-launch);
   font-size: 0.846rem;
@@ -472,8 +472,8 @@ body {
 }
 
 .btn-launch-sidebar:hover {
-  background: rgba(61, 186, 110, 0.2);
-  border-color: rgba(61, 186, 110, 0.45);
+  background: rgba(222, 115, 86, 0.2);
+  border-color: rgba(222, 115, 86, 0.45);
 }
 
 .sidebar-launch-group {
@@ -1675,19 +1675,19 @@ body {
   align-items: center;
   gap: 7px;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-  box-shadow: 0 1px 6px rgba(61, 186, 110, 0.35);
+  box-shadow: 0 1px 6px rgba(222, 115, 86, 0.35);
   letter-spacing: -0.01em;
 }
 
 .btn-launch:hover {
   background: var(--color-launch-hover);
-  box-shadow: 0 2px 12px rgba(61, 186, 110, 0.45);
+  box-shadow: 0 2px 12px rgba(222, 115, 86, 0.45);
   transform: translateY(-1px);
 }
 
 .btn-launch:active {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(61, 186, 110, 0.3);
+  box-shadow: 0 1px 4px rgba(222, 115, 86, 0.3);
 }
 
 .btn-launch:disabled {
@@ -3166,8 +3166,8 @@ body {
 
 .toggle-switch input:checked + .toggle-track {
   background: var(--color-launch);
-  border-color: rgba(61, 186, 110, 0.4);
-  box-shadow: 0 0 8px rgba(61, 186, 110, 0.3);
+  border-color: rgba(222, 115, 86, 0.4);
+  box-shadow: 0 0 8px rgba(222, 115, 86, 0.3);
 }
 
 .toggle-switch input:checked + .toggle-track .toggle-thumb {
