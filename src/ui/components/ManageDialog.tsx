@@ -1405,6 +1405,12 @@ export function ManageDialog({
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (activeTab !== "plugins") return;
+    if (selectedPlugin && plugins.some((p) => p.name === selectedPlugin)) return;
+    if (plugins.length > 0) setSelectedPlugin(plugins[0].name);
+  }, [activeTab, plugins, selectedPlugin]);
+
   // Discover view state
   type PluginSubTab = "installed" | "browse" | "sources";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
