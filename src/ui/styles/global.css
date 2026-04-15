@@ -6565,7 +6565,7 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 18px 20px 20px;
+  padding: 20px;
   margin-bottom: 0;
 }
 
@@ -6649,7 +6649,6 @@ body {
 
 .pe-settings-accordion.open .modal-fields {
   padding: 0 20px 20px;
-  margin-top: -4px;
 }
 
 /* Hook rows — stack event name above the full command path */
