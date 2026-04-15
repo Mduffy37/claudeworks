@@ -275,11 +275,13 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 </div>
                 {onToggleFavourite && (
                   <button
+                    type="button"
                     className={`sidebar-fav-btn${t.favourite ? " active" : ""}`}
                     onClick={(e) => { e.stopPropagation(); onToggleFavourite(t.name); }}
-                    title={t.favourite ? "Remove from favourites" : "Add to favourites"}
+                    aria-pressed={t.favourite}
+                    aria-label={t.favourite ? `Remove ${t.name} from favourites` : `Add ${t.name} to favourites`}
                   >
-                    {t.favourite ? "\u2605" : "\u2606"}
+                    <span aria-hidden="true">{t.favourite ? "\u2605" : "\u2606"}</span>
                   </button>
                 )}
                 <TeamSidebarLaunch team={t} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />

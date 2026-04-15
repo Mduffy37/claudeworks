@@ -303,11 +303,13 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
               </div>
               {onToggleFavourite && (
                 <button
+                  type="button"
                   className={`sidebar-fav-btn${p.favourite ? " active" : ""}`}
                   onClick={(e) => { e.stopPropagation(); onToggleFavourite(p.name); }}
-                  title={p.favourite ? "Remove from favourites" : "Add to favourites"}
+                  aria-pressed={p.favourite}
+                  aria-label={p.favourite ? `Remove ${p.name} from favourites` : `Add ${p.name} to favourites`}
                 >
-                  {p.favourite ? "\u2605" : "\u2606"}
+                  <span aria-hidden="true">{p.favourite ? "\u2605" : "\u2606"}</span>
                 </button>
               )}
               <SidebarLaunch profile={p} onLaunch={onLaunch} onSave={onSave} isSelectedAndDirty={p.name === selectedName && !!dirty} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />
