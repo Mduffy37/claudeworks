@@ -7119,10 +7119,9 @@ body {
   padding: 6px 10px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--border);
-  font-size: 0.692rem;
+  font-size: 0.769rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: var(--text-muted);
 }
 
