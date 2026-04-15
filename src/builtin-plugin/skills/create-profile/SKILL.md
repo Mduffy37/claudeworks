@@ -161,134 +161,74 @@ From the workflow-shapes JSON you loaded in Step 1b, pick **1 or 2 shapes** that
 
 Write down the shape(s) you picked and which stages each one contributes. For blended shapes, union their stages and de-duplicate any that overlap (e.g. `feature-development.verify` and `bug-fixing.verify-and-close` cover similar ground — keep one).
 
-## Step 4 — Per-stage retrieval (Layer 2)
+## Step 4 — Retrieval (Layer 2)
 
-For each stage of your chosen shape(s), derive a retrieval query and run it against the cached `items.ndjson` grep stream. The retrieval pattern uses a **pipe intersection** (stage keywords AND tech context), which gives dramatically higher precision than a single OR-grep across both keyword sets.
+For each stage of your chosen shape(s), derive a stage-keyword list and then pass the full stage set (plus tech-context keywords from Layer 0) to `retrieve-plugins.js` in a single call. The script reads both the marketplace and local caches, runs the intersection filter, scores by distinct keyword matches, caps per-stage, and attaches full plugin digests from `catalog.json` + `local-catalog.json` — so one invocation replaces the old grep/rank/head/jq dance entirely.
 
-### 4a. Build two keyword groups per stage
+### 4a. Build per-stage keyword lists
 
-Group A — **stage keywords** (from workflow-shapes.json):
+**Group A — stage keywords** (from `workflow-shapes.json`):
 
 - `stage.keywords` — the stage's own keyword list (typically 5–8 words)
-- Plus any tools the user explicitly mentioned in Step 2 (e.g. "I use Playwright" → add `playwright`)
+- Plus any tools the user explicitly mentioned in Step 2 (e.g. "I use Playwright" → add `playwright` to the relevant stage)
 
-Group B — **tech context** (from Layer 0, project mode only):
+**Group B — tech context keywords** (from Layer 0, project mode only):
 
 - `signal_bundle.languages`
 - `signal_bundle.frameworks`
-- `signal_bundle.keyDependencies.slice(0, 5)` (top 5 deps — cap to avoid noise)
-- `signal_bundle.tooling` (for stages where tooling is load-bearing, e.g. `verify`)
+- `signal_bundle.keyDependencies.slice(0, 5)` — top 5 deps, capped to avoid noise
+- `signal_bundle.tooling` — include when tooling is load-bearing (e.g. the `verify` stage)
 
-Join each group with `|` to form a regex alternation. Example for the `implement` stage of a TypeScript/React/Electron project:
+In **generic mode** (no Layer 0 tech signal), leave Group B empty — the script falls through to a stage-keywords-only filter.
 
-- Group A: `(implement|write|code|wire|integrate|develop)`
-- Group B: `(typescript|react|electron|tsx|frontend)`
+**Also use the empty-Group-B path when retrieving cross-cutting staples in Step 6b** (planning, git workflow, debugging). Staples are meant to be general-purpose, and narrowing them by tech context is counterproductive.
 
-### 4b. Run the intersection grep
+### 4b. Call retrieve-plugins.js
 
-For each stage, construct a command of the following shape, then run it via `!`. The command pipes Group A (stage keywords) through Group B (tech context), which is what gives the intersection its precision. It grep-reads **two** NDJSON files together — the local `local-items.ndjson` Step 1e generated *and* the marketplace `items.ndjson` — with `local-items.ndjson` listed **first** so local items always appear in the head before marketplace items crowd them out:
+Build a single JSON payload with all your stages and the tech-context keywords, then pipe it to the script via a heredoc. For a TypeScript/React/Electron project with `implement` and `verify` stages, the call looks like this — use *your* actual stage IDs and keywords, not these:
 
-```
-grep -hiE '(<stage keyword 1>|<stage keyword 2>|...)' \
-  ~/.claude-profiles/marketplace-cache/local-items.ndjson \
-  ~/.claude-profiles/marketplace-cache/items.ndjson \
-  | grep -iE '(<tech keyword 1>|<tech keyword 2>|...)' \
-  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" '<all keywords from both groups, joined with |>' \
-  | head -60
-```
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/retrieve-plugins.js" <<'JSON'
+{
+  "stages": [
+    {"id": "implement", "keywords": ["implement","write","code","wire","integrate","develop"]},
+    {"id": "verify",    "keywords": ["test","verify","check","validate"]}
+  ],
+  "techKeywords": ["typescript","react","electron","tsx","frontend"],
+  "cap": 60
+}
+JSON`
 
-**Load-bearing details:**
-
-- `grep -h` (the `h` flag) suppresses grep's default "filename:" prefix when reading multiple files. Without it, each line gets `<path>:` prepended, which breaks JSON parsing downstream. Always use `-h` on the first grep. The second grep in the pipe doesn't need `-h` because its input is stdin, not multiple files.
-- **File order matters as a tiebreaker.** `local-items.ndjson` MUST come first, `items.ndjson` second. `rank-items.js` uses a stable sort, so items with the same keyword-match score preserve their input order — which means local items stay ahead of alphabetically-earlier marketplace items on ties. Without the local-first ordering, local items would lose all ties to marketplace items from `aaa`-prefixed marketplace IDs, which is how iteration-1 testing lost `local:uiux-toolkit` from its candidate pool.
-- **`rank-items.js` is the critical stage** that prevents alphabetical pollution. Without it, `head -60` takes the first 60 matches in *file order* — meaning early-alphabet marketplace IDs systematically crowd out late-alphabet ones, regardless of relevance. With it, every line is scored by **distinct keyword match count against the `desc` + `id` fields** (case-insensitive), sorted descending, and THEN head-capped — so the top 60 are genuinely the top 60 by relevance. Do not remove this stage or the retrieval pipeline silently reverts to alphabetical ordering.
-- **The keyword argument to `rank-items.js` must be the UNION of both groups**, joined with `|`. If Group A is `(implement|code|wire)` and Group B is `(react|typescript|electron)`, then pass `'implement|code|wire|react|typescript|electron'` to rank-items. The script then scores each grep-matched line by how many of those 6 distinct keywords appear in its `desc`/`id`/`plugin` fields.
-- **You must substitute the keyword groups with the actual words you built in Step 4a before running.** Do not run the command above with `<stage keyword 1>` literally — those angle brackets are placeholders, not shell tokens. Do not use a `$CACHE` variable anywhere; always write out the full cache paths literally.
-
-Concrete example for a TypeScript/React/Electron project's `implement` stage — run something like this (with *your* actual keywords, not these):
-
-!`grep -hiE '(implement|write|code|wire|integrate|develop)' ~/.claude-profiles/marketplace-cache/local-items.ndjson ~/.claude-profiles/marketplace-cache/items.ndjson | grep -iE '(typescript|react|electron|tsx|frontend)' | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" 'implement|write|code|wire|integrate|develop|typescript|react|electron|tsx|frontend' | head -60`
-
-Only items that match **both** the stage intent and the tech context survive the two greps, and the 60 that reach the head cap are the 60 with the highest distinct-keyword match counts — so you see the *best* matches regardless of which marketplace letter they come from. In practice this narrows a ~6000-entry index (plus however many local items the user has) to 60 candidates sorted by relevance.
-
-**You can still double-check in Step 6a.** The scoring formula there applies additional signals (featured status, collection alignment, multi-stage leverage, local nudge) on top of the raw keyword count `rank-items.js` computes. The pre-sort gives you a good starting order; Step 6a refines it.
-
-### 4c. Fallback for generic mode and cross-cutting staples
-
-In **generic mode** (`mode: "generic"` in the Layer 0 bundle), or when Group B is empty because Layer 0 couldn't find any tech context, fall back to a single grep with only Group A — but still read both files with `local-items.ndjson` first for tiebreaker ordering, and still pipe through `rank-items.js` so the head cap preserves relevance:
+The script emits a single-line JSON object of the shape:
 
 ```
-grep -hiE '(<stage keyword 1>|<stage keyword 2>|...)' \
-  ~/.claude-profiles/marketplace-cache/local-items.ndjson \
-  ~/.claude-profiles/marketplace-cache/items.ndjson \
-  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" '<stage keywords, joined with |>' \
-  | head -60
+{
+  "stages": [
+    {"id": "<stage-id>", "hitCount": N,
+     "hits": [{"kind","id","plugin","desc","sourceUrl"}, ...]}, ...
+  ],
+  "plugins": [
+    {"id","displayName","description","marketplace","collections","featured",
+     "counts","sourceUrl","topKeywords","source":"marketplace"|"local"}, ...
+  ],
+  "diagnostics": {"itemsCount","localItemsCount","catalogCount","localCatalogCount","missingFiles":[]}
+}
 ```
 
-Note: in generic mode the keywords passed to `rank-items.js` are just the stage keywords — there's no Group B to merge in, because Layer 0 didn't produce tech context.
+Each `stages[i].hits` is ranked by distinct-keyword match count (same formula as the old `rank-items.js` pipeline), capped at 60, with local items leading marketplace items on score ties. The `plugins` array is the unique set of plugins referenced across all stages, **with full catalog digests already joined** — no follow-up `jq` pass is needed. This is why Step 5 (plugin-level lookup) is gone: the join happens inside `retrieve-plugins.js`.
 
-Concrete example for a `research` stage in generic mode — run something like this with *your* actual keywords:
+**Error handling.** If the response has an `error` key instead of `stages`/`plugins`, surface the message verbatim to the user and stop. If `diagnostics.missingFiles` contains `catalog.json` or `items.ndjson`, the marketplace cache is incomplete — re-run `fetch-marketplace-cache.js` from Step 1c. If it contains `local-items.ndjson` or `local-catalog.json`, re-run `list-local-plugins.js` from Step 1e.
 
-!`grep -hiE '(research|investigate|compare|survey|evaluate|source|prior art)' ~/.claude-profiles/marketplace-cache/local-items.ndjson ~/.claude-profiles/marketplace-cache/items.ndjson | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/rank-items.js" 'research|investigate|compare|survey|evaluate|source|prior art' | head -60`
+**If a stage returns fewer than ~5 hits**, either (a) broaden its `keywords` list with synonyms you derive from the stage's `intent` field in `workflow-shapes.json` and re-run the script, or (b) note the gap and flag it explicitly in the self-critique (Step 6d) and presentation (Step 7a).
 
-Retrieval is broader per stage, but workflow shapes still constrain composition. The same alphabetical-order warning from 4b applies — rank in Step 6a, never trust file order.
+### 4c. Candidate pool
 
-**Also use the single-grep fallback when retrieving cross-cutting staples in Step 6b** — staples like planning, git workflow, and debugging tools are meant to be general-purpose, so narrowing them by tech context is counterproductive.
-
-### 4d. Parse and collect
-
-Each line of output is a JSON object with `{kind, id, plugin, desc, sourceUrl}`. Parse and collect them as candidate items for that stage. Cap at ~60 hits per stage — this is deliberately more than you'll eventually use, because the scoring step in Step 6a trims to the top ~15 based on relevance (not file order). If a stage returns fewer than ~5 hits, either (a) broaden Group A with synonyms you derive from the stage's `intent` field, or (b) note the gap and continue — you will flag it explicitly in the self-critique and presentation steps.
-
-### 4e. Collect unique plugin IDs
-
-Across all stage retrievals, collect the **unique set of plugin IDs** that appeared in any hit. You will typically end up with 20–40 unique plugins across 4–6 stages. This is your candidate plugin pool for Step 5.
-
-## Step 5 — Plugin-level lookup
-
-For the unique plugin IDs you collected in Step 4e, pull their full catalog entries using `jq`. **Split the candidate pool into two groups by source before looking up:**
-
-- **Marketplace plugin IDs** — the format is `<pluginName>@<marketplaceId>` (e.g. `frontend-design@claude-plugins-official`). Look these up in `catalog.json`.
-- **Local plugin IDs** — the format starts with `local:` (e.g. `local:uiux-toolkit`, `local:gsd`). Look these up in `local-catalog.json` (the file Step 1e wrote).
-
-Run jq once per source with the same shape of command, using `--arg ids` to pass a comma-joined string into jq, which splits it and membership-tests each plugin's `id`.
-
-### 5a. Marketplace lookup
-
-```
-jq --arg ids '<marketplace-plugin-id-1>,<marketplace-plugin-id-2>' \
-   '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' \
-   ~/.claude-profiles/marketplace-cache/catalog.json
-```
-
-**Substitute the angle-bracketed placeholders with your actual comma-joined plugin ID list before running.** Do not run the command with `<marketplace-plugin-id-1>` literally — those are placeholders.
-
-Concrete example — if your marketplace candidates were `frontend-design@claude-plugins-official`, `chrome-devtools-mcp@chrome-devtools-plugins`, and `feature-dev@claude-plugins-official`, you would run:
-
-!`jq --arg ids 'frontend-design@claude-plugins-official,chrome-devtools-mcp@chrome-devtools-plugins,feature-dev@claude-plugins-official' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/catalog.json`
-
-### 5b. Local lookup
-
-Same command shape against `local-catalog.json`:
-
-```
-jq --arg ids '<local-plugin-id-1>,<local-plugin-id-2>' \
-   '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' \
-   ~/.claude-profiles/marketplace-cache/local-catalog.json
-```
-
-Concrete example — if your local candidates were `local:uiux-toolkit` and `local:gsd`, you would run:
-
-!`jq --arg ids 'local:uiux-toolkit,local:gsd' '[.plugins[] | select(.id as $id | ($ids | split(",")) | index($id))]' ~/.claude-profiles/marketplace-cache/local-catalog.json`
-
-Merge the results from 5a and 5b into a single candidate-pool list. For each plugin, you now have `displayName`, `description`, `featured` (always `false` for locals), `collections` (always `[]` for locals), `counts`, `topKeywords` (may be empty for locals), and `sourceUrl` (a `file://` path for locals). You have enough plugin-level context to rank candidates within each stage and make informed composition decisions.
-
-Skip 5a entirely if no marketplace candidates surfaced. Skip 5b if no local candidates surfaced. It's normal for either to be empty depending on the user's tech stack and what they've installed locally.
+The script's `response.plugins` array **is** your candidate plugin pool for Step 6 — typically 20–40 unique plugins across 4–6 stages, each carrying `displayName`, `description`, `featured`, `collections`, `counts`, `topKeywords`, `sourceUrl`, and a `source` tag (`"marketplace"` or `"local"`). Use `response.stages[].hits` when you need to know *which* stages a given plugin matched for (for multi-stage leverage scoring in Step 6a).
 
 ## Step 6 — Composition and self-critique (Layer 3)
 
 ### 6a. Per-stage selection (explicit scoring, not file order)
 
-For each stage, you have ~60 candidate items from Step 4b. **Do not pick winners based on the order they appeared in the grep output** — that's file order (alphabetical by marketplace ID), not relevance. Instead, compute an explicit score per *unique plugin* (aggregating the matched items across a plugin into a single plugin-level score), then pick the 1–2 highest-scoring plugins for the stage.
+For each stage, you have up to ~60 candidate items in `response.stages[i].hits` and the unique plugin digests in `response.plugins`. The script's per-stage ranking is a good starting order (distinct-keyword match score, stable, local-first tiebreak), but Step 6a applies additional signals on top of it. Compute an explicit score per *unique plugin* (aggregating the matched items across a plugin into a single plugin-level score), then pick the 1–2 highest-scoring plugins for the stage.
 
 **Scoring formula** (compute this for every candidate plugin, then rank):
 
@@ -340,11 +280,23 @@ The user sees a profile with a single effective `pubmed` skill. The other 998 ar
 - **Marketplace-prefix clustering.** If all your winners across stages come from plugins whose marketplace IDs start with the same one or two letters (e.g. all `agenticnotetaking`, `agricidaniel-claude-ads`, `ai-research-skills`), that's a red flag — you ranked by file order, not by score. Recompute the scoring formula before continuing.
 - **Generic-verb false positives.** A plugin description that contains the word `implement` or `code` does not automatically mean it belongs in the `implement` stage — a note-taking plugin might have `"Use this to implement better notes"` in its description. Low Group B score (no tech-context match) should heavily penalize these.
 - **Over-scoring small plugins with one perfect keyword match.** A one-skill plugin that hits every Group A word gets a high score mechanically, but a larger, better-rounded plugin that hits 3 of 5 may serve the stage better. Use the tiebreakers above.
-- **Ignoring local plugins.** If your final picks for a stage include zero local candidates when the user has several plausible local skills (you can see them in the `local-catalog.json` Step 1e generated), double-check that you actually ran the grep against `local-items.ndjson` alongside `items.ndjson` in Step 4b. Missing the local file is a common bug, and the symptom is an all-marketplace final profile even when the user has perfect local matches installed.
+- **Ignoring local plugins.** If your final picks for a stage include zero local candidates when the user has several plausible local skills (you can see them in the `local-catalog.json` Step 1e generated), double-check `response.diagnostics.localItemsCount` from the Step 4b call — if it's `0`, the local cache wasn't built and the retrieval ran against marketplace-only data. Re-run `list-local-plugins.js` from Step 1e and re-run Step 4b. The symptom of silently skipping locals is an all-marketplace final profile even when the user has perfect local matches installed.
 
 ### 6b. Cross-cutting staples
 
-Beyond the workflow shape's stages, some tools are valuable regardless of stage — planning skills, git workflow tools, general debugging helpers, note-taking. Add 1–3 cross-cutting staples to the profile. Retrieve them with a separate grep pass using generic staple keywords (`plan|planning|git|debug|note|todo|task`). Prefer featured plugins here especially — you are adding baseline utility, not domain-specific tooling.
+Beyond the workflow shape's stages, some tools are valuable regardless of stage — planning skills, git workflow tools, general debugging helpers, note-taking. Add 1–3 cross-cutting staples to the profile. Retrieve them with a second call to `retrieve-plugins.js` using a single synthetic `"staples"` stage with generic keywords and an **empty** `techKeywords` array (staples are meant to be general-purpose; narrowing them by tech context is counterproductive):
+
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/retrieve-plugins.js" <<'JSON'
+{
+  "stages": [
+    {"id": "staples", "keywords": ["plan","planning","git","debug","note","todo","task"]}
+  ],
+  "techKeywords": [],
+  "cap": 30
+}
+JSON`
+
+Prefer featured plugins here especially — you are adding baseline utility, not domain-specific tooling.
 
 ### 6c. Draft the plugin shell (provisional)
 
@@ -530,25 +482,42 @@ Now and only now, ask. Never assume — always explicit, and explain what it is 
 - **User says yes** → proceed to 7d
 - **User asks "what would it look like?"** → sketch a one-paragraph version from the workflow shape's stages, then ask the question again
 
-### 7d. Sequence the tool set into a `/workflow` body (only if 7c = yes)
+### 7d. Hand off to `create-workflow` to sequence the tool set
 
-**This is the first time workflow stages appear in user-facing text.** Step 7a showed the user a flat tool list by design; now that they've opted into having a `/workflow` command, the sequence question finally matters, and the workflow shape's stages are the right scaffolding for it. Frame the transition explicitly so the user understands what's happening:
+The actual stage-by-stage sequencing lives in the **`create-workflow`** skill (also in this `profiles-manager` plugin). Don't duplicate that logic here — hand control over with a context block so `create-workflow` can skip its own profile-selection and shape-picking steps and go straight into interactive sequencing using the plugins and shape you already locked in.
 
-> *"Great — let's turn your tool set into a sequence. The workflow shape I matched your work to (`<shape-id>`) has these stages: <list of stage names>. I'll propose one step per stage using the tools we just locked in, and you can confirm, tweak, or add extra steps as we go. The tool set doesn't change — we're just deciding what order Claude walks through them in when you type `/workflow`."*
+Emit the handoff context block verbatim, in exactly this shape, substituting your locked state:
 
-Then work through the sequence stage by stage. **Do not draft the body unilaterally.**
+```
+CREATE_WORKFLOW_CONTEXT
+{
+  "profileDescription": "<profile_description from Step 0>",
+  "profileName": "<P_NAME you're about to write — if not yet locked, use a placeholder and update once 7e sets it>",
+  "pickedPlugins": [
+    {"id": "frontend-design@claude-plugins-official", "displayName": "frontend-design",
+     "enabledItems": {"skills": ["frontend-design"], "commands": [], "agents": []}},
+    ...
+  ],
+  "shapeId": "<the shape id you picked in Step 3, e.g. 'feature-development'>",
+  "stages": [
+    {"id": "plan", "name": "Plan", "intent": "...", "keywords": ["..."]},
+    ...
+  ]
+}
+END_CREATE_WORKFLOW_CONTEXT
+```
 
-1. **Propose the scaffolding.** Use the chosen workflow shape's stages as the skeleton. *"The shape has these stages: [list]."*
+Then announce the handoff in one line — *"Handing off to the `create-workflow` skill to co-design the `/workflow` body with you."* — and invoke the skill. `create-workflow` will detect the context block, skip its standalone flow, and run Step 3 (interactive sequencing) directly. It does not write to `profiles.json` in parent mode — it emits the final body between marker lines:
 
-2. **For each stage, propose one concrete step in one sentence.** Ground it in the tools the user just locked in 7b, not in tools Claude might have considered earlier. Example: *"For the `implement` stage, I'd have Claude use `frontend-design`'s `frontend-design` skill to scaffold the component structure, then fill in the logic. Sound right, or do you do something different at this stage?"*
+```
+WORKFLOW_BODY_BEGIN
+<final body>
+WORKFLOW_BODY_END
+```
 
-3. **Confirm the step, then ask about additions.** After each stage is locked, ask: *"Anything else that should happen at this stage? Also anything between `<stage N>` and `<stage N+1>` that's not in the shape but is part of how you actually work?"* The user might want Claude to post a Slack summary after shipping, or check a changelog before starting, or always run `git pull` first. These aren't in the shape — let the user add them.
+**When control returns to you**, extract the text between `WORKFLOW_BODY_BEGIN` and `WORKFLOW_BODY_END` verbatim and hold it as `P_WORKFLOW` for the Step 8 write. If the user opted out mid-way (the markers surround an empty body), leave `P_WORKFLOW` unset — Step 8 will write the profile with no `/workflow` command, and the user can always invoke `create-workflow` standalone later.
 
-4. **Once all stages are confirmed, assemble the `/workflow` body and show it back.** Format as a numbered list or bulleted list, whichever reads more naturally for this workflow. Ask: *"Here's the full /workflow body — anything to change before I lock it in?"*
-
-5. **Save the final body as `P_WORKFLOW` for Step 8's write.** If at any point the user says *"actually skip the workflow"*, respect that and proceed to 7e with `P_WORKFLOW` unset.
-
-**Remember:** the `/workflow` body is a sequence *over the existing tool set*. It does not add or remove tools — that was locked in 7b. If the user realises during 7d that they're missing a tool for a stage, pause, jump back to a mini-7b beat to add it, then resume sequencing. Don't silently smuggle new picks in through the workflow.
+Then proceed to Step 7e. Do not re-ask the workflow question or re-sequence the stages — that conversation belongs to `create-workflow` and duplicating it here produces confusing double-prompts.
 
 ### 7e. Final settings (administrative)
 

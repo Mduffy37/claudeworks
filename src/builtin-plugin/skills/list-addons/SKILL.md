@@ -1,76 +1,68 @@
 ---
 name: list-addons
-description: List all plugins, skills, agents, and commands available in the current profile with their status (active, excluded, local)
+description: Verify profile isolation by diffing the declared inventory (script) against what's actually loaded in this Claude session (system-reminder)
 ---
 
-Run the following command to inspect the current profile's add-ons:
+This skill is a **profile isolation validator**, not just a lister. It runs in three phases and produces a diff report. Follow the phases in order, do not skip.
 
-!`node -e "
-const fs=require('fs'),path=require('path'),os=require('os');
-const cd=process.env.CLAUDE_CONFIG_DIR;
-if(!cd){console.log('Not running under a profile (no CLAUDE_CONFIG_DIR)');process.exit(0)}
-const pp=cd.split(path.sep),pn=pp[pp.lastIndexOf('config')-1];
-const pfPath=path.join(os.homedir(),'.claude-profiles','profiles.json');
-if(!fs.existsSync(pfPath)){console.log('profiles.json not found');process.exit(0)}
-const pf=JSON.parse(fs.readFileSync(pfPath,'utf-8')).profiles[pn];
-if(!pf){console.log('Profile not found: '+pn);process.exit(0)}
-const mf=JSON.parse(fs.readFileSync(path.join(cd,'plugins','installed_plugins.json'),'utf-8'));
-const ex=pf.excludedItems||{};
-const skills=[],commands=[],agents=[];
+## Phase 1 — Declared inventory (from the filesystem)
 
-for(const[plugName,installs]of Object.entries(mf.plugins)){
-  const short=plugName.split('@')[0];const pe=ex[plugName]||[];
-  for(const inst of installs){const b=inst.installPath;
-    if(!fs.existsSync(b))continue;
+Run the helper and parse its JSON output. This is what the profile *declares* should be loaded:
 
-    const sd=path.join(b,'skills');
-    if(fs.existsSync(sd))for(const d of fs.readdirSync(sd)){const sm=path.join(sd,d,'SKILL.md');if(!fs.existsSync(sm))continue;
-      const c=fs.readFileSync(sm,'utf-8'),m=c.match(/^name:\\s*(.+)$/m);const n=m?m[1].trim():d;
-      const desc=(c.match(/^description:\\s*(.+)$/m)||[])[1]||'';
-      skills.push({name:short+':'+n,excluded:pe.includes(n),desc:desc.slice(0,80)})}
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-addons.js" --json 2>&1`
 
-    const cd2=path.join(b,'commands');
-    if(fs.existsSync(cd2))for(const f of fs.readdirSync(cd2)){if(!f.endsWith('.md'))continue;const n=f.replace('.md','');
-      commands.push({name:short+':'+n,excluded:pe.includes(n)})}
+Parse the JSON into three sets: `declared.skills`, `declared.commands`, `declared.agents`. Each is a sorted array of `plugin:name` strings. Remember the `profile`, `pluginCount`, `counts.excluded`, and `excludedSkills`/`excludedCommands`/`excludedAgents` fields — you'll need them for the final report.
 
-    const ad=path.join(b,'agents');
-    if(fs.existsSync(ad))for(const f of fs.readdirSync(ad)){if(!f.endsWith('.md')||f==='README.md')continue;const n=f.replace('.md','');
-      agents.push({name:short+':'+n,excluded:pe.includes(n)})}
-  }
-}
+## Phase 2 — Actual inventory (from your session context)
 
-// Local items from working directory
-const wd=pf.directory||process.cwd();const lc=path.join(wd,'.claude');const local=[];
-if(fs.existsSync(lc)){
-  const ls=path.join(lc,'skills');if(fs.existsSync(ls))for(const d of fs.readdirSync(ls)){const sm=path.join(ls,d,'SKILL.md');if(fs.existsSync(sm))local.push(d+' (skill)')}
-  const lm=path.join(lc,'commands');if(fs.existsSync(lm))for(const f of fs.readdirSync(lm)){if(f.endsWith('.md'))local.push(f.replace('.md','')+' (command)')}
-  const la=path.join(lc,'agents');if(fs.existsSync(la))for(const f of fs.readdirSync(la)){if(f.endsWith('.md')&&f!=='README.md')local.push(f.replace('.md','')+' (agent)')}
-}
+Now enumerate what's **actually available to you in this running session**. The authoritative source is the `<system-reminder>` block near the start of the conversation that lists available skills. That block is ground truth — the Claude Code runtime injected it after profile assembly completed, so it reflects what was actually loaded.
 
-console.log('');
-console.log('Profile: '+pn);
-console.log('Plugins: '+pf.plugins.length);
-console.log('');
-if(skills.length){
-  const active=skills.filter(s=>!s.excluded);const excluded=skills.filter(s=>s.excluded);
-  console.log('Skills ('+active.length+' active'+(excluded.length?', '+excluded.length+' excluded':'')+'):');
-  for(const s of active)console.log('  + '+s.name+(s.desc?' — '+s.desc:''));
-  for(const s of excluded)console.log('  - '+s.name+' (excluded)');
-}
-if(commands.length){
-  const active=commands.filter(c=>!c.excluded);const excluded=commands.filter(c=>c.excluded);
-  console.log('Commands ('+active.length+' active'+(excluded.length?', '+excluded.length+' excluded':'')+'):');
-  for(const c of active)console.log('  + /'+c.name);
-  for(const c of excluded)console.log('  - /'+c.name+' (excluded)');
-}
-if(agents.length){
-  const active=agents.filter(a=>!a.excluded);const excluded=agents.filter(a=>a.excluded);
-  console.log('Agents ('+active.length+' active'+(excluded.length?', '+excluded.length+' excluded':'')+'):');
-  for(const a of active)console.log('  + '+a.name);
-  for(const a of excluded)console.log('  - '+a.name+' (excluded)');
-}
-if(local.length){console.log('');console.log('Local (from '+wd+'/.claude/):');for(const l of local)console.log('  ~ '+l)}
-console.log('');
-" 2>&1`
+**Strict rules for Phase 2 — read, do not recall:**
 
-Display the output above as a formatted summary. Do not modify or interpret it.
+- Read directly from the system-reminder text in your context. Do not rely on memory of what a "typical" profile has.
+- Convert every listed skill to the same `plugin:name` format used in Phase 1. Items in the system reminder that already have a `plugin:name` prefix stay as-is. Items without a plugin prefix (e.g. `update-config`, `keybindings-help`, `simplify`, `loop`) are **builtin or globally-installed** — prefix them with the sentinel `(global):` so they diff cleanly.
+- Do the same for commands (user-invocable slash commands grouped under "user-invocable skills" or similar) and for agents (under the Agent tool's `subagent_type` list).
+- If a category (skills, commands, agents) is not visible in your context, say so explicitly in the report instead of guessing.
+
+Build three sets: `session.skills`, `session.commands`, `session.agents`.
+
+## Phase 3 — Diff and report
+
+Compute three deltas per category:
+
+- **Matched** = `declared ∩ session` — items in both. Report the count only, never the list.
+- **Missing from session** = `declared ∖ session` — declared in the profile but absent from your context. These are **load failures** — profile assembly wrote the files but Claude Code didn't pick them up. Every entry here is a bug worth investigating.
+- **Unexpected in session** = `session ∖ declared` — present in your context but not in the profile's declaration. These are **isolation leaks** — items reaching your session from some source the profile didn't ask for (usually `~/.claude/` bleeding through because the runtime reads it regardless of `CLAUDE_CONFIG_DIR`). Every entry here is a profile-separation bug. Items prefixed `(global):` are always unexpected from the profile's perspective — group them under their own subheading so a user can see "global builtins leaking in" separately from "non-builtin leaks," because the latter is a more urgent signal.
+
+## Output format
+
+Produce a terse markdown report. Example shape — fill with your real diff:
+
+```
+# Profile isolation check — <profile-name>
+
+Declared: <N> skills, <N> commands, <N> agents (<N> excluded)
+Session:  <N> skills, <N> commands, <N> agents
+
+## ✓ Matched
+Skills:   <N> / <N>
+Commands: <N> / <N>
+Agents:   <N> / <N>
+
+## ⚠ Missing from session (declared but not loaded)
+- plugin:name
+- plugin:name
+(none → "All declared items are loaded.")
+
+## ⚠ Unexpected in session (loaded but not declared)
+### Non-builtin leaks (investigate)
+- plugin:name
+### Global builtins
+- (global):name
+- (global):name
+(none → "No unexpected items.")
+```
+
+**Verdict line at the end**: if Missing is empty AND the "Non-builtin leaks" subsection is empty, print `✓ Profile isolation verified.`. If either has entries, print `✗ Profile isolation issue: <N> missing, <N> unexpected (non-builtin).` and nothing else on that line.
+
+Do not enumerate the profile's excluded items (the helper's JSON includes them for your reference only — they are noise at scale for mega-bundle plugins like antigravity-awesome-skills and must not appear in the report body).
