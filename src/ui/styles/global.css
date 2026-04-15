@@ -109,6 +109,10 @@
   --color-team-dim:    rgba(140, 107, 122, 0.16);
   --color-danger:      var(--error-crimson);
   --color-danger-dim:  rgba(181, 51, 51, 0.16);
+  --color-success:     var(--sage);
+  --color-success-dim: rgba(122, 139, 110, 0.18);
+  --color-warning:     var(--brass);
+  --color-warning-dim: rgba(176, 138, 58, 0.18);
 
   --color-launch:       var(--terracotta);
   --color-launch-hover: var(--coral);
@@ -200,6 +204,8 @@
   --color-command-dim: rgba(176, 138, 58, 0.12);
   --color-team-dim:    rgba(140, 107, 122, 0.12);
   --color-danger-dim:  rgba(181, 51, 51, 0.10);
+  --color-success-dim: rgba(122, 139, 110, 0.14);
+  --color-warning-dim: rgba(176, 138, 58, 0.14);
 
   --ring:           0 0 0 1px var(--ring-warm);
   --ring-strong:    0 0 0 1px var(--ring-deep);
@@ -7352,6 +7358,31 @@ body {
   font-size: 0.692rem;
   flex-shrink: 0;
   margin-top: 3px;
+}
+
+.health-issue-icon.danger { color: var(--color-danger); }
+.health-issue-icon.warning { color: var(--color-warning); }
+.health-issue-icon.success { color: var(--color-success); }
+
+.health-ok-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: var(--color-success-dim);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  color: var(--color-success);
+  font-size: 0.846rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.health-ok-state::before {
+  content: "\2713";
+  font-size: 0.923rem;
+  line-height: 1;
 }
 
 /* ─── Error panel on the loading page ─────────────────────────────────── */

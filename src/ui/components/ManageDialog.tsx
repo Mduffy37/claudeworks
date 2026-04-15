@@ -1064,13 +1064,13 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
           <div className="health-issue-list">
             {healthEntries.map(([name, missing]) => (
               <div key={name} className="health-issue-item">
-                <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                <span className="health-issue-icon danger" aria-hidden="true">{"\u25CF"}</span>
                 <span><strong>{name}</strong> — missing plugin{missing.length !== 1 ? "s" : ""}: {missing.join(", ")}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="manage-section-hint">No missing plugins detected.</div>
+          <div className="health-ok-state">No missing plugins detected</div>
         )}
         {staleProfiles.length > 0 && (
           <>
@@ -1080,7 +1080,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             <div className="health-issue-list">
               {staleProfiles.map((p) => (
                 <div key={p.name} className="health-issue-item">
-                  <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span className="health-issue-icon warning" aria-hidden="true">{"\u25CB"}</span>
                   <span>{p.name} — last launched {new Date(p.lastLaunched!).toLocaleDateString()}</span>
                 </div>
               ))}
@@ -1095,7 +1095,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             <div className="health-issue-list">
               {neverLaunched.map((p) => (
                 <div key={p.name} className="health-issue-item">
-                  <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                  <span className="health-issue-icon warning" aria-hidden="true">{"\u25CB"}</span>
                   <span>{p.name}</span>
                 </div>
               ))}
@@ -1115,7 +1115,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
           <div className="health-issue-list">
             {unusedPlugins.map((name) => (
               <div key={name} className="health-issue-item">
-                <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--text-muted)" }}>{"\u25CB"}</span>
+                <span className="health-issue-icon warning" aria-hidden="true">{"\u25CB"}</span>
                 <span>{name.split("@")[0]}</span>
               </div>
             ))}
@@ -1159,7 +1159,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
                 </div>
                 {diagnostics.issues.map((issue, i) => (
                   <div key={i} className="health-issue-item">
-                    <span className="health-issue-icon" aria-hidden="true" style={{ color: "var(--color-danger)" }}>{"\u25CF"}</span>
+                    <span className="health-issue-icon danger" aria-hidden="true">{"\u25CF"}</span>
                     <span>{issue}</span>
                   </div>
                 ))}
@@ -1168,7 +1168,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
               <>
                 <div className="field-divider" />
                 <div className="field">
-                  <div className="field-hint" style={{ margin: 0, color: "var(--color-skill)" }}>No issues detected.</div>
+                  <div className="health-ok-state">No issues detected</div>
                 </div>
               </>
             )}
