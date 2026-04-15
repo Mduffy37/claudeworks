@@ -39,6 +39,11 @@ function shortPath(dir: string): string {
   return parts.length <= 1 ? dir : `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
 }
 
+function basename(dir: string): string {
+  const parts = dir.split("/").filter(Boolean);
+  return parts[parts.length - 1] ?? dir;
+}
+
 function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, importedProjects = [], onOpenProjectsConfig }: {
   profile: Profile;
   onLaunch: (name: string, directory?: string) => void;
@@ -93,6 +98,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
       <select
         className="sidebar-launch-select"
         aria-label={`Launch directory for ${profile.name}`}
+        title={selectedDir || "No directory selected"}
         value={selectedDir}
         onChange={(e) => updateSelectedDir(e.target.value)}
         onMouseDown={(e) => {
@@ -104,7 +110,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
       >
         <option value="">None</option>
         {dirs.map((dir) => (
-          <option key={dir} value={dir}>{shortPath(dir)}</option>
+          <option key={dir} value={dir} title={dir}>{basename(dir)}</option>
         ))}
       </select>
       <button
