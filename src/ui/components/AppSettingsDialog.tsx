@@ -129,19 +129,35 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
           <div className="manage-section">
             <div className="manage-section-header">
               <span className="manage-section-label">Text Size</span>
+              <span className="text-size-readout" aria-hidden="true">
+                {Math.round(scale * 100)}%
+              </span>
             </div>
             <div className="text-size-slider">
               <span className="text-size-label-sm" aria-hidden="true">A</span>
-              <input
-                type="range"
-                min={0.85}
-                max={1.2}
-                step={0.05}
-                value={scale}
-                onChange={(e) => handleScaleChange(Number(e.target.value))}
-                aria-label="Text size"
-                aria-valuetext={`${Math.round(scale * 100)}%`}
-              />
+              <div className="text-size-track">
+                <input
+                  type="range"
+                  min={0.85}
+                  max={1.2}
+                  step={0.05}
+                  value={scale}
+                  onChange={(e) => handleScaleChange(Number(e.target.value))}
+                  aria-label="Text size"
+                  aria-valuetext={`${Math.round(scale * 100)}%`}
+                  list="text-size-ticks"
+                />
+                <datalist id="text-size-ticks">
+                  <option value="0.85" label="85%" />
+                  <option value="1" label="100%" />
+                  <option value="1.2" label="120%" />
+                </datalist>
+                <div className="text-size-tickrow" aria-hidden="true">
+                  <span style={{ left: "0%" }}>85%</span>
+                  <span style={{ left: `${((1 - 0.85) / (1.2 - 0.85)) * 100}%` }}>100%</span>
+                  <span style={{ left: "100%" }}>120%</span>
+                </div>
+              </div>
               <span className="text-size-label-lg" aria-hidden="true">A</span>
             </div>
           </div>
