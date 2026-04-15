@@ -1725,19 +1725,21 @@ body {
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--ivory);
   border: none;
   padding: 6px 16px;
   border-radius: var(--radius-sm);
-  font-size: 1rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--transition-fast), opacity var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
   letter-spacing: -0.01em;
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
+  box-shadow: var(--ring-accent);
 }
 
 .btn-primary:disabled {
@@ -1747,13 +1749,13 @@ body {
 }
 
 .btn-primary.btn-primary-dirty {
-  box-shadow: 0 1px 8px rgba(222, 115, 86, 0.45);
-  font-weight: 600;
+  box-shadow: 0 1px 8px rgba(201, 100, 66, 0.45);
+  font-weight: 500;
 }
 
 .btn-primary.btn-primary-dirty:hover {
   background: var(--accent-hover);
-  box-shadow: 0 2px 12px rgba(222, 115, 86, 0.55);
+  box-shadow: 0 2px 12px rgba(201, 100, 66, 0.55);
 }
 
 .btn-secondary {
@@ -1778,12 +1780,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(234, 179, 8, 0.08);
-  color: #eab308;
-  border: 1px solid rgba(234, 179, 8, 0.45);
+  background: rgba(176, 138, 58, 0.10);
+  color: var(--brass);
+  border: 1px solid rgba(176, 138, 58, 0.45);
   padding: 6px 12px;
   border-radius: var(--radius-sm);
-  font-size: 1rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1791,39 +1794,40 @@ body {
 }
 
 .btn-warning:hover {
-  background: rgba(234, 179, 8, 0.16);
-  border-color: rgba(234, 179, 8, 0.7);
+  background: rgba(176, 138, 58, 0.18);
+  border-color: rgba(176, 138, 58, 0.7);
 }
 
 /* ─── Launch button ───────────────────────────────────────────────────────── */
 
 .btn-launch {
   background: var(--color-launch);
-  color: #fff;
+  color: var(--ivory);
   border: none;
   padding: 9px 20px;
   border-radius: var(--radius);
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 7px;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-  box-shadow: 0 1px 6px rgba(222, 115, 86, 0.35);
+  box-shadow: 0 1px 6px rgba(201, 100, 66, 0.35);
   letter-spacing: -0.01em;
 }
 
 .btn-launch:hover {
   background: var(--color-launch-hover);
-  box-shadow: 0 2px 12px rgba(222, 115, 86, 0.45);
+  box-shadow: 0 2px 12px rgba(201, 100, 66, 0.45);
   transform: translateY(-1px);
 }
 
 .btn-launch:active {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(222, 115, 86, 0.3);
+  box-shadow: 0 1px 4px rgba(201, 100, 66, 0.3);
 }
 
 .btn-launch:disabled {
@@ -1948,13 +1952,13 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.18);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.18);
   animation: unsaved-pulse 2s ease-in-out infinite;
 }
 
 @keyframes unsaved-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.18); }
-  50% { box-shadow: 0 0 0 5px rgba(222, 115, 86, 0.08); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.18); }
+  50% { box-shadow: 0 0 0 5px rgba(201, 100, 66, 0.08); }
 }
 
 .pe-topbar-right {
@@ -1980,13 +1984,15 @@ body {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
+  font-family: var(--font-serif);
   font-size: 1.231rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-heading);
   padding: 2px 6px;
   margin: -2px -6px;
   width: 100%;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .pe-topbar-name-input:hover {
@@ -1996,7 +2002,7 @@ body {
 .pe-topbar-name-input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.15);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
 }
 
 .pe-topbar-subtitle {
