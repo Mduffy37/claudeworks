@@ -218,7 +218,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
         </div>
       )}
 
-      <div className="profile-list-items">
+      <div className="profile-list-items" role="list" aria-label="Teams">
         {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
@@ -239,41 +239,41 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
             return (
               <div
                 key={t.name}
+                role="listitem"
                 className={`profile-item${t.name === selectedTeam ? " selected" : ""}`}
-                onClick={() => onSelect(t.name)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelect(t.name);
-                  }
-                }}
               >
-                <div className="profile-item-icon" style={{ background: "var(--color-team-dim)", color: "var(--color-team)" }}>
-                  {t.name.trim().charAt(0).toUpperCase() || "T"}
-                </div>
-                <div className="profile-item-body">
-                  <div className="profile-item-name">
-                    {t.name}
-                    {health && (
-                      <span
-                        className="health-badge"
-                        title={`${health.length} missing profile${health.length !== 1 ? "s" : ""}`}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                          <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
-                          <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                          <circle cx="8" cy="11" r="0.7" fill="currentColor" />
-                        </svg>
-                      </span>
-                    )}
+                <button
+                  type="button"
+                  className="profile-item-select"
+                  onClick={() => onSelect(t.name)}
+                  aria-current={t.name === selectedTeam ? "true" : undefined}
+                  aria-label={`Select team ${t.name}, ${t.members.length} member${t.members.length !== 1 ? "s" : ""}${lead ? `, led by ${lead.profile}` : ""}`}
+                >
+                  <div className="profile-item-icon" style={{ background: "var(--color-team-dim)", color: "var(--color-team)" }} aria-hidden="true">
+                    {t.name.trim().charAt(0).toUpperCase() || "T"}
                   </div>
-                  <div className="profile-item-meta">
-                    {t.members.length} member{t.members.length !== 1 ? "s" : ""}
-                    {lead ? ` · Lead: ${lead.profile}` : ""}
+                  <div className="profile-item-body">
+                    <div className="profile-item-name">
+                      {t.name}
+                      {health && (
+                        <span
+                          className="health-badge"
+                          aria-label={`${health.length} missing profile${health.length !== 1 ? "s" : ""}`}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                            <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                            <circle cx="8" cy="11" r="0.7" fill="currentColor" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                    <div className="profile-item-meta" aria-hidden="true">
+                      {t.members.length} member{t.members.length !== 1 ? "s" : ""}
+                      {lead ? ` · Lead: ${lead.profile}` : ""}
+                    </div>
                   </div>
-                </div>
+                </button>
                 {onToggleFavourite && (
                   <button
                     type="button"

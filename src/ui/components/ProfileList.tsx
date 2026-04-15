@@ -246,7 +246,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
         </div>
       )}
 
-      <div className="profile-list-items">
+      <div className="profile-list-items" role="list" aria-label="Profiles">
         {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
@@ -264,44 +264,44 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
           filtered.map((p) => (
             <div
               key={p.name}
+              role="listitem"
               className={`profile-item ${p.name === selectedName ? "selected" : ""}`}
-              onClick={() => onSelect(p.name)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelect(p.name);
-                }
-              }}
             >
-              <div className="profile-item-icon">
-                {profileInitial(p.name)}
-              </div>
-              <div className="profile-item-body">
-                <div className="profile-item-name">
-                  {p.name}
-                  {p.isDefault && (
-                    <span className="default-badge">DEFAULT</span>
-                  )}
-                  {profileHealth[p.name] && (
-                    <span
-                      className="health-badge"
-                      title={`${profileHealth[p.name].length} missing plugin${profileHealth[p.name].length !== 1 ? "s" : ""}`}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
-                        <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                        <circle cx="8" cy="11" r="0.7" fill="currentColor" />
-                      </svg>
-                    </span>
-                  )}
+              <button
+                type="button"
+                className="profile-item-select"
+                onClick={() => onSelect(p.name)}
+                aria-current={p.name === selectedName ? "true" : undefined}
+                aria-label={`Select profile ${p.name}${p.isDefault ? " (default)" : ""}, ${p.plugins.length} plugin${p.plugins.length !== 1 ? "s" : ""}`}
+              >
+                <div className="profile-item-icon" aria-hidden="true">
+                  {profileInitial(p.name)}
                 </div>
-                <div className="profile-item-meta">
-                  {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
-                  {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched)}` : ""}
+                <div className="profile-item-body">
+                  <div className="profile-item-name">
+                    {p.name}
+                    {p.isDefault && (
+                      <span className="default-badge" aria-hidden="true">DEFAULT</span>
+                    )}
+                    {profileHealth[p.name] && (
+                      <span
+                        className="health-badge"
+                        aria-label={`${profileHealth[p.name].length} missing plugin${profileHealth[p.name].length !== 1 ? "s" : ""}`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                          <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                          <circle cx="8" cy="11" r="0.7" fill="currentColor" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  <div className="profile-item-meta" aria-hidden="true">
+                    {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
+                    {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched)}` : ""}
+                  </div>
                 </div>
-              </div>
+              </button>
               {onToggleFavourite && (
                 <button
                   type="button"
