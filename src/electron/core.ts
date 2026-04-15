@@ -1112,15 +1112,45 @@ function ensureProfilesDir(): void {
   fs.mkdirSync(PROFILES_DIR, { recursive: true });
 }
 
+/**
+ * Schema version for profiles.json. Every time the on-disk shape of a
+ * stored profile changes in a way that old code can't read, bump this
+ * and add a branch to migrateProfilesStore().
+ *
+ * Today there is only v1 — the function is a skeleton so future migrations
+ * have a place to live. Shipping before v1 is public means every user has
+ * a known version stamp on disk, so v2 code never has to guess.
+ */
+const PROFILES_SCHEMA_VERSION = 1;
+
+function migrateProfilesStore(raw: any): ProfilesStore {
+  if (!raw || typeof raw !== "object") return { schemaVersion: PROFILES_SCHEMA_VERSION, profiles: {} };
+  const version = typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
+  let store: any = raw;
+
+  // Any data written before PROFILES_SCHEMA_VERSION existed is treated as
+  // "version 0" and upgraded to 1. No shape change today — the stamp is
+  // the migration.
+  if (version < 1) {
+    store = { ...store, schemaVersion: 1 };
+  }
+  // Future migrations go here, e.g.:
+  // if (version < 2) { store = { ...store, profiles: mapProfilesV1toV2(store.profiles) }; }
+
+  return store as ProfilesStore;
+}
+
 function readProfilesStore(): ProfilesStore {
-  if (!fs.existsSync(PROFILES_JSON)) return { profiles: {} };
-  return JSON.parse(fs.readFileSync(PROFILES_JSON, "utf-8"));
+  if (!fs.existsSync(PROFILES_JSON)) return { schemaVersion: PROFILES_SCHEMA_VERSION, profiles: {} };
+  const raw = JSON.parse(fs.readFileSync(PROFILES_JSON, "utf-8"));
+  return migrateProfilesStore(raw);
 }
 
 function writeProfilesStore(store: ProfilesStore): void {
   ensureProfilesDir();
+  const stamped: ProfilesStore = { ...store, schemaVersion: PROFILES_SCHEMA_VERSION };
   const tmp = PROFILES_JSON + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(store, null, 2) + "\n");
+  fs.writeFileSync(tmp, JSON.stringify(stamped, null, 2) + "\n");
   fs.renameSync(tmp, PROFILES_JSON);
 }
 
@@ -2893,15 +2923,30 @@ export async function launchProfile(profile: Profile, directory?: string, option
 
 const TEAMS_JSON = path.join(PROFILES_DIR, "teams.json");
 
+/** See PROFILES_SCHEMA_VERSION — same pattern for the teams file. */
+const TEAMS_SCHEMA_VERSION = 1;
+
+function migrateTeamsStore(raw: any): TeamsStore {
+  if (!raw || typeof raw !== "object") return { schemaVersion: TEAMS_SCHEMA_VERSION, teams: {} };
+  const version = typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
+  let store: any = raw;
+  if (version < 1) {
+    store = { ...store, schemaVersion: 1 };
+  }
+  return store as TeamsStore;
+}
+
 function readTeamsStore(): TeamsStore {
-  if (!fs.existsSync(TEAMS_JSON)) return { teams: {} };
-  return JSON.parse(fs.readFileSync(TEAMS_JSON, "utf-8"));
+  if (!fs.existsSync(TEAMS_JSON)) return { schemaVersion: TEAMS_SCHEMA_VERSION, teams: {} };
+  const raw = JSON.parse(fs.readFileSync(TEAMS_JSON, "utf-8"));
+  return migrateTeamsStore(raw);
 }
 
 function writeTeamsStore(store: TeamsStore): void {
   ensureProfilesDir();
+  const stamped: TeamsStore = { ...store, schemaVersion: TEAMS_SCHEMA_VERSION };
   const tmp = TEAMS_JSON + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(store, null, 2) + "\n");
+  fs.writeFileSync(tmp, JSON.stringify(stamped, null, 2) + "\n");
   fs.renameSync(tmp, TEAMS_JSON);
 }
 
@@ -3404,9 +3449,22 @@ export function saveGlobalClaudeMd(content: string): void {
   fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
 }
 
+/** See PROFILES_SCHEMA_VERSION — same pattern for global-defaults.json. */
+const GLOBAL_DEFAULTS_SCHEMA_VERSION = 1;
+
+function migrateGlobalDefaults(raw: any): any {
+  if (!raw || typeof raw !== "object") return { schemaVersion: GLOBAL_DEFAULTS_SCHEMA_VERSION };
+  const version = typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
+  let data: any = raw;
+  if (version < 1) {
+    data = { ...data, schemaVersion: 1 };
+  }
+  return data;
+}
+
 export function getGlobalDefaults(): { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string } {
   try {
-    const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+    const data = migrateGlobalDefaults(JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8")));
     return { model: data.model ?? "", opusContext: data.opusContext, sonnetContext: data.sonnetContext, effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags, terminalApp: data.terminalApp, tmuxMode: data.tmuxMode };
   } catch {
     return { model: "", effortLevel: "" };
@@ -3414,7 +3472,10 @@ export function getGlobalDefaults(): { model: string; opusContext?: "200k" | "1m
 }
 
 export function saveGlobalDefaults(defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }): void {
-  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(defaults, null, 2));
+  // schemaVersion spread last so the constant always wins over any stale
+  // value that might be in the defaults object.
+  const stamped = { ...defaults, schemaVersion: GLOBAL_DEFAULTS_SCHEMA_VERSION };
+  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(stamped, null, 2));
 }
 
 // ---------------------------------------------------------------------------

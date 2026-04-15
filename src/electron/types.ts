@@ -273,11 +273,19 @@ export interface InstalledPluginInfo {
 
 /** Stored profiles file format. */
 export interface ProfilesStore {
+  /**
+   * Schema version of the persisted file. Bumped whenever the shape of a
+   * stored profile changes in a way that requires migration. Optional on
+   * read for backwards compatibility with any pre-versioned data on disk.
+   */
+  schemaVersion?: number;
   profiles: Record<string, Profile>;
 }
 
 /** Stored teams file format (separate from profiles). */
 export interface TeamsStore {
+  /** See ProfilesStore.schemaVersion. */
+  schemaVersion?: number;
   teams: Record<string, Team>;
 }
 
