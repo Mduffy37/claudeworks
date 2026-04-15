@@ -242,14 +242,36 @@ function TabBar({
   counts: Partial<Record<TabId, string>>;
   onChange: (id: TabId) => void;
 }) {
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const idx = TABS.findIndex((t) => t.id === active);
+    let next = idx;
+    if (e.key === "ArrowLeft") next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === "ArrowRight") next = (idx + 1) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    const nextId = TABS[next].id;
+    onChange(nextId);
+    tabRefs.current[nextId]?.focus();
+  };
   return (
-    <div className="pe-tab-bar">
+    <div className="pe-tab-bar" role="tablist" aria-label="Profile sections" onKeyDown={onKeyDown}>
       {TABS.map((tab) => {
         const count = counts[tab.id];
+        const selected = active === tab.id;
         return (
           <button
             key={tab.id}
-            className={`pe-tab${active === tab.id ? " active" : ""}`}
+            ref={(el) => { tabRefs.current[tab.id] = el; }}
+            id={`pe-tab-${tab.id}`}
+            role="tab"
+            type="button"
+            aria-selected={selected}
+            aria-controls={`pe-tabpanel-${tab.id}`}
+            tabIndex={selected ? 0 : -1}
+            className={`pe-tab${selected ? " active" : ""}`}
             onClick={() => onChange(tab.id)}
           >
             {tab.label}
@@ -679,7 +701,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         />
 
         {/* Tab content */}
-        <div className="pe-tab-content">
+        <div
+          className="pe-tab-content"
+          role="tabpanel"
+          id={`pe-tabpanel-${activeTab}`}
+          aria-labelledby={`pe-tab-${activeTab}`}
+          tabIndex={0}
+        >
           {flatItemListData && (() => {
             const { type, items, groupCounts } = flatItemListData;
             return (

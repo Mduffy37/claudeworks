@@ -1973,43 +1973,48 @@ export function ManageDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="manage-dialog-header">
-          <div className="manage-dialog-tabs">
-            <button
-              className={`manage-dialog-tab${activeTab === "plugins" ? " active" : ""}`}
-              onClick={() => setActiveTab("plugins")}
-            >
-              Plugins
-            </button>
-            <button
-              className={`manage-dialog-tab${activeTab === "projects" ? " active" : ""}`}
-              onClick={() => setActiveTab("projects")}
-            >
-              Projects
-            </button>
-            <button
-              className={`manage-dialog-tab${activeTab === "prompts" ? " active" : ""}`}
-              onClick={() => setActiveTab("prompts")}
-            >
-              Prompts
-            </button>
-            <button
-              className={`manage-dialog-tab${activeTab === "global" ? " active" : ""}`}
-              onClick={() => setActiveTab("global")}
-            >
-              Global
-            </button>
-            <button
-              className={`manage-dialog-tab${activeTab === "health" ? " active" : ""}`}
-              onClick={() => setActiveTab("health")}
-            >
-              Health
-            </button>
-            <button
-              className={`manage-dialog-tab${activeTab === "statusbar" ? " active" : ""}`}
-              onClick={() => setActiveTab("statusbar")}
-            >
-              Status Bar
-            </button>
+          <div
+            className="manage-dialog-tabs"
+            role="tablist"
+            aria-label="Configure Claude sections"
+            onKeyDown={(e) => {
+              const tabs: ManageTab[] = ["plugins", "projects", "prompts", "global", "health", "statusbar"];
+              if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+              e.preventDefault();
+              const idx = tabs.indexOf(activeTab);
+              let next = idx;
+              if (e.key === "ArrowLeft") next = (idx - 1 + tabs.length) % tabs.length;
+              else if (e.key === "ArrowRight") next = (idx + 1) % tabs.length;
+              else if (e.key === "Home") next = 0;
+              else if (e.key === "End") next = tabs.length - 1;
+              setActiveTab(tabs[next]);
+            }}
+          >
+            {([
+              { id: "plugins" as const, label: "Plugins" },
+              { id: "projects" as const, label: "Projects" },
+              { id: "prompts" as const, label: "Prompts" },
+              { id: "global" as const, label: "Global" },
+              { id: "health" as const, label: "Health" },
+              { id: "statusbar" as const, label: "Status Bar" },
+            ]).map((tab) => {
+              const selected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`mg-tab-${tab.id}`}
+                  role="tab"
+                  type="button"
+                  aria-selected={selected}
+                  aria-controls={`mg-tabpanel-${tab.id}`}
+                  tabIndex={selected ? 0 : -1}
+                  className={`manage-dialog-tab${selected ? " active" : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
@@ -2017,7 +2022,12 @@ export function ManageDialog({
             </svg>
           </button>
         </div>
-        <div className="manage-dialog-body">
+        <div
+          className="manage-dialog-body"
+          role="tabpanel"
+          id={`mg-tabpanel-${activeTab}`}
+          aria-labelledby={`mg-tab-${activeTab}`}
+        >
           {activeTab === "plugins" && (
             <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <div className="discover-toggle">
