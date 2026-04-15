@@ -1900,7 +1900,7 @@ body {
 .pe-overflow-menu {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
+  right: 0;
   min-width: 160px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
