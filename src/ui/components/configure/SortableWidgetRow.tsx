@@ -78,7 +78,7 @@ export function SortableWidgetRow({
         className="status-bar-drag-handle"
         {...attributes}
         {...listeners}
-        aria-label="Drag to reorder"
+        aria-label={`Reorder ${label}`}
         onClick={(e) => e.stopPropagation()}
       >
         ⋮⋮
