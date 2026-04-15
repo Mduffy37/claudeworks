@@ -150,6 +150,16 @@ export function PluginPicker({
                   git
                 </span>
               )}
+              {plugin.source &&
+                plugin.source.type !== "skillfish" &&
+                plugin.source.type !== "git" && (
+                  <span
+                    className={`plugin-source plugin-source-${plugin.source.type}`}
+                    title={plugin.source.tooltip ?? `Installed by ${plugin.source.type}`}
+                  >
+                    {plugin.source.label ?? plugin.source.type}
+                  </span>
+                )}
             </span>
 
             {/* Badge row — always visible type breakdown */}

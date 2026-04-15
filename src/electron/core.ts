@@ -643,6 +643,85 @@ function parseRemoteOwnerRepo(url: string): { owner: string; repo: string } | nu
 }
 
 /**
+ * Detect a skill installed by an agent-skill CLI that writes a `.skill-lock.json`
+ * manifest near the real skill folder (e.g. Leonxlnx's skill-cli used by
+ * taste-skill). Follows symlinks, walks up the resolved path looking for the
+ * manifest, and matches the skill by its resolved basename.
+ *
+ * Returns a PluginSource with a `groupKey` so multiple skills from the same
+ * source repo collapse into one synthetic plugin card. Blanket detector —
+ * not hardcoded to any specific repo.
+ */
+function detectSkillLockSource(
+  skillDir: string,
+  manifestCache: Map<string, any>,
+): import("./types").PluginSource | null {
+  let realPath: string;
+  try {
+    realPath = fs.realpathSync(skillDir);
+  } catch {
+    return null;
+  }
+  const skillKey = path.basename(realPath);
+
+  // Walk up from the real skill folder looking for `.skill-lock.json`.
+  // Stop at $HOME or filesystem root to keep the walk bounded.
+  const home = os.homedir();
+  let dir = path.dirname(realPath);
+  let manifest: any = null;
+  let manifestPath = "";
+  while (dir && dir !== path.dirname(dir)) {
+    const candidate = path.join(dir, ".skill-lock.json");
+    if (manifestCache.has(candidate)) {
+      const cached = manifestCache.get(candidate);
+      if (cached) {
+        manifest = cached;
+        manifestPath = candidate;
+      }
+      break;
+    }
+    if (fs.existsSync(candidate)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(candidate, "utf-8"));
+        manifestCache.set(candidate, parsed);
+        manifest = parsed;
+        manifestPath = candidate;
+        break;
+      } catch {
+        manifestCache.set(candidate, null);
+        break;
+      }
+    }
+    if (dir === home) break;
+    dir = path.dirname(dir);
+  }
+
+  if (!manifest || !manifest.skills || typeof manifest.skills !== "object") return null;
+  const entry = manifest.skills[skillKey];
+  if (!entry || !entry.source) return null;
+
+  const source: string = String(entry.source);
+  const sourceUrl: string | undefined = entry.sourceUrl;
+
+  return {
+    type: "skill-lock",
+    label: "skill-lock",
+    groupKey: `skill-lock:${source}`,
+    groupName: source,
+    tooltip: sourceUrl
+      ? `Tracked by .skill-lock.json — source: ${source} (${sourceUrl})`
+      : `Tracked by .skill-lock.json — source: ${source}`,
+    metadata: {
+      source,
+      sourceUrl,
+      sourceType: entry.sourceType,
+      installedAt: entry.installedAt,
+      manifestPath,
+    },
+  };
+}
+
+/**
  * Detect a git-managed skill folder by presence of `.git/`, and extract the remote
  * URL, branch, and sha via subprocess. Returns null if anything fails.
  */
@@ -691,7 +770,32 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
   const gsdItems: PluginItem[] = [];
 
 
-  // Skills: each skill directory → its own plugin (GSD skills → framework:gsd)
+  // Skills: each skill directory → its own plugin, unless a detector returns a
+  // `groupKey` (multi-skill installers like skill-cli), in which case all skills
+  // sharing that key collapse into one grouped plugin card. GSD skills →
+  // framework:gsd as before.
+  //
+  // Detector registry — runs in order per skill, first hit wins. Blanket shape:
+  // adding a new installer means adding one function here.
+  const skillLockManifestCache = new Map<string, any>();
+  const skillDetectors: Array<(dir: string) => import("./types").PluginSource | null> = [
+    (dir) => {
+      const m = readSkillfishMarker(dir);
+      return m ? { type: "skillfish", metadata: m } : null;
+    },
+    (dir) => detectSkillLockSource(dir, skillLockManifestCache),
+    (dir) => {
+      const m = detectGitSource(dir);
+      return m ? { type: "git", metadata: m } : null;
+    },
+  ];
+
+  // Buffer grouped skills by groupKey so we can emit one PluginWithItems per group.
+  const groupedSkills = new Map<
+    string,
+    { source: import("./types").PluginSource; items: PluginItem[] }
+  >();
+
   const skillsDir = path.join(claudeHome, "skills");
   if (fs.existsSync(skillsDir)) {
     for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
@@ -713,27 +817,54 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
           userInvocable: true,
           dependencies: [],
         });
-      } else {
-        const skillDir = path.join(skillsDir, entry.name);
-        const skillfishMarker = readSkillfishMarker(skillDir);
-        let source: import("./types").PluginSource | undefined;
-        if (skillfishMarker) {
-          source = { type: "skillfish", metadata: skillfishMarker };
-        } else {
-          const gitMeta = detectGitSource(skillDir);
-          if (gitMeta) source = { type: "git", metadata: gitMeta };
+        continue;
+      }
+
+      const skillDir = path.join(skillsDir, entry.name);
+      let source: import("./types").PluginSource | undefined;
+      for (const detector of skillDetectors) {
+        const hit = detector(skillDir);
+        if (hit) { source = hit; break; }
+      }
+
+      // Grouped path: skills sharing a groupKey accumulate into one bucket.
+      if (source?.groupKey) {
+        const groupKey = source.groupKey;
+        const groupedPluginName = source.groupName ?? groupKey;
+        let bucket = groupedSkills.get(groupKey);
+        if (!bucket) {
+          bucket = { source, items: [] };
+          groupedSkills.set(groupKey, bucket);
         }
-        plugins.push(makePlugin(pluginName, [{
+        bucket.items.push({
           name: skillName,
           description: fm.description ?? "",
           type: "skill",
-          plugin: `${LOCAL_PLUGIN_PREFIX}${pluginName}`,
+          plugin: `${LOCAL_PLUGIN_PREFIX}${groupedPluginName}`,
           path: skillMd,
           userInvocable: true,
           dependencies: [],
-        }], source));
+        });
+        continue;
       }
+
+      // Ungrouped path: preserved legacy behaviour — one plugin per skill.
+      plugins.push(makePlugin(pluginName, [{
+        name: skillName,
+        description: fm.description ?? "",
+        type: "skill",
+        plugin: `${LOCAL_PLUGIN_PREFIX}${pluginName}`,
+        path: skillMd,
+        userInvocable: true,
+        dependencies: [],
+      }], source));
     }
+  }
+
+  // Emit one synthetic plugin per grouped bucket.
+  for (const { source, items } of groupedSkills.values()) {
+    const groupedPluginName = source.groupName ?? source.groupKey!;
+    plugins.push(makePlugin(groupedPluginName, items, source));
   }
 
   // Commands: each namespace dir → its own plugin; loose .md files → "commands" plugin

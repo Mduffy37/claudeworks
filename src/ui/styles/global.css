@@ -3157,6 +3157,10 @@ body {
   color: #c4b5fd;
 }
 
+.plugin-source-skill-lock {
+  color: #fbbf24;
+}
+
 .plugin-source-marketplace {
   color: var(--text-muted);
   opacity: 0.85;

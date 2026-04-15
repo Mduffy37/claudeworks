@@ -40,9 +40,18 @@ export interface PluginMcp {
   plugin: string; // parent plugin name
 }
 
-/** Provenance marker detected on a local plugin (e.g. a `.skillfish.json` file or `.git/` dir). */
+/**
+ * Provenance marker detected on a local plugin. Returned by a detector in the
+ * scanner's detector registry. `type` identifies the detector; `groupKey`,
+ * when present, collapses multiple skills sharing the same key into a single
+ * synthetic plugin card (used for multi-skill installers like skill-cli).
+ */
 export interface PluginSource {
-  type: "skillfish" | "git";
+  type: string;                    // detector name: "skillfish" | "git" | "skill-cli" | ...
+  label?: string;                  // pill text in the UI (falls back to `type`)
+  groupKey?: string;               // skills sharing this key collapse into one plugin
+  groupName?: string;              // display name for the grouped plugin card
+  tooltip?: string;                // pre-formatted tooltip text for the pill
   metadata?: Record<string, any>;
 }
 
