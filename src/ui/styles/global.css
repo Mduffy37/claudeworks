@@ -2351,7 +2351,7 @@ body {
 .pe-tab.active {
   color: var(--text-primary);
   border-bottom-color: var(--accent);
-  background: var(--accent-dim);
+  background: var(--bg-elevated);
 }
 
 .pe-tab-count {
@@ -2368,9 +2368,10 @@ body {
 }
 
 .pe-tab.active .pe-tab-count {
-  color: var(--accent);
-  background: var(--accent-dim);
-  border-color: rgba(201, 100, 66, 0.25);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  opacity: 1;
 }
 
 /* ─── Tab content panel ───────────────────────────────────────────────────── */
@@ -5175,8 +5176,9 @@ body {
 }
 
 .discover-toggle-btn.active {
-  background: var(--accent);
-  color: var(--bg-primary);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 /* ── Marketplaces tab ────────────────────────────────────────────── */
@@ -5633,9 +5635,10 @@ body {
 }
 
 .curated-collection-chip.active {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 .curated-collection-chip.curated-collection-more {
