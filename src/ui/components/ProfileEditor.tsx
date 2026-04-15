@@ -876,7 +876,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   <p style={{ fontSize: "0.846rem", color: "var(--text-muted)", marginTop: "8px" }}>
                     Add skills, agents, or commands to your project's <code>.claude/</code> directory and they'll appear here.
                   </p>
-                  <button className="btn-secondary" style={{ marginTop: "8px" }} onClick={() => window.api.openInFinder(launchDir + "/.claude")}>
+                  <button className="btn-outlined-accent" style={{ marginTop: "8px" }} onClick={() => window.api.openInFinder(launchDir + "/.claude")}>
                     Open .claude/ directory
                   </button>
                 </div>
@@ -894,7 +894,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                         </div>
                       </div>
                       <button
-                        className="btn-secondary"
+                        className="btn-outlined-accent"
                         onClick={() => window.api.openInFinder(launchDir + "/.claude")}
                       >
                         Open .claude/
@@ -910,9 +910,23 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                           {type === "skill" ? "Skills" : type === "agent" ? "Agents" : "Commands"} ({items.length})
                         </div>
                         {items.map((item) => (
-                          <div key={item.path} className="local-item enabled">
+                          <div
+                            key={item.path}
+                            className="local-item enabled clickable"
+                            role="button"
+                            tabIndex={0}
+                            title={`Reveal ${item.path} in Finder`}
+                            onClick={() => window.api.openInFinder(item.path)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                window.api.openInFinder(item.path);
+                              }
+                            }}
+                          >
                             <span className="local-item-name">{item.name}</span>
                             <span className="plugin-badge">{item.type}</span>
+                            <span className="local-item-chevron" aria-hidden="true">›</span>
                           </div>
                         ))}
                       </div>

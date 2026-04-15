@@ -1840,6 +1840,29 @@ body {
   color: var(--text-primary);
 }
 
+.btn-outlined-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-outlined-accent:hover {
+  background: rgba(201, 100, 66, 0.10);
+  border-color: var(--accent-hover);
+  color: var(--accent-hover);
+}
+
 .btn-warning {
   display: inline-flex;
   align-items: center;
@@ -3888,17 +3911,42 @@ body {
   border-radius: var(--radius);
   margin-bottom: 4px;
   opacity: 0.5;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .local-item.enabled {
   opacity: 1;
 }
 
+.local-item.clickable {
+  cursor: pointer;
+}
+
+.local-item.clickable:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.local-item.clickable:hover .local-item-chevron {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
 .local-item-name {
   flex: 1;
+  min-width: 0;
   font-size: 1rem;
   font-weight: 500;
+}
+
+.local-item-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 /* ─── Launch bar ──────────────────────────────────────────────────────────── */
