@@ -6292,7 +6292,7 @@ body {
 .home-period-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--ivory);
 }
 
 .home-update-banner {
@@ -6300,12 +6300,12 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(56, 152, 236, 0.12);
-  border: 1px solid rgba(56, 152, 236, 0.25);
+  background: rgba(176, 138, 58, 0.12);
+  border: 1px solid rgba(176, 138, 58, 0.35);
   border-radius: var(--radius);
   margin-bottom: 16px;
-  font-size: 0.923rem;
-  color: #3898ec;
+  font-size: var(--fs-caption);
+  color: var(--brass);
 }
 
 .home-update-current {
@@ -6333,10 +6333,13 @@ body {
 }
 
 .home-stat-value {
+  font-family: var(--font-serif);
   font-size: 1.35rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
-  line-height: 1.2;
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-heading);
+  font-variant-numeric: tabular-nums;
 }
 
 .home-stat-label {
@@ -6359,17 +6362,18 @@ body {
 .home-section + .home-columns,
 .home-stats + .home-columns {
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border);
 }
 
 .home-section-title {
-  font-size: 0.692rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h5);
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-heading);
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 /* Activity chart */
@@ -6424,7 +6428,7 @@ body {
   padding: 6px 10px;
   pointer-events: none;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-whisper);
   text-align: center;
 }
 
@@ -6465,9 +6469,9 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--sage);
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 6px rgba(122, 139, 110, 0.45);
 }
 
 .home-active-info {
@@ -6530,14 +6534,14 @@ body {
 .home-profile-icon {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--accent-dim);
   color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 0.846rem;
+  font-weight: 500;
+  font-size: var(--fs-caption);
 }
 
 .home-profile-name {
@@ -6563,7 +6567,7 @@ body {
 .home-launch-btn:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--ivory);
 }
 
 /* Project list */
@@ -6725,7 +6729,7 @@ body {
 }
 
 .sidebar-fav-btn.active {
-  color: #eab308;
+  color: var(--brass);
 }
 
 /* Session re-launch button */
@@ -6743,7 +6747,7 @@ body {
 
 .home-session-launch:hover {
   background: var(--accent);
-  color: white;
+  color: var(--ivory);
 }
 
 /* Home button in sidebar */
