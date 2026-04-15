@@ -2,99 +2,141 @@
 
 :root {
   color-scheme: dark;
-  /* Core backgrounds — neutral dark, not blue-purple */
-  --bg-primary: #141414;
-  --bg-secondary: #1c1c1e;
-  --bg-surface: #242426;
-  --bg-elevated: #2c2c2e;
-  --bg-hover: rgba(255, 255, 255, 0.06);
-  --bg-selected: rgba(255, 255, 255, 0.09);
-  --bg-selected-border: rgba(255, 255, 255, 0.14);
 
-  /* Text */
-  --text-primary: rgba(255, 255, 255, 0.92);
-  --text-secondary: rgba(255, 255, 255, 0.55);
-  --text-muted: rgba(255, 255, 255, 0.32);
-  --text-placeholder: rgba(255, 255, 255, 0.22);
+  /* ══ Palette primitives (DESIGN.md) ══════════════════════════════════ */
 
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --border-focus: rgba(222, 115, 86, 0.55);
+  /* Shared brand */
+  --terracotta:     #c96442;
+  --coral:          #d97757;
+  --error-crimson:  #b53333;
 
-  /* Accent — the single action color */
-  --accent: #DE7356;
-  --accent-dim: rgba(222, 115, 86, 0.15);
-  --accent-hover: #e5856b;
+  /* Shared warm neutral (works against both surface tones) */
+  --stone-gray:     #87867f;
 
-  /* Semantic type colors */
-  --color-skill: #52c97a;
-  --color-skill-dim: rgba(82, 201, 122, 0.12);
-  --color-agent: #5ea8f0;
-  --color-agent-dim: rgba(94, 168, 240, 0.12);
-  --color-command: #d4a05a;
-  --color-command-dim: rgba(212, 160, 90, 0.12);
-  --color-danger: #f55b5b;
-  --color-danger-dim: rgba(245, 91, 91, 0.12);
+  /* Dark-warm primitives */
+  --deep-dark:            #141413;
+  --dark-surface:         #30302e;
+  --dark-elevated:        #3d3d3a;
+  --dark-elevated-strong: #4d4c48;
+  --dark-border:          #30302e;
+  --dark-border-strong:   #4d4c48;
+  --warm-silver:          #b0aea5;
+  --ring-dark:            #4d4c48;
+  --ring-dark-strong:     #5e5d59;
 
-  /* Launch — matches accent so Launch reads as the single primary action */
-  --color-launch: #DE7356;
-  --color-launch-hover: #e5856b;
+  /* Light-warm primitives */
+  --parchment:     #f5f4ed;
+  --ivory:         #faf9f5;
+  --warm-sand:     #e8e6dc;
+  --pure-white:    #ffffff;
+  --near-black:    #141413;
+  --charcoal-warm: #4d4c48;
+  --olive-gray:    #5e5d59;
+  --dark-warm:     #3d3d3a;
+  --border-cream:  #f0eee6;
+  --border-warm:   #e8e6dc;
+  --ring-warm:     #d1cfc5;
+  --ring-deep:     #c2c0b6;
 
-  /* Team purple */
-  --color-team: #c490ff;
-  --color-team-dim: rgba(186, 104, 255, 0.15);
+  /* Item-type earth spectrum — tuned so every pair passes 3.0:1 non-text contrast
+     against both Parchment (#f5f4ed) and Dark Surface (#30302e) for indicator use.
+     Not intended as primary text color; use --text-primary for item names. */
+  --sage:   #7a8b6e;  /* skill   — muted olive  (3.31 L / 3.62 D) */
+  --walnut: #9a7a5e;  /* agent   — warm umber   (3.58 L / 3.35 D) */
+  --brass:  #9a7a2e;  /* command — deep amber   (3.66 L / 3.27 D) */
+  --plum:   #987585;  /* team    — earthy mauve (3.65 L / 3.29 D) */
 
-  /* Radius */
-  --radius-sm: 5px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  /* ══ Semantic aliases — dark defaults ═══════════════════════════════ */
+
+  --bg-primary:         var(--deep-dark);
+  --bg-secondary:       var(--dark-surface);
+  --bg-surface:         var(--dark-elevated);
+  --bg-elevated:        var(--dark-elevated-strong);
+  --bg-hover:           rgba(245, 244, 237, 0.05);
+  --bg-selected:        rgba(201, 100, 66, 0.10);
+  --bg-selected-border: rgba(201, 100, 66, 0.22);
+
+  --text-primary:     var(--warm-silver);
+  --text-secondary:   var(--stone-gray);
+  --text-muted:       rgba(176, 174, 165, 0.75);  /* ~4.0:1 AA on dark surface */
+  --text-placeholder: rgba(176, 174, 165, 0.45);
+
+  --border:        var(--dark-border);
+  --border-strong: var(--dark-border-strong);
+  --border-focus:  rgba(201, 100, 66, 0.55);
+
+  --accent:       var(--terracotta);
+  --accent-dim:   rgba(201, 100, 66, 0.16);
+  --accent-hover: var(--coral);
+
+  --color-skill:       var(--sage);
+  --color-skill-dim:   rgba(122, 139, 110, 0.14);
+  --color-agent:       var(--walnut);
+  --color-agent-dim:   rgba(138, 106, 78, 0.16);
+  --color-command:     var(--brass);
+  --color-command-dim: rgba(176, 138, 58, 0.14);
+  --color-team:        var(--plum);
+  --color-team-dim:    rgba(140, 107, 122, 0.16);
+  --color-danger:      var(--error-crimson);
+  --color-danger-dim:  rgba(181, 51, 51, 0.16);
+
+  --color-launch:       var(--terracotta);
+  --color-launch-hover: var(--coral);
+
+  /* ══ Radius scale (DESIGN.md 7-step) ═════════════════════════════════ */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius:     8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+
+  /* ══ Ring & shadow tokens (dark defaults) ════════════════════════════ */
+  --ring:           0 0 0 1px var(--ring-dark);
+  --ring-strong:    0 0 0 1px var(--ring-dark-strong);
+  --ring-accent:    0 0 0 1px var(--terracotta);
+  --shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.20);
+  --shadow-inset:   inset 0 0 0 1px rgba(245, 244, 237, 0.10);
 
   /* Transitions */
   --transition-fast: 120ms ease;
-  --transition: 180ms ease;
+  --transition:      180ms ease;
 }
 
-/* ─── Light theme ─────────────────────────────────────────────────────────── */
+/* ─── Light theme — overrides semantic aliases to point at light primitives ─ */
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg-primary: #f5f5f5;
-  --bg-secondary: #ebebeb;
-  --bg-surface: #e0e0e0;
-  --bg-elevated: #d6d6d6;
-  --bg-hover: rgba(0, 0, 0, 0.05);
-  --bg-selected: rgba(0, 0, 0, 0.07);
-  --bg-selected-border: rgba(0, 0, 0, 0.12);
-  --bg-tertiary: rgba(0, 0, 0, 0.04);
 
-  --text-primary: rgba(0, 0, 0, 0.88);
-  --text-secondary: rgba(0, 0, 0, 0.55);
-  --text-muted: rgba(0, 0, 0, 0.35);
-  --text-placeholder: rgba(0, 0, 0, 0.25);
+  --bg-primary:         var(--parchment);
+  --bg-secondary:       var(--ivory);
+  --bg-surface:         var(--warm-sand);
+  --bg-elevated:        var(--pure-white);
+  --bg-hover:           rgba(20, 20, 19, 0.04);
+  --bg-selected:        rgba(201, 100, 66, 0.08);
+  --bg-selected-border: rgba(201, 100, 66, 0.20);
 
-  --border: rgba(0, 0, 0, 0.1);
-  --border-strong: rgba(0, 0, 0, 0.18);
-  --border-focus: rgba(200, 90, 60, 0.55);
+  --text-primary:     var(--near-black);
+  --text-secondary:   var(--olive-gray);
+  --text-muted:       #6e6d67;  /* darker-than-stone for AA on parchment (~4.7:1) */
+  --text-placeholder: rgba(94, 93, 89, 0.75);
 
-  --accent: #c45a3a;
-  --accent-dim: rgba(196, 90, 58, 0.12);
-  --accent-hover: #b34e30;
+  --border:        var(--border-cream);
+  --border-strong: var(--border-warm);
 
-  --color-skill: #2a9d5c;
-  --color-skill-dim: rgba(42, 157, 92, 0.1);
-  --color-agent: #3a7fd4;
-  --color-agent-dim: rgba(58, 127, 212, 0.1);
-  --color-command: #b8862e;
-  --color-command-dim: rgba(184, 134, 46, 0.1);
-  --color-danger: #d44040;
-  --color-danger-dim: rgba(212, 64, 64, 0.1);
+  --accent-dim: rgba(201, 100, 66, 0.12);
 
-  --color-launch: #c45a3a;
-  --color-launch-hover: #b34e30;
+  --color-skill-dim:   rgba(122, 139, 110, 0.12);
+  --color-agent-dim:   rgba(138, 106, 78, 0.12);
+  --color-command-dim: rgba(176, 138, 58, 0.12);
+  --color-team-dim:    rgba(140, 107, 122, 0.12);
+  --color-danger-dim:  rgba(181, 51, 51, 0.10);
 
-  --color-team: #8a5cd4;
-  --color-team-dim: rgba(138, 92, 212, 0.12);
+  --ring:           0 0 0 1px var(--ring-warm);
+  --ring-strong:    0 0 0 1px var(--ring-deep);
+  --shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.05);
+  --shadow-inset:   inset 0 0 0 1px rgba(20, 20, 19, 0.15);
 }
 
 /* ─── Reset ───────────────────────────────────────────────────────────────── */
@@ -611,7 +653,7 @@ body {
   height: 85vh;
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1079,7 +1121,7 @@ body {
   max-height: 500px;
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2596,7 +2638,7 @@ body {
 .modal-dialog {
   background: var(--bg-secondary);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   width: 100%;
   max-width: 460px;
   max-height: calc(100vh - 48px);
@@ -2810,7 +2852,7 @@ body {
   gap: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 16px;
 }
 
@@ -3648,7 +3690,7 @@ body {
   border-top: 1px solid var(--border);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
 }
 
 .launch-dir {
@@ -4552,7 +4594,7 @@ body {
   gap: 10px;
   margin: 8px 12px 12px;
   border: 2px dashed var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.015);
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
@@ -6093,7 +6135,7 @@ body {
 .pe-settings-section {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 18px 20px 20px;
   margin-bottom: 0;
 }
