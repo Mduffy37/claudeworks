@@ -1675,6 +1675,7 @@ body {
 .bulk-item > td {
   padding: 10px 16px;
   vertical-align: middle;
+  height: 80px;
 }
 
 .bulk-item > td.bulk-col-check {
@@ -1741,7 +1742,7 @@ body {
   gap: 6px;
   flex-shrink: 0;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .bulk-meta-badge {
