@@ -63,12 +63,12 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
               <label
                 className="toggle-switch"
                 onClick={(e) => e.stopPropagation()}
-                title={mcp.enabled ? "Disable plugin" : "Enable plugin"}
               >
                 <input
                   type="checkbox"
                   checked={mcp.enabled}
                   onChange={(e) => onTogglePlugin(mcp.pluginFullName, e.target.checked)}
+                  aria-label={`${mcp.enabled ? "Disable" : "Enable"} MCP server ${mcp.name} from plugin ${mcp.pluginDisplayName}`}
                 />
                 <span className="toggle-track">
                   <span className="toggle-thumb" />

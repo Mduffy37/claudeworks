@@ -94,12 +94,12 @@ export function PluginPicker({
           <label
             className="toggle-switch"
             onClick={(e) => e.stopPropagation()}
-            title={enabled ? "Disable plugin" : "Enable plugin"}
           >
             <input
               type="checkbox"
               checked={enabled}
               onChange={(e) => onTogglePlugin(plugin.name, e.target.checked)}
+              aria-label={`${enabled ? "Disable" : "Enable"} plugin ${plugin.pluginName}`}
             />
             <span className="toggle-track">
               <span className="toggle-thumb" />
