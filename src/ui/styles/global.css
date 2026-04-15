@@ -406,11 +406,13 @@ body {
 }
 
 .profile-list-header h2 {
-  font-size: 0.846rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: var(--ls-tight);
+  text-transform: none;
+  color: var(--text-primary);
+  line-height: var(--lh-heading);
 }
 
 .profile-list-items {
@@ -435,17 +437,23 @@ body {
 
 .profile-item:hover {
   background: var(--bg-hover);
+  box-shadow: var(--ring);
 }
 
 .profile-item.selected {
   background: var(--bg-selected);
-  border-color: var(--bg-selected-border);
+  border-color: transparent;
+  box-shadow: var(--ring-accent);
+}
+
+.profile-item.selected:hover {
+  box-shadow: var(--ring-accent);
 }
 
 .profile-item-icon {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   display: flex;
@@ -459,7 +467,7 @@ body {
 
 .profile-item.selected .profile-item-icon {
   background: var(--accent-dim);
-  border-color: rgba(222, 115, 86, 0.3);
+  border-color: var(--accent-dim);
   color: var(--accent);
 }
 
@@ -510,7 +518,7 @@ body {
 }
 
 .health-badge {
-  color: #eab308;
+  color: var(--brass);
   display: inline-flex;
   flex-shrink: 0;
 }
@@ -522,7 +530,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   background: transparent;
   border: 1px solid var(--border-strong);
   color: var(--text-muted);
@@ -559,50 +567,47 @@ body {
 
 .btn-launch-sidebar {
   display: flex;
-  opacity: 0.3;
+  opacity: 1;
   width: 100%;
-  padding: 4px 8px;
-  margin-top: 6px;
-  background: rgba(222, 115, 86, 0.1);
-  border: 1px solid rgba(222, 115, 86, 0.25);
+  padding: 5px 10px;
+  margin-top: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--color-launch);
-  font-size: 0.846rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition: opacity var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  gap: 6px;
+  transition: background var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
   white-space: nowrap;
   box-sizing: border-box;
   flex-shrink: 0;
+  box-shadow: var(--ring);
 }
 
-.profile-item:hover .btn-launch-sidebar,
+.btn-launch-sidebar:hover,
 .btn-launch-sidebar:focus-visible {
-  opacity: 1;
-}
-
-.btn-launch-sidebar:hover {
-  background: rgba(222, 115, 86, 0.2);
-  border-color: rgba(222, 115, 86, 0.45);
+  background: var(--terracotta);
+  color: var(--ivory);
+  border-color: var(--terracotta);
+  box-shadow: var(--ring-accent);
 }
 
 .sidebar-launch-group {
   display: flex;
-  opacity: 0.3;
+  opacity: 1;
   width: 100%;
   gap: 5px;
   margin-top: 6px;
   align-items: stretch;
   box-sizing: border-box;
-  transition: opacity var(--transition-fast);
-}
-
-.profile-item:hover .sidebar-launch-group {
-  opacity: 1;
 }
 
 .sidebar-launch-select {
@@ -615,7 +620,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.846rem;
+  font-size: var(--fs-caption);
   font-family: var(--font-mono);
   cursor: pointer;
   /* strip default OS select chrome */
@@ -642,10 +647,6 @@ body {
 }
 
 .btn-launch-label {
-  display: none;
-}
-
-.profile-item:hover .btn-launch-label {
   display: inline;
 }
 
@@ -715,7 +716,7 @@ body {
 
 .sidebar-dock-primary:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--ivory);
 }
 
 /* ─── Manage dialog ──────────────────────────────────────────────────────── */
