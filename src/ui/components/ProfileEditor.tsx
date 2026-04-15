@@ -857,6 +857,22 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   <div className="local-items-note">
                     Items from <strong>{launchDir.split("/").pop()}</strong>/.claude/ — these are loaded automatically when launching into this directory, independent of profile settings.
                   </div>
+                  {localItems.length < 3 && (
+                    <div className="pe-local-helper-card">
+                      <div className="pe-local-helper-body">
+                        <div className="pe-local-helper-title">Add more project items</div>
+                        <div className="pe-local-helper-text">
+                          Drop skills, agents, or commands into this project's <code>.claude/</code> directory and they'll appear here alongside profile-level items.
+                        </div>
+                      </div>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => window.api.openInFinder(launchDir + "/.claude")}
+                      >
+                        Open .claude/
+                      </button>
+                    </div>
+                  )}
                   {(["skill", "agent", "command"] as const).map((type) => {
                     const items = localItems.filter((i) => i.type === type);
                     if (items.length === 0) return null;

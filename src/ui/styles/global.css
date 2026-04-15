@@ -3557,6 +3557,43 @@ body {
   padding: 0 0 8px;
 }
 
+.pe-local-helper-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.pe-local-helper-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pe-local-helper-title {
+  font-size: 0.923rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.pe-local-helper-text {
+  font-size: 0.846rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.pe-local-helper-text code {
+  font-family: "SF Mono", monospace;
+  font-size: 0.769rem;
+  background: var(--bg-elevated);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
 .local-item {
   display: flex;
   align-items: center;
