@@ -463,6 +463,12 @@ export interface ElectronAPI {
   fetchUpstreamMarketplace: (source: string) => Promise<Record<string, any>>;
   fetchPluginItems: (source: string, pluginPath: string) => Promise<PluginItem[]>;
   fetchRepoReadme: (source: string) => Promise<string>;
+  getGitHubBackend: () => Promise<{
+    kind: "gh" | "fetch-authed" | "fetch-anon";
+    rateLimit: "5000/h" | "60/h";
+    description: string;
+    upgradeHint: string | null;
+  }>;
   // Status line config
   getStatusLineConfig: () => Promise<StatusLineConfig>;
   setStatusLineConfig: (config: StatusLineConfig) => Promise<void>;

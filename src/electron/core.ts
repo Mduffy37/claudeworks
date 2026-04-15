@@ -3710,34 +3710,219 @@ import type { CuratedMarketplaceData, CuratedIndex } from "./types";
 let curatedCache: CuratedMarketplaceData | null = null;
 let curatedIndexCache: CuratedIndex | null = null;
 
+// ---------------------------------------------------------------------------
+// GitHub API backend
+// ---------------------------------------------------------------------------
+//
+// Three-level backend detection, picked once at first use and cached for the
+// session:
+//
+//   1. `gh` CLI authenticated → use `gh api`. 5000/h quota, access to any
+//      private repo the user has permissions for, multi-host support
+//      (e.g. GitHub Enterprise).
+//   2. `GITHUB_TOKEN` env var set → use fetch() with an Authorization header.
+//      Same 5000/h quota, any private repo the token grants, no `gh` CLI
+//      required.
+//   3. Neither → fall back to unauthenticated fetch(). 60/h quota,
+//      public repos only.
+//
+// Every GitHub call site goes through `githubApi(path, opts)`; the backend
+// dispatch is invisible to callers. Detection runs once per session, so users
+// who install/configure `gh` mid-session need to restart to pick it up.
+
+type GitHubBackend =
+  | { kind: "gh" }
+  | { kind: "fetch-authed"; token: string }
+  | { kind: "fetch-anon" };
+
+let _ghBackend: GitHubBackend | null = null;
+let _ghBinaryPathCache: string | null = null;
+
+/**
+ * Locate the `gh` CLI binary. Checks `GH_PATH` first (override), then common
+ * install locations, then falls back to bare "gh" (which lets execFileAsync
+ * try the runtime PATH — may still succeed in dev-mode Electron).
+ *
+ * Electron on macOS launched from a `.app` bundle inherits a minimal PATH
+ * that usually excludes Homebrew locations, so hardcoding the bundle-safe
+ * absolute path is more reliable than trusting PATH. Apple Silicon and Intel
+ * Homebrew use different prefixes, hence the two-candidate check.
+ */
 function ghBinary(): string {
-  return process.env.GH_PATH ?? "/opt/homebrew/bin/gh";
+  if (_ghBinaryPathCache) return _ghBinaryPathCache;
+  const override = process.env.GH_PATH;
+  if (override) {
+    _ghBinaryPathCache = override;
+    return override;
+  }
+  const candidates = [
+    "/opt/homebrew/bin/gh",    // macOS Apple Silicon Homebrew
+    "/usr/local/bin/gh",       // macOS Intel Homebrew, Linux /usr/local
+    "/usr/bin/gh",             // Linux system install
+    "/home/linuxbrew/.linuxbrew/bin/gh", // Linuxbrew
+  ];
+  for (const c of candidates) {
+    try {
+      fs.accessSync(c, fs.constants.X_OK);
+      _ghBinaryPathCache = c;
+      return c;
+    } catch {
+      // try next
+    }
+  }
+  // Fall back to bare name — execFileAsync will search PATH if the host
+  // environment has it available (dev mode, most tests).
+  _ghBinaryPathCache = "gh";
+  return "gh";
 }
 
-// Uses the `application/vnd.github.raw` media type instead of the default JSON
-// contents representation. Two reasons: (1) the JSON contents endpoint has a
-// hard 1 MB limit — larger files return `content: ""` silently, which broke
-// index.json fetching once the search index grew past 1.7 MB; (2) raw bytes
-// skip the base64 round-trip. Explicit maxBuffer overrides Node's 1 MB
-// child-process default, which would otherwise re-introduce a silent truncate
-// at the same threshold. 50 MB ceiling gives plenty of headroom for index growth.
+async function detectGitHubBackend(): Promise<GitHubBackend> {
+  if (_ghBackend) return _ghBackend;
+  // Level 1: gh CLI authenticated. `gh auth status` exits 0 only when at
+  // least one host is logged in; otherwise it errors. Bounded 3s timeout in
+  // case gh is installed but hangs on a flaky config file.
+  try {
+    await execFileAsync(ghBinary(), ["auth", "status"], { timeout: 3000 });
+    _ghBackend = { kind: "gh" };
+    return _ghBackend;
+  } catch {
+    // fall through to fetch-based backends
+  }
+  // Level 2: GITHUB_TOKEN env var (authenticated fetch, no gh needed).
+  const token = process.env.GITHUB_TOKEN?.trim();
+  if (token) {
+    _ghBackend = { kind: "fetch-authed", token };
+    return _ghBackend;
+  }
+  // Level 3: unauthenticated fetch. Public repos only, 60/h quota.
+  _ghBackend = { kind: "fetch-anon" };
+  return _ghBackend;
+}
+
+/**
+ * Public backend state for the UI. Browse-tab callers can use this to show a
+ * quota/limits banner explaining what mode the app is running in and how to
+ * raise the rate limit.
+ */
+export async function getGitHubBackendState(): Promise<{
+  kind: "gh" | "fetch-authed" | "fetch-anon";
+  rateLimit: "5000/h" | "60/h";
+  description: string;
+  upgradeHint: string | null;
+}> {
+  const b = await detectGitHubBackend();
+  switch (b.kind) {
+    case "gh":
+      return {
+        kind: "gh",
+        rateLimit: "5000/h",
+        description: "Authenticated via `gh` CLI",
+        upgradeHint: null,
+      };
+    case "fetch-authed":
+      return {
+        kind: "fetch-authed",
+        rateLimit: "5000/h",
+        description: "Authenticated via GITHUB_TOKEN env var",
+        upgradeHint: null,
+      };
+    case "fetch-anon":
+      return {
+        kind: "fetch-anon",
+        rateLimit: "60/h",
+        description: "Unauthenticated — public repos only",
+        upgradeHint: "Install `gh` CLI (https://cli.github.com) and run `gh auth login`, or set GITHUB_TOKEN in your environment, to raise the limit to 5000/h and access private marketplaces.",
+      };
+  }
+}
+
+/**
+ * Unified GitHub API helper. Routes through whichever backend was detected
+ * at startup; callers never have to know which one.
+ *
+ * Raw vs JSON media:
+ *   - `raw: true` → `application/vnd.github.raw`. Use for file-content fetches
+ *     (marketplace.json, SKILL.md, plugin.json, README, index.json). Avoids
+ *     the JSON contents endpoint's 1 MB limit and skips base64 encoding.
+ *   - `raw: false` (default) → `application/vnd.github+json`. Use for
+ *     directory listings and symlink detection (where the `type` / `target`
+ *     fields are needed).
+ *
+ * 50 MB `maxBuffer` on the `gh` path prevents Node's 1 MB child-process
+ * default from silently truncating large payloads — this previously broke
+ * index.json fetching once the search index grew past the 1 MB default.
+ */
+async function githubApi(
+  apiPath: string,
+  opts: { raw?: boolean; timeout?: number } = {},
+): Promise<string> {
+  const backend = await detectGitHubBackend();
+  const timeout = opts.timeout ?? 15000;
+  const accept = opts.raw ? "application/vnd.github.raw" : "application/vnd.github+json";
+
+  if (backend.kind === "gh") {
+    const { stdout } = await execFileAsync(ghBinary(), [
+      "api",
+      apiPath,
+      "-H", `Accept: ${accept}`,
+    ], { timeout, maxBuffer: 50 * 1024 * 1024 });
+    return stdout;
+  }
+
+  // fetch-authed and fetch-anon share the fetch path; the only difference is
+  // whether we attach an Authorization header.
+  const url = `https://api.github.com/${apiPath.replace(/^\//, "")}`;
+  const headers: Record<string, string> = {
+    "User-Agent": "claude-profiles",
+    "Accept": accept,
+  };
+  if (backend.kind === "fetch-authed") {
+    headers["Authorization"] = `token ${backend.token}`;
+  }
+  const res = await fetch(url, {
+    headers,
+    signal: AbortSignal.timeout(timeout),
+  });
+  if (!res.ok) {
+    throw new Error(`GitHub API ${res.status} on ${apiPath}: ${res.statusText}`);
+  }
+  return await res.text();
+}
+
+// ---------------------------------------------------------------------------
+// LRU caches for quota-sensitive call sites
+// ---------------------------------------------------------------------------
+//
+// `fetchRepoReadme` and `fetchUpstreamMarketplace` are called from the curated
+// detail modal every time it opens. Without caching, repeat opens cost one
+// round-trip each — under the `fetch-anon` backend (60/h quota) that adds up
+// fast for anyone casually browsing. Both are idempotent for the life of a
+// session; a restart refreshes. Map-based LRU is sufficient.
+const README_CACHE_MAX = 50;
+const MARKETPLACE_CACHE_MAX = 50;
+const _readmeCache = new Map<string, string>();
+const _marketplaceCache = new Map<string, Record<string, any>>();
+
+function lruTouch<K, V>(cache: Map<K, V>, key: K, val: V, max: number): void {
+  cache.delete(key);
+  cache.set(key, val);
+  if (cache.size > max) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+}
+
+/** Fetches a file from the curator's own marketplace repo. */
 async function fetchGitHubFileContent(repoPath: string): Promise<string> {
-  const { stdout } = await execFileAsync(ghBinary(), [
-    "api",
+  return githubApi(
     `repos/Mduffy37/claude-profiles-marketplace/contents/${repoPath}`,
-    "-H", "Accept: application/vnd.github.raw",
-  ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
-  return stdout;
+    { raw: true },
+  );
 }
 
-/** Fetch a file's content from any public GitHub repo via `gh api`. See fetchGitHubFileContent for the media-type and maxBuffer rationale. */
+/** Fetch a raw file from any public GitHub repo. */
 async function fetchAnyRepoFile(source: string, filePath: string): Promise<string> {
-  const { stdout } = await execFileAsync(ghBinary(), [
-    "api",
-    `repos/${source}/contents/${filePath}`,
-    "-H", "Accept: application/vnd.github.raw",
-  ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
-  return stdout;
+  return githubApi(`repos/${source}/contents/${filePath}`, { raw: true });
 }
 
 /**
@@ -3774,10 +3959,7 @@ async function resolveSymlink(source: string, repoPath: string, depth = 0): Prom
   if (depth >= 3) return null;
   const cleanPath = repoPath.replace(/^\/+/, "");
   try {
-    const { stdout } = await execFileAsync(ghBinary(), [
-      "api",
-      `repos/${source}/contents/${cleanPath}`,
-    ], { timeout: 15000, maxBuffer: 50 * 1024 * 1024 });
+    const stdout = await githubApi(`repos/${source}/contents/${cleanPath}`);
     const parsed = JSON.parse(stdout);
     if (Array.isArray(parsed)) return cleanPath;
     if (parsed && parsed.type === "symlink" && typeof parsed.target === "string") {
@@ -3799,10 +3981,7 @@ async function resolveSymlink(source: string, repoPath: string, depth = 0): Prom
  */
 async function fetchAnyRepoDir(source: string, dirPath: string, depth = 0): Promise<Array<{ name: string; type: string; path: string }>> {
   if (depth >= 3) return [];
-  const { stdout } = await execFileAsync(ghBinary(), [
-    "api",
-    `repos/${source}/contents/${dirPath}`,
-  ], { timeout: 15000 });
+  const stdout = await githubApi(`repos/${source}/contents/${dirPath}`);
   const data = JSON.parse(stdout);
   if (!Array.isArray(data)) {
     if (data && data.type === "symlink" && typeof data.target === "string") {
@@ -3854,28 +4033,46 @@ function parseFrontmatterString(content: string): Record<string, string> {
   return result;
 }
 
-/** Fetch a repo's README (rendered as raw markdown). Returns empty string on failure. */
+/**
+ * Fetch a repo's README as raw markdown. Cached per-source (see LRU notes
+ * above) so the curated detail modal can be reopened without re-fetching.
+ * Returns empty string on failure.
+ *
+ * We fetch `/readme` with `Accept: application/vnd.github.raw` which returns
+ * the markdown directly — much simpler than the old `--jq ".content"` + base64
+ * decode dance, and works identically on the `gh` and fetch backends.
+ */
 export async function fetchRepoReadme(source: string): Promise<string> {
+  const cached = _readmeCache.get(source);
+  if (cached !== undefined) {
+    lruTouch(_readmeCache, source, cached, README_CACHE_MAX);
+    return cached;
+  }
   try {
-    const { stdout } = await execFileAsync(ghBinary(), [
-      "api",
-      `repos/${source}/readme`,
-      "--jq", ".content",
-    ], { timeout: 15000 });
-    return Buffer.from(stdout.trim().replace(/\s/g, ""), "base64").toString("utf-8");
+    const raw = await githubApi(`repos/${source}/readme`, { raw: true });
+    lruTouch(_readmeCache, source, raw, README_CACHE_MAX);
+    return raw;
   } catch {
     return "";
   }
 }
 
 /**
- * Fetch an upstream Claude Code marketplace's manifest from GitHub without registering it.
- * Returns the parsed `.claude-plugin/marketplace.json` — callers get the full upstream shape
- * (typically `{ name, owner, plugins: [...] }`).
+ * Fetch an upstream Claude Code marketplace's manifest from GitHub without
+ * registering it. Returns the parsed `.claude-plugin/marketplace.json` —
+ * callers get the full upstream shape (typically `{ name, owner, plugins: [...] }`).
+ * Cached per-source (see LRU notes above).
  */
 export async function fetchUpstreamMarketplace(source: string): Promise<Record<string, any>> {
+  const cached = _marketplaceCache.get(source);
+  if (cached !== undefined) {
+    lruTouch(_marketplaceCache, source, cached, MARKETPLACE_CACHE_MAX);
+    return cached;
+  }
   const raw = await fetchAnyRepoFile(source, ".claude-plugin/marketplace.json");
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  lruTouch(_marketplaceCache, source, parsed, MARKETPLACE_CACHE_MAX);
+  return parsed;
 }
 
 /**

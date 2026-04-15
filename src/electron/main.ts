@@ -64,6 +64,7 @@ import {
   fetchUpstreamMarketplace,
   fetchPluginItems,
   fetchRepoReadme,
+  getGitHubBackendState,
   getStatusLineConfig,
   setStatusLineConfig,
   resetStatusLineConfig,
@@ -510,6 +511,7 @@ ipcMain.handle("refresh-curated-index", () => refreshCuratedIndex());
 ipcMain.handle("fetch-upstream-marketplace", (_event, source: string) => fetchUpstreamMarketplace(source));
 ipcMain.handle("fetch-plugin-items", (_event, source: string, pluginPath: string) => fetchPluginItems(source, pluginPath));
 ipcMain.handle("fetch-repo-readme", (_event, source: string) => fetchRepoReadme(source));
+ipcMain.handle("get-github-backend", () => getGitHubBackendState());
 
 // Status line config
 ipcMain.handle("get-statusline-config", () => getStatusLineConfig());
