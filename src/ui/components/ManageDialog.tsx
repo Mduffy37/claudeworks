@@ -399,29 +399,41 @@ function ProjectsTab() {
             </svg>
           </button>
         </div>
-        <div className="manage-projects-list">
+        <div className="manage-projects-list" role="listbox" aria-label="Imported projects">
           {projects.length === 0 ? (
             <div className="manage-projects-empty">
               No projects imported. Click + to add a project directory.
             </div>
           ) : (
-            projects.map((dir) => (
-              <div
-                key={dir}
-                className={`manage-project-item${selected === dir ? " selected" : ""}`}
-                onClick={() => setSelected(dir)}
-              >
-                <div className="manage-project-name">{shortPath(dir)}</div>
-                <div className="manage-project-path">{dir}</div>
-                <button
-                  className="manage-project-remove"
-                  onClick={(e) => { e.stopPropagation(); handleRemove(dir); }}
-                  title="Remove project"
+            projects.map((dir) => {
+              const isSelected = selected === dir;
+              return (
+                <div
+                  key={dir}
+                  role="option"
+                  aria-selected={isSelected}
+                  tabIndex={isSelected ? 0 : -1}
+                  className={`manage-project-item${isSelected ? " selected" : ""}`}
+                  onClick={() => setSelected(dir)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(dir);
+                    }
+                  }}
                 >
-                  &times;
-                </button>
-              </div>
-            ))
+                  <div className="manage-project-name">{shortPath(dir)}</div>
+                  <div className="manage-project-path" title={dir}>{dir}</div>
+                  <button
+                    className="manage-project-remove"
+                    onClick={(e) => { e.stopPropagation(); handleRemove(dir); }}
+                    aria-label={`Remove project ${shortPath(dir)}`}
+                  >
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -1284,27 +1296,39 @@ function PromptsTab() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="manage-projects-list">
+        <div className="manage-projects-list" role="listbox" aria-label="Saved prompts">
           {filtered.length === 0 ? (
             <div className="manage-projects-empty">
               {prompts.length === 0 ? "No prompts yet. Click + to create one." : "No matches."}
             </div>
           ) : (
-            filtered.map((p) => (
-              <div
-                key={p.id}
-                className={`manage-project-item${selected === p.id ? " selected" : ""}`}
-                onClick={() => setSelected(p.id)}
-              >
-                <div className="manage-project-name">{p.name || "Untitled"}</div>
-                {p.description && <div className="manage-project-path">{p.description}</div>}
-                {p.tags.length > 0 && (
-                  <div className="prompt-list-tags">
-                    {p.tags.map((t) => <span key={t} className="bulk-tag-chip">{t}</span>)}
-                  </div>
-                )}
-              </div>
-            ))
+            filtered.map((p) => {
+              const isSelected = selected === p.id;
+              return (
+                <div
+                  key={p.id}
+                  role="option"
+                  aria-selected={isSelected}
+                  tabIndex={isSelected ? 0 : -1}
+                  className={`manage-project-item${isSelected ? " selected" : ""}`}
+                  onClick={() => setSelected(p.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(p.id);
+                    }
+                  }}
+                >
+                  <div className="manage-project-name">{p.name || "Untitled"}</div>
+                  {p.description && <div className="manage-project-path">{p.description}</div>}
+                  {p.tags.length > 0 && (
+                    <div className="prompt-list-tags">
+                      {p.tags.map((t) => <span key={t} className="bulk-tag-chip">{t}</span>)}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>
