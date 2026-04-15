@@ -139,6 +139,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                       (isCommand ? " command-name" : "") +
                       (!enabled ? " muted" : "")
                     }
+                    aria-hidden="true"
                   >
                     {isCommand ? `/${item.name}` : item.name}
                   </span>
