@@ -173,7 +173,12 @@ export function SettingsTab(props: Props) {
             <label>Voice</label>
             <div className="field-toggle">
               <label className="toggle-switch">
-                <input type="checkbox" checked={voiceEnabled ?? true} onChange={(e) => onChangeVoice(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={voiceEnabled ?? true}
+                  onChange={(e) => onChangeVoice(e.target.checked)}
+                  aria-label="Voice"
+                />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
               <span className="field-toggle-label">
@@ -201,6 +206,7 @@ export function SettingsTab(props: Props) {
                       onChangeStatusLineConfig(undefined);
                     }
                   }}
+                  aria-label="Override global status bar for this profile"
                 />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
@@ -221,7 +227,12 @@ export function SettingsTab(props: Props) {
           <div className="field">
             <div className="field-toggle">
               <label className="toggle-switch">
-                <input type="checkbox" checked={useDefaultAuth} onChange={(e) => onChangeUseDefaultAuth(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={useDefaultAuth}
+                  onChange={(e) => onChangeUseDefaultAuth(e.target.checked)}
+                  aria-label="Use default authentication"
+                />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
               <span className="field-toggle-label">Use default authentication</span>
@@ -310,7 +321,12 @@ export function SettingsTab(props: Props) {
                 <div key={`${h.event}-${h.index}`} className="field">
                   <div className="field-toggle">
                     <label className="toggle-switch">
-                      <input type="checkbox" checked={!disabled} onChange={() => toggleHook(h.event, h.index)} />
+                      <input
+                        type="checkbox"
+                        checked={!disabled}
+                        onChange={() => toggleHook(h.event, h.index)}
+                        aria-label={`Enable ${h.event} hook: ${h.command}`}
+                      />
                       <span className="toggle-track"><span className="toggle-thumb" /></span>
                     </label>
                     <span className="field-toggle-label">
@@ -373,14 +389,24 @@ export function SettingsTab(props: Props) {
             <div className="flag-toggles">
               <div className="field-toggle">
                 <label className="toggle-switch">
-                  <input type="checkbox" checked={launchFlags.dangerouslySkipPermissions ?? false} onChange={(e) => onChangeLaunchFlags({ ...launchFlags, dangerouslySkipPermissions: e.target.checked || undefined })} />
+                  <input
+                    type="checkbox"
+                    checked={launchFlags.dangerouslySkipPermissions ?? false}
+                    onChange={(e) => onChangeLaunchFlags({ ...launchFlags, dangerouslySkipPermissions: e.target.checked || undefined })}
+                    aria-label="Enable --dangerously-skip-permissions launch flag"
+                  />
                   <span className="toggle-track"><span className="toggle-thumb" /></span>
                 </label>
                 <span className="field-toggle-label"><code>--dangerously-skip-permissions</code></span>
               </div>
               <div className="field-toggle">
                 <label className="toggle-switch">
-                  <input type="checkbox" checked={launchFlags.verbose ?? false} onChange={(e) => onChangeLaunchFlags({ ...launchFlags, verbose: e.target.checked || undefined })} />
+                  <input
+                    type="checkbox"
+                    checked={launchFlags.verbose ?? false}
+                    onChange={(e) => onChangeLaunchFlags({ ...launchFlags, verbose: e.target.checked || undefined })}
+                    aria-label="Enable --verbose launch flag"
+                  />
                   <span className="toggle-track"><span className="toggle-thumb" /></span>
                 </label>
                 <span className="field-toggle-label"><code>--verbose</code></span>
