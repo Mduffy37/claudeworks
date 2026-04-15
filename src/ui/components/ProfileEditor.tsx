@@ -32,6 +32,8 @@ interface Props {
   onDelete: (name: string) => void;
   onDuplicate?: (name: string) => void;
   onOpenProjectsConfig?: () => void;
+  /** Opens the Configure Claude dialog at Plugins > Browse with the query pre-filled. */
+  onOpenBrowseAt?: (query: string) => void;
   focusTagsSignal?: number;
   focusProjectsSignal?: number;
   dirty: boolean;
@@ -263,7 +265,7 @@ function TabBar({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], tagSuggestions = [], onSave, onLaunch, onDelete, onDuplicate, onOpenProjectsConfig, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onRegisterSave }: Props) {
+export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], tagSuggestions = [], onSave, onLaunch, onDelete, onDuplicate, onOpenProjectsConfig, onOpenBrowseAt, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onRegisterSave }: Props) {
   const draft = useProfileDraft({ profile, isNew, importedProjects, onSave, dirty, onDirtyChange });
 
   // Register the editor's save function so the sidebar can trigger it
@@ -276,6 +278,11 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
   const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow">(null);
   const [itemSort, setItemSort] = useState<SortOption>("source");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // Set when the user clicks "Add plugin" on a missing-plugin banner row and
+  // we couldn't find the plugin in any curated marketplace. Triggers the
+  // not-found ConfirmDialog which asks whether to remove it from the profile.
+  const [missingNotFoundPluginId, setMissingNotFoundPluginId] = useState<string | null>(null);
+  const [missingLookupBusy, setMissingLookupBusy] = useState<string | null>(null);
   const toggleGroup = (name: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
@@ -283,6 +290,46 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       else next.add(name);
       return next;
     });
+  };
+
+  // Remove a single missing plugin id from the profile's plugin list.
+  // Used by both the per-row "Remove" button on the missing banner and by
+  // the "Remove from profile" confirmation after a failed curated lookup.
+  const removeOneMissingPlugin = (pluginId: string) => {
+    const cleaned = draft.selectedPlugins.filter((p) => p !== pluginId);
+    draft.setSelectedPlugins(cleaned);
+    onDirtyChange(true);
+  };
+
+  // "Add plugin" handler for a missing-plugin row. Looks up the plugin in the
+  // curated index; if found, asks the parent to open Configure Claude at the
+  // Browse sub-tab pre-searched for the plugin name. If not found (or the
+  // index fails to load), surfaces the not-found confirm dialog.
+  const handleAddMissingPlugin = async (pluginId: string) => {
+    if (missingLookupBusy) return;
+    const shortName = pluginId.split("@")[0];
+    const marketplaceId = pluginId.includes("@") ? pluginId.split("@")[1] : undefined;
+    setMissingLookupBusy(pluginId);
+    try {
+      const index = await window.api.getCuratedIndex();
+      const match = index.entries.find((e) => {
+        if (e.kind !== "plugin") return false;
+        if (e.id !== shortName && e.id !== pluginId) return false;
+        if (marketplaceId && e.path[0] && e.path[0] !== marketplaceId) return false;
+        return true;
+      });
+      if (match && onOpenBrowseAt) {
+        onOpenBrowseAt(shortName);
+      } else {
+        setMissingNotFoundPluginId(pluginId);
+      }
+    } catch {
+      // Curated index failed to load — treat as "not found" so the user can
+      // still decide to remove the plugin rather than being stuck.
+      setMissingNotFoundPluginId(pluginId);
+    } finally {
+      setMissingLookupBusy(null);
+    }
   };
 
   const {
@@ -444,6 +491,56 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     return { enabledPlugins, skills, agents, commands, pluginMcps, standaloneMcps, flags };
   }, [plugins, selectedPlugins, excludedItems, mcpServers, disabledMcpServers, launchDir, directories, launchFlags, customFlags]);
 
+  // ─── Flat item list (skills / agents / commands tabs) ─────────────────────
+  // Lifted out of the render IIFE so flatMap+filter+sort+groupCounts don't
+  // rerun on unrelated re-renders (toggling a plugin, opening a modal, etc).
+  const flatItemListData = useMemo(() => {
+    if (activeTab !== "skills" && activeTab !== "agents" && activeTab !== "commands") {
+      return null;
+    }
+    const type = activeTab === "skills" ? "skill" : activeTab === "agents" ? "agent" : "command";
+    let items = plugins.flatMap((p) =>
+      p.items
+        .filter((i) => i.type === type)
+        .map((i) => ({
+          ...i,
+          pluginName: p.name,
+          pluginDisplayName: p.pluginName,
+          enabled: selectedPlugins.includes(p.name) && !(excludedItems[p.name] ?? []).includes(i.name),
+          pluginEnabled: selectedPlugins.includes(p.name),
+        }))
+    );
+
+    if (itemSearch.trim()) {
+      const q = itemSearch.toLowerCase().trim();
+      items = items.filter((i) =>
+        i.name.toLowerCase().includes(q) || i.pluginDisplayName.toLowerCase().includes(q)
+      );
+    }
+
+    if (itemFilter === "enabled") items = items.filter((i) => i.enabled);
+    if (itemFilter === "disabled") items = items.filter((i) => !i.enabled);
+
+    items.sort((a, b) =>
+      itemSort === "source"
+        ? a.pluginDisplayName.localeCompare(b.pluginDisplayName) || a.name.localeCompare(b.name)
+        : a.name.localeCompare(b.name)
+    );
+
+    let groupCounts: Map<string, { total: number; enabled: number }> | null = null;
+    if (itemSort === "source") {
+      groupCounts = new Map();
+      for (const it of items) {
+        const g = groupCounts.get(it.pluginDisplayName) ?? { total: 0, enabled: 0 };
+        g.total++;
+        if (it.enabled) g.enabled++;
+        groupCounts.set(it.pluginDisplayName, g);
+      }
+    }
+
+    return { type, items, groupCounts };
+  }, [activeTab, plugins, selectedPlugins, excludedItems, itemSearch, itemFilter, itemSort]);
+
   // ─── Empty state ───────────────────────────────────────────────────────────
 
   if (!profile && !isNew) {
@@ -508,25 +605,48 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
       {brokenPlugins.length > 0 && (
         <div className="pe-health-warning">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
-            <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            <circle cx="8" cy="11" r="0.7" fill="currentColor" />
-          </svg>
-          <span>
-            {brokenPlugins.length} missing plugin{brokenPlugins.length !== 1 ? "s" : ""}:{" "}
-            {brokenPlugins.map((n) => n.split("@")[0]).join(", ")}
-          </span>
-          <button
-            className="pe-health-remove"
-            onClick={() => {
-              const cleaned = draft.selectedPlugins.filter((p) => !brokenPlugins.includes(p));
-              draft.setSelectedPlugins(cleaned);
-              onDirtyChange(true);
-            }}
-          >
-            Remove from profile
-          </button>
+          <div className="pe-health-warning-header">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+              <path d="M8 6v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              <circle cx="8" cy="11" r="0.7" fill="currentColor" />
+            </svg>
+            <span>
+              {brokenPlugins.length} missing plugin{brokenPlugins.length !== 1 ? "s" : ""} — choose "Add plugin" to find it in the marketplace or "Remove" to drop it from this profile.
+            </span>
+          </div>
+          <ul className="pe-health-warning-list">
+            {brokenPlugins.map((pid) => {
+              const shortName = pid.split("@")[0];
+              const marketplaceId = pid.includes("@") ? pid.split("@")[1] : null;
+              const busy = missingLookupBusy === pid;
+              return (
+                <li key={pid} className="pe-health-warning-row">
+                  <div className="pe-health-plugin-id">
+                    <span className="pe-health-plugin-name">{shortName}</span>
+                    {marketplaceId && (
+                      <span className="pe-health-plugin-marketplace">@{marketplaceId}</span>
+                    )}
+                  </div>
+                  <div className="pe-health-actions">
+                    <button
+                      className="pe-health-add"
+                      disabled={busy}
+                      onClick={() => handleAddMissingPlugin(pid)}
+                    >
+                      {busy ? "Looking up…" : "Add plugin"}
+                    </button>
+                    <button
+                      className="pe-health-remove"
+                      onClick={() => removeOneMissingPlugin(pid)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
 
@@ -560,54 +680,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
         {/* Tab content */}
         <div className="pe-tab-content">
-          {(activeTab === "skills" || activeTab === "agents" || activeTab === "commands") && (() => {
-            const type = activeTab === "skills" ? "skill" : activeTab === "agents" ? "agent" : "command";
-            // Show ALL items of this type from ALL plugins
-            let items = plugins.flatMap((p) =>
-              p.items
-                .filter((i) => i.type === type)
-                .map((i) => ({
-                  ...i,
-                  pluginName: p.name,
-                  pluginDisplayName: p.pluginName,
-                  enabled: selectedPlugins.includes(p.name) && !(excludedItems[p.name] ?? []).includes(i.name),
-                  pluginEnabled: selectedPlugins.includes(p.name),
-                }))
-            );
-
-            // Apply search
-            if (itemSearch.trim()) {
-              const q = itemSearch.toLowerCase().trim();
-              items = items.filter((i) =>
-                i.name.toLowerCase().includes(q) || i.pluginDisplayName.toLowerCase().includes(q)
-              );
-            }
-
-            // Apply filter
-            if (itemFilter === "enabled") items = items.filter((i) => i.enabled);
-            if (itemFilter === "disabled") items = items.filter((i) => !i.enabled);
-
-            // Apply sort
-            items.sort((a, b) =>
-              itemSort === "source"
-                ? a.pluginDisplayName.localeCompare(b.pluginDisplayName) || a.name.localeCompare(b.name)
-                : a.name.localeCompare(b.name)
-            );
-
-            // Pre-compute per-plugin counts once so we can show group headers in source sort.
-            const groupCounts = itemSort === "source"
-              ? (() => {
-                  const map = new Map<string, { total: number; enabled: number }>();
-                  for (const it of items) {
-                    const g = map.get(it.pluginDisplayName) ?? { total: 0, enabled: 0 };
-                    g.total++;
-                    if (it.enabled) g.enabled++;
-                    map.set(it.pluginDisplayName, g);
-                  }
-                  return map;
-                })()
-              : null;
-
+          {flatItemListData && (() => {
+            const { type, items, groupCounts } = flatItemListData;
             return (
               <>
                 <FilterBar
@@ -910,6 +984,30 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           confirmLabel="Delete Profile"
           onConfirm={() => { setConfirmDelete(false); onDelete(profile.name); }}
           onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+
+      {/* Missing-plugin not-found confirmation — shown after the curated lookup
+          fails to find the plugin in any marketplace we know about. */}
+      {missingNotFoundPluginId && (
+        <ConfirmDialog
+          title="Plugin not found"
+          description={
+            <>
+              <strong>{missingNotFoundPluginId.split("@")[0]}</strong> isn't available in any curated marketplace we can see
+              {missingNotFoundPluginId.includes("@") && (
+                <> (searched for <code>{missingNotFoundPluginId}</code>)</>
+              )}
+              . It may have been removed, renamed, or only lives in a private marketplace you haven't added. Remove it from this profile?
+            </>
+          }
+          confirmLabel="Remove from profile"
+          onConfirm={() => {
+            const pid = missingNotFoundPluginId;
+            setMissingNotFoundPluginId(null);
+            removeOneMissingPlugin(pid);
+          }}
+          onCancel={() => setMissingNotFoundPluginId(null)}
         />
       )}
 

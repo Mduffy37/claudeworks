@@ -48,7 +48,31 @@ function validateProfileName(name: string): void {
 // Plugin scanning
 // ---------------------------------------------------------------------------
 
-export function scanInstalledPlugins(): PluginEntry[] {
+// Plugin scans touch the filesystem heavily (realpath, stat, git subprocesses)
+// and fire in bursts — UI mount, profile health check, and profile launch can
+// all run inside ~100ms, each calling the same scanners. A short TTL coalesces
+// those into a single scan; anything older than the TTL re-scans naturally, so
+// user-visible freshness after install/uninstall is unaffected.
+const SCAN_CACHE_TTL_MS = 1500;
+const _scanCacheClearFns: Array<() => void> = [];
+
+function cacheScan<T>(fn: () => T): () => T {
+  let cached: { value: T; expires: number } | null = null;
+  _scanCacheClearFns.push(() => { cached = null; });
+  return () => {
+    const now = Date.now();
+    if (cached && cached.expires > now) return cached.value;
+    const value = fn();
+    cached = { value, expires: now + SCAN_CACHE_TTL_MS };
+    return value;
+  };
+}
+
+export function invalidatePluginCaches(): void {
+  for (const clear of _scanCacheClearFns) clear();
+}
+
+export const scanInstalledPlugins = cacheScan((): PluginEntry[] => {
   const manifestPath = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
   if (!fs.existsSync(manifestPath)) return [];
 
@@ -85,7 +109,7 @@ export function scanInstalledPlugins(): PluginEntry[] {
     }
   }
   return entries;
-}
+});
 
 /** Read a plugin's `.claude-plugin/plugin.json` manifest, or null if missing/invalid. */
 function readPluginManifest(pluginRoot: string): Record<string, any> | null {
@@ -494,7 +518,7 @@ export function writeMcpConfig(
   fs.writeFileSync(outPath, JSON.stringify({ mcpServers }, null, 2) + "\n");
 }
 
-export function getPluginsWithItems(): PluginWithItems[] {
+export const getPluginsWithItems = cacheScan((): PluginWithItems[] => {
   const plugins = scanInstalledPlugins();
   const result: PluginWithItems[] = plugins.map((p) => ({
     ...p,
@@ -507,7 +531,7 @@ export function getPluginsWithItems(): PluginWithItems[] {
   result.push(...scanUserLocalPlugins());
 
   return result;
-}
+});
 
 /** Check which plugins in a profile are no longer installed globally. */
 export function checkProfileHealth(profile: Profile): string[] {
@@ -724,31 +748,58 @@ function detectSkillLockSource(
 /**
  * Detect a git-managed skill folder by presence of `.git/`, and extract the remote
  * URL, branch, and sha via subprocess. Returns null if anything fails.
+ *
+ * Results are cached by `skillDir` keyed on `.git/HEAD` mtime — three `git`
+ * subprocesses per skill per scan adds up fast (one main-process block per
+ * N×3 spawns), and HEAD's mtime reliably changes on any checkout/commit/rebase,
+ * so the cache auto-invalidates when git state actually moves.
  */
+const _gitSourceCache = new Map<
+  string,
+  { mtimeMs: number; result: Record<string, any> | null }
+>();
+
 function detectGitSource(skillDir: string): Record<string, any> | null {
   const gitDir = path.join(skillDir, ".git");
   if (!fs.existsSync(gitDir)) return null;
+
+  let mtimeMs = 0;
+  try {
+    mtimeMs = fs.statSync(path.join(gitDir, "HEAD")).mtimeMs;
+  } catch {
+    // HEAD missing/unreadable — fall through and re-run; don't cache.
+  }
+  if (mtimeMs) {
+    const cached = _gitSourceCache.get(skillDir);
+    if (cached && cached.mtimeMs === mtimeMs) return cached.result;
+  }
+
+  let result: Record<string, any> | null = null;
   try {
     const run = (args: string[]) =>
       execFileSync("git", ["-C", skillDir, ...args], { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
     const url = (() => { try { return run(["remote", "get-url", "origin"]); } catch { return ""; } })();
     const branch = (() => { try { return run(["rev-parse", "--abbrev-ref", "HEAD"]); } catch { return ""; } })();
     const sha = (() => { try { return run(["rev-parse", "HEAD"]); } catch { return ""; } })();
-    if (!url && !branch && !sha) return null;
-    const parsed = url ? parseRemoteOwnerRepo(url) : null;
-    return {
-      url: url || undefined,
-      branch: branch || undefined,
-      sha: sha || undefined,
-      owner: parsed?.owner,
-      repo: parsed?.repo,
-    };
+    if (url || branch || sha) {
+      const parsed = url ? parseRemoteOwnerRepo(url) : null;
+      result = {
+        url: url || undefined,
+        branch: branch || undefined,
+        sha: sha || undefined,
+        owner: parsed?.owner,
+        repo: parsed?.repo,
+      };
+    }
   } catch {
-    return null;
+    result = null;
   }
+
+  if (mtimeMs) _gitSourceCache.set(skillDir, { mtimeMs, result });
+  return result;
 }
 
-export function scanUserLocalPlugins(): PluginWithItems[] {
+export const scanUserLocalPlugins = cacheScan((): PluginWithItems[] => {
   const claudeHome = path.join(os.homedir(), ".claude");
   const plugins: PluginWithItems[] = [];
 
@@ -981,7 +1032,7 @@ export function scanUserLocalPlugins(): PluginWithItems[] {
   }
 
   return plugins;
-}
+});
 
 export function scanMcpServers(directory?: string): StandaloneMcp[] {
   const servers: StandaloneMcp[] = [];
@@ -1566,8 +1617,12 @@ export function assembleProfile(profile: Profile): string {
     settings.hooks = Object.keys(stripped).length > 0 ? stripped : undefined;
   }
 
+  // Honour the user's plugin selection exactly — do NOT force-include the
+  // built-in profiles-manager plugin here. When the user has disabled it via
+  // the app toggle (i.e. removed it from `profile.plugins`), silently re-adding
+  // it breaks the profile isolation the toggle promises.
   settings.enabledPlugins = Object.fromEntries(
-    [...profile.plugins, BUILTIN_PLUGIN_NAME].map((name) => [name, true])
+    profile.plugins.map((name) => [name, true])
   );
 
   // Apply profile-specific overrides, falling back to global defaults
@@ -1676,11 +1731,35 @@ export function assembleProfile(profile: Profile): string {
   // Scan plugins once for cache setup and exclusions
   const installedPlugins = scanInstalledPlugins();
 
-  // Symlink plugin caches
-  symlinkSelectedCaches(profile, configDir, installedPlugins);
+  // Fingerprint-guarded cache rebuild.
+  //
+  // symlinkSelectedCaches + applyExclusions are the expensive phases of
+  // assembleProfile — on a profile with several excluded plugins they wipe
+  // and rebuild the whole plugin cache tree every time (deep copy + targeted
+  // delete). Most profile saves don't touch anything that invalidates the
+  // rebuild (tag/description/model/launchDir edits), and launches never do,
+  // so we hash the inputs the rebuild actually depends on and skip the block
+  // when the hash matches the marker we wrote last time.
+  const fingerprint = computeAssemblyFingerprint(profile, installedPlugins);
+  const markerPath = path.join(configDir, ".assembly-fingerprint.json");
+  const cacheDir = path.join(configDir, "plugins", "cache");
+  let cacheStale = true;
+  try {
+    if (fs.existsSync(markerPath) && fs.existsSync(cacheDir)) {
+      const stored = JSON.parse(fs.readFileSync(markerPath, "utf-8"));
+      if (stored?.fingerprint === fingerprint) cacheStale = false;
+    }
+  } catch {
+    // Unreadable marker — treat as stale and rebuild.
+  }
 
-  // Apply skill-level exclusions
-  applyExclusions(profile, configDir, installedPlugins);
+  if (cacheStale) {
+    // Symlink plugin caches
+    symlinkSelectedCaches(profile, configDir, installedPlugins);
+
+    // Apply skill-level exclusions
+    applyExclusions(profile, configDir, installedPlugins);
+  }
 
   // Rewrite installPath for plugins with exclusions so Claude Code reads the patched manifest
   if (profile.excludedItems && Object.keys(profile.excludedItems).length > 0) {
@@ -1717,22 +1796,62 @@ export function assembleProfile(profile: Profile): string {
   const baselineDir = profile.directory ?? os.homedir();
   writeMcpConfig(profile, baselineDir, configDir);
 
+  // Persist fingerprint so the next assembly with identical cache-relevant
+  // inputs can skip symlinkSelectedCaches + applyExclusions. Written last so
+  // a failure anywhere above leaves the prior (still-valid) marker untouched.
+  try {
+    fs.writeFileSync(
+      markerPath,
+      JSON.stringify({ fingerprint, ts: Date.now() }, null, 2),
+    );
+  } catch {}
+
   return configDir;
+}
+
+/**
+ * Hash of the inputs that determine whether the cache rebuild phase of
+ * assembleProfile can be skipped. Covers the enabled plugin set, their
+ * versions (so reinstalls/upgrades force a rebuild), and the per-plugin
+ * exclusion list. Bump the `v` field when the assembly shape itself changes.
+ */
+function computeAssemblyFingerprint(profile: Profile, plugins: PluginEntry[]): string {
+  const enabledWithVersions = profile.plugins
+    .map((name) => {
+      const p = plugins.find((pl) => pl.name === name);
+      return [name, p?.version ?? "unknown"] as [string, string];
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+  const excluded = Object.entries(profile.excludedItems ?? {})
+    .filter(([, v]) => Array.isArray(v) && v.length > 0)
+    .map(([k, v]) => [k, [...v].sort()] as [string, string[]])
+    .sort(([a], [b]) => a.localeCompare(b));
+  const payload = JSON.stringify({ v: 1, plugins: enabledWithVersions, excluded });
+  return crypto.createHash("sha256").update(payload).digest("hex");
 }
 
 function symlinkSelectedCaches(profile: Profile, configDir: string, plugins: PluginEntry[]): void {
   const sourceCache = path.join(CLAUDE_HOME, "plugins", "cache");
   const targetCache = path.join(configDir, "plugins", "cache");
 
-  // Clear existing symlinks and copied dirs
+  // Move the old cache dir aside in one O(1) rename, then recreate it empty.
+  // The slow `rm -rf` of the previous filtered-copy trees (~1.9s on a
+  // plugin-heavy profile) runs in a detached background process so it never
+  // blocks the assembly hot path. Detached + unref means the cleanup survives
+  // even if the parent Electron process exits before it finishes.
+  const pluginsParent = path.join(configDir, "plugins");
   if (fs.existsSync(targetCache)) {
-    for (const entry of fs.readdirSync(targetCache)) {
-      const full = path.join(targetCache, entry);
-      const stat = fs.lstatSync(full);
-      if (stat.isSymbolicLink()) fs.unlinkSync(full);
-      else if (stat.isDirectory()) fs.rmSync(full, { recursive: true, force: true });
+    const trashDir = path.join(pluginsParent, `cache.trash.${Date.now()}.${process.pid}`);
+    try {
+      fs.renameSync(targetCache, trashDir);
+      spawn("rm", ["-rf", trashDir], { detached: true, stdio: "ignore" }).unref();
+    } catch {
+      // Rename can fail if something holds the dir open. Fall back to
+      // synchronous removal so assembly still produces a clean state.
+      try { fs.rmSync(targetCache, { recursive: true, force: true }); } catch {}
     }
   }
+  fs.mkdirSync(targetCache, { recursive: true });
 
   // Determine which marketplace dirs need symlinking
   const neededMarketplaces = new Set<string>();
@@ -1779,7 +1898,20 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
       }
     }
 
-    // Replace the specific plugin dir with a filtered copy
+    // Replace the specific plugin dir with a filtered copy.
+    //
+    // Strategy: clone the whole source tree via COPYFILE_FICLONE (reflinks
+    // on APFS, normal copy elsewhere) with a `filter` callback that skips
+    // excluded skill directories, agent files, and command files entirely.
+    // Shared plugin infrastructure (.claude-plugin/, helper scripts, libs,
+    // readme, license, etc.) is preserved because only explicitly-excluded
+    // paths are filtered out — everything else copies through unchanged.
+    //
+    // This replaces the previous "copy everything then rm" approach, which
+    // was O(whole tree) even when only a handful of items were excluded.
+    // Filtered clonefile is O(kept items) in filesystem-metadata cost, which
+    // matters for pathological cases like bundles with 1500 skills where
+    // you want 5.
     const pluginDir = path.join(marketplaceDir, plugin.pluginName);
     if (!fs.existsSync(pluginDir)) continue;
 
@@ -1787,28 +1919,37 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
     if (pluginStat.isSymbolicLink()) {
       const realPluginDir = fs.realpathSync(pluginDir);
       fs.unlinkSync(pluginDir);
-      copyDirRecursive(realPluginDir, pluginDir);
-    }
 
-    // Delete excluded items from the copy
-    const items = scanPluginItems(plugin);
-    for (const item of items) {
-      if (excludedNames.includes(item.name)) {
-        const relativePath = path.relative(plugin.installPath, item.path);
-        const copiedItemPath = path.join(
-          marketplaceDir,
-          plugin.pluginName,
-          plugin.version,
-          relativePath
-        );
-        if (fs.existsSync(copiedItemPath)) {
-          if (item.type === "skill") {
-            fs.rmSync(path.dirname(copiedItemPath), { recursive: true, force: true });
-          } else {
-            fs.unlinkSync(copiedItemPath);
-          }
+      // Resolve each excluded item to a path relative to realPluginDir.
+      // Skills exclude the containing directory (SKILL.md's parent);
+      // agents/commands exclude the single file at item.path.
+      const items = scanPluginItems(plugin);
+      const excludedRel = new Set<string>();
+      for (const item of items) {
+        if (!excludedNames.includes(item.name)) continue;
+        const excludePath = item.type === "skill" ? path.dirname(item.path) : item.path;
+        const rel = path.relative(realPluginDir, excludePath);
+        // Defensive: refuse anything that escapes the plugin root.
+        if (rel && !rel.startsWith("..") && !path.isAbsolute(rel)) {
+          excludedRel.add(rel);
         }
       }
+      const excludedPrefixes = [...excludedRel].map((r) => r + path.sep);
+
+      fs.cpSync(realPluginDir, pluginDir, {
+        recursive: true,
+        force: true,
+        mode: fs.constants.COPYFILE_FICLONE,
+        filter: (src) => {
+          const rel = path.relative(realPluginDir, src);
+          if (!rel) return true; // plugin root itself
+          if (excludedRel.has(rel)) return false;
+          for (const prefix of excludedPrefixes) {
+            if (rel.startsWith(prefix)) return false;
+          }
+          return true;
+        },
+      });
     }
 
     // Patch marketplace.json to remove excluded skill/agent/command paths
@@ -1833,17 +1974,24 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
   }
 }
 
+/**
+ * Recursive directory copy that uses APFS clonefile reflinks on macOS via
+ * `COPYFILE_FICLONE` — files become copy-on-write references to the source
+ * inode instead of full data copies, so a multi-thousand-file plugin tree
+ * clones in tens of milliseconds instead of multiple seconds. On non-APFS
+ * filesystems the flag silently falls back to a normal copy, so this is
+ * always at least as fast as the old file-by-file implementation.
+ *
+ * Used for both filtered plugin copies in applyExclusions and the builtin
+ * plugin installer — both call paths are on the user's profile-assembly
+ * hot path.
+ */
 function copyDirRecursive(src: string, dest: string): void {
-  fs.mkdirSync(dest, { recursive: true });
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
-    }
-  }
+  fs.cpSync(src, dest, {
+    recursive: true,
+    force: true,
+    mode: fs.constants.COPYFILE_FICLONE,
+  });
 }
 
 const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
@@ -2054,11 +2202,37 @@ function symlinkShared(configDir: string, profile: Profile): void {
     }
   }
 
-  // Symlink all marketplaces
+  // Symlink only marketplaces the profile actually needs. Symlinking every
+  // marketplace unconditionally (the previous behaviour) let Claude Code
+  // discover plugins from marketplaces the user hadn't enabled and
+  // auto-register them into the profile's installed_plugins.json with a
+  // synthetic `version: "unknown"` entry — defeating profile isolation for
+  // any plugin whose marketplace was installed globally, most notably the
+  // built-in `claude-profiles` marketplace containing profiles-manager.
+  const neededMarketplaces = new Set<string>();
+  for (const pluginName of profile.plugins) {
+    const marketplace = pluginName.split("@")[1];
+    if (marketplace) neededMarketplaces.add(marketplace);
+  }
   const sourceMp = path.join(CLAUDE_HOME, "plugins", "marketplaces");
   const targetMp = path.join(configDir, "plugins", "marketplaces");
+
+  // Clean up stale marketplace symlinks from a previous assembly so toggling
+  // a plugin off actually removes its marketplace from the profile.
+  if (fs.existsSync(targetMp)) {
+    for (const entry of fs.readdirSync(targetMp)) {
+      if (neededMarketplaces.has(entry)) continue;
+      const stale = path.join(targetMp, entry);
+      try {
+        const stat = fs.lstatSync(stale);
+        if (stat.isSymbolicLink()) fs.unlinkSync(stale);
+      } catch { /* ignore */ }
+    }
+  }
+
   if (fs.existsSync(sourceMp)) {
     for (const entry of fs.readdirSync(sourceMp)) {
+      if (!neededMarketplaces.has(entry)) continue;
       const tgt = path.join(targetMp, entry);
       if (!fs.existsSync(tgt)) {
         fs.symlinkSync(path.join(sourceMp, entry), tgt);

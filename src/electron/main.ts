@@ -5,6 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import {
   getPluginsWithItems,
+  invalidatePluginCaches,
   scanLocalItems,
   scanMcpServers,
   loadProfiles,
@@ -272,10 +273,12 @@ ipcMain.handle("add-bin-to-path", () => {
 
 ipcMain.handle("update-plugin", async (_event, name: string) => {
   await updatePlugin(name);
+  invalidatePluginCaches();
 });
 
 ipcMain.handle("uninstall-plugin", async (_event, name: string) => {
   await uninstallPlugin(name);
+  invalidatePluginCaches();
 });
 
 ipcMain.handle("check-plugin-updates", async () => {
@@ -288,14 +291,17 @@ ipcMain.handle("get-available-plugins", async () => {
 
 ipcMain.handle("install-plugin", async (_event, pluginId: string) => {
   await installPlugin(pluginId);
+  invalidatePluginCaches();
 });
 
 ipcMain.handle("add-marketplace", async (_event, source: string) => {
   await addMarketplace(source);
+  invalidatePluginCaches();
 });
 
 ipcMain.handle("remove-marketplace", async (_event, name: string) => {
   await removeMarketplace(name);
+  invalidatePluginCaches();
 });
 
 ipcMain.handle("list-marketplaces", () => {
