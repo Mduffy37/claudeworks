@@ -2509,9 +2509,11 @@ export function ManageDialog({
                         return (
                           <div key={mp.name} className="marketplace-source-group">
                             <div className="marketplace-item">
-                              <div
+                              <button
+                                type="button"
                                 className="marketplace-item-body"
-                                style={{ cursor: "pointer" }}
+                                aria-expanded={isExpanded}
+                                aria-label={`${isExpanded ? "Collapse" : "Expand"} marketplace ${mp.name}`}
                                 onClick={() => {
                                   const next = new Set(expandedSources);
                                   if (isExpanded) next.delete(mp.name); else next.add(mp.name);
@@ -2523,11 +2525,11 @@ export function ManageDialog({
                                 }}
                               >
                                 <div className="marketplace-item-name">
-                                  <span className={`browse-marketplace-arrow${isExpanded ? " open" : ""}`}>&#9654;</span>
+                                  <span className={`browse-marketplace-arrow${isExpanded ? " open" : ""}`} aria-hidden="true">&#9654;</span>
                                   {" "}{mp.name}
                                 </div>
                                 <div className="marketplace-item-repo">{mp.repo}</div>
-                              </div>
+                              </button>
                               {mp.name !== "claude-plugins-official" && (
                                 <button
                                   className="btn-danger-small"
