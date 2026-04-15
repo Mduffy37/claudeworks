@@ -1898,66 +1898,94 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
       }
     }
 
-    // Replace the specific plugin dir with a filtered copy.
+    // Replace the specific plugin dir with a structured overlay.
     //
-    // Strategy: clone the whole source tree via COPYFILE_FICLONE (reflinks
-    // on APFS, normal copy elsewhere) with a `filter` callback that skips
-    // excluded skill directories, agent files, and command files entirely.
-    // Shared plugin infrastructure (.claude-plugin/, helper scripts, libs,
-    // readme, license, etc.) is preserved because only explicitly-excluded
-    // paths are filtered out — everything else copies through unchanged.
+    // Previous approach: deep-clone the entire plugin tree via fs.cpSync +
+    // COPYFILE_FICLONE, filtering out the excluded paths along the way. On
+    // APFS the clones were reflinks so the data was free, but cpSync still
+    // walked the whole source tree (readdir + stat per entry) and paid
+    // filesystem metadata overhead per kept file. For a 13-plugin profile
+    // where several plugins are multi-hundred-file bundles, this burned
+    // 4-5 seconds on every save that invalidated the fingerprint.
     //
-    // This replaces the previous "copy everything then rm" approach, which
-    // was O(whole tree) even when only a handful of items were excluded.
-    // Filtered clonefile is O(kept items) in filesystem-metadata cost, which
-    // matters for pathological cases like bundles with 1500 skills where
-    // you want 5.
+    // New approach: walk only the *ancestor chain* leading to each excluded
+    // item, materialising real directories along that chain and symlinking
+    // everything else (whole subtrees) back to the source. Cost scales with
+    // the number of directories that contain exclusions, not the total file
+    // count. A "1500 skills, want 5" bundle goes from seconds to ~5 symlink
+    // ops plus a manifest rewrite.
+    //
+    // Structure of the result:
+    //   pluginDir/
+    //     <version>/                     — real dir (ancestor)
+    //       .claude-plugin/              — real dir (ancestor — manifest patch)
+    //         plugin.json → source       — symlink
+    //         marketplace.json            — real, patched copy
+    //         <other files> → source     — symlinks
+    //       skills/                      — real dir if any skill excluded
+    //         kept-skill → source/...    — symlink (whole subtree)
+    //         (excluded-skill omitted)
+    //       commands/                    — real dir if any command excluded
+    //         kept.md → source/...       — symlink
+    //         (excluded.md omitted)
+    //       lib/ → source/lib/           — symlink (whole subtree, no exclusions)
+    //       readme.md → source/readme.md — symlink
     const pluginDir = path.join(marketplaceDir, plugin.pluginName);
     if (!fs.existsSync(pluginDir)) continue;
 
     const pluginStat = fs.lstatSync(pluginDir);
-    if (pluginStat.isSymbolicLink()) {
-      const realPluginDir = fs.realpathSync(pluginDir);
-      fs.unlinkSync(pluginDir);
+    if (!pluginStat.isSymbolicLink()) continue;
+    const realPluginDir = fs.realpathSync(pluginDir);
+    fs.unlinkSync(pluginDir);
 
-      // Resolve each excluded item to a path relative to realPluginDir.
-      // Skills exclude the containing directory (SKILL.md's parent);
-      // agents/commands exclude the single file at item.path.
-      const items = scanPluginItems(plugin);
-      const excludedRel = new Set<string>();
-      for (const item of items) {
-        if (!excludedNames.includes(item.name)) continue;
-        const excludePath = item.type === "skill" ? path.dirname(item.path) : item.path;
-        const rel = path.relative(realPluginDir, excludePath);
-        // Defensive: refuse anything that escapes the plugin root.
-        if (rel && !rel.startsWith("..") && !path.isAbsolute(rel)) {
-          excludedRel.add(rel);
-        }
+    // Resolve each excluded item to a path relative to realPluginDir.
+    // Skills exclude the containing directory (SKILL.md's parent);
+    // agents/commands exclude the single file at item.path.
+    const items = scanPluginItems(plugin);
+    const excludedPaths = new Set<string>();
+    const excludedAncestors = new Set<string>();
+    const addAncestors = (rel: string) => {
+      let anc = path.dirname(rel);
+      while (anc && anc !== "." && anc !== path.sep) {
+        excludedAncestors.add(anc);
+        const next = path.dirname(anc);
+        if (next === anc) break;
+        anc = next;
       }
-      const excludedPrefixes = [...excludedRel].map((r) => r + path.sep);
-
-      fs.cpSync(realPluginDir, pluginDir, {
-        recursive: true,
-        force: true,
-        mode: fs.constants.COPYFILE_FICLONE,
-        filter: (src) => {
-          const rel = path.relative(realPluginDir, src);
-          if (!rel) return true; // plugin root itself
-          if (excludedRel.has(rel)) return false;
-          for (const prefix of excludedPrefixes) {
-            if (rel.startsWith(prefix)) return false;
-          }
-          return true;
-        },
-      });
+    };
+    for (const item of items) {
+      if (!excludedNames.includes(item.name)) continue;
+      const excludePath = item.type === "skill" ? path.dirname(item.path) : item.path;
+      const rel = path.relative(realPluginDir, excludePath);
+      // Defensive: refuse anything that escapes the plugin root.
+      if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) continue;
+      excludedPaths.add(rel);
+      addAncestors(rel);
     }
 
-    // Patch marketplace.json to remove excluded skill/agent/command paths
-    const copiedPluginDir = path.join(marketplaceDir, plugin.pluginName, plugin.version);
-    const marketplaceJsonPath = path.join(copiedPluginDir, ".claude-plugin", "marketplace.json");
-    if (fs.existsSync(marketplaceJsonPath)) {
+    // Always force-materialise the version dir + .claude-plugin so we can
+    // shadow marketplace.json with a patched copy. Mark the file itself as
+    // excluded (the overlay walker won't symlink it) and write it manually
+    // after the walk.
+    const versionRel = path.relative(realPluginDir, plugin.installPath);
+    const claudePluginRel = versionRel
+      ? path.join(versionRel, ".claude-plugin")
+      : ".claude-plugin";
+    const marketplaceRel = path.join(claudePluginRel, "marketplace.json");
+    if (versionRel && !versionRel.startsWith("..")) {
+      excludedAncestors.add(versionRel);
+    }
+    excludedAncestors.add(claudePluginRel);
+    excludedPaths.add(marketplaceRel);
+
+    overlayDir(realPluginDir, pluginDir, "", excludedPaths, excludedAncestors);
+
+    // Write the patched marketplace.json at its overlay location.
+    const sourceMarketplaceJson = path.join(realPluginDir, marketplaceRel);
+    const targetMarketplaceJson = path.join(pluginDir, marketplaceRel);
+    if (fs.existsSync(sourceMarketplaceJson)) {
       try {
-        const manifest = JSON.parse(fs.readFileSync(marketplaceJsonPath, "utf-8"));
+        const manifest = JSON.parse(fs.readFileSync(sourceMarketplaceJson, "utf-8"));
         for (const p of manifest.plugins ?? []) {
           for (const key of ["skills", "agents", "commands"]) {
             if (Array.isArray(p[key])) {
@@ -1968,9 +1996,46 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
             }
           }
         }
-        fs.writeFileSync(marketplaceJsonPath, JSON.stringify(manifest, null, 2));
+        fs.mkdirSync(path.dirname(targetMarketplaceJson), { recursive: true });
+        fs.writeFileSync(targetMarketplaceJson, JSON.stringify(manifest, null, 2));
       } catch {}
     }
+  }
+}
+
+/**
+ * Walk `srcDir`, materialising `dstDir` as a mix of real dirs (for paths that
+ * lead to excluded items) and symlinks (for subtrees with no exclusions).
+ *
+ * - Paths in `excludedPaths` are omitted entirely.
+ * - Paths in `excludedAncestors` are created as real directories and recursed
+ *   into — one level deeper on the chain toward an excluded item.
+ * - Everything else is symlinked directly to its source counterpart, which
+ *   means whole unrelated subtrees stay shared with the global plugin cache.
+ *
+ * Cost: O(directories on the ancestor chain + immediate children of each
+ * ancestor). For a plugin with ~2000 files where 3 skills are excluded,
+ * that's roughly 15-50 filesystem operations instead of 2000+ clonefile
+ * calls — typically 50-200× fewer syscalls than the previous approach.
+ */
+function overlayDir(
+  srcDir: string,
+  dstDir: string,
+  relPrefix: string,
+  excludedPaths: Set<string>,
+  excludedAncestors: Set<string>,
+): void {
+  fs.mkdirSync(dstDir, { recursive: true });
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcChild = path.join(srcDir, entry.name);
+    const dstChild = path.join(dstDir, entry.name);
+    const relChild = relPrefix ? path.join(relPrefix, entry.name) : entry.name;
+    if (excludedPaths.has(relChild)) continue;
+    if (excludedAncestors.has(relChild)) {
+      overlayDir(srcChild, dstChild, relChild, excludedPaths, excludedAncestors);
+      continue;
+    }
+    fs.symlinkSync(srcChild, dstChild);
   }
 }
 
