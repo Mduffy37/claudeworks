@@ -2275,7 +2275,7 @@ body {
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   margin-bottom: -1px;
   color: var(--text-muted);
   font-family: var(--font-sans);
