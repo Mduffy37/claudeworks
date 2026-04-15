@@ -5703,11 +5703,11 @@ body {
   margin-top: 6px;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-  font-size: 0.769rem;
-  line-height: 1.35;
+  background: var(--color-danger-dim);
+  border: 1px solid rgba(181, 51, 51, 0.32);
+  color: var(--color-danger);
+  font-size: var(--fs-label);
+  line-height: 1.4;
   max-width: 360px;
   word-break: break-word;
   white-space: pre-wrap;
@@ -5826,12 +5826,15 @@ body {
 }
 
 /* Kind-specific colours for the result-type tag (marketplace/plugin/skill/command/agent/mcpServer). */
-.curated-kind-tag.kind-marketplace { color: #67e8f9; background: rgba(103, 232, 249, 0.1); }
-.curated-kind-tag.kind-plugin      { color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
-.curated-kind-tag.kind-skill       { color: #86efac; background: rgba(134, 239, 172, 0.10); }
-.curated-kind-tag.kind-command     { color: #d4a05a; background: rgba(212, 160, 90, 0.14); }
-.curated-kind-tag.kind-agent       { color: #c4b5fd; background: rgba(196, 181, 253, 0.12); }
-.curated-kind-tag.kind-mcpServer   { color: #5eead4; background: rgba(94, 234, 212, 0.12); }
+/* Curated taxonomy tags — use the warm-earth spectrum so kind indicators
+   harmonise with the same sage/walnut/brass/plum semantics used in plugin
+   badges. Marketplace tag falls back to a warm neutral tint. */
+.curated-kind-tag.kind-marketplace { color: var(--text-secondary); background: rgba(245, 244, 237, 0.06); }
+.curated-kind-tag.kind-plugin      { color: var(--brass); background: rgba(154, 122, 46, 0.12); }
+.curated-kind-tag.kind-skill       { color: var(--sage); background: rgba(122, 139, 110, 0.12); }
+.curated-kind-tag.kind-command     { color: var(--brass); background: rgba(154, 122, 46, 0.14); }
+.curated-kind-tag.kind-agent       { color: var(--walnut); background: rgba(154, 122, 94, 0.14); }
+.curated-kind-tag.kind-mcpServer   { color: var(--plum); background: rgba(152, 117, 133, 0.14); }
 
 /* Transport chip rendered next to mcpServer kind tag in search results. */
 .curated-transport-chip {
