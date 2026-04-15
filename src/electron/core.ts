@@ -3240,12 +3240,36 @@ function cleanDescription(desc: string): string {
   return d;
 }
 
+// Frontmatter parse results cached per-file keyed on mtime. scanPluginItems
+// and scanUserLocalPlugins call readFrontmatter once per skill / agent /
+// command — on a heavy profile that's hundreds of readFileSync + YAML parses
+// per cold scan. mtime is a reliable "content changed" signal for regular
+// markdown files, so repeat reads after the first scan become a single stat
+// call plus a map lookup.
+//
+// Entries are never explicitly evicted — worst-case memory is O(files ever
+// seen in the session), which tops out around a few hundred small objects
+// for the heaviest users. A restart clears it.
+const _frontmatterCache = new Map<
+  string,
+  { mtimeMs: number; parsed: Record<string, string> }
+>();
+
 function readFrontmatter(filePath: string): Record<string, string> {
+  // Let stat throw naturally on missing files — matches the previous
+  // readFileSync-based contract (call sites pre-check with fs.existsSync).
+  const mtimeMs = fs.statSync(filePath).mtimeMs;
+  const cached = _frontmatterCache.get(filePath);
+  if (cached && cached.mtimeMs === mtimeMs) return cached.parsed;
+
   const result: Record<string, string> = {};
   const content = fs.readFileSync(filePath, "utf-8");
   const lines = content.split("\n");
 
-  if (!lines[0] || lines[0].trim() !== "---") return result;
+  if (!lines[0] || lines[0].trim() !== "---") {
+    _frontmatterCache.set(filePath, { mtimeMs, parsed: result });
+    return result;
+  }
 
   let currentKey: string | null = null;
   let multilineValue: string[] = [];
@@ -3290,6 +3314,7 @@ function readFrontmatter(filePath: string): Record<string, string> {
       }
     }
   }
+  _frontmatterCache.set(filePath, { mtimeMs, parsed: result });
   return result;
 }
 
