@@ -2173,7 +2173,8 @@ body {
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 0.923rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
   text-align: left;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
@@ -2184,10 +2185,10 @@ body {
 }
 
 .pe-info-card-toggle-label {
-  font-size: 0.846rem;
-  font-weight: 600;
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-overline);
   color: var(--text-muted);
 }
 
@@ -2273,7 +2274,8 @@ body {
   border-bottom: 3px solid transparent;
   margin-bottom: -1px;
   color: var(--text-muted);
-  font-size: 1rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
   font-weight: 500;
   cursor: pointer;
   transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
@@ -2307,7 +2309,7 @@ body {
 .pe-tab.active .pe-tab-count {
   color: var(--accent);
   background: var(--accent-dim);
-  border-color: rgba(222, 115, 86, 0.2);
+  border-color: rgba(201, 100, 66, 0.25);
 }
 
 /* ─── Tab content panel ───────────────────────────────────────────────────── */
