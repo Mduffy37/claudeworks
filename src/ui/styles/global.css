@@ -1829,21 +1829,30 @@ body {
 }
 
 .btn-secondary {
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-elevated);
-  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  border-color: var(--accent);
   color: var(--text-primary);
+}
+
+.btn-secondary:disabled,
+.btn-secondary[disabled] {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border-color: var(--border);
+  cursor: not-allowed;
 }
 
 .btn-outlined-accent {
