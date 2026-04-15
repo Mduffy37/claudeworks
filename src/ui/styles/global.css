@@ -2499,24 +2499,24 @@ body {
 .pe-instructions-tab {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   max-width: 720px;
 }
 
 .pe-instructions-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
 
 .pe-instructions-labels {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -2550,20 +2550,32 @@ body {
 
 .pe-editor-toolbar {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.pe-editor-toolbar .insert-prompt-btn {
+  flex-shrink: 0;
+}
+
+.pe-editor-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .pe-instructions-hint {
-  font-size: 0.923rem;
+  font-size: 0.846rem;
   color: var(--text-muted);
   line-height: 1.4;
 }
 
 .pe-instructions-editor {
   width: 100%;
-  min-height: 240px;
+  height: 260px;
   padding: 12px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -2572,7 +2584,7 @@ body {
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
   font-size: 0.923rem;
   line-height: 1.6;
-  resize: vertical;
+  resize: none;
 }
 
 .pe-instructions-editor:focus {
@@ -2581,10 +2593,11 @@ body {
 }
 
 .pe-instructions-stats {
-  font-size: 0.846rem;
+  font-size: 0.769rem;
   color: var(--text-muted);
   text-align: right;
-  padding: 4px 2px 0;
+  padding: 2px 4px 0;
+  letter-spacing: 0.02em;
 }
 
 /* ─── Fields ──────────────────────────────────────────────────────────────── */

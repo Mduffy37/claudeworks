@@ -887,22 +887,24 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     <span className="pe-instructions-heading">Always-on</span>
                     <span className="pe-instructions-hint">Appended to CLAUDE.md — Claude reads this every turn.</span>
                   </div>
-                  <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("instructions")}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                    Insert Prompt
-                  </button>
-                  {customClaudeMd.trim() && (
-                    <button className="insert-prompt-btn" onClick={async () => {
-                      const id = `prompt-${Date.now()}`;
-                      const now = Date.now();
-                      const prompts = await window.api.getPrompts();
-                      const newPrompt = { id, name: name || "Untitled", description: `Saved from profile "${name}"`, tags: [], content: customClaudeMd, createdAt: now, updatedAt: now };
-                      await window.api.savePrompts([...prompts, newPrompt]);
-                    }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                      Save as Prompt
+                  <div className="pe-editor-toolbar-actions">
+                    <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("instructions")}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      Insert Prompt
                     </button>
-                  )}
+                    {customClaudeMd.trim() && (
+                      <button className="insert-prompt-btn" onClick={async () => {
+                        const id = `prompt-${Date.now()}`;
+                        const now = Date.now();
+                        const prompts = await window.api.getPrompts();
+                        const newPrompt = { id, name: name || "Untitled", description: `Saved from profile "${name}"`, tags: [], content: customClaudeMd, createdAt: now, updatedAt: now };
+                        await window.api.savePrompts([...prompts, newPrompt]);
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        Save as Prompt
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <textarea
                   className="pe-instructions-editor"
@@ -926,22 +928,24 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       Invoked on demand — runs when you type <code>/workflow</code> in a session.
                     </span>
                   </div>
-                  <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("workflow")}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                    Insert Prompt
-                  </button>
-                  {workflow.trim() && (
-                    <button className="insert-prompt-btn" onClick={async () => {
-                      const id = `prompt-${Date.now()}`;
-                      const now = Date.now();
-                      const prompts = await window.api.getPrompts();
-                      const newPrompt = { id, name: name ? `${name} workflow` : "Untitled workflow", description: `Workflow saved from profile "${name}"`, tags: ["workflow"], content: workflow, createdAt: now, updatedAt: now };
-                      await window.api.savePrompts([...prompts, newPrompt]);
-                    }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                      Save as Prompt
+                  <div className="pe-editor-toolbar-actions">
+                    <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("workflow")}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      Insert Prompt
                     </button>
-                  )}
+                    {workflow.trim() && (
+                      <button className="insert-prompt-btn" onClick={async () => {
+                        const id = `prompt-${Date.now()}`;
+                        const now = Date.now();
+                        const prompts = await window.api.getPrompts();
+                        const newPrompt = { id, name: name ? `${name} workflow` : "Untitled workflow", description: `Workflow saved from profile "${name}"`, tags: ["workflow"], content: workflow, createdAt: now, updatedAt: now };
+                        await window.api.savePrompts([...prompts, newPrompt]);
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        Save as Prompt
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <textarea
                   className="pe-instructions-editor"
