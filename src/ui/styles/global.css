@@ -631,10 +631,19 @@ body {
 
 .btn-launch-sidebar:hover,
 .btn-launch-sidebar:focus-visible {
-  background: var(--terracotta);
-  color: var(--ivory);
-  border-color: var(--terracotta);
-  box-shadow: var(--ring-accent);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--ring);
+}
+
+.profile-item.selected .btn-launch-sidebar,
+.profile-item.selected .btn-launch-sidebar:hover,
+.profile-item.selected .btn-launch-sidebar:focus-visible {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--ring);
 }
 
 .sidebar-launch-group {
