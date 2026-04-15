@@ -79,7 +79,13 @@ export function SortableMember({
           {!member.isLead && (
             <button className="te-set-lead" onClick={onSetLead}>Set as lead</button>
           )}
-          <button className="te-remove" onClick={onRemove}>&times;</button>
+          <button
+            className="te-remove"
+            onClick={onRemove}
+            aria-label={`Remove ${member.profile} from team`}
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
       </div>
       <div className="te-member-fields">
