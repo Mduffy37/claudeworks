@@ -108,9 +108,48 @@ export function usePluginToggles({
     markDirty();
   };
 
+  const handleToggleGroup = (
+    groupItems: Array<{ pluginName: string; itemName: string; dependencies?: string[] }>,
+    enable: boolean
+  ) => {
+    if (groupItems.length === 0) return;
+    const newSelected = [...selectedPlugins];
+    const newExcluded: Record<string, string[]> = { ...excludedItems };
+    const pluginNames = Array.from(new Set(groupItems.map((g) => g.pluginName)));
+
+    if (enable) {
+      for (const pluginName of pluginNames) {
+        if (!newSelected.includes(pluginName)) newSelected.push(pluginName);
+        const plugin = plugins.find((p) => p.name === pluginName);
+        if (!plugin) continue;
+        const itemsForPlugin = groupItems.filter((g) => g.pluginName === pluginName).map((g) => g.itemName);
+        const current = newExcluded[pluginName] ?? [];
+        newExcluded[pluginName] = current.filter((n) => !itemsForPlugin.includes(n));
+        for (const name of itemsForPlugin) {
+          const it = plugin.items.find((i) => i.name === name);
+          if (it && it.dependencies.length > 0) {
+            enableDependencies(it, newSelected, newExcluded);
+          }
+        }
+      }
+    } else {
+      for (const pluginName of pluginNames) {
+        const itemsForPlugin = groupItems.filter((g) => g.pluginName === pluginName).map((g) => g.itemName);
+        const current = newExcluded[pluginName] ?? [];
+        const merged = Array.from(new Set([...current, ...itemsForPlugin]));
+        newExcluded[pluginName] = merged;
+      }
+    }
+
+    setSelectedPlugins(newSelected);
+    setExcludedItems(newExcluded);
+    markDirty();
+  };
+
   return {
     handleTogglePlugin,
     handleToggleItem,
     handleEnablePluginWithOnly,
+    handleToggleGroup,
   };
 }

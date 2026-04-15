@@ -394,7 +394,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     markDirty,
   } = draft;
 
-  const { handleTogglePlugin, handleToggleItem, handleEnablePluginWithOnly } =
+  const { handleTogglePlugin, handleToggleItem, handleEnablePluginWithOnly, handleToggleGroup } =
     usePluginToggles({
       plugins,
       selectedPlugins,
@@ -736,20 +736,39 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       const g = showGroupHeader ? groupCounts!.get(item.pluginDisplayName) : undefined;
                       return (
                         <React.Fragment key={`${item.pluginName}:${item.name}`}>
-                          {showGroupHeader && g && (
-                            <button
-                              type="button"
-                              className={`pe-flat-group-header${collapsed ? " collapsed" : ""}`}
-                              onClick={() => toggleGroup(item.pluginDisplayName)}
-                              aria-expanded={!collapsed}
-                            >
-                              <svg className="pe-flat-group-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                                <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                              <span className="pe-flat-group-name">{item.pluginDisplayName}</span>
-                              <span className="pe-flat-group-count">{g.enabled}/{g.total}</span>
-                            </button>
-                          )}
+                          {showGroupHeader && g && (() => {
+                            const groupItems = items.filter((it) => it.pluginDisplayName === item.pluginDisplayName);
+                            const allEnabled = g.enabled === g.total;
+                            return (
+                              <div className={`pe-flat-group-header${collapsed ? " collapsed" : ""}`}>
+                                <button
+                                  type="button"
+                                  className="pe-flat-group-collapse"
+                                  onClick={() => toggleGroup(item.pluginDisplayName)}
+                                  aria-expanded={!collapsed}
+                                  aria-label={`${collapsed ? "Expand" : "Collapse"} ${item.pluginDisplayName} group`}
+                                >
+                                  <svg className="pe-flat-group-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                    <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  <span className="pe-flat-group-name">{item.pluginDisplayName}</span>
+                                  <span className="pe-flat-group-count">{g.enabled}/{g.total}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="pe-flat-group-select-all"
+                                  onClick={() => {
+                                    const payload = groupItems.map((gi) => ({ pluginName: gi.pluginName, itemName: gi.name }));
+                                    handleToggleGroup(payload, !allEnabled);
+                                  }}
+                                  title={allEnabled ? "Deselect all in group" : "Select all in group"}
+                                  aria-label={allEnabled ? `Deselect all ${item.pluginDisplayName} ${type}s` : `Select all ${item.pluginDisplayName} ${type}s`}
+                                >
+                                  {allEnabled ? "None" : "All"}
+                                </button>
+                              </div>
+                            );
+                          })()}
                           {!collapsed && (
                           <div
                             className="pe-flat-item"
