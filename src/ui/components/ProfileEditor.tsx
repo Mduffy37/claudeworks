@@ -62,6 +62,7 @@ function OverviewModal({
   effortLevel,
   customClaudeMd,
   onClose,
+  onJumpToTab,
 }: {
   overview: {
     enabledPlugins: PluginWithItems[];
@@ -77,6 +78,7 @@ function OverviewModal({
   effortLevel: string;
   customClaudeMd: string;
   onClose: () => void;
+  onJumpToTab?: (tab: TabId) => void;
 }) {
   const [expanded, setExpanded] = useState<OverviewCategory>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -88,7 +90,22 @@ function OverviewModal({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const toggle = (cat: OverviewCategory) => setExpanded((prev) => prev === cat ? null : cat);
+  const categoryToTab: Record<NonNullable<OverviewCategory>, TabId> = {
+    plugins: "plugins",
+    skills: "skills",
+    agents: "agents",
+    commands: "commands",
+    mcps: "mcp",
+  };
+
+  const handleStatClick = (cat: OverviewCategory) => {
+    if (!cat) return;
+    if (onJumpToTab) {
+      onJumpToTab(categoryToTab[cat]);
+      return;
+    }
+    setExpanded((prev) => prev === cat ? null : cat);
+  };
 
   const stats: { key: OverviewCategory; label: string; count: number }[] = [
     { key: "plugins", label: "Plugins", count: overview.enabledPlugins.length },
@@ -118,7 +135,8 @@ function OverviewModal({
               <button
                 key={s.key}
                 className={`overview-stat${expanded === s.key ? " expanded" : ""}`}
-                onClick={() => toggle(s.key)}
+                onClick={() => handleStatClick(s.key)}
+                title={onJumpToTab ? `Jump to ${s.label} tab` : undefined}
               >
                 <div className="overview-stat-value">{s.count}</div>
                 <div className="overview-stat-label">{s.label}</div>
@@ -1103,6 +1121,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           effortLevel={effortLevel}
           customClaudeMd={customClaudeMd}
           onClose={() => setOverviewOpen(false)}
+          onJumpToTab={(tab) => { setActiveTab(tab); setOverviewOpen(false); }}
         />
       )}
 

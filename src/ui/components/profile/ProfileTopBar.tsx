@@ -171,7 +171,7 @@ export function ProfileTopBar({
                         Duplicate
                       </button>
                     )}
-                    <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
+                    <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); setShowLaunchOptions(false); onSetOverviewOpen(true); }}>
                       Overview
                     </button>
                     <div className="pe-overflow-divider" role="separator" />
