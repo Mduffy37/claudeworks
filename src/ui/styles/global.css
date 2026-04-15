@@ -4820,10 +4820,44 @@ body {
   max-height: 100%;
 }
 
+.marketplace-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.marketplace-head-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.marketplace-heading {
+  margin: 0;
+  font-size: 0.923rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.marketplace-count {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
 .marketplace-add-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .marketplace-input {
@@ -4932,10 +4966,31 @@ body {
   color: var(--text-primary);
 }
 
+.marketplace-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
 .marketplace-item-repo {
   font-size: 0.846rem;
   color: var(--text-muted);
   font-family: "SF Mono", monospace;
+}
+
+.marketplace-item-synced {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.marketplace-item-synced::before {
+  content: "\00b7";
+  margin-right: 10px;
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .btn-danger-small {
@@ -4951,6 +5006,30 @@ body {
 .btn-danger-small:hover {
   background: var(--color-danger);
   color: white;
+}
+
+.btn-danger-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 3px 8px;
+  font-size: 0.769rem;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.btn-danger-ghost:hover,
+.btn-danger-ghost:focus-visible {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  outline: none;
+}
+
+.btn-danger-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ── Discover loading / error ────────────────────────────────────── */

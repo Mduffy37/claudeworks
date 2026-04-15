@@ -1409,6 +1409,24 @@ function PromptsTab() {
   );
 }
 
+function formatRelativeTime(iso: string): string {
+  if (!iso) return "";
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return "";
+  const diff = Date.now() - then;
+  if (diff < 0) return "just now";
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
 // ─── Main dialog ────────────────────────────────────────────────────────────
 
 export function ManageDialog({
@@ -2554,23 +2572,30 @@ export function ManageDialog({
                 </div>
               ) : (
                 <div className="marketplace-tab">
-                  <div className="marketplace-add-row">
-                    <input
-                      type="text"
-                      className="marketplace-input"
-                      placeholder="GitHub repo (e.g. owner/repo)"
-                      value={marketplaceInput}
-                      onChange={(e) => setMarketplaceInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleAddMarketplace(); }}
-                      disabled={marketplaceLoading}
-                    />
-                    <button
-                      className="btn-primary"
-                      onClick={handleAddMarketplace}
-                      disabled={!marketplaceInput.trim() || marketplaceLoading}
-                    >
-                      {marketplaceLoading ? "Adding..." : "Add"}
-                    </button>
+                  <div className="marketplace-head">
+                    <div className="marketplace-head-title">
+                      <h3 className="marketplace-heading">Installed marketplaces</h3>
+                      <span className="marketplace-count" aria-label={`${marketplaces.length} registered`}>{marketplaces.length}</span>
+                    </div>
+                    <div className="marketplace-add-row">
+                      <input
+                        type="text"
+                        className="marketplace-input"
+                        placeholder="GitHub repo (e.g. owner/repo)"
+                        value={marketplaceInput}
+                        onChange={(e) => setMarketplaceInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleAddMarketplace(); }}
+                        disabled={marketplaceLoading}
+                        aria-label="GitHub repo to add as a marketplace source"
+                      />
+                      <button
+                        className="btn-primary"
+                        onClick={handleAddMarketplace}
+                        disabled={!marketplaceInput.trim() || marketplaceLoading}
+                      >
+                        {marketplaceLoading ? "Adding\u2026" : "Add source"}
+                      </button>
+                    </div>
                   </div>
                   {marketplaceError && (
                     <div className="marketplace-error">{marketplaceError}</div>
@@ -2604,13 +2629,24 @@ export function ManageDialog({
                                   <span className={`browse-marketplace-arrow${isExpanded ? " open" : ""}`} aria-hidden="true">&#9654;</span>
                                   {" "}{mp.name}
                                 </div>
-                                <div className="marketplace-item-repo">{mp.repo}</div>
+                                <div className="marketplace-item-meta">
+                                  <span className="marketplace-item-repo">{mp.repo}</span>
+                                  {mp.lastUpdated && (
+                                    <span
+                                      className="marketplace-item-synced"
+                                      title={new Date(mp.lastUpdated).toLocaleString()}
+                                    >
+                                      Last synced {formatRelativeTime(mp.lastUpdated)}
+                                    </span>
+                                  )}
+                                </div>
                               </button>
                               {mp.name !== "claude-plugins-official" && (
                                 <button
-                                  className="btn-danger-small"
+                                  className="btn-danger-ghost"
                                   onClick={(e) => { e.stopPropagation(); requestRemoveMarketplace(mp.name); }}
                                   disabled={marketplaceLoading}
+                                  aria-label={`Remove source ${mp.name}`}
                                   title="Remove source"
                                 >
                                   Remove
