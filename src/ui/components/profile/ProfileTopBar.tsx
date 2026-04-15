@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { Profile, LaunchOptions } from "../../../electron/types";
 import { LaunchOptionsPopover } from "../shared/LaunchOptionsPopover";
 
@@ -84,6 +84,32 @@ export function ProfileTopBar({
 }: ProfileTopBarProps) {
   const [showOverflow, setShowOverflow] = useState(false);
   const [showLaunchOptions, setShowLaunchOptions] = useState(false);
+  const overflowTriggerRef = useRef<HTMLButtonElement>(null);
+  const overflowMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showOverflow) return;
+    const first = overflowMenuRef.current?.querySelector<HTMLButtonElement>("[role=menuitem]");
+    first?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowOverflow(false);
+        overflowTriggerRef.current?.focus();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = Array.from(overflowMenuRef.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]") ?? []);
+        if (items.length === 0) return;
+        const current = items.indexOf(document.activeElement as HTMLButtonElement);
+        const nextIdx = e.key === "ArrowDown"
+          ? (current + 1) % items.length
+          : (current - 1 + items.length) % items.length;
+        items[nextIdx]?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showOverflow]);
   const enabledCount = selectedPlugins.length;
   const subtitle = isNew
     ? "Configure plugins and skills for this profile"
@@ -165,12 +191,17 @@ export function ProfileTopBar({
           {!isNew && profile && (
             <div className="pe-topbar-secondary">
               <button
+                ref={overflowTriggerRef}
+                id="pe-overflow-trigger"
                 className="pe-overflow-btn"
+                type="button"
                 onClick={() => setShowOverflow(!showOverflow)}
-                title="More actions"
                 aria-label="More actions"
+                aria-haspopup="menu"
+                aria-expanded={showOverflow}
+                aria-controls="pe-overflow-menu"
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <circle cx="3" cy="8" r="1.3" fill="currentColor" />
                   <circle cx="8" cy="8" r="1.3" fill="currentColor" />
                   <circle cx="13" cy="8" r="1.3" fill="currentColor" />
@@ -179,17 +210,23 @@ export function ProfileTopBar({
               {showOverflow && (
                 <>
                   <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
-                  <div className="pe-overflow-menu">
+                  <div
+                    ref={overflowMenuRef}
+                    id="pe-overflow-menu"
+                    className="pe-overflow-menu"
+                    role="menu"
+                    aria-labelledby="pe-overflow-trigger"
+                  >
                     {onDuplicate && (
-                      <button onClick={() => { setShowOverflow(false); onDuplicate(profile.name); }}>
+                      <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onDuplicate(profile.name); }}>
                         Duplicate
                       </button>
                     )}
-                    <button onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
+                    <button role="menuitem" type="button" onClick={() => { setShowOverflow(false); onSetOverviewOpen(true); }}>
                       Overview
                     </button>
-                    <div className="pe-overflow-divider" />
-                    <button className="pe-overflow-danger" onClick={() => { setShowOverflow(false); onSetConfirmDelete(true); }}>
+                    <div className="pe-overflow-divider" role="separator" />
+                    <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { setShowOverflow(false); onSetConfirmDelete(true); }}>
                       Delete Profile
                     </button>
                   </div>

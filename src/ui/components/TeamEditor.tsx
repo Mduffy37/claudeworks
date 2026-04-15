@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -54,6 +54,32 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [search, setSearch] = useState("");
   const [showOverflow, setShowOverflow] = useState(false);
+  const overflowTriggerRef = useRef<HTMLButtonElement>(null);
+  const overflowMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showOverflow) return;
+    const first = overflowMenuRef.current?.querySelector<HTMLButtonElement>("[role=menuitem]");
+    first?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowOverflow(false);
+        overflowTriggerRef.current?.focus();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = Array.from(overflowMenuRef.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]") ?? []);
+        if (items.length === 0) return;
+        const current = items.indexOf(document.activeElement as HTMLButtonElement);
+        const nextIdx = e.key === "ArrowDown"
+          ? (current + 1) % items.length
+          : (current - 1 + items.length) % items.length;
+        items[nextIdx]?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showOverflow]);
   const [launchDir, setLaunchDir] = useState("");
 
   // Persist launch dir per team (shared with TeamList sidebar dropdown).
