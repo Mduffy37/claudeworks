@@ -6511,7 +6511,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 6px 0 2px;
+  padding: 6px 24px 2px;
 }
 
 .pe-tp-row {
