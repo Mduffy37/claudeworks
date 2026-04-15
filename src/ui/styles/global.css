@@ -3384,13 +3384,14 @@ body {
 }
 
 .plugin-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 12px;
+  padding: 10px 14px;
+  min-height: 60px;
   cursor: pointer;
   transition: background var(--transition-fast);
-  /* Allow the body column to shrink below its content size */
   min-width: 0;
 }
 
