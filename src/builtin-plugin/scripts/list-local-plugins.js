@@ -127,11 +127,62 @@ function pushItem(kind, id, plugin, desc, sourceUrl) {
   });
 }
 
+// ─── Skill-lock grouping ────────────────────────────────────────────────────
+//
+// Mirror of core.ts:detectSkillLockSource. Skills installed by a CLI that
+// writes .skill-lock.json (e.g. Leonxlnx's skill-cli used by taste-skill)
+// collapse into one synthetic plugin per `source` so both the skill and the
+// Electron scanner agree on plugin IDs. Without this, the skill would write
+// profiles with per-skill `local:<name>` IDs that the scanner has already
+// grouped away, firing the "missing plugins" banner.
+
+const _skillLockManifestCache = new Map();
+
+function detectSkillLockSource(skillDir) {
+  let realPath;
+  try { realPath = fs.realpathSync(skillDir); } catch { return null; }
+  const skillKey = path.basename(realPath);
+
+  const home = os.homedir();
+  let dir = path.dirname(realPath);
+  let manifest = null;
+  while (dir && dir !== path.dirname(dir)) {
+    const candidate = path.join(dir, ".skill-lock.json");
+    if (_skillLockManifestCache.has(candidate)) {
+      manifest = _skillLockManifestCache.get(candidate);
+      break;
+    }
+    if (fs.existsSync(candidate)) {
+      try {
+        manifest = JSON.parse(fs.readFileSync(candidate, "utf-8"));
+        _skillLockManifestCache.set(candidate, manifest);
+      } catch {
+        _skillLockManifestCache.set(candidate, null);
+      }
+      break;
+    }
+    if (dir === home) break;
+    dir = path.dirname(dir);
+  }
+
+  if (!manifest || !manifest.skills || typeof manifest.skills !== "object") return null;
+  const entry = manifest.skills[skillKey];
+  if (!entry || !entry.source) return null;
+
+  return {
+    groupKey: `skill-lock:${entry.source}`,
+    groupName: String(entry.source),
+    sourceUrl: entry.sourceUrl,
+  };
+}
+
 // ─── Skills: ~/.claude/skills/<name>/SKILL.md ───────────────────────────────
 
 function scanSkills() {
   const dir = path.join(CLAUDE_HOME, "skills");
   if (!fs.existsSync(dir)) return;
+
+  const groupedSkills = new Map();
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
@@ -145,9 +196,20 @@ function scanSkills() {
     if (!fs.existsSync(skillMd)) continue;
 
     const fm = readFrontmatter(skillMd);
-    const pluginId = `local:${entry.name}`;
     const skillName = fm.name || entry.name;
 
+    const group = detectSkillLockSource(fullPath);
+    if (group) {
+      let bucket = groupedSkills.get(group.groupKey);
+      if (!bucket) {
+        bucket = { groupName: group.groupName, sourceUrl: group.sourceUrl, items: [] };
+        groupedSkills.set(group.groupKey, bucket);
+      }
+      bucket.items.push({ dirName: entry.name, skillName, description: fm.description, skillMd });
+      continue;
+    }
+
+    const pluginId = `local:${entry.name}`;
     pushPlugin(
       pluginId,
       entry.name,
@@ -162,6 +224,27 @@ function scanSkills() {
       fm.description,
       "file://" + skillMd,
     );
+  }
+
+  for (const bucket of groupedSkills.values()) {
+    const pluginId = `local:${bucket.groupName}`;
+    const roster = bucket.items.map((i) => i.skillName).join(", ");
+    pushPlugin(
+      pluginId,
+      bucket.groupName,
+      `Grouped skills from ${bucket.groupName}: ${roster}`,
+      { skills: bucket.items.length, agents: 0, commands: 0 },
+      bucket.sourceUrl || undefined,
+    );
+    for (const it of bucket.items) {
+      pushItem(
+        "skill",
+        `local/${bucket.groupName}/${it.skillName}`,
+        pluginId,
+        it.description,
+        "file://" + it.skillMd,
+      );
+    }
   }
 }
 

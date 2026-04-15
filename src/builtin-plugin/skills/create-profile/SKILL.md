@@ -484,6 +484,8 @@ Now and only now, ask. Never assume — always explicit, and explain what it is 
 
 ### 7d. Hand off to `create-workflow` to sequence the tool set
 
+**Preflight:** before invoking `create-workflow`, clear any stale workflow-body temp file from a previous run in the same shell with `rm -f "${TMPDIR:-/tmp}/claude-profiles-pending-workflow.md"`. This guarantees Step 8's `cat` sees either a fresh file (user went through the workflow) or no file at all (user opted out), never a stale body from a prior session.
+
 The actual stage-by-stage sequencing lives in the **`create-workflow`** skill (also in this `profiles-manager` plugin). Don't duplicate that logic here — hand control over with a context block so `create-workflow` can skip its own profile-selection and shape-picking steps and go straight into interactive sequencing using the plugins and shape you already locked in.
 
 Emit the handoff context block verbatim, in exactly this shape, substituting your locked state:
@@ -507,17 +509,20 @@ CREATE_WORKFLOW_CONTEXT
 END_CREATE_WORKFLOW_CONTEXT
 ```
 
-Then announce the handoff in one line — *"Handing off to the `create-workflow` skill to co-design the `/workflow` body with you."* — and invoke the skill. `create-workflow` will detect the context block, skip its standalone flow, and run Step 3 (interactive sequencing) directly. It does not write to `profiles.json` in parent mode — it emits the final body between marker lines:
+Then announce the handoff in one line — *"Handing off to the `create-workflow` skill to co-design the `/workflow` body with you."* — and invoke the skill. `create-workflow` will detect the context block, skip its standalone flow, and run Step 3 (interactive sequencing) directly. It does not write to `profiles.json` in parent mode — instead it stashes the final body in a temp file at:
 
 ```
-WORKFLOW_BODY_BEGIN
-<final body>
-WORKFLOW_BODY_END
+<$TMPDIR>/claude-profiles-pending-workflow.md
 ```
 
-**When control returns to you**, extract the text between `WORKFLOW_BODY_BEGIN` and `WORKFLOW_BODY_END` verbatim and hold it as `P_WORKFLOW` for the Step 8 write. If the user opted out mid-way (the markers surround an empty body), leave `P_WORKFLOW` unset — Step 8 will write the profile with no `/workflow` command, and the user can always invoke `create-workflow` standalone later.
+(Resolve `$TMPDIR` via Bash when you need to read the file; fall back to `/tmp` if unset.) **Past runs printed `WORKFLOW_BODY_BEGIN/END` marker lines to the user — that contract is gone. Do not look for those markers in `create-workflow`'s output, do not print them yourself.** The temp file is the only handoff channel.
 
-Then proceed to Step 7e. Do not re-ask the workflow question or re-sequence the stages — that conversation belongs to `create-workflow` and duplicating it here produces confusing double-prompts.
+`create-workflow` will also transition **in the same assistant turn** into asking the Step 7e questions (profile name first). You are not waiting for a separate user turn — the child skill drives straight into 7e on your behalf. Answer the Step 7e questions as you normally would; the temp file will be read by Step 8 when it builds the `write-profile.js` command. Specifically:
+
+- **When Step 8 is about to build the `P_WORKFLOW` value**, `cat` the temp file with Bash. If the file is missing or empty, the user opted out — leave `P_WORKFLOW` unset and Step 8 will write the profile with no `/workflow` command. If the file has content, set `P_WORKFLOW` to its contents via a heredoc-fed env var (same shape as `create-workflow`'s standalone mode) so newlines and shell specials survive.
+- After Step 8 succeeds, delete the temp file with `rm -f` so a subsequent `create-profile` run in the same shell starts clean. If the `rm` fails (file already gone), ignore it.
+
+Do not re-ask the workflow question, do not re-sequence stages, and do not re-ask for the profile name after `create-workflow` already asked — duplicating those produces confusing double-prompts.
 
 ### 7e. Final settings (administrative)
 

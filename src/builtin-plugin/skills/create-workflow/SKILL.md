@@ -134,19 +134,21 @@ When the user confirms every proposed stage, send the one-line confirmation from
 
 Your behavior here depends on invocation mode.
 
-### Parent mode — emit markers for create-profile to capture
+### Parent mode — stash the body and continue as create-profile Step 7e
 
-Print the final body between exact marker lines so the parent skill (`create-profile`) can slice it out of your response and set it as the `P_WORKFLOW` env var in its own `write-profile.js` call. Do not write to `profiles.json` yourself — the parent flow will do the full profile write in its Step 8.
+You are still in the same model session as `create-profile`; the "handoff" is a mode switch inside one session, not a process boundary. **Never print the body or any marker lines to the user** — that's internal plumbing and the old `WORKFLOW_BODY_BEGIN/END` markers leaked into chats in past runs. The parent skill will read the body from a temp file.
 
-Output exactly this, with your body in place of the placeholder:
+Use the Write tool to stash the final body at this fixed path:
 
 ```
-WORKFLOW_BODY_BEGIN
-<the final /workflow body, verbatim, preserving blank lines>
-WORKFLOW_BODY_END
+<$TMPDIR>/claude-profiles-pending-workflow.md
 ```
 
-Follow it with one line confirming the handoff: *"Workflow body ready — handing back to `create-profile` to finish the profile."* Then stop. Do not ask follow-up questions; control returns to the parent skill.
+Resolve `$TMPDIR` yourself via Bash before calling Write (on macOS sessions it's typically `/var/folders/...`; fall back to `/tmp` if unset). The file content is the `/workflow` body verbatim — preserving blank lines, no frontmatter, no markers, no surrounding commentary.
+
+If the user opted out of the workflow mid-way, write an **empty file** at the same path. `create-profile` Step 7d detects an empty file and leaves `P_WORKFLOW` unset, so no `/workflow` command is created.
+
+After the Write tool call, say **one** short line to the user — e.g. *"Workflow drafted — continuing with the final profile settings."* — and **immediately, in the same assistant turn**, proceed to `create-profile` Step 7e by asking the user for the profile name. Do not stop, do not wait for a user nudge, do not print the body or its path. The whole point of this contract is a streamlined handoff.
 
 ### Standalone mode — patch profiles.json via patch-profile.js
 
@@ -185,5 +187,5 @@ The Claude Profiles app's profile-assembly step writes the `workflow` field to `
 - **Respect `excludedItems`.** If the profile has items excluded from a plugin (mega-bundle filtering), don't reference the excluded items in the workflow body — they won't be active at runtime.
 - **Do not write a `/tools` command here.** That's a separate concern handled by `create-profile` Step 7e. This skill is scoped to `/workflow` only.
 - **If the user says "actually skip the workflow"** at any point, respect it:
-  - In parent mode, print `WORKFLOW_BODY_BEGIN\nWORKFLOW_BODY_END` (empty body) and tell them the parent will treat this as "no workflow". The parent's write-profile.js call leaves `P_WORKFLOW` unset and no `/workflow` is created.
+  - In parent mode, write an **empty file** at `<$TMPDIR>/claude-profiles-pending-workflow.md` and tell them the parent will treat this as "no workflow". The parent's write-profile.js call leaves `P_WORKFLOW` unset and no `/workflow` is created. Do NOT print marker lines — those are gone.
   - In standalone mode, do not touch `profiles.json`. Tell them nothing changed.
