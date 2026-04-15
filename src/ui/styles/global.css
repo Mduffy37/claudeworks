@@ -4684,7 +4684,7 @@ body {
   margin: 8px 12px 12px;
   border: 2px dashed var(--border);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(245, 244, 237, 0.02);
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
@@ -4696,12 +4696,12 @@ body {
 }
 
 .te-member-card.lead {
-  background: rgba(222, 115, 86, 0.05);
-  border-color: rgba(222, 115, 86, 0.2);
+  background: rgba(201, 100, 66, 0.06);
+  border-color: rgba(201, 100, 66, 0.25);
 }
 
 .te-member-card.broken {
-  border-color: rgba(245, 91, 91, 0.3);
+  border-color: rgba(181, 51, 51, 0.35);
 }
 
 .te-member-header {
@@ -4749,14 +4749,15 @@ body {
 }
 
 .te-member-card.lead .te-member-avatar {
-  background: rgba(222, 115, 86, 0.15);
+  background: var(--accent-dim);
   color: var(--accent);
 }
 
 .te-member-name {
   color: var(--text-primary);
-  font-size: 0.923rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -4779,21 +4780,25 @@ body {
 }
 
 .te-lead-badge {
-  background: rgba(222, 115, 86, 0.2);
+  background: var(--accent-dim);
   color: var(--accent);
   padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 0.692rem;
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-overline);
   font-weight: 500;
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
 }
 
 .te-broken-badge {
   background: var(--color-danger-dim);
   color: var(--color-danger);
   padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 0.692rem;
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-overline);
   font-weight: 500;
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
 }
 
 .te-colour-swatches {
@@ -4865,10 +4870,11 @@ body {
   flex: 1;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 5px 8px;
   color: var(--text-primary);
-  font-size: 0.846rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
   outline: none;
 }
 
@@ -4880,13 +4886,13 @@ body {
   flex: 1;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 5px 8px;
   color: var(--text-secondary);
-  font-size: 0.846rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
   resize: vertical;
   min-height: 36px;
-  font-family: inherit;
   outline: none;
 }
 
@@ -4895,12 +4901,12 @@ body {
 }
 
 .te-drop-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border: 2px dashed var(--border-strong);
   border-radius: var(--radius);
   padding: 20px;
   text-align: center;
   color: var(--text-placeholder);
-  font-size: 0.846rem;
+  font-size: var(--fs-caption);
 }
 
 .te-drop-zone.drag-active {
@@ -4912,7 +4918,7 @@ body {
 .te-avail-item.in-team {
   opacity: 0.35;
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--border);
 }
 
 .te-avail-item.in-team .te-avail-grip {
@@ -4927,9 +4933,10 @@ body {
   border-radius: var(--radius-sm);
   padding: 8px 12px;
   color: var(--text-primary);
-  font-size: 0.923rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-whisper);
 }
 
 /* Settings panel */
@@ -4950,10 +4957,11 @@ body {
 .te-settings select {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 4px 8px;
   color: var(--text-primary);
-  font-size: 0.846rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
 }
 
 /* Merge preview */
@@ -4979,7 +4987,7 @@ body {
 }
 
 .mp-agent {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(245, 244, 237, 0.04);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
 }
@@ -4992,18 +5000,19 @@ body {
 
 .mp-agent-name {
   color: var(--text-primary);
-  font-size: 0.923rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
   font-weight: 500;
 }
 
 .mp-agent-source {
   color: var(--text-muted);
-  font-size: 0.769rem;
+  font-size: var(--fs-label);
 }
 
 .mp-agent-instructions {
   color: var(--text-muted);
-  font-size: 0.846rem;
+  font-size: var(--fs-caption);
   margin-top: 4px;
   white-space: pre-wrap;
 }
