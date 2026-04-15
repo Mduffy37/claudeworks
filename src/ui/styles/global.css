@@ -2397,6 +2397,18 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+.pe-mcp-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
 }
 
 .pe-mcp-section-label {
@@ -2404,8 +2416,46 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.pe-mcp-section-label code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.769rem;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pe-mcp-section-hint {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pe-mcp-section-plugins {
+  border-left-color: var(--color-skill);
+  background: linear-gradient(180deg, rgba(103, 232, 249, 0.04), transparent 60px), var(--bg-secondary);
+}
+
+.pe-mcp-section-plugins .pe-mcp-section-label {
+  color: var(--color-skill);
+}
+
+.pe-mcp-section-project {
+  border-left-color: var(--accent);
+  background: linear-gradient(180deg, rgba(222, 115, 86, 0.04), transparent 60px), var(--bg-secondary);
+}
+
+.pe-mcp-section-project .pe-mcp-section-label {
+  color: var(--accent);
+}
+
+.pe-mcp-section-user {
+  border-left-color: var(--text-muted);
 }
 
 .pe-mcp-source {

@@ -52,8 +52,11 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       }
       </div>
       {pluginMcps.length > 0 && (
-        <div className="pe-mcp-section">
-          <div className="pe-mcp-section-label">From Plugins</div>
+        <div className="pe-mcp-section pe-mcp-section-plugins">
+          <div className="pe-mcp-section-head">
+            <span className="pe-mcp-section-label">From Plugins</span>
+            <span className="pe-mcp-section-hint">Toggling a row disables the source plugin for this profile.</span>
+          </div>
           {pluginMcps.map((mcp) => (
             <div
               key={`${mcp.pluginFullName}:${mcp.name}`}
@@ -83,8 +86,11 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       )}
 
       {userMcps.length > 0 && (
-        <div className="pe-mcp-section">
-          <div className="pe-mcp-section-label">User (~/.claude.json)</div>
+        <div className="pe-mcp-section pe-mcp-section-user">
+          <div className="pe-mcp-section-head">
+            <span className="pe-mcp-section-label">User <code>(~/.claude.json)</code></span>
+            <span className="pe-mcp-section-hint">Always on for every session.</span>
+          </div>
           {userMcps.map((mcp) => (
             <div key={mcp.name} className="local-item enabled" title={mcpTitle(mcp)}>
               <span className="local-item-name">{mcp.name}</span>
@@ -95,8 +101,11 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       )}
 
       {projectMcps.length > 0 && (
-        <div className="pe-mcp-section">
-          <div className="pe-mcp-section-label">Project ({launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default"})</div>
+        <div className="pe-mcp-section pe-mcp-section-project">
+          <div className="pe-mcp-section-head">
+            <span className="pe-mcp-section-label">Project ({launchDir ? (launchDir.split("/").pop() ?? launchDir) : "default"})</span>
+            <span className="pe-mcp-section-hint">Toggles persist per directory.</span>
+          </div>
           {projectMcps.map((mcp) => {
             const isEnabled = !launchDir || !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
             return (
