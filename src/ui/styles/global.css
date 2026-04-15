@@ -2293,23 +2293,29 @@ body {
 }
 
 .modal-close {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .modal-close:hover {
   background: var(--bg-hover);
-  border-color: var(--border);
+  border-color: var(--text-secondary);
   color: var(--text-primary);
+}
+
+.modal-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .modal-body {
