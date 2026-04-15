@@ -200,8 +200,9 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 className="sidebar-filter-empty"
                 onClick={() => onRequestFocusProjectsOnSelected?.()}
                 title={selectedTeam ? "Add a project to the selected team" : "Select a team first, then click to add a project"}
+                aria-label={selectedTeam ? "Add project to selected team" : "Add project (select a team first)"}
               >
-                + Project
+                <span aria-hidden="true">+ </span>Project
               </button>
             )}
             <select

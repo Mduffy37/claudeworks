@@ -227,8 +227,9 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 className="sidebar-filter-empty"
                 onClick={() => onRequestFocusProjectsOnSelected?.()}
                 title={selectedName ? "Add a project to the selected profile" : "Select a profile first, then click to add a project"}
+                aria-label={selectedName ? "Add project to selected profile" : "Add project (select a profile first)"}
               >
-                + Project
+                <span aria-hidden="true">+ </span>Project
               </button>
             )}
             <select
