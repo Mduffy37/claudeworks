@@ -1659,6 +1659,27 @@ body {
   color: var(--text-primary);
 }
 
+.btn-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(234, 179, 8, 0.08);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-warning:hover {
+  background: rgba(234, 179, 8, 0.16);
+  border-color: rgba(234, 179, 8, 0.7);
+}
+
 /* ─── Launch button ───────────────────────────────────────────────────────── */
 
 .btn-launch {
