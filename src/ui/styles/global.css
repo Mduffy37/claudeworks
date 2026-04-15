@@ -6360,6 +6360,34 @@ body {
 }
 
 /* Session list */
+.home-session-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.692rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.home-session-header-icon-spacer {
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.home-session-header-project {
+  flex: 1;
+}
+
+.home-session-header-date {
+  min-width: 80px;
+  text-align: right;
+}
+
 .home-session-list {
   display: flex;
   flex-direction: column;

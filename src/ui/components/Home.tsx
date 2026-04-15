@@ -322,6 +322,13 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Recent sessions */}
       <div className="home-section">
         <h2 className="home-section-title">Recent Sessions</h2>
+        <div className="home-session-header" aria-hidden="true">
+          <span className="home-session-header-icon-spacer" />
+          <span className="home-session-header-project">Project</span>
+          <span className="home-session-header-profile">Profile</span>
+          <span className="home-session-header-msgs">Messages</span>
+          <span className="home-session-header-date">Date</span>
+        </div>
         <div className="home-session-list" role="list">
           {(showAllRecent ? analytics.recentSessions : analytics.recentSessions.slice(0, 10)).map((s) => {
             const sessionProfile = profiles.find((p) => p.name === s.profile);
