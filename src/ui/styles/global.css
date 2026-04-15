@@ -3924,9 +3924,11 @@ body {
   gap: 4px;
 }
 
-.pl-filters .pl-sort-select {
-  flex: 1;
+.pl-filters .pl-sort-select,
+.pl-filters .sidebar-filter-empty {
+  flex: 1 1 0;
   min-width: 0;
+  justify-content: center;
 }
 
 .pl-search {
