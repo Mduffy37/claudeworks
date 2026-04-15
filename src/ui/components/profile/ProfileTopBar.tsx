@@ -160,7 +160,7 @@ export function ProfileTopBar({
                 }
               }}
             >
-              <option value="">None (choose at launch)</option>
+              <option value="">Choose directory…</option>
               {directories.map((dir) => (
                 <option key={dir} value={dir}>{shortPath(dir)}</option>
               ))}

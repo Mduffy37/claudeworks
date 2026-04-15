@@ -348,7 +348,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                   }
                 }}
               >
-                <option value="">None (choose at launch)</option>
+                <option value="">Choose directory…</option>
                 {importedProjects.map((dir) => (
                   <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
                 ))}
