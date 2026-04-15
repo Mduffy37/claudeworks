@@ -50,6 +50,10 @@ export function SettingsTab(props: Props) {
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
   const [globalHooks, setGlobalHooks] = useState<HookEntry[]>([]);
+  const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
+
+  const toggleAdvanced = (id: string) =>
+    setOpenAdvanced((prev) => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
     window.api.getGlobalHooks().then((hooks) => {
@@ -246,8 +250,22 @@ export function SettingsTab(props: Props) {
         </div>
       </div>
 
-      <div className="pe-settings-section">
-        <div className="pe-settings-section-label">Environment Variables</div>
+      <div className={`pe-settings-section pe-settings-accordion${openAdvanced.env ? " open" : ""}`}>
+        <button
+          type="button"
+          className="pe-settings-accordion-header"
+          aria-expanded={!!openAdvanced.env}
+          onClick={() => toggleAdvanced("env")}
+        >
+          <svg className="pe-settings-accordion-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="pe-settings-section-label">Environment Variables</span>
+          {(envEntries.length > 0 || inheritedEnv.length > 0) && (
+            <span className="pe-settings-section-count">{envEntries.length + inheritedEnv.length}</span>
+          )}
+        </button>
+        {openAdvanced.env && (
         <div className="modal-fields">
           {inheritedEnv.length > 0 && (
             <>
@@ -306,11 +324,24 @@ export function SettingsTab(props: Props) {
             <div className="field-hint">Environment variables set when this profile launches.</div>
           )}
         </div>
+        )}
       </div>
 
       {globalHooks.length > 0 && (
-        <div className="pe-settings-section">
-          <div className="pe-settings-section-label">Hooks</div>
+        <div className={`pe-settings-section pe-settings-accordion${openAdvanced.hooks ? " open" : ""}`}>
+          <button
+            type="button"
+            className="pe-settings-accordion-header"
+            aria-expanded={!!openAdvanced.hooks}
+            onClick={() => toggleAdvanced("hooks")}
+          >
+            <svg className="pe-settings-accordion-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="pe-settings-section-label">Hooks</span>
+            <span className="pe-settings-section-count">{globalHooks.length}</span>
+          </button>
+          {openAdvanced.hooks && (
           <div className="modal-fields">
             <div className="field-hint" style={{ marginBottom: "4px" }}>
               Global hooks inherited from ~/.claude/settings.json. Toggle off to disable for this profile.
@@ -338,6 +369,7 @@ export function SettingsTab(props: Props) {
               );
             })}
           </div>
+          )}
         </div>
       )}
 
