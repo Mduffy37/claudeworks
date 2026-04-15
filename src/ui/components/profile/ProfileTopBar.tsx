@@ -121,14 +121,26 @@ export function ProfileTopBar({
     <div className="pe-topbar">
       {/* Left: Name + subtitle, vertically centered */}
       <div className="pe-topbar-identity">
-        <input
-          className="pe-topbar-name-input"
-          value={name}
-          onChange={(e) => { onChangeName(e.target.value); markDirty(); }}
-          placeholder={isNew ? "Profile name..." : ""}
-          autoFocus={isNew}
-        />
-        <span className="pe-topbar-subtitle">{subtitle}</span>
+        <div className="pe-topbar-name-row">
+          <input
+            className="pe-topbar-name-input"
+            value={name}
+            onChange={(e) => { onChangeName(e.target.value); markDirty(); }}
+            placeholder={isNew ? "Profile name..." : ""}
+            autoFocus={isNew}
+          />
+          {dirty && !isNew && (
+            <span
+              className="pe-topbar-unsaved-dot"
+              role="status"
+              aria-label="Unsaved changes"
+              title="Unsaved changes"
+            />
+          )}
+        </div>
+        <span className="pe-topbar-subtitle">
+          {dirty && !isNew ? "Unsaved changes \u00B7 " : ""}{subtitle}
+        </span>
       </div>
 
       {/* Right: stacked controls */}
@@ -155,10 +167,11 @@ export function ProfileTopBar({
             </select>
             <div className="btn-launch-group">
               <button
-                className={`btn-launch${launching ? " launching" : ""}`}
+                className={`btn-launch${launching ? " launching" : ""}${dirty ? " dimmed" : ""}`}
                 disabled={launching}
                 onClick={onLaunch}
-                aria-label="Launch profile in iTerm2"
+                aria-label={dirty ? "Launch profile in iTerm2 (unsaved changes will not apply until saved)" : "Launch profile in iTerm2"}
+                title={dirty ? "You have unsaved changes — save first to apply them to the launched session" : undefined}
               >
                 <span className="btn-launch-icon">
                   <LaunchIcon spinning={launching} />
@@ -237,7 +250,7 @@ export function ProfileTopBar({
           )}
 
           <button
-            className="btn-primary"
+            className={`btn-primary${dirty && !saving ? " btn-primary-dirty" : ""}`}
             disabled={!name.trim() || !dirty || saving}
             onClick={onSave}
           >
