@@ -433,7 +433,7 @@ export function App() {
       <div className="drag-bar">
         <div className="drag-bar-brand">
           <img src="./logo.svg" alt="" width="16" height="16" className="drag-bar-logo" />
-          <span className="drag-bar-title">Claude Profiles</span>
+          <h1 className="drag-bar-title">Claude Profiles</h1>
         </div>
         <button
           className="app-refresh-btn"

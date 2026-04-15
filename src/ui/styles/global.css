@@ -267,6 +267,7 @@ body {
 }
 
 .drag-bar-title {
+  margin: 0;
   font-size: 0.923rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -5771,6 +5772,7 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  margin-top: 0;
   margin-bottom: 12px;
 }
 

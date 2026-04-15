@@ -178,7 +178,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Favourites */}
       {profiles.some((p) => p.favourite) && (
         <div className="home-section">
-          <h3 className="home-section-title">Favourites</h3>
+          <h2 className="home-section-title">Favourites</h2>
           <div className="home-favourites">
             {profiles.filter((p) => p.favourite).map((p) => (
               <div
@@ -236,7 +236,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Active sessions */}
       {activeSessions.length > 0 && (
         <div className="home-section">
-          <h3 className="home-section-title">Active Sessions ({activeSessions.length})</h3>
+          <h2 className="home-section-title">Active Sessions ({activeSessions.length})</h2>
           <div className="home-active-list">
             {activeSessions.map((s) => (
               <div key={s.pid} className="home-active-item">
@@ -254,7 +254,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
       {/* Activity chart */}
       <div className="home-section">
-        <h3 className="home-section-title">Activity</h3>
+        <h2 className="home-section-title">Activity</h2>
         <ActivityChart data={analytics.dailyActivity} days={period === "7d" ? 7 : period === "30d" ? 30 : undefined} />
       </div>
 
@@ -262,7 +262,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       <div className="home-columns">
         {/* Profiles */}
         <div className="home-section">
-          <h3 className="home-section-title">Profiles</h3>
+          <h2 className="home-section-title">Profiles</h2>
           <div className="home-profile-grid">
             {profiles.map((p) => {
               const usage = analytics.profileUsage.find((u) => u.name === p.name);
@@ -304,7 +304,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
         {/* Top projects */}
         <div className="home-section">
-          <h3 className="home-section-title">Top Projects</h3>
+          <h2 className="home-section-title">Top Projects</h2>
           <div className="home-project-list">
             {analytics.topProjects.map((p) => (
               <div key={p.name} className="home-project-item">
@@ -318,7 +318,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
       {/* Recent sessions */}
       <div className="home-section">
-        <h3 className="home-section-title">Recent Sessions</h3>
+        <h2 className="home-section-title">Recent Sessions</h2>
         <div className="home-session-list">
           {(showAllRecent ? analytics.recentSessions : analytics.recentSessions.slice(0, 10)).map((s) => {
             const sessionProfile = profiles.find((p) => p.name === s.profile);
@@ -363,7 +363,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Profile usage */}
       {analytics.profileUsage.length > 0 && (
         <div className="home-section">
-          <h3 className="home-section-title">Profile Activity</h3>
+          <h2 className="home-section-title">Profile Activity</h2>
           <div className="home-profile-grid">
             {analytics.profileUsage.map((pu) => {
               const profile = profiles.find((p) => p.name === pu.name);
