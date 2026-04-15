@@ -4730,11 +4730,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 8px 12px 12px;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-md);
-  background: rgba(245, 244, 237, 0.02);
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  margin: 8px 16px 12px;
+  max-width: 720px;
+  border: none;
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+.te-members-list.drag-active {
+  background: rgba(201, 100, 66, 0.04);
+  outline: 1px dashed var(--accent);
+  outline-offset: -4px;
 }
 
 .te-member-card {
@@ -4954,7 +4960,9 @@ body {
 .te-drop-zone {
   border: 2px dashed var(--border-strong);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px 20px;
+  min-height: 0;
+  max-height: 72px;
   text-align: center;
   color: var(--text-placeholder);
   font-size: var(--fs-caption);
