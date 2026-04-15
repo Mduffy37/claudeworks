@@ -657,15 +657,15 @@ body {
 }
 
 .sidebar-launch-select {
-  /* take remaining space but cap so the button always has room */
-  flex: 1 1 0;
+  /* Demoted to a quiet chip — Launch is the dominant element on the row. */
+  flex: 0 1 auto;
   min-width: 0;
-  max-width: calc(100% - 72px); /* 72px ≈ launch button minimum width */
+  max-width: 45%;
   padding: 4px 6px;
-  background: var(--bg-elevated);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: var(--fs-caption);
   font-family: var(--font-mono);
   cursor: pointer;
@@ -686,10 +686,13 @@ body {
 .sidebar-launch-group .btn-launch-sidebar {
   display: flex;
   opacity: 1; /* parent .sidebar-launch-group handles opacity */
-  flex-shrink: 0;
+  flex: 1 1 auto;
   width: auto;
-  min-width: 64px;
+  min-width: 110px;
   margin-top: 0; /* group already handles vertical spacing */
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  font-weight: 600;
 }
 
 .btn-launch-label {
