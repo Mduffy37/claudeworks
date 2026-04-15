@@ -2,6 +2,8 @@
   "name": "claude-profiles",
   "version": "0.1.0",
   "description": "Desktop app for managing Claude Code profiles",
+  "author": "Matthew Duffy",
+  "license": "MIT",
   "main": "dist/electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:electron:watch\"",
