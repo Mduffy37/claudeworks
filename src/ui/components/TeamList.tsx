@@ -66,6 +66,7 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
     <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
       <select
         className="sidebar-launch-select"
+        aria-label={`Launch directory for ${team.name}`}
         value={selectedDir}
         onChange={(e) => updateSelectedDir(e.target.value)}
         onMouseDown={(e) => {

@@ -92,6 +92,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
     <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
       <select
         className="sidebar-launch-select"
+        aria-label={`Launch directory for ${profile.name}`}
         value={selectedDir}
         onChange={(e) => updateSelectedDir(e.target.value)}
         onMouseDown={(e) => {

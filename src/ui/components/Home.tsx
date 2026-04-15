@@ -156,6 +156,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
         {allProjects.length > 0 && (
           <select
             className="home-project-filter"
+            aria-label="Filter by project"
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
           >

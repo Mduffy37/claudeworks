@@ -138,6 +138,7 @@ export function ProfileTopBar({
           <div className="pe-topbar-controls-row">
             <select
               className="pe-launch-dir-select"
+              aria-label="Launch directory"
               value={launchDir}
               onChange={(e) => onSetLaunchDir(e.target.value)}
               onMouseDown={(e) => {
