@@ -6477,6 +6477,40 @@ body {
   margin-top: -4px;
 }
 
+/* Hook rows — stack event name above the full command path */
+.pe-hook-label {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pe-hook-label > strong {
+  font-size: 0.846rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.pe-hook-command {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 4px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, "SF Mono", Menlo, Consolas, monospace);
+  font-size: 0.769rem;
+  line-height: 1.45;
+  word-break: break-all;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* ── Home / Dashboard ────────────────────────────────────────────── */
 
 .home {

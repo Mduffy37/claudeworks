@@ -360,9 +360,9 @@ export function SettingsTab(props: Props) {
                       />
                       <span className="toggle-track"><span className="toggle-thumb" /></span>
                     </label>
-                    <span className="field-toggle-label">
+                    <span className="field-toggle-label pe-hook-label">
                       <strong>{h.event}</strong>
-                      <span style={{ color: "var(--text-muted)", marginLeft: "8px", fontSize: "0.846rem", fontFamily: '"SF Mono", monospace' }}>{h.command}</span>
+                      <code className="pe-hook-command">{h.command}</code>
                     </span>
                   </div>
                 </div>
