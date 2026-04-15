@@ -1104,7 +1104,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             <div className="manage-section-header" style={{ marginTop: "12px" }}>
               <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>Never Launched</span>
             </div>
-            <div className="health-issue-list">
+            <div className={`health-issue-list${neverLaunched.length > 10 ? " two-col" : ""}`}>
               {neverLaunched.map((p) => (
                 <div key={p.name} className="health-issue-item">
                   <span className="health-issue-icon warning" aria-hidden="true">{"\u25CB"}</span>
@@ -1124,7 +1124,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
           <div className="manage-section-hint">
             Installed plugins not used by any profile.
           </div>
-          <div className="health-issue-list">
+          <div className={`health-issue-list${unusedPlugins.length > 10 ? " two-col" : ""}`}>
             {unusedPlugins.map((name) => (
               <div key={name} className="health-issue-item">
                 <span className="health-issue-icon warning" aria-hidden="true">{"\u25CB"}</span>
