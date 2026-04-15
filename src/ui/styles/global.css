@@ -3011,8 +3011,41 @@ body {
   gap: 8px;
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 0 0 0 14px;
+  border-left: 3px solid var(--border);
   border-radius: 0;
+}
+
+.pe-instructions-section.always-on {
+  border-left-color: var(--sage);
+}
+
+.pe-instructions-section.on-demand {
+  border-left-color: var(--walnut);
+}
+
+.pe-instructions-state-pill {
+  font-family: var(--font-sans);
+  font-size: 0.692rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.pe-instructions-state-pill.always-on {
+  color: var(--sage);
+  background: rgba(122, 139, 110, 0.14);
+  border: 1px solid rgba(122, 139, 110, 0.45);
+}
+
+.pe-instructions-state-pill.on-demand {
+  color: var(--walnut);
+  background: rgba(154, 122, 94, 0.14);
+  border: 1px solid rgba(154, 122, 94, 0.45);
 }
 
 .pe-instructions-labels {
@@ -3088,6 +3121,14 @@ body {
   font-size: 0.923rem;
   line-height: 1.6;
   resize: none;
+}
+
+.pe-instructions-section.always-on .pe-instructions-editor {
+  height: 300px;
+}
+
+.pe-instructions-section.on-demand .pe-instructions-editor {
+  height: 220px;
 }
 
 .pe-instructions-editor:focus {

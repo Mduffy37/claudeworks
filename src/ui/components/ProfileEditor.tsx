@@ -964,10 +964,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               )}
 
               {/* Always-on instructions — written to <config>/CLAUDE.md */}
-              <section className="pe-instructions-section">
+              <section className="pe-instructions-section always-on">
                 <div className="pe-editor-toolbar">
                   <div className="pe-instructions-labels">
-                    <span className="pe-instructions-heading">Always-on</span>
+                    <span className="pe-instructions-heading">
+                      <span className="pe-instructions-state-pill always-on" aria-label="Always on">Always on</span>
+                      CLAUDE.md
+                    </span>
                     <span className="pe-instructions-hint">Appended to CLAUDE.md — Claude reads this every turn.</span>
                   </div>
                   <div className="pe-editor-toolbar-actions">
@@ -1001,11 +1004,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               </section>
 
               {/* /workflow command — written to <config>/commands/workflow.md */}
-              <section className="pe-instructions-section">
+              <section className="pe-instructions-section on-demand">
                 <div className="pe-editor-toolbar">
                   <div className="pe-instructions-labels">
                     <span className="pe-instructions-heading">
-                      <code className="pe-instructions-command">/workflow</code> command
+                      <span className="pe-instructions-state-pill on-demand" aria-label="On demand">On demand</span>
+                      <code className="pe-instructions-command">/workflow</code>
                     </span>
                     <span className="pe-instructions-hint">
                       Invoked on demand — runs when you type <code>/workflow</code> in a session.
