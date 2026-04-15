@@ -965,8 +965,15 @@ body {
 
 .theme-option.active {
   border-color: var(--accent);
-  background: var(--accent-dim);
-  color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.theme-option.active:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .text-size-slider {
