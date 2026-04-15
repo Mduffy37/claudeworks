@@ -5552,6 +5552,23 @@ body {
   border-color: var(--accent);
 }
 
+/* Card has exactly one click target by default; inline actions reveal on
+   hover/focus so users don't have to choose between whole-card vs chip. */
+.curated-featured-card .curated-install-btn,
+.curated-featured-card .curated-added-group {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.curated-featured-card:hover .curated-install-btn,
+.curated-featured-card:hover .curated-added-group,
+.curated-featured-card:focus-within .curated-install-btn,
+.curated-featured-card:focus-within .curated-added-group {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .curated-featured-card-header {
   display: flex;
   align-items: center;
@@ -5634,12 +5651,39 @@ body {
   border-style: solid;
 }
 
+/* Hero — the one obvious entry into Browse */
+.curated-hero {
+  padding: 20px 20px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.curated-hero-title {
+  font-size: 1.077rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  letter-spacing: -0.005em;
+}
+
+.curated-hero-sub {
+  font-size: 0.769rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
 /* Toolbar */
 .curated-toolbar {
   display: flex;
   gap: 6px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--border);
+}
+
+.curated-toolbar-hero {
+  padding: 0;
+  border-bottom: none;
+  gap: 8px;
 }
 
 .curated-search {
@@ -5651,6 +5695,24 @@ body {
   font-size: 0.769rem;
   color: var(--text-primary);
   outline: none;
+}
+
+.curated-toolbar-hero .curated-search {
+  padding: 10px 14px;
+  font-size: 0.923rem;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.curated-toolbar-hero .curated-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.18);
+}
+
+.curated-toolbar-hero .curated-refresh-btn {
+  padding: 8px 12px;
 }
 
 .curated-search:focus {

@@ -2164,6 +2164,32 @@ export function ManageDialog({
                     </div>
                   ) : curatedData ? (
                     <>
+                      {/* Hero search — the one obvious entry into Browse */}
+                      <div className="curated-hero">
+                        <div className="curated-hero-title">Browse the Claude Code ecosystem</div>
+                        <div className="curated-hero-sub">Search curated marketplaces, plugins, skills, agents, and commands.</div>
+                        <div className="curated-toolbar curated-toolbar-hero">
+                          <input
+                            type="text"
+                            className="curated-search"
+                            placeholder="Search plugins, skills, agents, commands…"
+                            value={curatedSearch}
+                            onChange={(e) => setCuratedSearch(e.target.value)}
+                          />
+                          <button
+                            className="btn-secondary curated-refresh-btn"
+                            onClick={refreshCurated}
+                            disabled={curatedLoading}
+                            title="Refresh curated list"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                              <path d="M14 8A6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M14 2v4h-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Featured row */}
                       {featuredCurated.length > 0 && (
                         <div className="curated-featured">
@@ -2308,28 +2334,6 @@ export function ManageDialog({
                           </div>
                         );
                       })()}
-
-                      {/* Search + refresh */}
-                      <div className="curated-toolbar">
-                        <input
-                          type="text"
-                          className="curated-search"
-                          placeholder="Search"
-                          value={curatedSearch}
-                          onChange={(e) => setCuratedSearch(e.target.value)}
-                        />
-                        <button
-                          className="btn-secondary curated-refresh-btn"
-                          onClick={refreshCurated}
-                          disabled={curatedLoading}
-                          title="Refresh curated list"
-                        >
-                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M14 8A6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M14 2v4h-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
 
                       {/* Entry list — shows top-level curated entries normally,
                           swaps to a grouped global search view when the user types. */}
