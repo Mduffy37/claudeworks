@@ -935,7 +935,7 @@ body {
 
 .manage-git-dirty {
   font-size: 0.846rem;
-  color: var(--color-warning, #e5a84b);
+  color: var(--color-warning, #9a7a2e);
   font-style: italic;
 }
 
@@ -1121,14 +1121,14 @@ body {
 .theme-option.active {
   border-color: var(--accent);
   background: var(--accent);
-  color: #ffffff;
+  color: var(--ivory);
   font-weight: 600;
 }
 
 .theme-option.active:hover {
   border-color: var(--accent);
   background: var(--accent);
-  color: #ffffff;
+  color: var(--ivory);
 }
 
 .text-size-slider {
@@ -1286,7 +1286,7 @@ body {
   align-items: center;
   gap: 5px;
   background: var(--accent-dim);
-  border: 1px solid rgba(222, 115, 86, 0.25);
+  border: 1px solid rgba(201, 100, 66, 0.28);
   border-radius: var(--radius-sm);
   color: var(--accent);
   font-size: 0.846rem;
@@ -1298,8 +1298,8 @@ body {
 }
 
 .insert-prompt-btn:hover {
-  background: rgba(222, 115, 86, 0.22);
-  border-color: rgba(222, 115, 86, 0.4);
+  background: rgba(201, 100, 66, 0.24);
+  border-color: rgba(201, 100, 66, 0.42);
   color: var(--accent-hover);
 }
 
@@ -1545,7 +1545,7 @@ body {
 .bulk-tag-input-wrap input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.15);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.16);
 }
 
 .bulk-item-list {
@@ -2500,7 +2500,7 @@ body {
 .pe-flat-group-select-all:focus-visible {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(222, 115, 86, 0.2);
+  box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.22);
 }
 
 .pe-flat-group-name {
@@ -3082,7 +3082,7 @@ body {
 .env-var-row > input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.28);
 }
 
 .env-var-row > input:disabled {
@@ -3190,7 +3190,7 @@ body {
 .pe-launch-dir-select:focus-visible {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.2);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.22);
 }
 
 /* ─── Plugin picker ───────────────────────────────────────────────────────── */
@@ -3602,7 +3602,7 @@ body {
 .skill-badge.deps {
   color: var(--color-agent);
   background: var(--color-agent-dim);
-  border: 1px solid rgba(94, 168, 240, 0.18);
+  border: 1px solid rgba(154, 122, 94, 0.22);
   cursor: help;
 }
 
@@ -3815,7 +3815,7 @@ body {
 .launch-dir input:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.28);
 }
 
 /* ─── Empty states ────────────────────────────────────────────────────────── */
@@ -3874,12 +3874,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(245, 244, 237, 0.1);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(245, 244, 237, 0.2);
 }
 
 /* ─── Launch error banner ──────────────────────────────────────────────────── */
@@ -3891,8 +3891,8 @@ body {
   gap: 8px;
   padding: 8px 16px;
   background: var(--color-danger-dim);
-  border-bottom: 1px solid rgba(220, 60, 60, 0.3);
-  color: #f87171;
+  border-bottom: 1px solid rgba(181, 51, 51, 0.32);
+  color: var(--color-danger);
   font-size: 0.923rem;
   line-height: 1.4;
 }
@@ -3902,7 +3902,7 @@ body {
   border: none;
   padding: 2px;
   cursor: pointer;
-  color: #f87171;
+  color: var(--color-danger);
   opacity: 0.7;
   flex-shrink: 0;
 }
@@ -3916,9 +3916,9 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(234, 179, 8, 0.12);
-  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
-  color: #eab308;
+  background: rgba(154, 122, 46, 0.14);
+  border-bottom: 1px solid rgba(154, 122, 46, 0.28);
+  color: var(--brass);
   font-size: 0.923rem;
   line-height: 1.4;
 }
@@ -3934,8 +3934,8 @@ body {
 .pe-health-remove {
   flex-shrink: 0;
   background: transparent;
-  border: 1px solid rgba(234, 179, 8, 0.5);
-  color: #eab308;
+  border: 1px solid rgba(154, 122, 46, 0.55);
+  color: var(--brass);
   border-radius: var(--radius);
   padding: 3px 8px;
   font-size: 0.769rem;
@@ -3943,7 +3943,7 @@ body {
 }
 
 .pe-health-remove:hover {
-  background: rgba(234, 179, 8, 0.2);
+  background: rgba(154, 122, 46, 0.22);
 }
 
 .pe-health-link:hover {
@@ -4655,7 +4655,7 @@ body {
 .te-avail-add:focus-visible {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.3);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.32);
 }
 
 .te-avail-name {
@@ -5055,8 +5055,8 @@ body {
   gap: 12px;
   padding: 10px 14px;
   margin-bottom: 8px;
-  background: color-mix(in srgb, var(--warning, #e8a735) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--warning, #e8a735) 25%, transparent);
+  background: color-mix(in srgb, var(--warning, #9a7a2e) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning, #9a7a2e) 25%, transparent);
   border-radius: 6px;
   font-size: 0.846rem;
   line-height: 1.4;
@@ -5065,7 +5065,7 @@ body {
 .manage-default-nudge code {
   font-family: var(--font-mono);
   font-size: 0.769rem;
-  background: color-mix(in srgb, var(--warning, #e8a735) 15%, transparent);
+  background: color-mix(in srgb, var(--warning, #9a7a2e) 15%, transparent);
   padding: 1px 4px;
   border-radius: 3px;
 }
@@ -5865,7 +5865,7 @@ body {
   font-weight: 600;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  color: #fb923c;
+  color: var(--coral);
   background: rgba(251, 146, 60, 0.14);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -5884,8 +5884,8 @@ body {
   font-size: 0.692rem;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  background: rgba(103, 232, 249, 0.08);
-  color: #67e8f9;
+  background: rgba(122, 139, 110, 0.10);
+  color: var(--sage);
   text-transform: lowercase;
   letter-spacing: 0.02em;
   flex-shrink: 0;
@@ -5949,8 +5949,8 @@ body {
   font-size: 0.692rem;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  background: rgba(103, 232, 249, 0.08);
-  color: #67e8f9;
+  background: rgba(122, 139, 110, 0.10);
+  color: var(--sage);
   text-transform: lowercase;
   letter-spacing: 0.02em;
   flex-shrink: 0;
@@ -5960,8 +5960,8 @@ body {
   font-size: 0.692rem;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  background: rgba(251, 191, 36, 0.12);
-  color: #fbbf24;
+  background: rgba(154, 122, 46, 0.14);
+  color: var(--brass);
   text-transform: lowercase;
   letter-spacing: 0.03em;
   flex-shrink: 0;
@@ -6046,7 +6046,7 @@ body {
 }
 
 .curated-detail-meta a {
-  color: #67e8f9;
+  color: var(--sage);
   text-decoration: none;
 }
 .curated-detail-meta a:hover {
@@ -6157,7 +6157,7 @@ body {
   margin: 0 0 1em;
 }
 .curated-detail-markdown a {
-  color: #67e8f9;
+  color: var(--sage);
   text-decoration: none;
 }
 .curated-detail-markdown a:hover {
@@ -6812,7 +6812,7 @@ body {
   padding: 0 6px;
   background: var(--color-launch);
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 1px solid rgba(245, 244, 237, 0.2);
   border-top-right-radius: var(--radius);
   border-bottom-right-radius: var(--radius);
   cursor: pointer;
@@ -6988,7 +6988,7 @@ body {
 }
 
 .app-error-icon {
-  color: #f59e0b;
+  color: var(--brass);
   margin-bottom: 4px;
 }
 
@@ -7030,7 +7030,7 @@ body {
 }
 
 .app-error-sources strong {
-  color: #f59e0b;
+  color: var(--brass);
   font-weight: 600;
 }
 
@@ -7077,7 +7077,7 @@ body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.12);
+  border: 2.5px solid rgba(245, 244, 237, 0.12);
   border-top-color: var(--text-primary);
   animation: spin 0.9s linear infinite;
 }
@@ -7087,7 +7087,7 @@ body {
   background: rgba(248, 113, 113, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.3);
   border-radius: 6px;
-  color: #fca5a5;
+  color: var(--color-danger);
   font-size: 0.923rem;
   margin-bottom: 12px;
 }
@@ -7115,22 +7115,22 @@ body {
 }
 
 .doctor-summary-chip-healthy {
-  color: #86efac;
-  background: rgba(134, 239, 172, 0.12);
+  color: var(--sage);
+  background: rgba(122, 139, 110, 0.14);
 }
 
 .doctor-summary-chip-fixed {
-  color: #67e8f9;
-  background: rgba(103, 232, 249, 0.12);
+  color: var(--sage);
+  background: rgba(122, 139, 110, 0.14);
 }
 
 .doctor-summary-chip-detected {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
+  color: var(--brass);
+  background: rgba(154, 122, 46, 0.14);
 }
 
 .doctor-summary-chip-unfixable {
-  color: #fca5a5;
+  color: var(--color-danger);
   background: rgba(252, 165, 165, 0.14);
 }
 
@@ -7159,17 +7159,17 @@ body {
 }
 
 .doctor-finding-healthy {
-  border-color: rgba(134, 239, 172, 0.28);
+  border-color: rgba(122, 139, 110, 0.32);
 }
 
 .doctor-finding-fixed {
-  border-color: rgba(103, 232, 249, 0.35);
-  background: rgba(103, 232, 249, 0.04);
+  border-color: rgba(122, 139, 110, 0.38);
+  background: rgba(122, 139, 110, 0.06);
 }
 
 .doctor-finding-detected {
-  border-color: rgba(251, 191, 36, 0.35);
-  background: rgba(251, 191, 36, 0.04);
+  border-color: rgba(154, 122, 46, 0.38);
+  background: rgba(154, 122, 46, 0.05);
 }
 
 .doctor-finding-unfixable {
@@ -7189,10 +7189,10 @@ body {
   justify-content: center;
 }
 
-.doctor-finding-healthy .doctor-finding-icon { color: #86efac; }
-.doctor-finding-fixed .doctor-finding-icon { color: #67e8f9; }
-.doctor-finding-detected .doctor-finding-icon { color: #fbbf24; }
-.doctor-finding-unfixable .doctor-finding-icon { color: #fca5a5; }
+.doctor-finding-healthy .doctor-finding-icon { color: var(--sage); }
+.doctor-finding-fixed .doctor-finding-icon { color: var(--sage); }
+.doctor-finding-detected .doctor-finding-icon { color: var(--brass); }
+.doctor-finding-unfixable .doctor-finding-icon { color: var(--color-danger); }
 .doctor-finding-skipped .doctor-finding-icon { color: var(--text-muted); }
 
 .doctor-finding-body {
@@ -7255,7 +7255,7 @@ body {
 .doctor-repaired-label {
   flex: 1;
   font-size: 0.846rem;
-  color: #86efac;
+  color: var(--sage);
 }
 
 /* ─── TagsProjectsEditor (inline per-profile/team) ─────────────────────────── */
@@ -7307,8 +7307,8 @@ body {
 }
 
 .pe-tp-chip-project {
-  background: color-mix(in srgb, #7c3aed 18%, transparent);
-  color: #c4b5fd;
+  background: color-mix(in srgb, #987585 18%, transparent);
+  color: #b098a5;
 }
 
 .pe-tp-chip-remove {
