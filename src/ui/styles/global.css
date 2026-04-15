@@ -2643,10 +2643,11 @@ body {
 
 .pe-mcp-section-label {
   margin: 0;
-  font-size: 0.846rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-overline);
   color: var(--text-primary);
 }
 
@@ -2669,7 +2670,7 @@ body {
 
 .pe-mcp-section-plugins {
   border-left-color: var(--color-skill);
-  background: linear-gradient(180deg, rgba(103, 232, 249, 0.04), transparent 60px), var(--bg-secondary);
+  background: linear-gradient(180deg, rgba(122, 139, 110, 0.06), transparent 60px), var(--bg-secondary);
 }
 
 .pe-mcp-section-plugins .pe-mcp-section-label {
@@ -2678,7 +2679,7 @@ body {
 
 .pe-mcp-section-project {
   border-left-color: var(--accent);
-  background: linear-gradient(180deg, rgba(222, 115, 86, 0.04), transparent 60px), var(--bg-secondary);
+  background: linear-gradient(180deg, rgba(201, 100, 66, 0.05), transparent 60px), var(--bg-secondary);
 }
 
 .pe-mcp-section-project .pe-mcp-section-label {
@@ -3530,8 +3531,8 @@ body {
 .item-checkbox {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-xs);
+  border: 1.5px solid rgba(245, 244, 237, 0.25);
   background: transparent;
   flex-shrink: 0;
   display: flex;
@@ -3551,7 +3552,7 @@ body {
   content: "";
   width: 5px;
   height: 9px;
-  border: 1.8px solid #fff;
+  border: 1.8px solid var(--ivory);
   border-top: none;
   border-left: none;
   transform: rotate(45deg) translate(-0.5px, -1.5px);
