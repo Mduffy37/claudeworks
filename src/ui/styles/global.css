@@ -37,9 +37,9 @@
   --color-danger: #f55b5b;
   --color-danger-dim: rgba(245, 91, 91, 0.12);
 
-  /* Launch green */
-  --color-launch: #3dba6e;
-  --color-launch-hover: #48d47f;
+  /* Launch — matches accent so Launch reads as the single primary action */
+  --color-launch: #DE7356;
+  --color-launch-hover: #e5856b;
 
   /* Team purple */
   --color-team: #c490ff;
@@ -90,8 +90,8 @@
   --color-danger: #d44040;
   --color-danger-dim: rgba(212, 64, 64, 0.1);
 
-  --color-launch: #2e9e5a;
-  --color-launch-hover: #37b868;
+  --color-launch: #c45a3a;
+  --color-launch-hover: #b34e30;
 
   --color-team: #8a5cd4;
   --color-team-dim: rgba(138, 92, 212, 0.12);
