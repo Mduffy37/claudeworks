@@ -605,7 +605,11 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 ) : (
                   <div className="pe-flat-list">
                     {items.map((item) => (
-                      <div key={`${item.pluginName}:${item.name}`} className="pe-flat-item">
+                      <div
+                        key={`${item.pluginName}:${item.name}`}
+                        className="pe-flat-item"
+                        title={item.description || undefined}
+                      >
                         <div
                           className={`item-checkbox${item.enabled ? " checked" : ""}`}
                           onClick={() => {

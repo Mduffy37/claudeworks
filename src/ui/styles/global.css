@@ -2489,6 +2489,47 @@ body {
   font-size: 0.923rem;
 }
 
+/* Environment variable rows — 3-col grid so inherited, saved, and the
+   "Add Variable" row line up as [key | value | action]. */
+.env-var-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.env-var-row > input {
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.923rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.env-var-row > input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.env-var-row > input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.25);
+}
+
+.env-var-row > input:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.env-var-row > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* ─── Directory list ──────────────────────────────────────────────────────── */
 
 .dir-list {

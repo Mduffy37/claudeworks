@@ -11,6 +11,13 @@ interface McpTabProps {
   onToggleMcp: (dir: string, mcpName: string, enabled: boolean) => void;
 }
 
+function mcpTitle(mcp: { type: string; command?: string; url?: string }): string | undefined {
+  const parts: string[] = [mcp.type];
+  if (mcp.command) parts.push(mcp.command);
+  else if (mcp.url) parts.push(mcp.url);
+  return parts.join(" · ");
+}
+
 export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, launchDir, disabledMcpServers, onToggleMcp }: McpTabProps) {
   const pluginMcps = plugins
     .filter((p) => p.mcpServers.length > 0)
@@ -51,6 +58,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
             <div
               key={`${mcp.pluginFullName}:${mcp.name}`}
               className={`local-item${mcp.enabled ? " enabled" : ""}`}
+              title={mcpTitle(mcp)}
             >
               <label
                 className="toggle-switch"
@@ -78,7 +86,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
         <div className="pe-mcp-section">
           <div className="pe-mcp-section-label">User (~/.claude.json)</div>
           {userMcps.map((mcp) => (
-            <div key={mcp.name} className="local-item enabled">
+            <div key={mcp.name} className="local-item enabled" title={mcpTitle(mcp)}>
               <span className="local-item-name">{mcp.name}</span>
               <span className="plugin-badge">{mcp.type}</span>
             </div>
@@ -95,6 +103,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
               <div
                 key={mcp.name}
                 className={`local-item${isEnabled ? " enabled" : ""}`}
+                title={mcpTitle(mcp)}
               >
                 <label
                   className="toggle-switch"

@@ -598,22 +598,17 @@ function ProjectsTab() {
               <div className="modal-fields" style={{ marginTop: "8px" }}>
                 <div className="manage-section-label" style={{ padding: 0, margin: 0 }}>Environment Variables</div>
                 {projEnvEntries.map(([key, value]) => (
-                  <div className="field" key={key}>
-                    <label>{key}</label>
-                    <div className="field-with-button">
-                      <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} />
-                      <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>Remove</button>
-                    </div>
+                  <div className="env-var-row" key={key}>
+                    <input type="text" value={key} disabled aria-label="Variable name" />
+                    <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} placeholder="value" aria-label={`${key} value`} />
+                    <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>Remove</button>
                   </div>
                 ))}
                 {projEnvEntries.length > 0 && <div className="field-divider" />}
-                <div className="field">
-                  <label>Add Variable</label>
-                  <div className="field-with-button">
-                    <input type="text" value={projEnvNewKey} onChange={(e) => setProjEnvNewKey(e.target.value.replace(/\s/g, ""))} placeholder="KEY" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
-                    <input type="text" value={projEnvNewVal} onChange={(e) => setProjEnvNewVal(e.target.value)} placeholder="value" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
-                    <button className="btn-secondary" disabled={!projEnvNewKey.trim()} onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); }}>Add</button>
-                  </div>
+                <div className="env-var-row">
+                  <input type="text" value={projEnvNewKey} onChange={(e) => setProjEnvNewKey(e.target.value.replace(/\s/g, ""))} placeholder="NEW_VAR_NAME" aria-label="New variable name" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
+                  <input type="text" value={projEnvNewVal} onChange={(e) => setProjEnvNewVal(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
+                  <button className="btn-secondary" disabled={!projEnvNewKey.trim()} onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); }}>Add</button>
                 </div>
               </div>
             </div>
@@ -849,22 +844,17 @@ function GlobalSettingsTab() {
         </div>
         <div className="modal-fields" style={{ marginTop: "8px" }}>
           {envEntries.map(([key, value]) => (
-            <div className="field" key={key}>
-              <label>{key}</label>
-              <div className="field-with-button">
-                <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder="value" />
-                <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
-              </div>
+            <div className="env-var-row" key={key}>
+              <input type="text" value={key} disabled aria-label="Variable name" />
+              <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder="value" aria-label={`${key} value`} />
+              <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
             </div>
           ))}
           {envEntries.length > 0 && <div className="field-divider" />}
-          <div className="field">
-            <label>Add Variable</label>
-            <div className="field-with-button">
-              <input type="text" value={newKey} onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))} placeholder="e.g. CLAUDE_CODE_MAX_OUTPUT_TOKENS" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
-              <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
-              <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
-            </div>
+          <div className="env-var-row">
+            <input type="text" value={newKey} onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))} placeholder="NEW_VAR_NAME" aria-label="New variable name" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+            <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+            <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
           </div>
         </div>
       </div>
