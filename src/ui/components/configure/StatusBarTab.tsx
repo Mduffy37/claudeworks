@@ -319,18 +319,19 @@ export function StatusBarTab() {
             <h3 className="status-bar-section-label">Global</h3>
             <ul className="status-bar-widget-list">
               <li className="status-bar-widget-row">
-                <label className="status-bar-separator-row">
-                  <span className="status-bar-widget-name">Master color</span>
+                <div className="status-bar-separator-row">
+                  <span className="status-bar-widget-name" id="sb-master-color-label">Master color</span>
                   <input
                     type="color"
                     value={masterColor}
                     onChange={(e) => changeMasterColor(e.target.value)}
                     className="status-bar-color-input"
+                    aria-labelledby="sb-master-color-label"
                   />
-                </label>
+                </div>
               </li>
               <li className="status-bar-widget-row">
-                <label className="status-bar-separator-row">
+                <div className="status-bar-separator-row">
                   <span className="status-bar-widget-name">Field separator</span>
                   <input
                     type="text"
@@ -338,17 +339,19 @@ export function StatusBarTab() {
                     maxLength={3}
                     onChange={(e) => changeSeparator("field", e.target.value)}
                     className="status-bar-separator-input"
+                    aria-label="Field separator glyph"
                   />
                   <input
                     type="color"
                     value={fieldSepColor}
                     onChange={(e) => changeSeparatorColor("fieldColor", e.target.value)}
                     className="status-bar-color-input"
+                    aria-label="Field separator color"
                   />
-                </label>
+                </div>
               </li>
               <li className="status-bar-widget-row">
-                <label className="status-bar-separator-row">
+                <div className="status-bar-separator-row">
                   <span className="status-bar-widget-name">Section separator</span>
                   <input
                     type="text"
@@ -356,14 +359,16 @@ export function StatusBarTab() {
                     maxLength={3}
                     onChange={(e) => changeSeparator("section", e.target.value)}
                     className="status-bar-separator-input"
+                    aria-label="Section separator glyph"
                   />
                   <input
                     type="color"
                     value={sectionSepColor}
                     onChange={(e) => changeSeparatorColor("sectionColor", e.target.value)}
                     className="status-bar-color-input"
+                    aria-label="Section separator color"
                   />
-                </label>
+                </div>
               </li>
             </ul>
           </section>
