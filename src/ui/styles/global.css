@@ -3939,18 +3939,79 @@ body {
   padding: 4px 8px 48px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .te-avail-item {
-  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 6px;
   border: 1px dashed rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-sm);
-  cursor: grab;
 }
 
-.te-avail-item:active {
+.te-avail-grip {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  grid-template-rows: repeat(3, 3px);
+  gap: 2px;
+  padding: 8px 4px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  color: var(--text-muted);
+}
+
+.te-avail-grip > span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.te-avail-item:hover .te-avail-grip {
+  color: var(--text-primary);
+}
+
+.te-avail-grip:active {
   cursor: grabbing;
+}
+
+.te-avail-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.te-avail-add {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.te-avail-add:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.te-avail-add:focus-visible {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.3);
 }
 
 .te-avail-name {
@@ -4205,9 +4266,13 @@ body {
 
 .te-avail-item.in-team {
   opacity: 0.35;
-  cursor: default;
   border-style: solid;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.te-avail-item.in-team .te-avail-grip {
+  cursor: default;
+  pointer-events: none;
 }
 
 .te-drag-overlay,

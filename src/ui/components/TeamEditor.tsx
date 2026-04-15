@@ -222,6 +222,17 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
     updateDraft({ members: filtered });
   };
 
+  const handleAddMember = (profileName: string) => {
+    if (memberProfileNames.has(profileName)) return;
+    const newMember: TeamMember = {
+      profile: profileName,
+      role: "",
+      instructions: "",
+      isLead: draft.members.length === 0,
+    };
+    updateDraft({ members: [...draft.members, newMember] });
+  };
+
   const handleSetLead = (profileName: string) => {
     updateDraft({
       members: draft.members.map((m) => ({
@@ -432,7 +443,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
             <SortableContext items={filteredProfiles.map((p) => `avail-${p.name}`)} strategy={verticalListSortingStrategy}>
               <div className="te-available-list">
                 {filteredProfiles.map((p) => (
-                  <DraggableProfile key={p.name} profile={p} inTeam={memberProfileNames.has(p.name)} />
+                  <DraggableProfile key={p.name} profile={p} inTeam={memberProfileNames.has(p.name)} onAdd={() => handleAddMember(p.name)} />
                 ))}
               </div>
             </SortableContext>
