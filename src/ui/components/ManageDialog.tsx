@@ -2038,7 +2038,7 @@ export function ManageDialog({
             role="tablist"
             aria-label="Configure Claude sections"
             onKeyDown={(e) => {
-              const tabs: ManageTab[] = ["plugins", "projects", "prompts", "global", "health", "statusbar"];
+              const tabs: ManageTab[] = ["plugins", "projects", "prompts", "global", "statusbar", "health"];
               if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
               e.preventDefault();
               const idx = tabs.indexOf(activeTab);
@@ -2055,8 +2055,8 @@ export function ManageDialog({
               { id: "projects" as const, label: "Projects" },
               { id: "prompts" as const, label: "Prompts" },
               { id: "global" as const, label: "Global" },
-              { id: "health" as const, label: "Health" },
               { id: "statusbar" as const, label: "Status Bar" },
+              { id: "health" as const, label: "Health" },
             ]).map((tab) => {
               const selected = activeTab === tab.id;
               return (
