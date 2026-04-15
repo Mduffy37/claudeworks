@@ -3213,10 +3213,11 @@ body {
 }
 
 .plugin-section-header h3 {
-  font-size: 0.846rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-overline);
   color: var(--text-muted);
 }
 
@@ -3290,10 +3291,10 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(245, 244, 237, 0.12);
+  border: 1px solid rgba(245, 244, 237, 0.08);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
 }
 
 .toggle-thumb {
@@ -3303,20 +3304,20 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(245, 244, 237, 0.55);
   transition: transform var(--transition), background var(--transition);
   pointer-events: none;
 }
 
 .toggle-switch input:checked + .toggle-track {
   background: var(--color-launch);
-  border-color: rgba(222, 115, 86, 0.4);
-  box-shadow: 0 0 8px rgba(222, 115, 86, 0.3);
+  border-color: rgba(201, 100, 66, 0.45);
+  box-shadow: 0 0 8px rgba(201, 100, 66, 0.32);
 }
 
 .toggle-switch input:checked + .toggle-track .toggle-thumb {
   transform: translateX(16px);
-  background: #fff;
+  background: var(--ivory);
 }
 
 /* ─── Expand arrow ────────────────────────────────────────────────────────── */
@@ -3428,8 +3429,8 @@ body {
 .plugin-badge.excluded {
   color: var(--color-danger);
   background: var(--color-danger-dim);
-  border: 1px solid rgba(245, 91, 91, 0.22);
-  font-weight: 600;
+  border: 1px solid rgba(181, 51, 51, 0.28);
+  font-weight: 500;
 }
 
 /* ─── Plugin items panel ──────────────────────────────────────────────────── */
@@ -3437,7 +3438,7 @@ body {
 .plugin-items {
   padding: 12px 14px 14px 56px;
   border-top: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--bg-primary);
 }
 
 /* ─── Skill toggler ───────────────────────────────────────────────────────── */
@@ -3462,10 +3463,11 @@ body {
 }
 
 .skill-group-label {
-  font-size: 0.769rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-overline);
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -3503,7 +3505,7 @@ body {
   border-radius: var(--radius);
   padding: 4px;
   z-index: 200;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-whisper);
 }
 
 .skill-context-menu button {
@@ -3606,32 +3608,32 @@ body {
 .plugin-badge.skill-badge {
   color: var(--color-skill);
   background: var(--color-skill-dim);
-  border: 1px solid rgba(82, 201, 122, 0.2);
+  border: 1px solid rgba(122, 139, 110, 0.25);
 }
 
 .plugin-badge.agent-badge {
   color: var(--color-agent);
   background: var(--color-agent-dim);
-  border: 1px solid rgba(94, 168, 240, 0.2);
+  border: 1px solid rgba(154, 122, 94, 0.25);
 }
 
 .plugin-badge.cmd-badge {
   color: var(--color-command);
   background: var(--color-command-dim);
-  border: 1px solid rgba(212, 160, 90, 0.2);
+  border: 1px solid rgba(154, 122, 46, 0.25);
 }
 
 .plugin-badge.hook-badge {
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(245, 244, 237, 0.06);
   border: 1px solid var(--border);
 }
 
-/* MCP — purple to distinguish it from cmd and excluded which share amber */
+/* MCP — uses the fifth earth token (plum) to keep every type in the warm spectrum */
 .plugin-badge.mcp {
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.12);
-  border: 1px solid rgba(167, 139, 250, 0.2);
+  color: var(--plum);
+  background: rgba(152, 117, 133, 0.14);
+  border: 1px solid rgba(152, 117, 133, 0.28);
 }
 
 /* Install-source provenance indicator — sits inline next to the plugin name,
@@ -3646,15 +3648,15 @@ body {
 }
 
 .plugin-source-skillfish {
-  color: #67e8f9;
+  color: var(--sage);
 }
 
 .plugin-source-git {
-  color: #c4b5fd;
+  color: var(--plum);
 }
 
 .plugin-source-skill-lock {
-  color: #fbbf24;
+  color: var(--brass);
 }
 
 .plugin-source-marketplace {
@@ -3685,10 +3687,11 @@ body {
 }
 
 .mcp-scope-label {
-  font-size: 0.846rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-overline);
   color: var(--text-muted);
   margin-bottom: 4px;
 }
