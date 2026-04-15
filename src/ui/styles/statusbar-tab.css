@@ -18,7 +18,7 @@
 
 .status-bar-split {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 20px;
   flex: 1;
   min-height: 0; /* allows children to shrink below their intrinsic height */

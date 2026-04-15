@@ -374,7 +374,7 @@ export function StatusBarTab() {
           </section>
 
           <section className="status-bar-section">
-            <h3 className="status-bar-section-label">Widgets</h3>
+            <h3 className="status-bar-section-label">Configured widgets</h3>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
