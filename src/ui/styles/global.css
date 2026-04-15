@@ -5808,19 +5808,36 @@ body {
 
 .pe-settings-tab {
   padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
 }
 
 .pe-settings-section {
-  margin-bottom: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px 20px;
+  margin-bottom: 0;
 }
 
 .pe-settings-section-label {
-  font-size: 0.769rem;
+  font-size: 0.923rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin-bottom: 10px;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pe-settings-section .modal-fields {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
 
 /* ── Home / Dashboard ────────────────────────────────────────────── */
