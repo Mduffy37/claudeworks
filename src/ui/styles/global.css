@@ -1787,19 +1787,26 @@ body {
 }
 
 .btn-primary:disabled {
-  opacity: 0.35;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  box-shadow: none;
   cursor: default;
   pointer-events: none;
+  opacity: 1;
 }
 
 .btn-primary.btn-primary-dirty {
-  box-shadow: 0 1px 8px rgba(201, 100, 66, 0.45);
-  font-weight: 500;
+  background: var(--accent);
+  color: var(--ivory);
+  border: none;
+  box-shadow: 0 2px 14px rgba(201, 100, 66, 0.55), 0 0 0 3px rgba(201, 100, 66, 0.18);
+  font-weight: 600;
 }
 
 .btn-primary.btn-primary-dirty:hover {
   background: var(--accent-hover);
-  box-shadow: 0 2px 12px rgba(201, 100, 66, 0.55);
+  box-shadow: 0 3px 18px rgba(201, 100, 66, 0.65), 0 0 0 3px rgba(201, 100, 66, 0.22);
 }
 
 .btn-secondary {
