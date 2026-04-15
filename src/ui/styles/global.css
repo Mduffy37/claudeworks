@@ -6480,13 +6480,13 @@ body {
 }
 
 .home-stats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
 
 .home-stat {
-  flex: 1;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -6496,6 +6496,7 @@ body {
   justify-content: center;
   min-height: 64px;
   text-align: left;
+  min-width: 0;
 }
 
 .home-stat-value {
