@@ -833,6 +833,17 @@ body {
   flex-direction: column;
 }
 
+.manage-dialog-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+}
+
 .manage-dialog-body > * {
   min-height: 0;
 }

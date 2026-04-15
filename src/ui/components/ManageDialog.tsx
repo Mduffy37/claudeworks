@@ -2765,6 +2765,11 @@ export function ManageDialog({
           {activeTab === "health" && <HealthTab profiles={profiles} plugins={plugins} />}
           {activeTab === "statusbar" && <StatusBarTab />}
         </div>
+        {(activeTab === "global" || activeTab === "health") && (
+          <div className="manage-dialog-footer">
+            <button className="btn-primary" onClick={onClose}>Done</button>
+          </div>
+        )}
       </div>
     </div>
     {curatedDetail && (
