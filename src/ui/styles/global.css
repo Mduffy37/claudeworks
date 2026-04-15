@@ -1,5 +1,32 @@
 @import "./statusbar-tab.css";
 
+/* ─── Fonts (self-hosted WOFF2, SIL OFL, see /fonts/README.md) ────────────── */
+
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("../fonts/SourceSerif4Variable-Roman.woff2") format("woff2-variations"),
+       url("../fonts/SourceSerif4Variable-Roman.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 
@@ -99,6 +126,44 @@
   --shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.20);
   --shadow-inset:   inset 0 0 0 1px rgba(245, 244, 237, 0.10);
 
+  /* ══ Typography tokens ═══════════════════════════════════════════════ */
+
+  /* Families — system sans, Source Serif 4 for editorial moments, JetBrains Mono for code */
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans:  -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-mono:  "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+
+  /* Size ramp (DESIGN.md-aligned) */
+  --fs-display:  4rem;       /* 64px   — hero */
+  --fs-h1:       3.25rem;    /* 52px   — page titles */
+  --fs-h2:       2.3rem;     /* ~37px  — section headings */
+  --fs-h3:       2rem;       /* 32px   — card titles */
+  --fs-h4:       1.6rem;     /* 25.6px — smaller section titles */
+  --fs-h5:       1.3rem;     /* 20.8px — feature titles */
+  --fs-body-lg:  1.25rem;    /* 20px   — intro / large body */
+  --fs-body:     1.0625rem;  /* 17px   — body / nav */
+  --fs-base:     1rem;       /* 16px   — standard / button text */
+  --fs-small:    0.9375rem;  /* 15px   — compact body */
+  --fs-caption:  0.875rem;   /* 14px   — metadata, captions */
+  --fs-label:    0.75rem;    /* 12px   — badges, small labels */
+  --fs-overline: 0.625rem;   /* 10px   — uppercase overlines */
+  --fs-micro:    0.6rem;     /* 9.6px  — smallest text */
+
+  /* Line heights */
+  --lh-display: 1.10;
+  --lh-heading: 1.20;
+  --lh-h-loose: 1.30;
+  --lh-body:    1.60;  /* relaxed editorial body — token defined, NOT wired to base body this loop */
+  --lh-ui:      1.40;
+  --lh-unit:    1.00;
+
+  /* Letter spacing */
+  --ls-tight:    -0.01em;
+  --ls-normal:    0;
+  --ls-label:     0.03em;
+  --ls-overline:  0.05em;
+  --ls-micro:     0.01em;
+
   /* Transitions */
   --transition-fast: 120ms ease;
   --transition:      180ms ease;
@@ -139,6 +204,13 @@
   --shadow-inset:   inset 0 0 0 1px rgba(20, 20, 19, 0.15);
 }
 
+/* ─── Typography utility classes (opt-in handles) ─────────────────────────── */
+
+.serif   { font-family: var(--font-serif); font-weight: 500; letter-spacing: var(--ls-tight); }
+.sans    { font-family: var(--font-sans); }
+.mono    { font-family: var(--font-mono); }
+.tabular { font-variant-numeric: tabular-nums; }
+
 /* ─── Reset ───────────────────────────────────────────────────────────────── */
 
 * {
@@ -152,7 +224,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -544,7 +616,7 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 0.846rem;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   /* strip default OS select chrome */
   appearance: none;
@@ -851,7 +923,7 @@ body {
 }
 
 .manage-git-branch {
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
   color: var(--text-primary);
   background: var(--bg-surface);
@@ -983,7 +1055,7 @@ body {
   flex: 1;
   font-size: 0.846rem;
   color: var(--text-muted);
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1084,7 +1156,7 @@ body {
   height: 14px;
   font-size: 0.654rem;
   color: var(--text-muted);
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .text-size-tickrow span {
@@ -1098,7 +1170,7 @@ body {
   margin-left: auto;
   font-size: 0.769rem;
   color: var(--text-secondary);
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1334,7 +1406,7 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 0.923rem;
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
   padding: 10px 12px;
   resize: vertical;
   outline: none;
@@ -1375,7 +1447,7 @@ body {
 }
 
 .manage-global-settings .manage-claudemd-editor {
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
 }
 
 /* ─── Bulk Manage Dialog ─────────────────────────────────────────────────── */
@@ -2320,7 +2392,7 @@ body {
 }
 
 .pe-flat-item-name.command-name {
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
 }
 
@@ -2498,7 +2570,7 @@ body {
 
 .pe-plugin-group-version {
   font-size: 0.769rem;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   color: var(--text-muted);
 }
 
@@ -2570,7 +2642,7 @@ body {
 }
 
 .pe-mcp-section-label code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   font-weight: 500;
   color: var(--text-muted);
@@ -2775,7 +2847,7 @@ body {
 }
 
 .pe-instructions-command {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.846rem;
   font-weight: 500;
   color: #67e8f9;
@@ -2785,7 +2857,7 @@ body {
 }
 
 .pe-instructions-section .pe-instructions-hint code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.846rem;
   padding: 0 3px;
   background: rgba(255, 255, 255, 0.06);
@@ -2825,7 +2897,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
   line-height: 1.6;
   resize: none;
@@ -2944,7 +3016,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
   line-height: 1.5;
   resize: vertical;
@@ -2966,7 +3038,7 @@ body {
 
 .field-with-button input {
   flex: 1;
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
 }
 
@@ -2986,7 +3058,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -3031,7 +3103,7 @@ body {
 
 .dir-list-path {
   flex: 1;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.846rem;
   color: var(--text-secondary);
   overflow: hidden;
@@ -3063,7 +3135,7 @@ body {
 }
 
 .field-hint code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   color: var(--text-secondary);
   background: var(--bg-elevated);
   padding: 1px 4px;
@@ -3088,7 +3160,7 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.923rem;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   min-width: 200px;
   max-width: 260px;
@@ -3285,7 +3357,7 @@ body {
 
 /* Version — deemphasised, reads as metadata attached to the name */
 .plugin-version {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   font-weight: 400;
   color: var(--text-muted);
@@ -3333,7 +3405,7 @@ body {
   color: var(--text-muted);
   background: transparent;
   border: none;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   padding: 2px 4px;
 }
@@ -3490,7 +3562,7 @@ body {
 }
 
 .skill-name.command-name {
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.923rem;
   color: var(--color-command);
 }
@@ -3556,7 +3628,7 @@ body {
 /* Install-source provenance indicator — sits inline next to the plugin name,
    same shape as .plugin-version but in a muted cyan so it reads as "source" not "version". */
 .plugin-source {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   font-weight: 400;
   flex-shrink: 0;
@@ -3650,7 +3722,7 @@ body {
 }
 
 .pe-local-helper-text code {
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   background: var(--bg-elevated);
   padding: 1px 5px;
@@ -3715,13 +3787,13 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.923rem;
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .launch-dir input::placeholder {
   color: var(--text-placeholder);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: var(--font-sans);
   font-size: 1rem;
 }
 
@@ -3873,7 +3945,7 @@ body {
 }
 
 .pe-default-banner code {
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   padding: 1px 4px;
@@ -3972,7 +4044,7 @@ body {
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 0.846rem;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -4202,8 +4274,10 @@ body {
 }
 
 .pm-name {
+  font-family: var(--font-serif);
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: var(--ls-tight);
   color: var(--text-primary);
 }
 
@@ -4961,7 +5035,7 @@ body {
 }
 
 .manage-default-nudge code {
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   background: color-mix(in srgb, var(--warning, #e8a735) 15%, transparent);
   padding: 1px 4px;
@@ -5171,7 +5245,7 @@ body {
 .marketplace-item-repo {
   font-size: 0.846rem;
   color: var(--text-muted);
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .marketplace-item-synced {
@@ -5285,7 +5359,7 @@ body {
 
 .discover-source-link {
   font-size: 0.846rem;
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--accent);
   text-decoration: none;
 }
@@ -5721,7 +5795,7 @@ body {
 }
 
 .curated-search-result-path {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.692rem;
   color: var(--text-muted);
   margin-top: 2px;
@@ -5739,7 +5813,7 @@ body {
 .curated-transport-chip {
   display: inline-flex;
   align-items: center;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.615rem;
   padding: 1px 5px;
   border-radius: var(--radius-sm);
@@ -5755,7 +5829,7 @@ body {
 .curated-bundle-badge {
   display: inline-flex;
   align-items: center;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.615rem;
   font-weight: 600;
   padding: 1px 6px;
@@ -5775,7 +5849,7 @@ body {
 }
 
 .curated-kind-tag {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.692rem;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
@@ -5828,8 +5902,10 @@ body {
 }
 
 .curated-detail-title {
+  font-family: var(--font-serif);
   font-size: 1.154rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: var(--ls-tight);
   margin: 0;
   color: var(--text-primary);
   white-space: nowrap;
@@ -5838,7 +5914,7 @@ body {
 }
 
 .curated-detail-kind-tag {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.692rem;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
@@ -6057,7 +6133,7 @@ body {
   text-decoration: underline;
 }
 .curated-detail-markdown code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.846rem;
   padding: 1px 5px;
   background: var(--bg-surface);
@@ -6510,7 +6586,7 @@ body {
 .home-project-count {
   font-size: 0.846rem;
   color: var(--text-muted);
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 /* Session list */
@@ -6569,7 +6645,7 @@ body {
 .home-session-msgs {
   font-size: 0.769rem;
   color: var(--text-muted);
-  font-family: "SF Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .home-session-profile {
@@ -6903,7 +6979,7 @@ body {
   border-radius: 6px;
   font-size: 0.846rem;
   color: var(--text-primary);
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   text-align: left;
   width: 100%;
   max-width: 480px;
@@ -6996,7 +7072,7 @@ body {
   border-radius: 10px;
   font-size: 0.769rem;
   font-weight: 500;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
 }
 
 .doctor-summary-chip .doctor-summary-count {
@@ -7108,7 +7184,7 @@ body {
   padding: 6px 10px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.769rem;
   color: var(--text-primary);
   display: flex;
@@ -7125,7 +7201,7 @@ body {
 }
 
 .doctor-finding-backup code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--font-mono);
   color: var(--text-primary);
   background: rgba(0, 0, 0, 0.2);
   padding: 1px 5px;
