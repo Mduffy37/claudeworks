@@ -5175,6 +5175,19 @@ body {
   color: var(--accent);
 }
 
+.curated-collection-chip.curated-collection-more {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.curated-collection-chip.curated-collection-more:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-style: solid;
+}
+
 /* Toolbar */
 .curated-toolbar {
   display: flex;

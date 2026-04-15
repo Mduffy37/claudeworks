@@ -1445,6 +1445,7 @@ export function ManageDialog({
   const [curatedLoading, setCuratedLoading] = useState(false);
   const [curatedError, setCuratedError] = useState<string | null>(null);
   const [curatedCollection, setCuratedCollection] = useState<string | null>(null);
+  const [curatedCollectionsExpanded, setCuratedCollectionsExpanded] = useState(false);
   const [curatedSearch, setCuratedSearch] = useState("");
   const [curatedInstalling, setCuratedInstalling] = useState<string | null>(null);
   const [curatedErrors, setCuratedErrors] = useState<Record<string, string>>({});
@@ -2213,30 +2214,65 @@ export function ManageDialog({
                       )}
 
                       {/* Collections filter */}
-                      {curatedData.collections.length > 0 && (
-                        <div className="curated-collections">
-                          <div className="curated-section-title">Collections</div>
-                          <div className="curated-collection-row">
-                            <button
-                              className={`curated-collection-chip${curatedCollection === null ? " active" : ""}`}
-                              onClick={() => setCuratedCollection(null)}
-                            >
-                              All
-                            </button>
-                            {curatedData.collections.map((c) => (
+                      {curatedData.collections.length > 0 && (() => {
+                        const CHIP_LIMIT = 6;
+                        const allCollections = curatedData.collections;
+                        const selected = curatedCollection ? allCollections.find((c) => c.id === curatedCollection) : null;
+                        const primary = curatedCollectionsExpanded
+                          ? allCollections
+                          : (() => {
+                              const head = allCollections.slice(0, CHIP_LIMIT);
+                              if (selected && !head.some((c) => c.id === selected.id)) {
+                                return [...head.slice(0, CHIP_LIMIT - 1), selected];
+                              }
+                              return head;
+                            })();
+                        const overflow = allCollections.length - primary.length;
+                        return (
+                          <div className="curated-collections">
+                            <div className="curated-section-title">Collections</div>
+                            <div className="curated-collection-row">
                               <button
-                                key={c.id}
-                                className={`curated-collection-chip${curatedCollection === c.id ? " active" : ""}`}
-                                onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
-                                title={c.description}
+                                className={`curated-collection-chip${curatedCollection === null ? " active" : ""}`}
+                                onClick={() => setCuratedCollection(null)}
                               >
-                                <CollectionIcon name={c.icon} />
-                                <span>{c.name}</span>
+                                All
                               </button>
-                            ))}
+                              {primary.map((c) => (
+                                <button
+                                  key={c.id}
+                                  className={`curated-collection-chip${curatedCollection === c.id ? " active" : ""}`}
+                                  onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
+                                  title={c.description}
+                                >
+                                  <CollectionIcon name={c.icon} />
+                                  <span>{c.name}</span>
+                                </button>
+                              ))}
+                              {overflow > 0 && (
+                                <button
+                                  type="button"
+                                  className="curated-collection-chip curated-collection-more"
+                                  onClick={() => setCuratedCollectionsExpanded(true)}
+                                  aria-label={`Show ${overflow} more collection filter${overflow !== 1 ? "s" : ""}`}
+                                >
+                                  + {overflow} more
+                                </button>
+                              )}
+                              {curatedCollectionsExpanded && allCollections.length > CHIP_LIMIT && (
+                                <button
+                                  type="button"
+                                  className="curated-collection-chip curated-collection-more"
+                                  onClick={() => setCuratedCollectionsExpanded(false)}
+                                  aria-label="Collapse collection filter list"
+                                >
+                                  Show less
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Search + refresh */}
                       <div className="curated-toolbar">
