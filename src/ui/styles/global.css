@@ -1687,6 +1687,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 99;
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .pe-overflow-menu {
@@ -2006,7 +2007,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
   cursor: default;

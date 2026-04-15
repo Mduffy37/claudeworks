@@ -708,8 +708,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           {activeTab === "local" && (
             <div className="pe-local-tab">
               {!launchDir ? (
-                <div className="pe-tab-empty">
-                  Select a directory in the topbar to see project-specific skills, agents, and commands.
+                <div className="empty-state" style={{ padding: "32px 0" }}>
+                  <div className="empty-state-icon">&#9671;</div>
+                  <div className="empty-state-title">Select a project directory</div>
+                  <div className="empty-state-body">
+                    Choose a directory in the topbar to see project-specific skills, agents, and commands.
+                  </div>
                 </div>
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">

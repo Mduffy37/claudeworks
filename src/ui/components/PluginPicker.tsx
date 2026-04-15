@@ -275,25 +275,23 @@ export function PluginPicker({
         </div>
       )}
 
-      <div className="plugin-section">
-        <div className="plugin-section-header">
-          <h3>Project Plugins</h3>
-          {localPlugins.length > 0 && (
-            <span className="plugin-section-count">{localPlugins.length}</span>
+      {directory && (
+        <div className="plugin-section">
+          <div className="plugin-section-header">
+            <h3>Project Plugins</h3>
+            {localPlugins.length > 0 && (
+              <span className="plugin-section-count">{localPlugins.length}</span>
+            )}
+          </div>
+          {localPlugins.length === 0 ? (
+            <div className="empty-state-inline">
+              No plugins installed for {directory}
+            </div>
+          ) : (
+            localPlugins.map(renderPlugin)
           )}
         </div>
-        {!directory ? (
-          <div className="empty-state-inline">
-            Set a default directory above to see project plugins
-          </div>
-        ) : localPlugins.length === 0 ? (
-          <div className="empty-state-inline">
-            No plugins installed for {directory}
-          </div>
-        ) : (
-          localPlugins.map(renderPlugin)
-        )}
-      </div>
+      )}
     </div>
   );
 }
