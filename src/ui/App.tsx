@@ -581,7 +581,7 @@ export function App() {
               <path d="M6.5 1.5h3L10 3.4a5 5 0 011.2.7l1.8-.7 1.5 2.6-1.3 1.3a5 5 0 010 1.4l1.3 1.3-1.5 2.6-1.8-.7a5 5 0 01-1.2.7l-.5 1.9h-3L6 12.6a5 5 0 01-1.2-.7l-1.8.7L1.5 10l1.3-1.3a5 5 0 010-1.4L1.5 6l1.5-2.6 1.8.7A5 5 0 016 3.4l.5-1.9z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" fill="none" />
               <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.1" />
             </svg>
-            Configure Claude
+            {sidebarDensity === "compact" ? "Configure" : "Configure Claude"}
           </button>
         </div>
       </div>
