@@ -6,67 +6,18 @@ import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
-import { generateTeamMd, generateStartTeamCommand } from "./team-templates";
-import {
-  FRAMEWORK_PLUGIN_PREFIX,
-  scanInstalledPlugins,
-  scanUserLocalPlugins,
-  getPluginsWithItems,
-  scanPluginItems,
-  checkAllProfileHealth,
-  scanMcpServers,
-  writeMcpConfig,
-  readPluginManifest,
-  normaliseManifestPaths,
-  isLocalPlugin,
-  isFrameworkPlugin,
-  resetKnownPluginNamesCache,
-} from "./plugins";
-import {
-  resolveModelId,
-  assembleProfile,
-  symlinkSelectedCaches,
-  symlinkShared,
-  ensureBuiltinPlugin,
-} from "./assembly";
-import { getGitHubBackendState } from "./marketplace";
-import {
-  syncCredentials,
-  checkCredentialStatus,
-  keychainServiceForConfigDir,
-} from "./keychain";
-import {
-  loadTeams,
-  saveTeam,
-  renameTeam,
-  deleteTeamByName,
-  assembleTeamProfile,
-  launchTeam,
-  checkAllTeamHealth,
-  getTeamMergePreview,
-  readTeamsStore,
-  writeTeamsStore,
-} from "./teams";
+import { resetKnownPluginNamesCache } from "./plugins";
+import { assembleProfile } from "./assembly";
+import { readTeamsStore, writeTeamsStore } from "./teams";
 import {
   findRealClaudeBinary,
   generateAliases,
   removeAliases,
   removeAlias,
-  getLaunchLog,
 } from "./launch";
 import type {
-  PluginEntry,
-  PluginItem,
   Profile,
-  ProfileAlias,
   ProfilesStore,
-  Team,
-  TeamMember,
-  TeamsStore,
-  MergePreview,
-  AnalyticsData,
-  ActiveSession,
-  LaunchOptions,
   StatusLineConfig,
   StatusLineWidget,
 } from "./types";
@@ -821,91 +772,3 @@ export async function renderStatusLinePreview(
     child.stdin?.end();
   });
 }
-
-// ---------------------------------------------------------------------------
-// Re-exports from extracted modules (keeps main.ts imports working unchanged)
-// ---------------------------------------------------------------------------
-
-export {
-  invalidatePluginCaches,
-  scanInstalledPlugins,
-  scanPluginItems,
-  scanPluginHooks,
-  scanPluginMcpServers,
-  writeMcpConfig,
-  getPluginsWithItems,
-  checkProfileHealth,
-  checkAllProfileHealth,
-  scanLocalItems,
-  isLocalPlugin,
-  isFrameworkPlugin,
-  isGsdInstalled,
-  readSkillfishMarker,
-  parseRemoteOwnerRepo,
-  detectSkillLockSource,
-  detectGitSource,
-  scanUserLocalPlugins,
-  scanMcpServers,
-  readPluginManifest,
-  normaliseManifestPaths,
-  readFrontmatter,
-  resetKnownPluginNamesCache,
-  FRAMEWORK_PLUGIN_PREFIX,
-} from "./plugins";
-
-export {
-  resolveModelId,
-  assembleProfile,
-  symlinkSelectedCaches,
-  symlinkShared,
-  ensureBuiltinPlugin,
-} from "./assembly";
-
-export {
-  getGitHubBackendState,
-  fetchRepoReadme,
-  fetchUpstreamMarketplace,
-  fetchPluginItems,
-  getCuratedMarketplace,
-  refreshCuratedMarketplace,
-  getCuratedIndex,
-  refreshCuratedIndex,
-} from "./marketplace";
-
-export {
-  syncCredentials,
-  checkCredentialStatus,
-  keychainServiceForConfigDir,
-} from "./keychain";
-
-export {
-  loadTeams,
-  saveTeam,
-  renameTeam,
-  deleteTeamByName,
-  assembleTeamProfile,
-  launchTeam,
-  checkAllTeamHealth,
-  getTeamMergePreview,
-} from "./teams";
-
-export {
-  escSh,
-  findRealClaudeBinary,
-  generateAliases,
-  removeAliases,
-  removeAlias,
-  recordLaunch,
-  getLaunchLog,
-  launchInTerminal,
-  launchProfile,
-} from "./launch";
-export type { LaunchLogEntry } from "./launch";
-
-export {
-  getActiveSessions,
-  getAnalytics,
-  exportDiagnostics,
-  runDiagnostics,
-  checkForAppUpdate,
-} from "./diagnostics";

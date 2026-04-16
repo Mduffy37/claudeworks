@@ -27,7 +27,13 @@ const testHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "claude-p
 process.env.HOME = testHome;
 
 // Dynamic import so core.ts sees our overridden HOME.
-const core = await import("../src/electron/core");
+const plugins = await import("../src/electron/plugins");
+const assembly = await import("../src/electron/assembly");
+const core = {
+  assembleProfile: assembly.assembleProfile,
+  invalidatePluginCaches: plugins.invalidatePluginCaches,
+  scanPluginItems: plugins.scanPluginItems,
+};
 
 const CLAUDE_HOME = path.join(testHome, ".claude");
 const PROFILES_DIR = path.join(testHome, ".claude-profiles");

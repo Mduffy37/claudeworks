@@ -20,7 +20,7 @@ import {
   detectSkillLockSource,
   detectGitSource,
   scanInstalledPlugins,
-} from "./core";
+} from "./plugins";
 
 // ── constants (mirror core.ts to avoid importing non-exported values) ──────
 

@@ -27,11 +27,13 @@ import {
   validateProfileName,
   ensureProfilesDir,
   getGlobalDefaults,
+} from "./core";
+import {
   escSh,
   findRealClaudeBinary,
   launchInTerminal,
   recordLaunch,
-} from "./core";
+} from "./launch";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
