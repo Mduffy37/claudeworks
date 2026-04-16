@@ -22,7 +22,13 @@ type CuratedDetailTarget =
  */
 /** Map a curated collection to a kind-class used by .curated-tag styling.
  *  Matches by id or name so the earth-spectrum tints land on the four
- *  primary kinds even though collection ids are free-form strings. */
+ *  primary kinds even though collection ids are free-form strings.
+ *
+ *  Currently unused — kept (along with the matching .curated-tag.kind-*
+ *  rules in global.css) in case we want to reintroduce tinting later.
+ *  The substring matching is leaky (e.g. "Multi-Agent Orchestration"
+ *  matches kind-agent because it contains "agent"), so any future use
+ *  should tighten the regex or drive tinting from an explicit field. */
 function collectionKindClass(col: { id: string; name: string; icon?: string }): string | null {
   const key = `${col.id} ${col.name} ${col.icon ?? ""}`.toLowerCase();
   if (/\bskills?\b|\bskill-/.test(key)) return "kind-skill";
@@ -2476,9 +2482,8 @@ export function ManageDialog({
                                       {t.entry.collections.slice(0, 2).map((c) => {
                                         const col = curatedData.collections.find((x) => x.id === c);
                                         if (!col) return null;
-                                        const kindClass = collectionKindClass(col);
                                         return (
-                                          <span key={c} className={`curated-tag${kindClass ? ` ${kindClass}` : ""}`}>
+                                          <span key={c} className="curated-tag">
                                             <CollectionIcon name={col.icon} />
                                             <span>{col.name}</span>
                                           </span>
@@ -2553,20 +2558,17 @@ export function ManageDialog({
                               >
                                 All
                               </button>
-                              {primary.map((c) => {
-                                const kindClass = collectionKindClass(c);
-                                return (
+                              {primary.map((c) => (
                                 <button
                                   key={c.id}
-                                  className={`curated-collection-chip${kindClass ? ` ${kindClass}` : ""}${curatedCollection === c.id ? " active" : ""}`}
+                                  className={`curated-collection-chip${curatedCollection === c.id ? " active" : ""}`}
                                   onClick={() => setCuratedCollection(curatedCollection === c.id ? null : c.id)}
                                   title={c.description}
                                 >
                                   <CollectionIcon name={c.icon} />
                                   <span>{c.name}</span>
                                 </button>
-                                );
-                              })}
+                              ))}
                               {overflow > 0 && (
                                 <button
                                   type="button"
@@ -2744,11 +2746,10 @@ export function ManageDialog({
                                     {t.entry.collections.map((c) => {
                                       const col = curatedData.collections.find((x) => x.id === c);
                                       if (!col) return null;
-                                      const kindClass = collectionKindClass(col);
                                       return (
                                         <span
                                           key={c}
-                                          className={`curated-tag clickable${kindClass ? ` ${kindClass}` : ""}${curatedCollection === c ? " active" : ""}`}
+                                          className={`curated-tag clickable${curatedCollection === c ? " active" : ""}`}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setCuratedCollection(curatedCollection === c ? null : c);
