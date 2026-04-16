@@ -3750,6 +3750,22 @@ export function saveGlobalDefaults(defaults: { model: string; opusContext?: "200
   fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(stamped, null, 2));
 }
 
+export function getFavouritePlugins(): string[] {
+  try {
+    const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+    return Array.isArray(data.favouritePlugins) ? data.favouritePlugins : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveFavouritePlugins(ids: string[]): void {
+  let data: any = {};
+  try { data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8")); } catch {}
+  data.favouritePlugins = ids;
+  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(data, null, 2));
+}
+
 // ---------------------------------------------------------------------------
 // Imported projects
 // ---------------------------------------------------------------------------

@@ -50,6 +50,8 @@ import {
   saveGlobalHooks,
   getGlobalDefaults,
   saveGlobalDefaults,
+  getFavouritePlugins,
+  saveFavouritePlugins,
   getImportedProjects,
   addImportedProject,
   removeImportedProject,
@@ -427,6 +429,8 @@ ipcMain.handle("get-global-hooks", () => getGlobalHooks());
 ipcMain.handle("save-global-hooks", (_event, hooks: Record<string, any>) => saveGlobalHooks(hooks));
 ipcMain.handle("get-global-defaults", () => getGlobalDefaults());
 ipcMain.handle("save-global-defaults", (_event, defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string }) => saveGlobalDefaults(defaults));
+ipcMain.handle("get-favourite-plugins", () => getFavouritePlugins());
+ipcMain.handle("save-favourite-plugins", (_event, ids: string[]) => saveFavouritePlugins(ids));
 
 // Projects
 ipcMain.handle("get-imported-projects", () => getImportedProjects());

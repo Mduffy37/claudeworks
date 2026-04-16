@@ -59,6 +59,8 @@ const api: ElectronAPI = {
   saveGlobalHooks: (hooks) => ipcRenderer.invoke("save-global-hooks", hooks),
   getGlobalDefaults: () => ipcRenderer.invoke("get-global-defaults"),
   saveGlobalDefaults: (defaults) => ipcRenderer.invoke("save-global-defaults", defaults),
+  getFavouritePlugins: () => ipcRenderer.invoke("get-favourite-plugins"),
+  saveFavouritePlugins: (ids) => ipcRenderer.invoke("save-favourite-plugins", ids),
   // Projects
   getImportedProjects: () => ipcRenderer.invoke("get-imported-projects"),
   addImportedProject: (dir) => ipcRenderer.invoke("add-imported-project", dir),

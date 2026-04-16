@@ -495,6 +495,8 @@ export interface ElectronAPI {
   resolvePlugins: (ids: string[]) => Promise<Array<{ id: string; resolved: ResolvedPlugin | null }>>;
   // Known env vars
   getKnownEnvVars: () => Promise<KnownEnvVar[]>;
+  getFavouritePlugins: () => Promise<string[]>;
+  saveFavouritePlugins: (ids: string[]) => Promise<void>;
 }
 
 export interface ActiveSession {
