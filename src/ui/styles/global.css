@@ -500,6 +500,7 @@ h1, h2, h3, h4, h5, h6 {
 .profile-item.selected {
   background: var(--bg-selected);
   border-color: transparent;
+  border-left: 3px solid var(--accent);
   box-shadow: var(--ring-accent);
 }
 
@@ -651,19 +652,25 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-launch-sidebar:hover,
 .btn-launch-sidebar:focus-visible {
+  background: var(--accent);
+  color: var(--ivory);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.profile-item.selected .btn-launch-sidebar {
   background: var(--bg-elevated);
   color: var(--text-primary);
   border-color: var(--border-strong);
   box-shadow: var(--ring);
 }
 
-.profile-item.selected .btn-launch-sidebar,
 .profile-item.selected .btn-launch-sidebar:hover,
 .profile-item.selected .btn-launch-sidebar:focus-visible {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  border-color: var(--border-strong);
-  box-shadow: var(--ring);
+  background: var(--accent);
+  color: var(--ivory);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .sidebar-launch-group {
