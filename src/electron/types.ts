@@ -506,6 +506,7 @@ export interface ElectronAPI {
   getKnownEnvVars: () => Promise<KnownEnvVar[]>;
   getFavouritePlugins: () => Promise<string[]>;
   saveFavouritePlugins: (ids: string[]) => Promise<void>;
+  checkAliasConflict: (aliasName: string, profileName: string) => Promise<{ conflict: boolean; source: string; detail: string } | null>;
 }
 
 export interface ActiveSession {

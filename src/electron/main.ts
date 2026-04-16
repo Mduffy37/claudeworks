@@ -73,6 +73,7 @@ import {
   setStatusLineConfig,
   resetStatusLineConfig,
   renderStatusLinePreview,
+  checkAliasConflict,
 } from "./core";
 import { runProfilesDoctor } from "./doctor";
 import { getKnownEnvVars } from "./known-env-vars";
@@ -207,7 +208,7 @@ ipcMain.handle("duplicate-profile", async (_event, name: string) => {
     attempt++;
   }
 
-  const copy: Profile = { ...source, name: copyName, alias: undefined, isDefault: undefined };
+  const copy: Profile = { ...source, name: copyName, aliases: undefined, isDefault: undefined };
   const saved = saveProfile(copy);
   assembleProfile(saved);
   if (saved.useDefaultAuth !== false) await syncCredentials(saved, "seed");
@@ -545,6 +546,9 @@ ipcMain.handle("render-statusline-preview", (_event, config, mockSession) =>
 
 // Plugin resolver
 ipcMain.handle("resolve-plugins", (_event, ids: string[]) => resolvePlugins(ids));
+
+// Alias conflict detection
+ipcMain.handle("check-alias-conflict", (_event, aliasName: string, profileName: string) => checkAliasConflict(aliasName, profileName));
 
 // Known env vars
 ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());

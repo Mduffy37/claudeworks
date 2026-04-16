@@ -97,6 +97,8 @@ const api: ElectronAPI = {
     ipcRenderer.invoke("render-statusline-preview", config, mockSession),
   // Plugin resolver
   resolvePlugins: (ids) => ipcRenderer.invoke("resolve-plugins", ids),
+  // Alias conflict detection
+  checkAliasConflict: (aliasName, profileName) => ipcRenderer.invoke("check-alias-conflict", aliasName, profileName),
   // Known env vars
   getKnownEnvVars: () => ipcRenderer.invoke("get-known-env-vars"),
 };

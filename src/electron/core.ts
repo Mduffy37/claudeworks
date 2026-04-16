@@ -16,6 +16,7 @@ import type {
   StandaloneMcp,
   LocalItem,
   Profile,
+  ProfileAlias,
   ProfilesStore,
   Team,
   TeamMember,
@@ -1212,7 +1213,7 @@ export function ensureDefaultProfile(): void {
     excludedItems: {},
     description: "Your default profile. Running `claude` launches with these plugins and settings.",
     isDefault: true,
-    alias: "claude",
+    aliases: [{ name: "claude" }],
     useDefaultAuth: true,
   };
 
@@ -1226,7 +1227,7 @@ export function ensureDefaultProfile(): void {
   store.profiles[profile.name] = profile;
   writeProfilesStore(store);
   assembleProfile(profile);
-  generateAlias(profile);
+  generateAliases(profile);
 
   // Ensure PATH is set up
   const binDir = path.join(PROFILES_DIR, "bin");
@@ -1250,7 +1251,7 @@ export function renameProfile(oldName: string, profile: Profile): Profile {
   }
 
   const old = store.profiles[oldName];
-  if (old.alias) removeAlias(old.alias);
+  removeAliases(old.aliases);
 
   if (profile.name !== oldName) {
     const oldDir = path.join(PROFILES_DIR, oldName);
@@ -1261,7 +1262,7 @@ export function renameProfile(oldName: string, profile: Profile): Profile {
 
   store.profiles[profile.name] = profile;
   writeProfilesStore(store);
-  if (profile.alias) generateAlias(profile);
+  if (profile.aliases && profile.aliases.length > 0) generateAliases(profile);
 
   // Cascade rename to team member references
   if (profile.name !== oldName) {
@@ -1285,20 +1286,42 @@ export function saveProfile(profile: Profile): Profile {
   validateProfileName(profile.name);
   const store = readProfilesStore();
   const existing = store.profiles[profile.name];
-  if (existing?.alias && existing.alias !== profile.alias) {
-    removeAlias(existing.alias);
+
+  // Clean up removed aliases — any alias the old version had that the new version doesn't
+  if (existing?.aliases) {
+    const newNames = new Set((profile.aliases ?? []).map(a => a.name));
+    for (const old of existing.aliases) {
+      if (!newNames.has(old.name)) removeAlias(old.name);
+    }
   }
 
-  // Enforce single-default invariant
+  // Default profile auto-manages "claude" alias
+  if (profile.isDefault && !profile.disableDefaultAlias) {
+    if (!(profile.aliases ?? []).some(a => a.name === "claude")) {
+      profile.aliases = [{ name: "claude" }, ...(profile.aliases ?? [])];
+    }
+  }
+
+  // When disableDefaultAlias is true, remove the auto-managed claude alias
+  if (profile.isDefault && profile.disableDefaultAlias) {
+    const claudeIdx = (profile.aliases ?? []).findIndex(a => a.name === "claude");
+    if (claudeIdx >= 0) {
+      removeAlias("claude");
+      profile.aliases = profile.aliases!.filter(a => a.name !== "claude");
+      if (profile.aliases.length === 0) profile.aliases = undefined;
+    }
+  }
+
+  // Revoke default from old default profiles
   if (profile.isDefault) {
-    profile.alias = "claude"; // default always owns the `claude` alias
     for (const p of Object.values(store.profiles)) {
       if (p.name !== profile.name && p.isDefault) {
         p.isDefault = undefined;
-        // If the old default had alias "claude", remove it
-        if (p.alias === "claude") {
-          removeAlias("claude");
-          p.alias = undefined;
+        if (p.aliases) {
+          const claudeAlias = p.aliases.find(a => a.name === "claude");
+          if (claudeAlias) removeAlias("claude");
+          p.aliases = p.aliases.filter(a => a.name !== "claude");
+          if (p.aliases.length === 0) p.aliases = undefined;
         }
       }
     }
@@ -1307,11 +1330,9 @@ export function saveProfile(profile: Profile): Profile {
   store.profiles[profile.name] = profile;
   writeProfilesStore(store);
 
-  // Generate CLI alias
-  if (profile.alias) {
-    generateAlias(profile);
-  } else if (existing?.alias) {
-    removeAlias(existing.alias);
+  // Generate alias scripts
+  if (profile.aliases && profile.aliases.length > 0) {
+    generateAliases(profile);
   }
 
   return profile;
@@ -1342,26 +1363,39 @@ export function findRealClaudeBinary(): string {
   throw new Error("Could not find the claude binary in PATH. Is Claude Code installed?");
 }
 
-function generateAlias(profile: Profile): void {
+function generateAliases(profile: Profile): void {
   const binDir = path.join(PROFILES_DIR, "bin");
   fs.mkdirSync(binDir, { recursive: true });
-
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
-  const workDir = profile.directory ?? "$PWD";
   const claudeBin = findRealClaudeBinary();
-
-  // Write the MCP regeneration helper (shared by all alias scripts)
   writeMcpHelper(binDir);
 
-  const script = `#!/bin/bash
+  for (const alias of profile.aliases ?? []) {
+    const workDir = alias.directory ?? profile.directory ?? "$PWD";
+    const workDirStr = workDir === "$PWD" ? "$PWD" : `'${escSh(workDir)}'`;
+
+    let launchArg = '"$@"';
+    if (alias.launchAction === "workflow") {
+      launchArg = "'/workflow'";
+    } else if (alias.launchAction === "prompt" && alias.launchPrompt) {
+      launchArg = `'${escSh(alias.launchPrompt)}'`;
+    }
+
+    const script = `#!/bin/bash
 # Generated by Claude Profiles — do not edit
 # Profile: ${profile.name}
-WORK_DIR="${workDir === "$PWD" ? "$PWD" : escSh(workDir)}"
-node '${escSh(path.join(binDir, ".regenerate-mcp.js"))}' '${escSh(profile.name)}' "$WORK_DIR" && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(configDir)}/mcp.json' --strict-mcp-config "$@"
+WORK_DIR=${workDirStr}
+node '${escSh(path.join(binDir, ".regenerate-mcp.js"))}' '${escSh(profile.name)}' "$WORK_DIR" && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(configDir)}/mcp.json' --strict-mcp-config ${launchArg}
 `;
+    fs.writeFileSync(path.join(binDir, alias.name), script, { mode: 0o755 });
+  }
+}
 
-  const scriptPath = path.join(binDir, profile.alias!);
-  fs.writeFileSync(scriptPath, script, { mode: 0o755 });
+function removeAliases(aliases: ProfileAlias[] | undefined): void {
+  for (const alias of aliases ?? []) {
+    const scriptPath = path.join(PROFILES_DIR, "bin", alias.name);
+    try { fs.unlinkSync(scriptPath); } catch {}
+  }
 }
 
 /**
@@ -1518,11 +1552,52 @@ function removeAlias(alias: string): void {
   try { fs.unlinkSync(scriptPath); } catch {}
 }
 
+export async function checkAliasConflict(
+  aliasName: string,
+  profileName: string,
+): Promise<{ conflict: boolean; source: "profile" | "system" | "shell"; detail: string } | null> {
+  // 1. Check other profiles
+  const store = readProfilesStore();
+  for (const [name, p] of Object.entries(store.profiles)) {
+    if (name === profileName) continue;
+    if ((p as Profile).aliases?.some(a => a.name === aliasName)) {
+      return { conflict: true, source: "profile", detail: `Already used by profile "${name}"` };
+    }
+  }
+
+  // 2. Check system commands (exclude our own bin dir)
+  try {
+    const binDir = path.join(PROFILES_DIR, "bin");
+    const pathDirs = (process.env.PATH ?? "").split(path.delimiter).filter(d => d !== binDir);
+    const env = { ...process.env, PATH: pathDirs.join(path.delimiter) };
+    const { stdout } = await execFileAsync("which", [aliasName], { env, timeout: 3000 }).catch(() => ({ stdout: "" }));
+    if (stdout.trim()) {
+      // Skip warning for default profile's "claude" alias
+      const thisProfile = store.profiles[profileName] as Profile | undefined;
+      if (aliasName === "claude" && thisProfile?.isDefault) return null;
+      return { conflict: true, source: "system", detail: `Shadows system command: ${stdout.trim()}` };
+    }
+  } catch {}
+
+  // 3. Check .zshrc for aliases and functions
+  try {
+    const zshrc = fs.readFileSync(path.join(os.homedir(), ".zshrc"), "utf-8");
+    const escaped = aliasName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const aliasPattern = new RegExp(`^\\s*alias\\s+${escaped}=`, "m");
+    const fnPattern = new RegExp(`^\\s*(function\\s+${escaped}\\s|${escaped}\\s*\\(\\s*\\))`, "m");
+    if (aliasPattern.test(zshrc) || fnPattern.test(zshrc)) {
+      return { conflict: true, source: "shell", detail: "Conflicts with alias/function in .zshrc" };
+    }
+  } catch {}
+
+  return null;
+}
+
 export async function deleteProfileByName(name: string): Promise<void> {
   validateProfileName(name);
   const store = readProfilesStore();
   const profile = store.profiles[name];
-  if (profile?.alias) removeAlias(profile.alias);
+  removeAliases(profile?.aliases);
   delete store.profiles[name];
   writeProfilesStore(store);
 
