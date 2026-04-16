@@ -4403,7 +4403,7 @@ h1, h2, h3, h4, h5, h6 {
 .pl-search-input {
   flex: 1;
   min-width: 0;
-  padding: 7px 12px;
+  padding: 6px 10px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -4838,7 +4838,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .te-available .pl-search {
-  padding: 0 4px;
+  padding: 0;
 }
 
 .te-available .pl-search-input {
@@ -5832,7 +5832,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 100px;
   padding: 3px 10px;
   font-size: var(--fs-label);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
@@ -7974,6 +7974,14 @@ h1, h2, h3, h4, h5, h6 {
 
   .te-members-list {
     gap: 8px;
+  }
+
+  .pe-items-tab,
+  .pe-mcp-tab,
+  .pe-tab-content .plugin-picker,
+  .pe-instructions-tab,
+  .pe-settings-tab {
+    max-width: none;
   }
 }
 
