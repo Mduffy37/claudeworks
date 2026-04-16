@@ -44,6 +44,9 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
   const renderPlugin = (plugin: PluginWithItems) => {
     const isSelected = plugin.name === selectedPlugin;
     const hasUpdate = plugin.name in availableUpdates;
+    const projectName = plugin.scope === "project" && plugin.projectPath
+      ? plugin.projectPath.split("/").pop()
+      : null;
 
     return (
       <div
@@ -62,6 +65,9 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
         <div className="pl-item-name">
           {plugin.pluginName}
           {hasUpdate && <span className="pl-update-dot" title="Update available" />}
+          {projectName && (
+            <span className="pl-project-chip" title={plugin.projectPath}>{projectName}</span>
+          )}
         </div>
         <div className="pl-item-meta">
           v{plugin.version} &middot; {pluginSummary(plugin)}

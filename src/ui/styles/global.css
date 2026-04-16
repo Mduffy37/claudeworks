@@ -4598,6 +4598,22 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
+.pl-project-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  vertical-align: middle;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ─── Plugin Manager Detail ────────────────────────────────────────────────── */
 
 .pm-empty {
