@@ -62,7 +62,7 @@ function OverviewModal({
   effortLevel,
   customClaudeMd,
   onClose,
-  onJumpToTab,
+  onGoToTab,
 }: {
   overview: {
     enabledPlugins: PluginWithItems[];
@@ -78,7 +78,7 @@ function OverviewModal({
   effortLevel: string;
   customClaudeMd: string;
   onClose: () => void;
-  onJumpToTab?: (tab: TabId) => void;
+  onGoToTab?: (tab: TabId) => void;
 }) {
   const [expanded, setExpanded] = useState<OverviewCategory>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -100,10 +100,6 @@ function OverviewModal({
 
   const handleStatClick = (cat: OverviewCategory) => {
     if (!cat) return;
-    if (onJumpToTab) {
-      onJumpToTab(categoryToTab[cat]);
-      return;
-    }
     setExpanded((prev) => prev === cat ? null : cat);
   };
 
@@ -136,7 +132,6 @@ function OverviewModal({
                 key={s.key}
                 className={`overview-stat${expanded === s.key ? " expanded" : ""}`}
                 onClick={() => handleStatClick(s.key)}
-                title={onJumpToTab ? `Jump to ${s.label} tab` : undefined}
               >
                 <div className="overview-stat-value">{s.count}</div>
                 <div className="overview-stat-label">{s.label}</div>
@@ -157,6 +152,15 @@ function OverviewModal({
                   </div>
                 ))}
               </div>
+              {onGoToTab && (
+                <button
+                  className="btn-link"
+                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  onClick={() => onGoToTab(categoryToTab["plugins"])}
+                >
+                  Go to Plugins tab →
+                </button>
+              )}
             </div>
           )}
 
@@ -171,6 +175,15 @@ function OverviewModal({
                   </div>
                 ))}
               </div>
+              {onGoToTab && (
+                <button
+                  className="btn-link"
+                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  onClick={() => onGoToTab(categoryToTab["skills"])}
+                >
+                  Go to Skills tab →
+                </button>
+              )}
             </div>
           )}
 
@@ -185,6 +198,15 @@ function OverviewModal({
                   </div>
                 ))}
               </div>
+              {onGoToTab && (
+                <button
+                  className="btn-link"
+                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  onClick={() => onGoToTab(categoryToTab["agents"])}
+                >
+                  Go to Agents tab →
+                </button>
+              )}
             </div>
           )}
 
@@ -199,6 +221,15 @@ function OverviewModal({
                   </div>
                 ))}
               </div>
+              {onGoToTab && (
+                <button
+                  className="btn-link"
+                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  onClick={() => onGoToTab(categoryToTab["commands"])}
+                >
+                  Go to Commands tab →
+                </button>
+              )}
             </div>
           )}
 
@@ -212,6 +243,15 @@ function OverviewModal({
                   </div>
                 ))}
               </div>
+              {onGoToTab && (
+                <button
+                  className="btn-link"
+                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  onClick={() => onGoToTab(categoryToTab["mcps"])}
+                >
+                  Go to MCP Servers tab →
+                </button>
+              )}
             </div>
           )}
 
@@ -1436,7 +1476,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           effortLevel={effortLevel}
           customClaudeMd={customClaudeMd}
           onClose={() => setOverviewOpen(false)}
-          onJumpToTab={(tab) => { setActiveTab(tab); setOverviewOpen(false); }}
+          onGoToTab={(tab) => { setActiveTab(tab); setOverviewOpen(false); }}
         />
       )}
 
