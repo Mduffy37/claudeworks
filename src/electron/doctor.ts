@@ -37,6 +37,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import type { DoctorFinding, DoctorReport } from "./types";
+import { resolvePlugins } from "./plugin-resolver";
 
 const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
@@ -573,31 +574,38 @@ function checkDanglingPluginRefs(): DoctorFinding[] {
     return findings;
   }
 
-  let installed: any = { plugins: {} };
-  if (fs.existsSync(INSTALLED_PLUGINS_JSON)) {
-    try {
-      installed = JSON.parse(fs.readFileSync(INSTALLED_PLUGINS_JSON, "utf-8"));
-    } catch {
-      findings.push({
-        check: "dangling-plugin-refs",
-        title: "Skipped plugin reference check",
-        severity: "info",
-        status: "skipped",
-        detail: "Cannot read installed_plugins.json.",
-      });
-      return findings;
-    }
-  }
-  const installedIds = new Set(Object.keys(installed.plugins ?? {}));
-
-  const dangling: string[] = [];
+  // Collect every plugin ID referenced by any profile.
+  const allRefs: Array<{ profile: string; pluginId: string }> = [];
   for (const [name, p] of Object.entries(store.profiles ?? {})) {
     const profile = p as { plugins?: unknown };
     if (!Array.isArray(profile?.plugins)) continue;
     for (const pid of profile.plugins) {
-      if (typeof pid === "string" && !installedIds.has(pid)) {
-        dangling.push(`${name}: ${pid}`);
+      if (typeof pid === "string") {
+        allRefs.push({ profile: name, pluginId: pid });
       }
+    }
+  }
+
+  if (allRefs.length === 0) {
+    findings.push({
+      check: "dangling-plugin-refs",
+      title: "No dangling plugin references",
+      severity: "info",
+      status: "healthy",
+      detail: "No profiles reference any plugins.",
+    });
+    return findings;
+  }
+
+  // Resolve all unique IDs in one pass.
+  const uniqueIds = [...new Set(allRefs.map((r) => r.pluginId))];
+  const resolved = resolvePlugins(uniqueIds);
+  const resolvedMap = new Map(resolved.map((r) => [r.id, r.resolved]));
+
+  const dangling: string[] = [];
+  for (const { profile, pluginId } of allRefs) {
+    if (!resolvedMap.get(pluginId)) {
+      dangling.push(`${profile}: ${pluginId}`);
     }
   }
 
