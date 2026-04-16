@@ -70,6 +70,13 @@ export interface ResolvedPlugin {
   label?: string;
 }
 
+export interface ProfileAlias {
+  name: string;
+  directory?: string;
+  launchAction?: "workflow" | "prompt";
+  launchPrompt?: string;
+}
+
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
@@ -104,7 +111,8 @@ export interface Profile {
   directory?: string; // primary directory (first in directories list)
   directories?: string[]; // all configured directories
   description: string;
-  alias?: string; // CLI alias (e.g. "claude-research")
+  aliases?: ProfileAlias[];
+  disableDefaultAlias?: boolean;
   // Session settings
   model?: "opus" | "sonnet" | "haiku";
   opusContext?: "200k" | "1m";   // default 1m

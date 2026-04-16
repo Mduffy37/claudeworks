@@ -1149,7 +1149,7 @@ function ensureProfilesDir(): void {
  * have a place to live. Shipping before v1 is public means every user has
  * a known version stamp on disk, so v2 code never has to guess.
  */
-const PROFILES_SCHEMA_VERSION = 1;
+const PROFILES_SCHEMA_VERSION = 2;
 
 function migrateProfilesStore(raw: any): ProfilesStore {
   if (!raw || typeof raw !== "object") return { schemaVersion: PROFILES_SCHEMA_VERSION, profiles: {} };
@@ -1162,8 +1162,18 @@ function migrateProfilesStore(raw: any): ProfilesStore {
   if (version < 1) {
     store = { ...store, schemaVersion: 1 };
   }
+  if (version < 2) {
+    for (const p of Object.values(store.profiles ?? {})) {
+      const profile = p as any;
+      if (typeof profile.alias === "string" && profile.alias) {
+        profile.aliases = [{ name: profile.alias }];
+      }
+      delete profile.alias;
+    }
+    store = { ...store, schemaVersion: 2 };
+  }
   // Future migrations go here, e.g.:
-  // if (version < 2) { store = { ...store, profiles: mapProfilesV1toV2(store.profiles) }; }
+  // if (version < 3) { store = { ...store, profiles: mapProfilesV2toV3(store.profiles) }; }
 
   return store as ProfilesStore;
 }
