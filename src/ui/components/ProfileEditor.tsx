@@ -349,6 +349,30 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     return `.claude/commands/${name}.md`;
   };
 
+  // Save-as-prompt dialog
+  const [savePromptContent, setSavePromptContent] = useState<string | null>(null);
+  const [savePromptName, setSavePromptName] = useState("");
+  const [savePromptDesc, setSavePromptDesc] = useState("");
+  const [savePromptTags, setSavePromptTags] = useState("");
+
+  const openSavePromptDialog = (content: string, defaultName: string) => {
+    setSavePromptContent(content);
+    setSavePromptName(defaultName);
+    setSavePromptDesc("");
+    setSavePromptTags("");
+  };
+
+  const handleSavePrompt = async () => {
+    if (!savePromptContent || !savePromptName.trim()) return;
+    const id = `prompt-${Date.now()}`;
+    const now = Date.now();
+    const prompts = await window.api.getPrompts();
+    const tags = savePromptTags.split(",").map(t => t.trim()).filter(Boolean);
+    const newPrompt = { id, name: savePromptName.trim(), description: savePromptDesc.trim(), tags, content: savePromptContent, createdAt: now, updatedAt: now };
+    await window.api.savePrompts([...prompts, newPrompt]);
+    setSavePromptContent(null);
+  };
+
   const [editingItem, setEditingItem] = useState<{ directory: string; relativePath: string; absolutePath: string; name: string; type: string } | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [editingDirty, setEditingDirty] = useState(false);
@@ -1092,13 +1116,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       window.api.openInFinder(filePath);
                     }} title="Open in default editor">Open in Editor ↗</button>
                     {customClaudeMd.trim() && (
-                      <button className="insert-prompt-btn" onClick={async () => {
-                        const id = `prompt-${Date.now()}`;
-                        const now = Date.now();
-                        const prompts = await window.api.getPrompts();
-                        const newPrompt = { id, name: name || "Untitled", description: `Saved from profile "${name}"`, tags: [], content: customClaudeMd, createdAt: now, updatedAt: now };
-                        await window.api.savePrompts([...prompts, newPrompt]);
-                      }}>
+                      <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(customClaudeMd, name || "Untitled")}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                         Save as Prompt
                       </button>
@@ -1142,13 +1160,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       window.api.openInFinder(filePath);
                     }} title="Open in default editor">Open in Editor ↗</button>
                     {workflow.trim() && (
-                      <button className="insert-prompt-btn" onClick={async () => {
-                        const id = `prompt-${Date.now()}`;
-                        const now = Date.now();
-                        const prompts = await window.api.getPrompts();
-                        const newPrompt = { id, name: name ? `${name} workflow` : "Untitled workflow", description: `Workflow saved from profile "${name}"`, tags: ["workflow"], content: workflow, createdAt: now, updatedAt: now };
-                        await window.api.savePrompts([...prompts, newPrompt]);
-                      }}>
+                      <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(workflow, name ? `${name} workflow` : "Untitled workflow")}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                         Save as Prompt
                       </button>
@@ -1372,6 +1384,41 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           onConfirm={() => setSaveError(null)}
           onCancel={() => setSaveError(null)}
         />
+      )}
+
+      {/* Save as Prompt dialog */}
+      {savePromptContent !== null && (
+        <div className="modal-backdrop" onClick={() => setSavePromptContent(null)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="modal-header">
+              <span className="modal-title">Save as Prompt</span>
+              <button className="modal-close" onClick={() => setSavePromptContent(null)} aria-label="Close">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="field">
+                <label>Name</label>
+                <input type="text" value={savePromptName} onChange={(e) => setSavePromptName(e.target.value)} placeholder="My prompt" autoFocus />
+              </div>
+              <div className="field">
+                <label>Description</label>
+                <input type="text" value={savePromptDesc} onChange={(e) => setSavePromptDesc(e.target.value)} placeholder="Optional description" />
+              </div>
+              <div className="field">
+                <label>Tags</label>
+                <input type="text" value={savePromptTags} onChange={(e) => setSavePromptTags(e.target.value)} placeholder="tag1, tag2, tag3" />
+                <div className="field-hint">Comma-separated</div>
+              </div>
+              <div className="modal-confirm-actions">
+                <button className="btn-secondary" onClick={() => setSavePromptContent(null)}>Cancel</button>
+                <button className="btn-primary" onClick={handleSavePrompt} disabled={!savePromptName.trim()}>Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Overview modal */}

@@ -9,6 +9,7 @@ interface Props {
 export function PromptPicker({ onSelect, onClose }: Props) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [search, setSearch] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   useEffect(() => {
     window.api.getPrompts().then(setPrompts);
@@ -22,13 +23,25 @@ export function PromptPicker({ onSelect, onClose }: Props) {
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const p of prompts) for (const t of p.tags) tags.add(t);
+    return [...tags].sort();
+  }, [prompts]);
+
   const filtered = useMemo(() => {
+    let result = prompts;
+    if (activeTag) {
+      result = result.filter((p) => p.tags.includes(activeTag));
+    }
     const q = search.toLowerCase().trim();
-    if (!q) return prompts;
-    return prompts.filter((p) =>
-      p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }, [prompts, search]);
+    if (q) {
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [prompts, search, activeTag]);
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -50,6 +63,25 @@ export function PromptPicker({ onSelect, onClose }: Props) {
             autoFocus
           />
         </div>
+        {allTags.length > 0 && (
+          <div className="prompt-picker-tags">
+            <button
+              className={`bulk-tag-chip${activeTag === null ? " active" : ""}`}
+              onClick={() => setActiveTag(null)}
+            >
+              All
+            </button>
+            {allTags.map((t) => (
+              <button
+                key={t}
+                className={`bulk-tag-chip${activeTag === t ? " active" : ""}`}
+                onClick={() => setActiveTag(activeTag === t ? null : t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="prompt-picker-list">
           {filtered.length === 0 ? (
             <div className="prompt-picker-empty">

@@ -1324,6 +1324,24 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--border-focus);
 }
 
+.prompt-picker-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prompt-picker-tags .bulk-tag-chip {
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.prompt-picker-tags .bulk-tag-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .prompt-picker-list {
   flex: 1;
   overflow-y: auto;
