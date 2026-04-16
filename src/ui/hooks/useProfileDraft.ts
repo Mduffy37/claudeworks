@@ -62,6 +62,14 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
 
   const handleSave = useCallback(async () => {
     if (!name.trim() || saving) return;
+
+    // Block save if there are duplicate alias names
+    const aliasNames = aliases.filter(a => a.name).map(a => a.name);
+    const dupes = aliasNames.filter((n, i) => aliasNames.indexOf(n) !== i);
+    if (dupes.length > 0) {
+      return; // silently block — the UI already shows duplicate warnings
+    }
+
     setSaving(true);
     try {
       await onSave({

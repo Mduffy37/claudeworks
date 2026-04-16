@@ -1171,7 +1171,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               disableDefaultAlias={disableDefaultAlias}
               onChangeDisableDefaultAlias={(v) => { setDisableDefaultAlias(v); markDirty(); }}
               profileName={name}
-              pluginCount={selectedPlugins.length}
+              pluginCount={plugins.length}
               directories={[...new Set([...importedProjects, ...directories])]}
               isInPath={binInPath}
               launchFlags={launchFlags}
