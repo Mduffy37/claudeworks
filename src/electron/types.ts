@@ -419,6 +419,8 @@ export interface ElectronAPI {
   installPlugin: (pluginId: string) => Promise<void>;
   addMarketplace: (source: string) => Promise<void>;
   removeMarketplace: (name: string) => Promise<void>;
+  updateMarketplace: (name: string) => Promise<void>;
+  updateAllMarketplaces: () => Promise<void>;
   listMarketplaces: () => Promise<Array<{ name: string; repo: string; lastUpdated: string }>>;
   getTeams: () => Promise<Team[]>;
   saveTeam: (team: Team) => Promise<Team>;

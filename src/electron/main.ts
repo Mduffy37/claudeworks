@@ -23,6 +23,8 @@ import {
   installPlugin,
   addMarketplace,
   removeMarketplace,
+  updateMarketplace,
+  updateAllMarketplaces,
   listMarketplaces,
   getAnalytics,
   getActiveSessions,
@@ -306,6 +308,9 @@ ipcMain.handle("remove-marketplace", async (_event, name: string) => {
   await removeMarketplace(name);
   invalidatePluginCaches();
 });
+
+ipcMain.handle("update-marketplace", (_event, name: string) => updateMarketplace(name));
+ipcMain.handle("update-all-marketplaces", () => updateAllMarketplaces());
 
 ipcMain.handle("list-marketplaces", () => {
   return listMarketplaces();

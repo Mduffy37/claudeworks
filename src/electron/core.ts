@@ -2904,6 +2904,20 @@ export async function removeMarketplace(name: string): Promise<void> {
   ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 60000 });
 }
 
+export async function updateMarketplace(name: string): Promise<void> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "marketplace", "update", name,
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 120000 });
+}
+
+export async function updateAllMarketplaces(): Promise<void> {
+  const claudeHome = path.join(os.homedir(), ".claude");
+  await execFileAsync(findRealClaudeBinary(), [
+    "plugin", "marketplace", "update",
+  ], { env: { ...process.env, CLAUDE_CONFIG_DIR: claudeHome }, timeout: 120000 });
+}
+
 export function listMarketplaces(): Array<{ name: string; repo: string; lastUpdated: string }> {
   const filePath = path.join(os.homedir(), ".claude", "plugins", "known_marketplaces.json");
   if (!fs.existsSync(filePath)) return [];
