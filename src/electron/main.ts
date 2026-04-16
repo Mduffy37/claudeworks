@@ -69,8 +69,10 @@ import {
   setStatusLineConfig,
   resetStatusLineConfig,
   renderStatusLinePreview,
+  getKnownEnvVars,
 } from "./core";
 import { runProfilesDoctor } from "./doctor";
+import { resolvePlugins } from "./plugin-resolver";
 import type { Profile, Team } from "./types";
 
 let mainWindow: BrowserWindow | null = null;
@@ -520,6 +522,12 @@ ipcMain.handle("reset-statusline-config", () => resetStatusLineConfig());
 ipcMain.handle("render-statusline-preview", (_event, config, mockSession) =>
   renderStatusLinePreview(config, mockSession),
 );
+
+// Plugin resolver
+ipcMain.handle("resolve-plugins", (_event, ids: string[]) => resolvePlugins(ids));
+
+// Known env vars
+ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());
 
 // ---------------------------------------------------------------------------
 // App lifecycle
