@@ -2001,6 +2001,8 @@ export function ManageDialog({
   const [marketplaceInput, setMarketplaceInput] = useState("");
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
+  const [refreshingSource, setRefreshingSource] = useState<string | null>(null);
+  const [refreshingAll, setRefreshingAll] = useState(false);
 
   const loadMarketplaces = async () => {
     const list = await window.api.listMarketplaces();
@@ -2036,6 +2038,37 @@ export function ManageDialog({
       setMarketplaceLoading(false);
     }
   };
+
+  const handleRefreshSource = async (name: string) => {
+    setRefreshingSource(name);
+    setMarketplaceError(null);
+    try {
+      await window.api.updateMarketplace(name);
+      await loadMarketplaces();
+      onPluginsChanged?.();
+      loadAvailablePlugins();
+    } catch (err: any) {
+      setMarketplaceError(err?.message ?? "Failed to refresh marketplace");
+    } finally {
+      setRefreshingSource(null);
+    }
+  };
+
+  const handleRefreshAll = async () => {
+    setRefreshingAll(true);
+    setMarketplaceError(null);
+    try {
+      await window.api.updateAllMarketplaces();
+      await loadMarketplaces();
+      onPluginsChanged?.();
+      loadAvailablePlugins();
+    } catch (err: any) {
+      setMarketplaceError(err?.message ?? "Failed to update marketplaces");
+    } finally {
+      setRefreshingAll(false);
+    }
+  };
+
   const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
   const installedPluginIds = useMemo(() => new Set(plugins.map((p) => p.name)), [plugins]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
@@ -2680,6 +2713,15 @@ export function ManageDialog({
                     <div className="marketplace-head-title">
                       <h3 className="marketplace-heading">Installed marketplaces</h3>
                       <span className="marketplace-count" aria-label={`${marketplaces.length} registered`}>{marketplaces.length}</span>
+                      {marketplaces.length > 0 && (
+                        <button
+                          className="btn-secondary"
+                          onClick={handleRefreshAll}
+                          disabled={refreshingAll || refreshingSource !== null || marketplaceLoading}
+                        >
+                          {refreshingAll ? "Updating\u2026" : "Update All Sources"}
+                        </button>
+                      )}
                     </div>
                     <div className="marketplace-add-row">
                       <input
@@ -2751,6 +2793,15 @@ export function ManageDialog({
                                     </span>
                                   )}
                                 </div>
+                              </button>
+                              <button
+                                className="btn-secondary"
+                                onClick={(e) => { e.stopPropagation(); handleRefreshSource(mp.name); }}
+                                disabled={refreshingSource !== null || refreshingAll || marketplaceLoading}
+                                aria-label={`Refresh source ${mp.name}`}
+                                title="Refresh source"
+                              >
+                                {refreshingSource === mp.name ? "Refreshing\u2026" : "Refresh"}
                               </button>
                               {mp.name !== "claude-plugins-official" && (
                                 <button
