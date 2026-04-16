@@ -341,6 +341,51 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
   const [itemFilter, setItemFilter] = useState<FilterOption>("all");
   const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow">(null);
   const [itemSort, setItemSort] = useState<SortOption>("source");
+
+  // ─── Inline item editor ─────────────────────────────────────────────────────
+  const itemRelativePath = (type: string, name: string): string => {
+    if (type === "skill") return `.claude/skills/${name}/SKILL.md`;
+    if (type === "agent") return `.claude/agents/${name}.md`;
+    return `.claude/commands/${name}.md`;
+  };
+
+  const [editingItem, setEditingItem] = useState<{ directory: string; relativePath: string; absolutePath: string; name: string; type: string } | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [editingDirty, setEditingDirty] = useState(false);
+
+  const handleOpenItemEditor = async (item: { name: string; type: string; path: string }) => {
+    if (!launchDir) return;
+    const relPath = itemRelativePath(item.type, item.name);
+    try {
+      const content = await window.api.readProjectFile(launchDir, relPath);
+      setEditingItem({ directory: launchDir, relativePath: relPath, absolutePath: item.path, name: item.name, type: item.type });
+      setEditingContent(content);
+      setEditingDirty(false);
+    } catch {
+      window.api.openInFinder(item.path);
+    }
+  };
+
+  const handleSaveEditingItem = async () => {
+    if (!editingItem) return;
+    await window.api.writeProjectFile(editingItem.directory, editingItem.relativePath, editingContent);
+    setEditingDirty(false);
+  };
+
+  const handleCloseEditor = () => {
+    setEditingItem(null);
+    setEditingContent("");
+    setEditingDirty(false);
+  };
+
+  useEffect(() => {
+    if (!editingItem) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCloseEditor();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [editingItem]);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   // Set when the user clicks "Add plugin" on a missing-plugin banner row and
   // we couldn't find the plugin in any curated marketplace. Triggers the
@@ -929,12 +974,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                             className="local-item enabled clickable"
                             role="button"
                             tabIndex={0}
-                            title={`Reveal ${item.path} in Finder`}
-                            onClick={() => window.api.openInFinder(item.path)}
+                            title={`Edit ${item.name}`}
+                            onClick={() => handleOpenItemEditor(item)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
-                                window.api.openInFinder(item.path);
+                                handleOpenItemEditor(item);
                               }
                             }}
                           >
@@ -1157,6 +1202,56 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           onClose={() => setOverviewOpen(false)}
           onJumpToTab={(tab) => { setActiveTab(tab); setOverviewOpen(false); }}
         />
+      )}
+
+      {/* Inline item editor modal */}
+      {editingItem && (
+        <div className="modal-backdrop" onClick={handleCloseEditor}>
+          <div
+            className="modal-dialog modal-dialog--editor"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="editor-title"
+          >
+            <div className="modal-header">
+              <span className="modal-title" id="editor-title">
+                {editingItem.type}: {editingItem.name}
+              </span>
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <button
+                  className="open-in-editor-btn"
+                  onClick={() => window.api.openInFinder(editingItem.absolutePath)}
+                  title="Open in default editor"
+                >
+                  Open in Editor ↗
+                </button>
+                {editingDirty && (
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: "0.846rem", padding: "3px 10px" }}
+                    onClick={handleSaveEditingItem}
+                  >
+                    Save
+                  </button>
+                )}
+                <button className="modal-close" onClick={handleCloseEditor} aria-label="Close">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="modal-body" style={{ padding: 0 }}>
+              <textarea
+                className="manage-claudemd-editor item-editor-textarea"
+                value={editingContent}
+                onChange={(e) => { setEditingContent(e.target.value); setEditingDirty(true); }}
+                placeholder={`${editingItem.type} content...`}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

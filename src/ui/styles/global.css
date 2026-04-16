@@ -8156,6 +8156,47 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ─── Project item editor modal ─────────────────────────────────────────── */
+
+.modal-dialog--editor {
+  max-width: 700px;
+  width: 90vw;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-dialog--editor .modal-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.item-editor-textarea {
+  height: 100%;
+  resize: none;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+/* Open in Editor button */
+.open-in-editor-btn {
+  font-size: 0.769rem;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.open-in-editor-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
 /* Large / ultrawide — let content breathe */
 @media (min-width: 1800px) {
   .profile-editor {
