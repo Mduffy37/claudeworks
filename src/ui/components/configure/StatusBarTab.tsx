@@ -547,28 +547,31 @@ export function StatusBarTab() {
             )}
           </div>
           {showSaveInput ? (
-            <div className="status-bar-save-input-wrap">
-              <input
-                type="text"
-                className="status-bar-save-input"
-                placeholder="Config name…"
-                value={saveInputName}
-                onChange={(e) => setSaveInputName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveConfig();
-                  if (e.key === "Escape") { setShowSaveInput(false); setSaveInputName(""); }
-                }}
-                autoFocus
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="field" style={{ flex: "0 0 auto", width: "180px", margin: 0 }}>
+                <input
+                  type="text"
+                  placeholder="Config name…"
+                  value={saveInputName}
+                  onChange={(e) => setSaveInputName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveConfig();
+                    if (e.key === "Escape") { setShowSaveInput(false); setSaveInputName(""); }
+                  }}
+                  autoFocus
+                />
+              </div>
               <button
-                className="btn-primary btn-sm"
+                className="btn-primary"
+                style={{ fontSize: "0.846rem", padding: "3px 10px" }}
                 disabled={!saveInputName.trim()}
                 onClick={handleSaveConfig}
               >
                 Save
               </button>
               <button
-                className="btn-secondary btn-sm"
+                className="btn-secondary"
+                style={{ fontSize: "0.846rem", padding: "3px 10px" }}
                 onClick={() => { setShowSaveInput(false); setSaveInputName(""); }}
               >
                 Cancel
