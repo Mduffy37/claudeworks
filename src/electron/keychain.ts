@@ -4,11 +4,10 @@ import * as crypto from "crypto";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import type { Profile } from "./types";
+import { PROFILES_DIR } from "./config";
 import { loadProfiles } from "./core";
 
 const execFileAsync = promisify(execFile);
-
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 
 // ---------------------------------------------------------------------------
 // Credentials

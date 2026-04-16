@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { execFileSync } from "child_process";
+import { CLAUDE_HOME } from "./config";
 import type {
   PluginEntry,
   PluginItem,
@@ -12,8 +13,6 @@ import type {
   LocalItem,
   Profile,
 } from "./types";
-
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 
 // ---------------------------------------------------------------------------
 // Plugin scanning

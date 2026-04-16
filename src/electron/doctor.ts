@@ -35,15 +35,12 @@
 
 import fs from "fs";
 import path from "path";
-import os from "os";
 import type { DoctorFinding, DoctorReport } from "./types";
 import { resolvePlugins } from "./plugin-resolver";
+import { CLAUDE_HOME, PROFILES_DIR, PROFILES_JSON } from "./config";
 
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
-const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
 const TEAMS_JSON = path.join(PROFILES_DIR, "teams.json");
 const BIN_DIR = path.join(PROFILES_DIR, "bin");
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 const INSTALLED_PLUGINS_JSON = path.join(CLAUDE_HOME, "plugins", "installed_plugins.json");
 
 type DoctorMode = "detect" | "repair";

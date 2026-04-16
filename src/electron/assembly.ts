@@ -4,6 +4,7 @@ import * as os from "os";
 import * as crypto from "crypto";
 import { spawn } from "child_process";
 import type { PluginEntry, Profile } from "./types";
+import { CLAUDE_HOME, PROFILES_DIR, getGlobalDefaults } from "./config";
 import {
   FRAMEWORK_PLUGIN_PREFIX,
   scanInstalledPlugins,
@@ -15,10 +16,6 @@ import {
   isFrameworkPlugin,
   writeMcpConfig,
 } from "./plugins";
-import { getGlobalDefaults } from "./core";
-
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 
 // ---------------------------------------------------------------------------
 // Profile assembly

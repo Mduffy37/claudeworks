@@ -15,17 +15,14 @@ import { getGitHubBackendState } from "./marketplace";
 import { checkCredentialStatus } from "./keychain";
 import { loadTeams } from "./teams";
 import { getLaunchLog } from "./launch";
+import { CLAUDE_HOME, PROFILES_DIR, getGlobalDefaults } from "./config";
 import {
   loadProfiles,
-  getGlobalDefaults,
   getGlobalHooks,
   listMarketplaces,
 } from "./core";
 
 const execFileAsync = promisify(execFile);
-
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 
 // ---------------------------------------------------------------------------
 // Active & Recent Sessions

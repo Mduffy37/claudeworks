@@ -39,6 +39,7 @@ import {
   runDiagnostics,
   exportDiagnostics,
 } from "./diagnostics";
+import { getGlobalDefaults, saveGlobalDefaults } from "./config";
 import {
   loadProfiles,
   saveProfile,
@@ -64,8 +65,6 @@ import {
   saveGlobalEnv,
   getGlobalHooks,
   saveGlobalHooks,
-  getGlobalDefaults,
-  saveGlobalDefaults,
   getFavouritePlugins,
   saveFavouritePlugins,
   getSavedStatusBarConfigs,

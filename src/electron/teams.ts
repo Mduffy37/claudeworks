@@ -23,20 +23,19 @@ import {
 } from "./assembly";
 import { syncCredentials } from "./keychain";
 import {
-  loadProfiles,
+  CLAUDE_HOME,
+  PROFILES_DIR,
   validateProfileName,
   ensureProfilesDir,
   getGlobalDefaults,
-} from "./core";
+} from "./config";
+import { loadProfiles } from "./core";
 import {
   escSh,
   findRealClaudeBinary,
   launchInTerminal,
   recordLaunch,
 } from "./launch";
-
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 
 // ---------------------------------------------------------------------------
 // Team persistence

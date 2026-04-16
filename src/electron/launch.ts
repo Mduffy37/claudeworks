@@ -5,11 +5,9 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import type { Profile, ProfileAlias, LaunchOptions } from "./types";
 import { writeMcpConfig } from "./plugins";
-import { ensureProfilesDir, getGlobalDefaults } from "./core";
+import { PROFILES_DIR, ensureProfilesDir, getGlobalDefaults } from "./config";
 
 const execFileAsync = promisify(execFile);
-
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
 
 /** Escape a string for use inside a single-quoted POSIX shell argument. */
 export function escSh(s: string): string {

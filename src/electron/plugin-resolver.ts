@@ -12,7 +12,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import * as os from "os";
 
 import type { ResolvedPlugin } from "./types";
 import {
@@ -21,14 +20,13 @@ import {
   detectGitSource,
   scanInstalledPlugins,
 } from "./plugins";
+import { CLAUDE_HOME } from "./config";
 
 // ── constants (mirror core.ts to avoid importing non-exported values) ──────
 
 const LOCAL_PLUGIN_PREFIX = "local:";
 const FRAMEWORK_PLUGIN_PREFIX = "framework:";
 const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
-
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
 
 // ── helpers ────────────────────────────────────────────────────────────────
 

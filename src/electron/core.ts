@@ -6,6 +6,14 @@ import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
+import {
+  CLAUDE_HOME,
+  PROFILES_DIR,
+  PROFILES_JSON,
+  GLOBAL_DEFAULTS_JSON,
+  validateProfileName,
+  ensureProfilesDir,
+} from "./config";
 import { resetKnownPluginNamesCache } from "./plugins";
 import { assembleProfile } from "./assembly";
 import { readTeamsStore, writeTeamsStore } from "./teams";
@@ -22,30 +30,12 @@ import type {
   StatusLineWidget,
 } from "./types";
 
-const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
-const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
 const STATUSLINE_CONFIG_PATH = path.join(os.homedir(), ".claude", "statusline-config.json");
 const STATUSLINE_RENDERER_PATH = path.join(os.homedir(), ".claude", "scripts", "statusline-render.py");
-
-export function validateProfileName(name: string): void {
-  if (!name || /[\/\\\0]|\.\./.test(name)) {
-    throw new Error(`Invalid profile name: "${name}". Names must not contain path separators, "..", or null bytes.`);
-  }
-  const resolved = path.resolve(PROFILES_DIR, name);
-  if (!resolved.startsWith(PROFILES_DIR + path.sep)) {
-    throw new Error(`Invalid profile name: "${name}" resolves outside the profiles directory.`);
-  }
-}
-
 
 // ---------------------------------------------------------------------------
 // Profile persistence
 // ---------------------------------------------------------------------------
-
-export function ensureProfilesDir(): void {
-  fs.mkdirSync(PROFILES_DIR, { recursive: true });
-}
 
 /**
  * Schema version for profiles.json. Every time the on-disk shape of a
@@ -449,7 +439,6 @@ export function listMarketplaces(): Array<{ name: string; repo: string; lastUpda
 // ---------------------------------------------------------------------------
 
 const GLOBAL_CLAUDE_MD = path.join(CLAUDE_HOME, "CLAUDE.md");
-const GLOBAL_DEFAULTS_JSON = path.join(PROFILES_DIR, "global-defaults.json");
 const IMPORTED_PROJECTS_JSON = path.join(PROFILES_DIR, "imported-projects.json");
 
 export function getGlobalClaudeMd(): string {
@@ -463,35 +452,6 @@ export function getGlobalClaudeMd(): string {
 export function saveGlobalClaudeMd(content: string): void {
   fs.mkdirSync(CLAUDE_HOME, { recursive: true });
   fs.writeFileSync(GLOBAL_CLAUDE_MD, content, "utf-8");
-}
-
-/** See PROFILES_SCHEMA_VERSION — same pattern for global-defaults.json. */
-const GLOBAL_DEFAULTS_SCHEMA_VERSION = 1;
-
-function migrateGlobalDefaults(raw: any): any {
-  if (!raw || typeof raw !== "object") return { schemaVersion: GLOBAL_DEFAULTS_SCHEMA_VERSION };
-  const version = typeof raw.schemaVersion === "number" ? raw.schemaVersion : 0;
-  let data: any = raw;
-  if (version < 1) {
-    data = { ...data, schemaVersion: 1 };
-  }
-  return data;
-}
-
-export function getGlobalDefaults(): { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string } {
-  try {
-    const data = migrateGlobalDefaults(JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8")));
-    return { model: data.model ?? "", opusContext: data.opusContext, sonnetContext: data.sonnetContext, effortLevel: data.effortLevel ?? "", env: data.env, customFlags: data.customFlags, terminalApp: data.terminalApp, tmuxMode: data.tmuxMode };
-  } catch {
-    return { model: "", effortLevel: "" };
-  }
-}
-
-export function saveGlobalDefaults(defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string; env?: Record<string, string>; customFlags?: string; terminalApp?: string; tmuxMode?: string }): void {
-  // schemaVersion spread last so the constant always wins over any stale
-  // value that might be in the defaults object.
-  const stamped = { ...defaults, schemaVersion: GLOBAL_DEFAULTS_SCHEMA_VERSION };
-  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(stamped, null, 2));
 }
 
 export function getFavouritePlugins(): string[] {
