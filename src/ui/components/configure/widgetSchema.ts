@@ -146,6 +146,17 @@ export const WIDGET_SCHEMAS: Record<string, WidgetSchema> = {
       { key: "showTier", label: "Color by risk tier", type: "boolean", default: false },
     ],
   },
+  usage7dSonnet: {
+    id: "usage7dSonnet",
+    label: "7-Day Sonnet Usage",
+    description: "Current 7d Sonnet-model window utilization with optional reset countdown and risk-tier coloring.",
+    options: [
+      { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
+      { key: "icon", label: "Icon/prefix", type: "text", default: "" },
+      { key: "showReset", label: "Show reset countdown", type: "boolean", default: false },
+      { key: "showTier", label: "Risk-tier coloring", type: "boolean", default: false },
+    ],
+  },
   cwd: {
     id: "cwd",
     label: "Working directory",
