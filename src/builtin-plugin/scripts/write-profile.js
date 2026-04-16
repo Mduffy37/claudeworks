@@ -126,7 +126,25 @@ try {
 if (!store || typeof store !== "object") store = { profiles: {} };
 if (!store.profiles || typeof store.profiles !== "object") store.profiles = {};
 
-// 5. Build the profile entry. Keep the shape identical to what core.ts writes.
+// 5. Parse P_DISABLED_MCP — optional, same shape as disabledMcpServers in the Profile type.
+//    Keys are directory paths (for project-scoped MCPs) or "__user__" (for global MCPs).
+//    Values are arrays of MCP server names to disable for this profile.
+let disabledMcpServers;
+try {
+  disabledMcpServers = JSON.parse(process.env.P_DISABLED_MCP || "{}");
+  if (disabledMcpServers === null || typeof disabledMcpServers !== "object" || Array.isArray(disabledMcpServers)) {
+    throw new Error("P_DISABLED_MCP must be a JSON object");
+  }
+  for (const [key, value] of Object.entries(disabledMcpServers)) {
+    if (!Array.isArray(value)) {
+      throw new Error(`disabledMcpServers["${key}"] must be an array of server name strings`);
+    }
+  }
+} catch (e) {
+  fail("Failed to parse P_DISABLED_MCP: " + String(e.message || e));
+}
+
+// 6. Build the profile entry. Keep the shape identical to what core.ts writes.
 const profile = {
   name,
   plugins,
@@ -137,11 +155,12 @@ const profile = {
   customClaudeMd: process.env.P_INSTRUCTIONS || "",
   workflow: process.env.P_WORKFLOW || undefined,
   tools: process.env.P_TOOLS || undefined,
+  disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
   useDefaultAuth: true,
 };
 store.profiles[name] = profile;
 
-// 6. Atomic write via tmp file + rename — same pattern as core.ts:writeProfilesStore.
+// 7. Atomic write via tmp file + rename — same pattern as core.ts:writeProfilesStore.
 //    Guards against leaving a half-written profiles.json if the process is
 //    interrupted between the truncate and the final flush.
 try {

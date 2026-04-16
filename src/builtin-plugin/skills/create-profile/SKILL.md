@@ -612,9 +612,15 @@ The write is handled by `$CLAUDE_PLUGIN_ROOT/scripts/write-profile.js`. The scri
 
 **Inline all `P_*` variables on the same command line as the script invocation** — don't try to `export` them in a previous step and then run the script, because each `!` command runs in its own shell. Example:
 
-!`P_NAME='my-profile' P_PLUGINS='["frontend-design@claude-plugins-official"]' P_EXCLUDED='{}' P_DESC='Frontend work' P_MODEL='' P_EFFORT='' P_INSTRUCTIONS='' P_WORKFLOW='' P_TOOLS='' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/write-profile.js" 2>&1`
+!`P_NAME='my-profile' P_PLUGINS='["frontend-design@claude-plugins-official"]' P_EXCLUDED='{}' P_DISABLED_MCP='{}' P_DESC='Frontend work' P_MODEL='' P_EFFORT='' P_INSTRUCTIONS='' P_WORKFLOW='' P_TOOLS='' node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/write-profile.js" 2>&1`
 
-Substitute the actual values from the profile draft. Required: `P_NAME`. Optional (leave empty string if not used): `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (JSON object `{"pluginId": ["item-name-1", "item-name-2", ...]}` — a **flat array of bare item names** per plugin ID; items to *exclude* from each plugin; leave as `'{}'` to enable everything in every plugin), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW`, `P_TOOLS` (markdown body of the `/tools` command if the user opted in at Step 7e; leave empty string to skip generating the command).
+Substitute the actual values from the profile draft. Required: `P_NAME`. Optional (leave empty string if not used): `P_PLUGINS` (JSON array of plugin IDs), `P_EXCLUDED` (JSON object `{"pluginId": ["item-name-1", "item-name-2", ...]}` — a **flat array of bare item names** per plugin ID; items to *exclude* from each plugin; leave as `'{}'` to enable everything in every plugin), `P_DESC`, `P_MODEL`, `P_EFFORT`, `P_INSTRUCTIONS`, `P_WORKFLOW`, `P_TOOLS` (markdown body of the `/tools` command if the user opted in at Step 7e; leave empty string to skip generating the command), `P_DISABLED_MCP` (JSON object for disabling MCP servers — see below).
+
+**Note on `disabledMcpServers`:** the profile engine defaults to *enabling* all user-level MCP servers (from `~/.claude.json` and `~/.mcp.json`). If the user's prompt specifies which MCP servers to enable (e.g. "use exa, firecrawl, reddit and hn"), compute the disable list as: all available user MCP servers MINUS the ones the user wants. To discover available MCPs, run:
+
+!`node -e "const fs=require('fs'),os=require('os'),p=require('path');const cj=p.join(os.homedir(),'.claude.json');const mj=p.join(os.homedir(),'.mcp.json');const servers=new Set();try{const d=JSON.parse(fs.readFileSync(cj,'utf-8'));for(const k of Object.keys(d.mcpServers||{}))servers.add(k)}catch{}try{const d=JSON.parse(fs.readFileSync(mj,'utf-8'));for(const k of Object.keys((d.mcpServers||{})))servers.add(k)}catch{}console.log(JSON.stringify([...servers].sort()))" 2>&1`
+
+This outputs a JSON array of all user-level MCP server names. Build `P_DISABLED_MCP` as `{"__user__": ["server-a", "server-b"]}` — the `"__user__"` key controls global MCP toggles. Servers NOT in this array remain enabled. If the user didn't mention MCP preferences, leave as `'{}'` (all MCPs enabled).
 
 The script outputs a single-line JSON object:
 
