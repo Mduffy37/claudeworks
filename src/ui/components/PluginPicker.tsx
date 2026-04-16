@@ -132,18 +132,6 @@ export function PluginPicker({
         className={`plugin-row${enabled ? " enabled" : ""}`}
       >
         <div className="plugin-header" onClick={() => toggleExpand(plugin.name)}>
-          {/* Favourite star */}
-          {onToggleFavourite && (
-            <button
-              className={`plugin-fav-btn${favouritePlugins?.includes(plugin.name) ? " active" : ""}`}
-              onClick={(e) => { e.stopPropagation(); onToggleFavourite(plugin.name); }}
-              title={favouritePlugins?.includes(plugin.name) ? "Remove from favourites" : "Add to favourites"}
-              aria-label={favouritePlugins?.includes(plugin.name) ? "Unfavourite" : "Favourite"}
-            >
-              {favouritePlugins?.includes(plugin.name) ? "\u2605" : "\u2606"}
-            </button>
-          )}
-
           {/* Toggle switch — stop propagation so it doesn't also expand/collapse */}
           <label
             className="toggle-switch"
@@ -239,6 +227,18 @@ export function PluginPicker({
               );
             })()}
           </div>
+
+          {/* Favourite star — far right */}
+          {onToggleFavourite && (
+            <button
+              className={`plugin-fav-btn${favouritePlugins?.includes(plugin.name) ? " active" : ""}`}
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(plugin.name); }}
+              title={favouritePlugins?.includes(plugin.name) ? "Remove from favourites" : "Add to favourites"}
+              aria-label={favouritePlugins?.includes(plugin.name) ? "Unfavourite" : "Favourite"}
+            >
+              {favouritePlugins?.includes(plugin.name) ? "\u2605" : "\u2606"}
+            </button>
+          )}
         </div>
 
         {isExpanded && (

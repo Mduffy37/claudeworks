@@ -3553,7 +3553,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .plugin-header {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
