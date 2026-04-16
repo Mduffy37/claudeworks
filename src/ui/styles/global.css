@@ -7412,6 +7412,27 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--brass);
 }
 
+/* Plugin picker favourite star */
+.plugin-fav-btn {
+  background: none;
+  border: none;
+  color: var(--text-placeholder);
+  font-size: 0.923rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.plugin-fav-btn:hover {
+  color: var(--text-secondary);
+}
+
+.plugin-fav-btn.active {
+  color: var(--brass);
+}
+
 /* Session re-launch button */
 .home-session-launch {
   background: var(--accent-dim);

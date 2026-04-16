@@ -323,6 +323,20 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     onRegisterSave?.(draft.handleSave);
   }, [draft.handleSave, onRegisterSave]);
 
+  const [favouritePlugins, setFavouritePlugins] = useState<string[]>([]);
+
+  useEffect(() => {
+    window.api.getFavouritePlugins().then(setFavouritePlugins);
+  }, []);
+
+  const handleToggleFavourite = async (pluginName: string) => {
+    const next = favouritePlugins.includes(pluginName)
+      ? favouritePlugins.filter((n) => n !== pluginName)
+      : [...favouritePlugins, pluginName];
+    setFavouritePlugins(next);
+    await window.api.saveFavouritePlugins(next);
+  };
+
   const [itemSearch, setItemSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<FilterOption>("all");
   const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow">(null);
@@ -946,6 +960,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               onTogglePlugin={handleTogglePlugin}
               onToggleItem={handleToggleItem}
               onEnablePluginWithOnly={handleEnablePluginWithOnly}
+              favouritePlugins={favouritePlugins}
+              onToggleFavourite={handleToggleFavourite}
             />
           )}
 

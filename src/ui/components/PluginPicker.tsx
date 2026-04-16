@@ -10,6 +10,8 @@ interface Props {
   onTogglePlugin: (pluginName: string, enabled: boolean) => void;
   onToggleItem: (pluginName: string, itemName: string, enabled: boolean) => void;
   onEnablePluginWithOnly: (pluginName: string, itemName: string) => void;
+  favouritePlugins?: string[];
+  onToggleFavourite?: (pluginName: string) => void;
 }
 
 // Chevron icon — rotates when expanded
@@ -35,6 +37,8 @@ export function PluginPicker({
   onTogglePlugin,
   onToggleItem,
   onEnablePluginWithOnly,
+  favouritePlugins,
+  onToggleFavourite,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -56,23 +60,43 @@ export function PluginPicker({
 
   const globalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isFramework(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
-  }, [plugins, search]);
+    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isFramework(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
+        const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
+        return aFav - bFav;
+      });
+  }, [plugins, search, favouritePlugins]);
 
   const frameworkPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => isFramework(p) && (!q || p.pluginName.toLowerCase().includes(q)));
-  }, [plugins, search]);
+    return plugins.filter((p) => isFramework(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
+        const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
+        return aFav - bFav;
+      });
+  }, [plugins, search, favouritePlugins]);
 
   const userLocalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => isLocal(p) && (!q || p.pluginName.toLowerCase().includes(q)));
-  }, [plugins, search]);
+    return plugins.filter((p) => isLocal(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
+        const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
+        return aFav - bFav;
+      });
+  }, [plugins, search, favouritePlugins]);
 
   const localPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)));
-  }, [plugins, directory, search]);
+    return plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
+        const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
+        return aFav - bFav;
+      });
+  }, [plugins, directory, search, favouritePlugins]);
 
   const renderPlugin = (plugin: PluginWithItems) => {
     const enabled = selectedPlugins.includes(plugin.name);
@@ -108,6 +132,18 @@ export function PluginPicker({
         className={`plugin-row${enabled ? " enabled" : ""}`}
       >
         <div className="plugin-header" onClick={() => toggleExpand(plugin.name)}>
+          {/* Favourite star */}
+          {onToggleFavourite && (
+            <button
+              className={`plugin-fav-btn${favouritePlugins?.includes(plugin.name) ? " active" : ""}`}
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(plugin.name); }}
+              title={favouritePlugins?.includes(plugin.name) ? "Remove from favourites" : "Add to favourites"}
+              aria-label={favouritePlugins?.includes(plugin.name) ? "Unfavourite" : "Favourite"}
+            >
+              {favouritePlugins?.includes(plugin.name) ? "\u2605" : "\u2606"}
+            </button>
+          )}
+
           {/* Toggle switch — stop propagation so it doesn't also expand/collapse */}
           <label
             className="toggle-switch"
