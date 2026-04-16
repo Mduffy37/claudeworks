@@ -367,3 +367,109 @@ describe("assembleProfile", () => {
     expect(fs.existsSync(path.join(canaryDir, "alive"))).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// scanPluginItems — item discovery correctness
+// ---------------------------------------------------------------------------
+
+describe("scanPluginItems", () => {
+  // Helper: build a minimal PluginEntry pointing at an arbitrary dir.
+  function makeEntry(installPath: string): import("../src/electron/types").PluginEntry {
+    return {
+      name: "test-plugin@test-marketplace",
+      pluginName: "test-plugin",
+      marketplace: "test-marketplace",
+      scope: "user",
+      installPath,
+      version: "1.0.0",
+    };
+  }
+
+  // ─── Test: container pattern expands "skills": "./" into N skills ─────
+
+  it('expands "skills": "./" container pattern into one item per skill subdir', () => {
+    const pluginDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "scan-container-")),
+    );
+
+    // Write plugin.json declaring "skills": "./" — the container pattern.
+    fs.mkdirSync(path.join(pluginDir, ".claude-plugin"), { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginDir, ".claude-plugin", "plugin.json"),
+      JSON.stringify({ name: "test-plugin", skills: ["./"] }),
+    );
+
+    // Write 5 skill subdirectories directly at the plugin root.
+    const skillNames = ["alpha", "beta", "gamma", "delta", "epsilon"];
+    for (const name of skillNames) {
+      const skillDir = path.join(pluginDir, name);
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(skillDir, "SKILL.md"),
+        `---\nname: ${name}\ndescription: Container skill ${name}\n---\n`,
+      );
+    }
+
+    const items = core.scanPluginItems(makeEntry(pluginDir));
+    const skillItems = items.filter((i) => i.type === "skill");
+
+    // Must expand to all 5 skills, not collapse to 1.
+    expect(skillItems).toHaveLength(skillNames.length);
+    const itemNames = skillItems.map((i) => i.name);
+    for (const name of skillNames) {
+      expect(itemNames).toContain(name);
+    }
+
+    fs.rmSync(pluginDir, { recursive: true, force: true });
+  });
+
+  // ─── Test: agent directory layout (agents/foo/AGENT.md) is detected ───
+
+  it("detects agents in directory layout (agents/<name>/AGENT.md)", () => {
+    const pluginDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "scan-agent-dir-")),
+    );
+
+    // No plugin.json — rely on conventional directory scan.
+    const agentDir = path.join(pluginDir, "agents", "my-agent");
+    fs.mkdirSync(agentDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(agentDir, "AGENT.md"),
+      "---\nname: my-agent\ndescription: Directory-layout agent\n---\n",
+    );
+
+    const items = core.scanPluginItems(makeEntry(pluginDir));
+    const agents = items.filter((i) => i.type === "agent");
+
+    expect(agents).toHaveLength(1);
+    expect(agents[0].name).toBe("my-agent");
+
+    fs.rmSync(pluginDir, { recursive: true, force: true });
+  });
+
+  // ─── Test: heuristic fallback surfaces root .md files as agents ───────
+
+  it("surfaces root .md files as agents when no manifest and no subdirs", () => {
+    const pluginDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "scan-heuristic-")),
+    );
+
+    // Root .md files — no plugin.json, no skills/commands/agents dirs.
+    fs.writeFileSync(path.join(pluginDir, "my-tool.md"), "---\nname: my-tool\n---\n");
+    fs.writeFileSync(path.join(pluginDir, "helper.md"), "---\nname: helper\n---\n");
+    // Well-known dev-doc files that must NOT be surfaced.
+    fs.writeFileSync(path.join(pluginDir, "README.md"), "# readme\n");
+    fs.writeFileSync(path.join(pluginDir, "CLAUDE.md"), "# claude\n");
+
+    const items = core.scanPluginItems(makeEntry(pluginDir));
+    const agents = items.filter((i) => i.type === "agent");
+    const agentNames = agents.map((i) => i.name);
+
+    expect(agentNames).toContain("my-tool");
+    expect(agentNames).toContain("helper");
+    expect(agentNames).not.toContain("README");
+    expect(agentNames).not.toContain("CLAUDE");
+
+    fs.rmSync(pluginDir, { recursive: true, force: true });
+  });
+});
