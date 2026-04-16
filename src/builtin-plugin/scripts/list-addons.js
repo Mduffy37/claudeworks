@@ -186,9 +186,19 @@ function scanPluginItems(installPath) {
   } else {
     const agentsDir = path.join(installPath, "agents");
     if (fs.existsSync(agentsDir)) {
-      for (const file of fs.readdirSync(agentsDir)) {
-        if (!file.endsWith(".md") || file === "README.md") continue;
-        pushAgent(out, path.join(agentsDir, file), path.basename(file, ".md"));
+      for (const entry of fs.readdirSync(agentsDir, { withFileTypes: true })) {
+        // Flat file: agents/foo.md
+        if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md") {
+          pushAgent(out, path.join(agentsDir, entry.name), path.basename(entry.name, ".md"));
+          continue;
+        }
+        // Directory layout: agents/foo/AGENT.md (mirrors skills/<name>/SKILL.md)
+        if (direntIsDirLike(entry, agentsDir)) {
+          const agentMd = path.join(agentsDir, entry.name, "AGENT.md");
+          if (fs.existsSync(agentMd)) {
+            pushAgent(out, agentMd, entry.name);
+          }
+        }
       }
     }
   }
