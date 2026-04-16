@@ -1055,7 +1055,14 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   onSelect={(content) => {
                     const append = (prev: string) => prev ? prev + "\n\n" + content : content;
                     if (promptPickerTarget === "instructions") setCustomClaudeMd(append);
-                    else setWorkflow(append);
+                    else if (promptPickerTarget?.startsWith("variant-")) {
+                      const vidx = parseInt(promptPickerTarget.split("-")[1], 10);
+                      if (!isNaN(vidx) && vidx < workflows.length) {
+                        const next = [...workflows];
+                        next[vidx] = { ...next[vidx], body: next[vidx].body ? next[vidx].body + "\n\n" + content : content };
+                        setWorkflows(next);
+                      }
+                    } else setWorkflow(append);
                     markDirty();
                   }}
                   onClose={() => setPromptPickerTarget(null)}
@@ -1172,38 +1179,34 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   </div>
                 </div>
 
-                {workflows.map((variant, idx) => (
-                  <div key={idx} className="alias-row">
-                    <button
-                      className="alias-remove-btn btn-secondary"
-                      onClick={() => {
-                        setWorkflows(workflows.filter((_, i) => i !== idx));
-                        markDirty();
-                      }}
-                      title="Remove variant"
-                    >
-                        Remove
-                    </button>
-                    <div className="alias-row-fields">
-                      <div className="field">
-                        <label>Name</label>
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.846rem", color: "var(--text-muted)", whiteSpace: "nowrap", marginRight: "4px" }}>workflow-</span>
-                          <input
-                            type="text"
-                            value={variant.name}
-                            onChange={(e) => {
-                              const next = [...workflows];
-                              next[idx] = { ...next[idx], name: e.target.value.replace(/[^a-z0-9-]/g, "") };
-                              setWorkflows(next);
-                              markDirty();
-                            }}
-                            placeholder="name"
-                          />
-                        </div>
+                {workflows
+                  .filter((variant) => {
+                    // Hide project-exclusive variants that don't match the current launch directory
+                    if (!variant.directory) return true;
+                    if (!launchDir) return true; // show all when no dir selected
+                    return variant.directory === launchDir;
+                  })
+                  .map((variant) => {
+                    const idx = workflows.indexOf(variant);
+                    return (
+                  <div key={idx} className="workflow-variant-card">
+                    <div className="workflow-variant-controls">
+                      <span className="workflow-variant-prefix">workflow-</span>
+                      <div className="field" style={{ flex: "0 0 auto", width: "15ch", margin: 0 }}>
+                        <input
+                          type="text"
+                          value={variant.name}
+                          onChange={(e) => {
+                            const next = [...workflows];
+                            next[idx] = { ...next[idx], name: e.target.value.replace(/[^a-z0-9-]/g, "") };
+                            setWorkflows(next);
+                            markDirty();
+                          }}
+                          placeholder="name"
+                        />
                       </div>
-                      <div className="field" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "6px" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.846rem", cursor: "pointer" }}>
+                      <div className="field-toggle">
+                        <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={!!variant.directory}
@@ -1214,13 +1217,37 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                               markDirty();
                             }}
                           />
-                          Exclusive to {variant.directory ? (variant.directory.split("/").pop() || "project") : "this project"}
+                          <span className="toggle-track"><span className="toggle-thumb" /></span>
                         </label>
+                        <span className="field-toggle-label">{variant.directory ? (variant.directory.split("/").pop() || "project") : (launchDir || directories[0] || "").split("/").pop() || "This project"} only</span>
                       </div>
+                      <button className="insert-prompt-btn" style={{ marginLeft: "auto" }} onClick={() => setPromptPickerTarget(`variant-${idx}`)}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        Insert Prompt
+                      </button>
+                      <button className="open-in-editor-btn" onClick={async () => {
+                        if (!variant.name) return;
+                        const configDir = await window.api.getProfileConfigDir(name);
+                        const relPath = `commands/workflow-${variant.name}.md`;
+                        const frontmatter = `---\ndescription: Run the ${variant.name} workflow\n---\n\n`;
+                        await window.api.writeProjectFile(configDir, relPath, variant.body ? frontmatter + variant.body : "");
+                        window.api.openInFinder(`${configDir}/${relPath}`);
+                      }} title="Open in default editor">Open in Editor ↗</button>
+                      <button
+                        className="btn-danger-ghost"
+                        style={{ fontSize: "0.769rem", padding: "2px 8px" }}
+                        onClick={() => {
+                          setWorkflows(workflows.filter((_, i) => i !== idx));
+                          markDirty();
+                        }}
+                      >
+                        Remove
+                      </button>
                     </div>
+                    {/* Editor */}
                     <textarea
                       className="pe-instructions-editor"
-                      style={{ marginTop: "16px" }}
+                      style={{ minHeight: "100px" }}
                       value={variant.body}
                       onChange={(e) => {
                         const next = [...workflows];
@@ -1229,10 +1256,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                         markDirty();
                       }}
                       placeholder={`Describe the ${variant.name || "variant"} workflow...`}
-                      style={{ minHeight: "100px" }}
                     />
                   </div>
-                ))}
+                    );
+                  })}
 
                 <button
                   className="btn-secondary"

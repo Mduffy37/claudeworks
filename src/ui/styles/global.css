@@ -8241,26 +8241,29 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 4px;
 }
 
-/* Workflow variant cards — reuses .alias-row from aliases */
-.pe-instructions-section.variants .alias-row-fields {
-  grid-template-columns: 1fr 1fr;
+/* Workflow variant cards */
+.workflow-variant-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
 }
 
-/* Align the workflow- prefix + input row to match select height */
-.pe-instructions-section.variants .alias-row-fields .field > div {
+.workflow-variant-controls {
   display: flex;
   align-items: center;
-  height: 32px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.pe-instructions-section.variants .alias-row-fields .field > div > input {
-  flex: 1;
-  min-width: 0;
+.workflow-variant-prefix {
+  font-family: var(--font-mono);
+  font-size: 0.846rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.pe-instructions-section.variants .alias-row-fields select {
-  height: 32px;
-}
 
 /* Large / ultrawide — let content breathe */
 @media (min-width: 1800px) {
