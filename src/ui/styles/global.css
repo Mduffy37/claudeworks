@@ -5837,9 +5837,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .curated-collection-chip.active {
   background: var(--bg-elevated);
-  border-color: var(--border-strong);
+  border-color: var(--text-secondary);
   color: var(--text-primary);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  box-shadow: inset 0 0 0 1px var(--text-secondary), 0 0 8px rgba(201, 100, 66, 0.12);
+  font-weight: 600;
 }
 
 /* Earth-spectrum kind tints for the top-level collection filter chips */
@@ -5849,24 +5850,28 @@ h1, h2, h3, h4, h5, h6 {
 .curated-collection-chip.kind-mcpServer { color: var(--plum); }
 
 .curated-collection-chip.kind-skill.active {
-  background: rgba(122, 139, 110, 0.18);
+  background: rgba(122, 139, 110, 0.22);
   border-color: var(--sage);
-  box-shadow: inset 0 0 0 1px var(--sage);
+  box-shadow: inset 0 0 0 1px var(--sage), 0 0 8px rgba(122, 139, 110, 0.15);
+  font-weight: 600;
 }
 .curated-collection-chip.kind-agent.active {
-  background: rgba(154, 122, 94, 0.18);
+  background: rgba(154, 122, 94, 0.22);
   border-color: var(--walnut);
-  box-shadow: inset 0 0 0 1px var(--walnut);
+  box-shadow: inset 0 0 0 1px var(--walnut), 0 0 8px rgba(154, 122, 94, 0.15);
+  font-weight: 600;
 }
 .curated-collection-chip.kind-command.active {
-  background: rgba(176, 138, 58, 0.18);
+  background: rgba(176, 138, 58, 0.22);
   border-color: var(--brass);
-  box-shadow: inset 0 0 0 1px var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass), 0 0 8px rgba(176, 138, 58, 0.15);
+  font-weight: 600;
 }
 .curated-collection-chip.kind-mcpServer.active {
-  background: rgba(152, 117, 133, 0.18);
+  background: rgba(152, 117, 133, 0.22);
   border-color: var(--plum);
-  box-shadow: inset 0 0 0 1px var(--plum);
+  box-shadow: inset 0 0 0 1px var(--plum), 0 0 8px rgba(152, 117, 133, 0.15);
+  font-weight: 600;
 }
 
 .curated-collection-chip.curated-collection-more {
