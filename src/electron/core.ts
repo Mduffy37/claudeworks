@@ -477,6 +477,7 @@ export function writeMcpConfig(
   }
 
   const disabled = profile.disabledMcpServers?.[directory] ?? [];
+  const disabledUser = profile.disabledMcpServers?.["__user__"] ?? [];
 
   // 2. User-level and project MCPs — read from ~/.claude.json
   const claudeJson = path.join(os.homedir(), ".claude.json");
@@ -484,10 +485,12 @@ export function writeMcpConfig(
     try {
       const data = JSON.parse(fs.readFileSync(claudeJson, "utf-8"));
 
-      // User-level MCPs — always included (not toggleable)
+      // User-level MCPs — toggleable per-profile via disabledMcpServers["__user__"]
       const userMcps: Record<string, any> = data.mcpServers ?? {};
       for (const [name, config] of Object.entries(userMcps)) {
-        mcpServers[name] = config;
+        if (!disabledUser.includes(name)) {
+          mcpServers[name] = config;
+        }
       }
 
       // Project MCPs from ~/.claude.json — filtered by disabled list
@@ -502,7 +505,22 @@ export function writeMcpConfig(
     }
   }
 
-  // 3. Local .mcp.json in the project directory — filtered by disabled list (flat or wrapped format)
+  // 3. Global ~/.mcp.json — toggleable via the same __user__ disabled list
+  const globalMcpJson = path.join(os.homedir(), ".mcp.json");
+  if (fs.existsSync(globalMcpJson)) {
+    try {
+      const entries = readMcpJsonFile(globalMcpJson);
+      for (const [name, config] of Object.entries(entries)) {
+        if (!disabledUser.includes(name)) {
+          mcpServers[name] = config;
+        }
+      }
+    } catch {
+      // Skip unreadable ~/.mcp.json
+    }
+  }
+
+  // 4. Local .mcp.json in the project directory — filtered by disabled list (flat or wrapped format)
   const localMcpPath = path.join(directory, ".mcp.json");
   if (fs.existsSync(localMcpPath)) {
     const entries = readMcpJsonFile(localMcpPath);

@@ -89,14 +89,37 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
         <div className="pe-mcp-section pe-mcp-section-user">
           <div className="pe-mcp-section-head">
             <h3 className="pe-mcp-section-label">User ({userMcps.length}) <code>(~/.claude.json)</code></h3>
-            <span className="pe-mcp-section-hint">Always on for every session.</span>
+            <span className="pe-mcp-section-hint">Global servers. Toggling disables for this profile only.</span>
           </div>
-          {userMcps.map((mcp) => (
-            <div key={mcp.name} className="local-item enabled" title={mcpTitle(mcp)}>
-              <span className="local-item-name">{mcp.name}</span>
-              <span className="plugin-badge">{mcp.type}</span>
-            </div>
-          ))}
+          {userMcps.map((mcp) => {
+            const isEnabled = !(disabledMcpServers["__user__"] ?? []).includes(mcp.name);
+            return (
+              <div
+                key={mcp.name}
+                className={`local-item${isEnabled ? " enabled" : ""}`}
+                title={mcpTitle(mcp)}
+              >
+                <label
+                  className="toggle-switch"
+                  onClick={(e) => e.stopPropagation()}
+                  title={isEnabled ? "Disable MCP server for this profile" : "Enable MCP server for this profile"}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={(e) => onToggleMcp("__user__", mcp.name, e.target.checked)}
+                    aria-label={`${isEnabled ? "Disable" : "Enable"} user MCP server ${mcp.name}`}
+                  />
+                  <span className="toggle-track">
+                    <span className="toggle-thumb" />
+                  </span>
+                </label>
+                <span className="local-item-name">{mcp.name}</span>
+                <span className="pe-mcp-source">global</span>
+                <span className="plugin-badge">{mcp.type}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
