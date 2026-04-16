@@ -51,6 +51,9 @@ export function SettingsTab(props: Props) {
   const [newValue, setNewValue] = useState("");
   const [globalHooks, setGlobalHooks] = useState<HookEntry[]>([]);
   const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
+  const [knownVars, setKnownVars] = useState<Array<{ name: string; description: string; values: string[] | null }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ name: string; description: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const toggleAdvanced = (id: string) =>
     setOpenAdvanced((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -91,6 +94,7 @@ export function SettingsTab(props: Props) {
 
   useEffect(() => {
     window.api.getGlobalEnv().then(setGlobalEnv);
+    window.api.getKnownEnvVars().then(setKnownVars);
   }, []);
 
   // Global env vars not overridden by this profile
@@ -113,6 +117,29 @@ export function SettingsTab(props: Props) {
 
   const handleUpdateEnvValue = (key: string, value: string) => {
     onChangeEnv({ ...env, [key]: value });
+  };
+
+  const handleNewKeyChange = (value: string) => {
+    const cleaned = value.replace(/\s/g, "");
+    setNewKey(cleaned);
+    if (cleaned.length > 0) {
+      const filtered = knownVars.filter(
+        (v) => v.name.toLowerCase().includes(cleaned.toLowerCase()) && !(v.name in env),
+      );
+      setSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (name: string) => {
+    setNewKey(name);
+    setShowSuggestions(false);
+    const known = knownVars.find((v) => v.name === name);
+    if (known?.values?.length === 1) {
+      setNewValue(known.values[0]);
+    }
   };
 
   return (
@@ -272,7 +299,7 @@ export function SettingsTab(props: Props) {
               <div className="field-hint" style={{ marginBottom: "2px" }}>Inherited from global settings</div>
               {inheritedEnv.map(([key, value]) => (
                 <div className="env-var-row" key={`global-${key}`}>
-                  <input type="text" value={key} disabled aria-label="Variable name" />
+                  <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
                   <input type="text" value={value} disabled aria-label={`${key} value`} />
                   <button className="btn-secondary" onClick={() => { onChangeEnv({ ...env, [key]: value }); }} title="Override in this profile">Override</button>
                 </div>
@@ -287,7 +314,7 @@ export function SettingsTab(props: Props) {
                 value={key}
                 disabled
                 aria-label="Variable name"
-                title={globalEnv[key] !== undefined ? `${key} (overriding global)` : key}
+                title={knownVars.find((v) => v.name === key)?.description ?? (globalEnv[key] !== undefined ? `${key} (overriding global)` : key)}
                 style={globalEnv[key] !== undefined ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
               />
               <input
@@ -302,14 +329,32 @@ export function SettingsTab(props: Props) {
           ))}
           {(envEntries.length > 0 || inheritedEnv.length > 0) && <div className="field-divider" />}
           <div className="env-var-row">
-            <input
-              type="text"
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))}
-              placeholder="NEW_VAR_NAME"
-              aria-label="New variable name"
-              onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
-            />
+            <div className="env-input-wrapper">
+              <input
+                type="text"
+                value={newKey}
+                onChange={(e) => handleNewKeyChange(e.target.value)}
+                placeholder="NEW_VAR_NAME"
+                aria-label="New variable name"
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
+                onFocus={() => { if (newKey.length > 0 && suggestions.length > 0) setShowSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              />
+              {showSuggestions && (
+                <div className="env-autocomplete-dropdown">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.name}
+                      className="env-autocomplete-item"
+                      onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s.name); }}
+                    >
+                      <span className="env-autocomplete-name">{s.name}</span>
+                      <span className="env-autocomplete-desc">{s.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input
               type="text"
               value={newValue}

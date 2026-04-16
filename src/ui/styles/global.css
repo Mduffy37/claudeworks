@@ -1524,6 +1524,7 @@ h1, h2, h3, h4, h5, h6 {
 .manage-global-settings .field input,
 .manage-global-settings .field select,
 .manage-global-settings .env-var-row > input,
+.manage-global-settings .env-input-wrapper > input,
 .manage-global-settings .manage-claudemd-editor {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -3322,6 +3323,77 @@ h1, h2, h3, h4, h5, h6 {
 .env-var-row > button {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+/* Env var autocomplete */
+.env-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.env-input-wrapper > input {
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.923rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.env-input-wrapper > input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.env-input-wrapper > input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.28);
+}
+
+.env-autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-top: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.env-autocomplete-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 2px;
+}
+
+.env-autocomplete-item:hover {
+  background: var(--bg-hover);
+}
+
+.env-autocomplete-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.env-autocomplete-desc {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 /* ─── Directory list ──────────────────────────────────────────────────────── */

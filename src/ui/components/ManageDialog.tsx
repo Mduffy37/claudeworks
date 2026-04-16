@@ -674,6 +674,9 @@ function GlobalSettingsTab() {
   const [defaultsDirty, setDefaultsDirty] = useState(false);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  const [knownVars, setKnownVars] = useState<Array<{ name: string; description: string; values: string[] | null }>>([]);
+  const [envSuggestions, setEnvSuggestions] = useState<Array<{ name: string; description: string }>>([]);
+  const [showEnvSuggestions, setShowEnvSuggestions] = useState(false);
   const [hooksJson, setHooksJson] = useState("");
   const [hooksDirty, setHooksDirty] = useState(false);
   const [hooksError, setHooksError] = useState("");
@@ -696,6 +699,7 @@ function GlobalSettingsTab() {
       setEnv(e);
       setEnvDirty(false);
     });
+    window.api.getKnownEnvVars().then(setKnownVars);
     Promise.all([
       window.api.getGlobalDefaults(),
       window.api.checkTmuxInstalled(),
@@ -763,6 +767,29 @@ function GlobalSettingsTab() {
   const handleUpdateEnvValue = (key: string, value: string) => {
     setEnv((prev) => ({ ...prev, [key]: value }));
     setEnvDirty(true);
+  };
+
+  const handleEnvNewKeyChange = (value: string) => {
+    const cleaned = value.replace(/\s/g, "");
+    setNewKey(cleaned);
+    if (cleaned.length > 0) {
+      const filtered = knownVars.filter(
+        (v) => v.name.toLowerCase().includes(cleaned.toLowerCase()) && !(v.name in env),
+      );
+      setEnvSuggestions(filtered);
+      setShowEnvSuggestions(filtered.length > 0);
+    } else {
+      setShowEnvSuggestions(false);
+    }
+  };
+
+  const selectEnvSuggestion = (name: string) => {
+    setNewKey(name);
+    setShowEnvSuggestions(false);
+    const known = knownVars.find((v) => v.name === name);
+    if (known?.values?.length === 1) {
+      setNewValue(known.values[0]);
+    }
   };
 
   const envEntries = Object.entries(env);
@@ -875,14 +902,30 @@ function GlobalSettingsTab() {
         <div className="modal-fields" style={{ marginTop: "8px" }}>
           {envEntries.map(([key, value]) => (
             <div className="env-var-row" key={key}>
-              <input type="text" value={key} disabled aria-label="Variable name" />
+              <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
               <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder="value" aria-label={`${key} value`} />
               <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
             </div>
           ))}
           {envEntries.length > 0 && <div className="field-divider" />}
           <div className="env-var-row">
-            <input type="text" value={newKey} onChange={(e) => setNewKey(e.target.value.replace(/\s/g, ""))} placeholder="NEW_VAR_NAME" aria-label="New variable name" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+            <div className="env-input-wrapper">
+              <input type="text" value={newKey} onChange={(e) => handleEnvNewKeyChange(e.target.value)} placeholder="NEW_VAR_NAME" aria-label="New variable name" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} onFocus={() => { if (newKey.length > 0 && envSuggestions.length > 0) setShowEnvSuggestions(true); }} onBlur={() => setTimeout(() => setShowEnvSuggestions(false), 150)} />
+              {showEnvSuggestions && (
+                <div className="env-autocomplete-dropdown">
+                  {envSuggestions.map((s) => (
+                    <button
+                      key={s.name}
+                      className="env-autocomplete-item"
+                      onMouseDown={(e) => { e.preventDefault(); selectEnvSuggestion(s.name); }}
+                    >
+                      <span className="env-autocomplete-name">{s.name}</span>
+                      <span className="env-autocomplete-desc">{s.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
             <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
           </div>
