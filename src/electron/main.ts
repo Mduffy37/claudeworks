@@ -220,7 +220,7 @@ ipcMain.handle("launch-profile", async (_event, name: string, directory?: string
   const profile = profiles.find((p) => p.name === name);
   if (!profile) throw new Error(`Profile "${name}" not found`);
   try {
-    assembleProfile(profile);
+    assembleProfile(profile, directory);
   } catch (err: any) {
     throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
   }
@@ -235,7 +235,7 @@ ipcMain.handle("launch-profile-with-options", async (_event, name: string, direc
   const profile = profiles.find((p) => p.name === name);
   if (!profile) throw new Error(`Profile "${name}" not found`);
   try {
-    assembleProfile(profile);
+    assembleProfile(profile, directory);
   } catch (err: any) {
     throw new Error(`Profile assembly failed: ${err?.message ?? "unknown error"}`);
   }

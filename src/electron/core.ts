@@ -1648,7 +1648,7 @@ function resolveModelId(
   return model;
 }
 
-export function assembleProfile(profile: Profile): string {
+export function assembleProfile(profile: Profile, launchDirectory?: string): string {
   const configDir = path.join(PROFILES_DIR, profile.name, "config");
 
   // Create directory structure
@@ -1876,8 +1876,9 @@ export function assembleProfile(profile: Profile): string {
   // Write each variant
   for (const variant of profile.workflows ?? []) {
     if (!variant.name || !variant.body?.trim()) continue;
-    // Project-scoped: skip if directory doesn't match the profile's primary directory
-    if (variant.directory && profile.directory && variant.directory !== profile.directory) continue;
+    // Project-scoped: skip if launch directory doesn't match
+    const effectiveDir = launchDirectory ?? profile.directory;
+    if (variant.directory && effectiveDir && variant.directory !== effectiveDir) continue;
     const variantPath = path.join(commandsDir, `workflow-${variant.name}.md`);
     const frontmatter = `---\ndescription: Run the ${variant.name} workflow\n---\n\n`;
     fs.writeFileSync(variantPath, frontmatter + variant.body);
