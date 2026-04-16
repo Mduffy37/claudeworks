@@ -8245,21 +8245,15 @@ h1, h2, h3, h4, h5, h6 {
 .workflow-variant-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 8px;
 }
 
-.workflow-variant-header {
+.workflow-variant-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-}
-
-.workflow-variant-name-row {
-  display: flex;
-  align-items: center;
-  flex: 1;
 }
 
 .workflow-variant-prefix {
@@ -8267,17 +8261,24 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.846rem;
   color: var(--text-muted);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.workflow-variant-name-input {
+.workflow-variant-name {
   flex: 1;
+  min-width: 0;
   font-family: var(--font-mono);
-  font-size: 0.846rem;
 }
 
-.workflow-variant-dir-select {
-  font-size: 0.846rem;
-  max-width: 160px;
+.workflow-variant-dir {
+  flex: 0 0 auto;
+  max-width: 180px;
+}
+
+.workflow-variant-remove {
+  flex-shrink: 0;
+  font-size: 0.769rem;
+  padding: 3px 8px;
 }
 
 /* Large / ultrawide — let content breathe */
