@@ -4,6 +4,7 @@ import type {
   LocalItem,
   StandaloneMcp,
   StatusLineConfig,
+  ProfileAlias,
 } from "../../../src/electron/types";
 
 type TabId = "plugins" | "skills" | "agents" | "commands" | "mcp" | "local" | "instructions" | "settings";
@@ -26,7 +27,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [directories, setDirectories] = useState<string[]>([]);
-  const [alias, setAlias] = useState("");
+  const [aliases, setAliases] = useState<ProfileAlias[]>([]);
+  const [disableDefaultAlias, setDisableDefaultAlias] = useState(false);
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
   const [excludedItems, setExcludedItems] = useState<Record<string, string[]>>({});
   const [localItems, setLocalItems] = useState<LocalItem[]>([]);
@@ -67,7 +69,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
         description,
         directory: directories[0] || undefined,
         directories: directories.length > 0 ? directories : undefined,
-        alias: alias.trim() || undefined,
+        aliases: aliases.length > 0 ? aliases : undefined,
+        disableDefaultAlias: disableDefaultAlias || undefined,
         isDefault: isDefault || undefined,
         plugins: selectedPlugins,
         excludedItems,
@@ -94,7 +97,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, alias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, aliases, disableDefaultAlias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -103,7 +106,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setDescription(profile.description);
       const dirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
       setDirectories(dirs);
-      setAlias(profile.alias ?? "");
+      setAliases(profile.aliases ?? []);
+      setDisableDefaultAlias(profile.disableDefaultAlias ?? false);
       setIsDefault(profile.isDefault ?? false);
       setSelectedPlugins([...profile.plugins]);
       setExcludedItems({ ...profile.excludedItems });
@@ -145,7 +149,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setName("");
       setDescription("");
       setDirectories([]);
-      setAlias("");
+      setAliases([]);
+      setDisableDefaultAlias(false);
       setIsDefault(false);
       setSelectedPlugins([]);
       setExcludedItems({});
@@ -235,7 +240,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     name, setName,
     description, setDescription,
     directories, setDirectories,
-    alias, setAlias,
+    aliases, setAliases, disableDefaultAlias, setDisableDefaultAlias,
     isDefault, setIsDefault,
     selectedPlugins, setSelectedPlugins,
     excludedItems, setExcludedItems,
