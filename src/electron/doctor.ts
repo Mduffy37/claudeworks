@@ -367,9 +367,11 @@ function checkStaleBinAliases(mode: DoctorMode): DoctorFinding[] {
     const store = JSON.parse(fs.readFileSync(PROFILES_JSON, "utf-8"));
     validAliases = new Set<string>();
     for (const p of Object.values(store.profiles ?? {})) {
-      const profile = p as { alias?: unknown };
-      if (typeof profile?.alias === "string" && profile.alias) {
-        validAliases.add(profile.alias);
+      const profile = p as { aliases?: Array<{ name: string }> };
+      for (const alias of profile?.aliases ?? []) {
+        if (typeof alias.name === "string" && alias.name) {
+          validAliases.add(alias.name);
+        }
       }
     }
   } catch {
@@ -522,11 +524,13 @@ function checkAliasCollisions(): DoctorFinding[] {
 
   const aliases = new Map<string, string[]>();
   for (const [name, p] of Object.entries(store.profiles ?? {})) {
-    const profile = p as { alias?: unknown };
-    if (typeof profile?.alias === "string" && profile.alias) {
-      const owners = aliases.get(profile.alias) ?? [];
-      owners.push(name);
-      aliases.set(profile.alias, owners);
+    const profile = p as { aliases?: Array<{ name: string }> };
+    for (const alias of profile?.aliases ?? []) {
+      if (typeof alias.name === "string" && alias.name) {
+        const owners = aliases.get(alias.name) ?? [];
+        owners.push(name);
+        aliases.set(alias.name, owners);
+      }
     }
   }
 
