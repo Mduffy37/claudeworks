@@ -5,6 +5,7 @@ import type {
   StandaloneMcp,
   StatusLineConfig,
   ProfileAlias,
+  ProfileWorkflow,
 } from "../../../src/electron/types";
 
 type TabId = "plugins" | "skills" | "agents" | "commands" | "mcp" | "local" | "instructions" | "settings";
@@ -40,6 +41,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [voiceEnabled, setVoiceEnabled] = useState<boolean | undefined>(undefined);
   const [customClaudeMd, setCustomClaudeMd] = useState("");
   const [workflow, setWorkflow] = useState("");
+  const [workflows, setWorkflows] = useState<ProfileWorkflow[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -103,6 +105,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
         voiceEnabled,
         customClaudeMd: customClaudeMd || undefined,
         workflow: workflow.trim() ? workflow : undefined,
+        workflows: workflows.length > 0 ? workflows : undefined,
         disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
         launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
         customFlags: customFlags.trim() || undefined,
@@ -119,7 +122,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, aliases, disableDefaultAlias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, aliases, disableDefaultAlias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, workflows, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -140,6 +143,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setVoiceEnabled(profile.voiceEnabled);
       setCustomClaudeMd(profile.customClaudeMd ?? "");
       setWorkflow(profile.workflow ?? "");
+      setWorkflows(profile.workflows ?? []);
       setDisabledMcpServers(profile.disabledMcpServers ?? {});
       setLaunchFlags(profile.launchFlags ?? {});
       setCustomFlags(profile.customFlags ?? "");
@@ -184,6 +188,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setVoiceEnabled(undefined);
       setCustomClaudeMd("");
       setWorkflow("");
+      setWorkflows([]);
       setDisabledMcpServers({});
       setLaunchFlags({});
       setCustomFlags("");
@@ -275,6 +280,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
     workflow, setWorkflow,
+    workflows, setWorkflows,
     activeTab, setActiveTab,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,

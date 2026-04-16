@@ -468,6 +468,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     voiceEnabled, setVoiceEnabled,
     customClaudeMd, setCustomClaudeMd,
     workflow, setWorkflow,
+    workflows, setWorkflows,
     activeTab, setActiveTab,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,
@@ -1156,6 +1157,90 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 <div className="pe-instructions-stats">
                   {workflow.length.toLocaleString()} chars · {workflow ? workflow.split("\n").length : 0} lines
                 </div>
+              </section>
+
+              {/* Workflow variants — named /workflow-{name} commands */}
+              <section className="pe-instructions-section variants">
+                <div className="pe-editor-toolbar">
+                  <div className="pe-instructions-labels">
+                    <span className="pe-instructions-heading">
+                      Workflow Variants
+                    </span>
+                    <span className="pe-instructions-hint">
+                      Named variants become <code>/workflow-name</code> commands. Optionally scope to a specific project directory.
+                    </span>
+                  </div>
+                </div>
+
+                {workflows.map((variant, idx) => (
+                  <div key={idx} className="workflow-variant-card">
+                    <div className="workflow-variant-header">
+                      <div className="workflow-variant-name-row">
+                        <span className="workflow-variant-prefix">workflow-</span>
+                        <input
+                          type="text"
+                          className="workflow-variant-name-input"
+                          value={variant.name}
+                          onChange={(e) => {
+                            const next = [...workflows];
+                            next[idx] = { ...next[idx], name: e.target.value.replace(/[^a-z0-9-]/g, "") };
+                            setWorkflows(next);
+                            markDirty();
+                          }}
+                          placeholder="name"
+                        />
+                      </div>
+                      <select
+                        className="workflow-variant-dir-select"
+                        value={variant.directory ?? ""}
+                        onChange={(e) => {
+                          const next = [...workflows];
+                          next[idx] = { ...next[idx], directory: e.target.value || undefined };
+                          setWorkflows(next);
+                          markDirty();
+                        }}
+                      >
+                        <option value="">All directories</option>
+                        {directories.map(d => (
+                          <option key={d} value={d}>{d.split("/").pop() || d}</option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn-danger-ghost"
+                        style={{ fontSize: "0.769rem", padding: "2px 6px" }}
+                        onClick={() => {
+                          setWorkflows(workflows.filter((_, i) => i !== idx));
+                          markDirty();
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <textarea
+                      className="pe-instructions-editor"
+                      value={variant.body}
+                      onChange={(e) => {
+                        const next = [...workflows];
+                        next[idx] = { ...next[idx], body: e.target.value };
+                        setWorkflows(next);
+                        markDirty();
+                      }}
+                      placeholder={`Describe the ${variant.name || "variant"} workflow...`}
+                      style={{ minHeight: "100px" }}
+                    />
+                  </div>
+                ))}
+
+                <button
+                  className="btn-secondary"
+                  style={{ marginTop: "4px" }}
+                  onClick={() => {
+                    setWorkflows([...workflows, { name: "", body: "" }]);
+                    markDirty();
+                  }}
+                >
+                  + Add Variant
+                </button>
               </section>
             </div>
           )}
