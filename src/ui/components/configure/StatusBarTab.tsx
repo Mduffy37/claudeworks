@@ -313,66 +313,10 @@ export function StatusBarTab() {
         </p>
       </header>
 
+      <StatusBarPreview config={config} />
+
       <div className="status-bar-split">
         <div className="status-bar-list-column">
-          <section className="status-bar-global-options status-bar-section">
-            <h3 className="status-bar-section-label">Global</h3>
-            <ul className="status-bar-widget-list">
-              <li className="status-bar-widget-row">
-                <div className="status-bar-separator-row">
-                  <span className="status-bar-widget-name" id="sb-master-color-label">Master color</span>
-                  <input
-                    type="color"
-                    value={masterColor}
-                    onChange={(e) => changeMasterColor(e.target.value)}
-                    className="status-bar-color-input"
-                    aria-labelledby="sb-master-color-label"
-                  />
-                </div>
-              </li>
-              <li className="status-bar-widget-row">
-                <div className="status-bar-separator-row">
-                  <span className="status-bar-widget-name">Field separator</span>
-                  <input
-                    type="text"
-                    value={fieldSep}
-                    maxLength={3}
-                    onChange={(e) => changeSeparator("field", e.target.value)}
-                    className="status-bar-separator-input"
-                    aria-label="Field separator glyph"
-                  />
-                  <input
-                    type="color"
-                    value={fieldSepColor}
-                    onChange={(e) => changeSeparatorColor("fieldColor", e.target.value)}
-                    className="status-bar-color-input"
-                    aria-label="Field separator color"
-                  />
-                </div>
-              </li>
-              <li className="status-bar-widget-row">
-                <div className="status-bar-separator-row">
-                  <span className="status-bar-widget-name">Section separator</span>
-                  <input
-                    type="text"
-                    value={sectionSep}
-                    maxLength={3}
-                    onChange={(e) => changeSeparator("section", e.target.value)}
-                    className="status-bar-separator-input"
-                    aria-label="Section separator glyph"
-                  />
-                  <input
-                    type="color"
-                    value={sectionSepColor}
-                    onChange={(e) => changeSeparatorColor("sectionColor", e.target.value)}
-                    className="status-bar-color-input"
-                    aria-label="Section separator color"
-                  />
-                </div>
-              </li>
-            </ul>
-          </section>
-
           <section className="status-bar-section">
             <h3 className="status-bar-section-label">Configured widgets</h3>
             <DndContext
@@ -430,7 +374,57 @@ export function StatusBarTab() {
         </div>
 
         <div className="status-bar-editor-column">
-          <StatusBarPreview config={config} />
+          <section className="status-bar-global-strip">
+            <h3 className="status-bar-section-label">Global</h3>
+            <div className="status-bar-global-row">
+              <div className="status-bar-global-field">
+                <span className="status-bar-global-field-label" id="sb-master-color-label">Master color</span>
+                <input
+                  type="color"
+                  value={masterColor}
+                  onChange={(e) => changeMasterColor(e.target.value)}
+                  className="status-bar-color-input"
+                  aria-labelledby="sb-master-color-label"
+                />
+              </div>
+              <div className="status-bar-global-field">
+                <span className="status-bar-global-field-label">Field separator</span>
+                <input
+                  type="text"
+                  value={fieldSep}
+                  maxLength={3}
+                  onChange={(e) => changeSeparator("field", e.target.value)}
+                  className="status-bar-separator-input"
+                  aria-label="Field separator glyph"
+                />
+                <input
+                  type="color"
+                  value={fieldSepColor}
+                  onChange={(e) => changeSeparatorColor("fieldColor", e.target.value)}
+                  className="status-bar-color-input"
+                  aria-label="Field separator color"
+                />
+              </div>
+              <div className="status-bar-global-field">
+                <span className="status-bar-global-field-label">Section separator</span>
+                <input
+                  type="text"
+                  value={sectionSep}
+                  maxLength={3}
+                  onChange={(e) => changeSeparator("section", e.target.value)}
+                  className="status-bar-separator-input"
+                  aria-label="Section separator glyph"
+                />
+                <input
+                  type="color"
+                  value={sectionSepColor}
+                  onChange={(e) => changeSeparatorColor("sectionColor", e.target.value)}
+                  className="status-bar-color-input"
+                  aria-label="Section separator color"
+                />
+              </div>
+            </div>
+          </section>
 
           <section className="status-bar-inspector">
             <h3 className="status-bar-inspector-label">Inspector</h3>
@@ -454,44 +448,45 @@ export function StatusBarTab() {
             )}
           </section>
 
-          <footer className="status-bar-tab-footer">
-            <div className="status-bar-footer-left">
-              <button
-                className="btn-secondary"
-                disabled={saving}
-                onClick={() => setConfirmClear(true)}
-              >
-                Clear all
-              </button>
-              <div className="status-bar-preset-wrap" ref={presetMenuRef}>
-                <button
-                  className="btn-secondary"
-                  disabled={saving}
-                  onClick={() => setPresetMenuOpen((prev) => !prev)}
-                >
-                  Load preset ▾
-                </button>
-                {presetMenuOpen && (
-                  <div className="status-bar-preset-menu">
-                    {Object.entries(PRESETS).map(([key, { label }]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => loadPreset(key as keyof typeof PRESETS)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
-              {saving ? "Saving…" : dirty ? "Save" : "Saved"}
-            </button>
-          </footer>
         </div>
       </div>
+
+      <footer className="status-bar-tab-footer">
+        <div className="status-bar-footer-left">
+          <button
+            className="btn-secondary"
+            disabled={saving}
+            onClick={() => setConfirmClear(true)}
+          >
+            Clear all
+          </button>
+          <div className="status-bar-preset-wrap" ref={presetMenuRef}>
+            <button
+              className="btn-secondary"
+              disabled={saving}
+              onClick={() => setPresetMenuOpen((prev) => !prev)}
+            >
+              Load preset ▾
+            </button>
+            {presetMenuOpen && (
+              <div className="status-bar-preset-menu">
+                {Object.entries(PRESETS).map(([key, { label }]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => loadPreset(key as keyof typeof PRESETS)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
+          {saving ? "Saving…" : dirty ? "Save" : "Saved"}
+        </button>
+      </footer>
 
       {confirmClear && (
         <ConfirmDialog
