@@ -55,6 +55,21 @@ export interface PluginSource {
   metadata?: Record<string, any>;
 }
 
+export interface KnownEnvVar {
+  name: string;
+  description: string;
+  values: string[] | null;
+  scope: "global" | "project" | "both";
+  requiredFor?: string;
+}
+
+export interface ResolvedPlugin {
+  id: string;
+  source: "marketplace" | "local" | "skill-lock" | "git" | "builtin" | "framework";
+  path: string;
+  label?: string;
+}
+
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
@@ -474,6 +489,10 @@ export interface ElectronAPI {
   setStatusLineConfig: (config: StatusLineConfig) => Promise<void>;
   resetStatusLineConfig: () => Promise<StatusLineConfig>;
   renderStatusLinePreview: (config: StatusLineConfig, mockSession?: Record<string, unknown>) => Promise<string>;
+  // Plugin resolver
+  resolvePlugins: (ids: string[]) => Promise<Array<{ id: string; resolved: ResolvedPlugin | null }>>;
+  // Known env vars
+  getKnownEnvVars: () => Promise<KnownEnvVar[]>;
 }
 
 export interface ActiveSession {
