@@ -45,6 +45,8 @@ import {
   saveProfile,
   renameProfile,
   deleteProfileByName,
+  exportProfileToJson,
+  importProfileFromJson,
   updatePlugin,
   uninstallPlugin,
   checkPluginUpdates,
@@ -200,6 +202,28 @@ ipcMain.handle("rename-profile", async (_event, oldName: string, profile: Profil
 
 ipcMain.handle("delete-profile", async (_event, name: string) => {
   await deleteProfileByName(name);
+});
+
+ipcMain.handle("export-profile", async (_event, name: string) => {
+  const data = exportProfileToJson(name);
+  const { filePath, canceled } = await dialog.showSaveDialog({
+    defaultPath: `${name}.claude-profile.json`,
+    filters: [{ name: "Claude Profile", extensions: ["json"] }],
+  });
+  if (canceled || !filePath) return { ok: false, cancelled: true };
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+  return { ok: true, path: filePath };
+});
+
+ipcMain.handle("import-profile", async () => {
+  const { filePaths, canceled } = await dialog.showOpenDialog({
+    filters: [{ name: "Claude Profile", extensions: ["json"] }],
+    properties: ["openFile"],
+  });
+  if (canceled || !filePaths?.length) return { ok: false, cancelled: true };
+  const raw = JSON.parse(fs.readFileSync(filePaths[0], "utf-8"));
+  const result = importProfileFromJson(raw);
+  return { ok: true, profile: result.profile, missingPlugins: result.missingPlugins };
 });
 
 ipcMain.handle("duplicate-profile", async (_event, name: string) => {

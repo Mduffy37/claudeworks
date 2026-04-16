@@ -420,6 +420,8 @@ export interface ElectronAPI {
   updateProfile: (profile: Profile) => Promise<Profile>;
   renameProfile: (oldName: string, profile: Profile) => Promise<Profile>;
   deleteProfile: (name: string) => Promise<void>;
+  exportProfile: (name: string) => Promise<{ ok: boolean; path?: string; cancelled?: boolean }>;
+  importProfile: () => Promise<{ ok: boolean; profile?: Profile; missingPlugins?: string[]; cancelled?: boolean }>;
   duplicateProfile: (name: string) => Promise<Profile>;
   launchProfile: (name: string, directory?: string) => Promise<void>;
   checkProfileHealth: () => Promise<Record<string, string[]>>;

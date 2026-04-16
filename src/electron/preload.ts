@@ -10,6 +10,8 @@ const api: ElectronAPI = {
   updateProfile: (profile) => ipcRenderer.invoke("update-profile", profile),
   renameProfile: (oldName, profile) => ipcRenderer.invoke("rename-profile", oldName, profile),
   deleteProfile: (name) => ipcRenderer.invoke("delete-profile", name),
+  exportProfile: (name) => ipcRenderer.invoke("export-profile", name),
+  importProfile: () => ipcRenderer.invoke("import-profile"),
   duplicateProfile: (name) => ipcRenderer.invoke("duplicate-profile", name),
   launchProfile: (name, directory) =>
     ipcRenderer.invoke("launch-profile", name, directory),

@@ -25,6 +25,7 @@ interface ProfileTopBarProps {
   onSetLaunchDir: (dir: string) => void;
   onSetConfirmDelete: (v: boolean) => void;
   onDuplicate?: (name: string) => void;
+  onExport?: (name: string) => void;
   onSetOverviewOpen: (v: boolean) => void;
   onSave: () => void;
   onLaunch: () => void;
@@ -49,6 +50,7 @@ export function ProfileTopBar({
   onSetLaunchDir,
   onSetConfirmDelete,
   onDuplicate,
+  onExport,
   onSetOverviewOpen,
   onSave,
   onLaunch,
@@ -66,6 +68,11 @@ export function ProfileTopBar({
       {onDuplicate && (
         <button role="menuitem" type="button" onClick={() => { close(); onDuplicate(profile.name); }}>
           Duplicate
+        </button>
+      )}
+      {onExport && (
+        <button role="menuitem" type="button" onClick={() => { close(); onExport(profile.name); }}>
+          Export
         </button>
       )}
       <button role="menuitem" type="button" onClick={() => { close(); onSetOverviewOpen(true); }}>
@@ -104,6 +111,16 @@ export function ProfileTopBar({
         showTmux: false,
       }}
       overflowMenu={overflowMenu}
+      onImport={isNew ? async () => {
+        const result = await window.api.importProfile();
+        if (result.ok && result.profile) {
+          if (result.missingPlugins && result.missingPlugins.length > 0) {
+            alert(`Profile imported as "${result.profile.name}".\n\n${result.missingPlugins.length} plugin(s) need installing:\n${result.missingPlugins.join("\n")}\n\nInstall them from Configure Claude > Plugins > Browse.`);
+          }
+          // Reload will be handled by the parent refreshing
+          window.location.reload();
+        }
+      } : undefined}
     />
   );
 }

@@ -307,6 +307,88 @@ export async function deleteProfileByName(name: string): Promise<void> {
 
 
 // ---------------------------------------------------------------------------
+// Profile export / import
+// ---------------------------------------------------------------------------
+
+/**
+ * Export a profile as a standalone JSON object. The export contains the full
+ * profile entry from profiles.json plus metadata (app version, export date,
+ * list of required plugins). Plugin files are NOT included — on import, the
+ * app checks which plugins are installed and reports missing ones so the user
+ * can install them from the marketplace.
+ */
+export function exportProfileToJson(profileName: string): Record<string, any> {
+  const profile = loadProfiles().find((p) => p.name === profileName);
+  if (!profile) throw new Error(`Profile "${profileName}" not found`);
+
+  let appVersion = "unknown";
+  try { appVersion = require(path.join(__dirname, "..", "..", "package.json")).version; } catch {}
+
+  return {
+    version: 1,
+    type: "claude-profiles-export",
+    exportedAt: new Date().toISOString(),
+    appVersion,
+    profile: {
+      ...profile,
+      // Strip runtime-only fields that don't transfer
+      lastLaunched: undefined,
+      isDefault: undefined,
+    },
+    requiredPlugins: profile.plugins.filter((p) => !p.startsWith("local:")),
+  };
+}
+
+/**
+ * Import a profile from an exported JSON object. Handles name collisions
+ * by appending "-imported". Returns the saved profile and a list of plugins
+ * that need to be installed for the profile to work.
+ */
+export function importProfileFromJson(
+  data: Record<string, any>,
+): { profile: Profile; missingPlugins: string[] } {
+  if (data.type !== "claude-profiles-export" || !data.profile) {
+    throw new Error("Invalid profile export file — missing 'type' or 'profile' field");
+  }
+
+  const imported = { ...data.profile } as Profile;
+
+  // Handle name collisions
+  const existing = loadProfiles();
+  const existingNames = new Set(existing.map((p) => p.name));
+  if (existingNames.has(imported.name)) {
+    let candidate = `${imported.name}-imported`;
+    let attempt = 2;
+    while (existingNames.has(candidate)) {
+      candidate = `${imported.name}-imported-${attempt}`;
+      attempt++;
+    }
+    imported.name = candidate;
+  }
+
+  // Clear runtime fields
+  imported.lastLaunched = undefined;
+  imported.isDefault = undefined;
+  imported.aliases = undefined;
+
+  // Save and assemble
+  const saved = saveProfile(imported);
+  assembleProfile(saved);
+
+  // Check for missing plugins
+  const { scanInstalledPlugins, scanUserLocalPlugins } = require("./plugins");
+  const installedNames = new Set([
+    ...scanInstalledPlugins().map((p: any) => p.name),
+    ...scanUserLocalPlugins().map((p: any) => p.name),
+  ]);
+  const missingPlugins = saved.plugins.filter(
+    (p) => !installedNames.has(p) && !p.startsWith("local:"),
+  );
+
+  return { profile: saved, missingPlugins };
+}
+
+// ---------------------------------------------------------------------------
 // Plugin operations
 // ---------------------------------------------------------------------------
 

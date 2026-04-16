@@ -7509,7 +7509,9 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 
-.btn-launch-group .btn-launch {
+/* Only flatten the right radius when the settings dropdown is present —
+   when isNew there's no dropdown so the button should be fully rounded. */
+.btn-launch-group .btn-launch:has(+ .btn-launch-settings) {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }

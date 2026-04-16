@@ -60,6 +60,7 @@ interface EditorTopBarProps {
     showTmux?: boolean;
   };
   overflowMenu?: (close: () => void) => ReactNode;
+  onImport?: () => void;
 }
 
 export function EditorTopBar({
@@ -84,6 +85,7 @@ export function EditorTopBar({
   onLaunchWithOptions,
   launchPopoverProps,
   overflowMenu,
+  onImport,
 }: EditorTopBarProps) {
   const [showOverflow, setShowOverflow] = useState(false);
   const [showLaunchOptions, setShowLaunchOptions] = useState(false);
@@ -198,10 +200,20 @@ export function EditorTopBar({
             </>
           )}
           <div className="btn-launch-group">
+            {isNew && onImport && (
+              <button
+                className="btn-secondary"
+                onClick={onImport}
+                style={{ marginRight: "6px", whiteSpace: "nowrap" }}
+              >
+                Import
+              </button>
+            )}
             <button
               className={`btn-launch${launching ? " launching" : ""}${dirty && !saving ? " btn-launch-dirty" : ""}`}
               disabled={!name.trim() || saving || launching}
               onClick={isNew || dirty ? onSave : onLaunch}
+              style={isNew ? { whiteSpace: "nowrap" } : undefined}
             >
               {saving ? "Saving\u2026"
                 : launching ? "Launching\u2026"

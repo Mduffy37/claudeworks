@@ -765,6 +765,9 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         onSetLaunchDir={setLaunchDir}
         onSetConfirmDelete={setConfirmDelete}
         onDuplicate={onDuplicate}
+        onExport={profile ? async (name) => {
+          await window.api.exportProfile(name);
+        } : undefined}
         onSetOverviewOpen={setOverviewOpen}
         onSave={handleSave}
         onLaunch={handleLaunch}
