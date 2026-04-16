@@ -139,7 +139,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
                 <input
                   type="range"
                   min={0.85}
-                  max={1.2}
+                  max={1.4}
                   step={0.05}
                   value={scale}
                   onChange={(e) => handleScaleChange(Number(e.target.value))}
@@ -151,11 +151,13 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
                   <option value="0.85" label="85%" />
                   <option value="1" label="100%" />
                   <option value="1.2" label="120%" />
+                  <option value="1.4" label="140%" />
                 </datalist>
                 <div className="text-size-tickrow" aria-hidden="true">
                   <span style={{ left: "0%" }}>85%</span>
-                  <span style={{ left: `${((1 - 0.85) / (1.2 - 0.85)) * 100}%` }}>100%</span>
-                  <span style={{ left: "100%" }}>120%</span>
+                  <span style={{ left: `${((1 - 0.85) / (1.4 - 0.85)) * 100}%` }}>100%</span>
+                  <span style={{ left: `${((1.2 - 0.85) / (1.4 - 0.85)) * 100}%` }}>120%</span>
+                  <span style={{ left: "100%" }}>140%</span>
                 </div>
               </div>
               <span className="text-size-label-lg" aria-hidden="true">A</span>
