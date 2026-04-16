@@ -5535,8 +5535,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .marketplace-item-meta {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  gap: 4px 10px;
   flex-wrap: wrap;
   margin-top: 2px;
 }
@@ -5548,13 +5548,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .marketplace-item-synced {
-  font-size: 0.769rem;
+  font-size: 0.692rem;
   color: var(--text-muted);
   opacity: 0.75;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  margin-left: auto;
-  text-align: right;
   white-space: nowrap;
 }
 
