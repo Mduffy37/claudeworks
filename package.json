@@ -2,7 +2,7 @@
   "name": "claude-profiles",
   "version": "0.1.0",
   "description": "Desktop app for managing Claude Code profiles",
-  "author": "Matthew Duffy",
+  "author": "Mduffy37",
   "license": "MIT",
   "main": "dist/electron/main.js",
   "scripts": {
