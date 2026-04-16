@@ -26,7 +26,6 @@ import type {
   LaunchOptions,
   StatusLineConfig,
   StatusLineWidget,
-  KnownEnvVar,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -2025,6 +2024,24 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
       addAncestors(rel);
     }
 
+    // Container-pattern fix: some plugins declare "skills": "./" (the plugin
+    // root is a container of skill subdirectories) but ALSO ship a root-level
+    // SKILL.md (an aggregation/summary skill). Claude Code's scanner sees the
+    // root SKILL.md and treats the whole plugin as a single skill instead of
+    // descending into subdirectories. Exclude the root SKILL.md from the
+    // overlay so Claude Code falls through to subdirectory scanning.
+    const pluginManifest = readPluginManifest(resolvedInstallPath);
+    if (pluginManifest) {
+      const skillsDecl = normaliseManifestPaths(pluginManifest.skills);
+      if (skillsDecl && skillsDecl.some((s: string) => s === "./" || s === ".")) {
+        const rootSkillMd = path.join(resolvedInstallPath, "SKILL.md");
+        if (fs.existsSync(rootSkillMd)) {
+          const rootSkillRel = versionRel ? path.join(versionRel, "SKILL.md") : "SKILL.md";
+          excludedPaths.add(rootSkillRel);
+        }
+      }
+    }
+
     // Always force-materialise the version dir + .claude-plugin so we can
     // shadow marketplace.json with a patched copy. Mark the file itself as
     // excluded (the overlay walker won't symlink it) and write it manually
@@ -2123,19 +2140,6 @@ function copyDirRecursive(src: string, dest: string): void {
 const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
 const BUILTIN_PLUGIN_VERSION = "1.0.0";
 
-const KNOWN_ENV_VARS: KnownEnvVar[] = [
-  {
-    name: "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
-    description: "Enable native agentic team mode (tmux-based multi-agent)",
-    values: ["0", "1"],
-    scope: "both",
-    requiredFor: "teams",
-  },
-];
-
-export function getKnownEnvVars(): KnownEnvVar[] {
-  return KNOWN_ENV_VARS;
-}
 
 export function ensureBuiltinPlugin(): string {
   // Install the built-in profiles-manager plugin so it appears as a normal

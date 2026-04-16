@@ -69,9 +69,9 @@ import {
   setStatusLineConfig,
   resetStatusLineConfig,
   renderStatusLinePreview,
-  getKnownEnvVars,
 } from "./core";
 import { runProfilesDoctor } from "./doctor";
+import { getKnownEnvVars } from "./known-env-vars";
 import { resolvePlugins } from "./plugin-resolver";
 import type { Profile, Team } from "./types";
 
