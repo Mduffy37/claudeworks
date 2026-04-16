@@ -372,6 +372,16 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     setEditingDirty(false);
   };
 
+  const handleDeleteEditingItem = async () => {
+    if (!editingItem) return;
+    if (editingItem.type === "skill") {
+      await window.api.deleteProjectFile(editingItem.directory, `.claude/skills/${editingItem.name}`);
+    } else {
+      await window.api.deleteProjectFile(editingItem.directory, editingItem.relativePath);
+    }
+    handleCloseEditor();
+  };
+
   const handleCloseEditor = () => {
     setEditingItem(null);
     setEditingContent("");
@@ -936,6 +946,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       {editingDirty && (
                         <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEditingItem}>Save</button>
                       )}
+                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDeleteEditingItem}>Delete</button>
                       <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleCloseEditor}>Close</button>
                     </div>
                   </div>
@@ -1066,7 +1077,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     </button>
                     <button className="open-in-editor-btn" onClick={async () => {
                       const configDir = await window.api.getProfileConfigDir(name);
-                      window.api.openInFinder(`${configDir}/CLAUDE.md`);
+                      const filePath = `${configDir}/CLAUDE.md`;
+                      // Ensure file exists with current content before opening
+                      await window.api.writeProjectFile(configDir, "CLAUDE.md", customClaudeMd || "");
+                      window.api.openInFinder(filePath);
                     }} title="Open in default editor">Open in Editor ↗</button>
                     {customClaudeMd.trim() && (
                       <button className="insert-prompt-btn" onClick={async () => {
@@ -1112,7 +1126,11 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     </button>
                     <button className="open-in-editor-btn" onClick={async () => {
                       const configDir = await window.api.getProfileConfigDir(name);
-                      window.api.openInFinder(`${configDir}/commands/workflow.md`);
+                      const filePath = `${configDir}/commands/workflow.md`;
+                      // Ensure file + directory exist with current content before opening
+                      const frontmatter = `---\ndescription: Run this profile's predefined workflow\n---\n\n`;
+                      await window.api.writeProjectFile(configDir, "commands/workflow.md", workflow ? frontmatter + workflow : "");
+                      window.api.openInFinder(filePath);
                     }} title="Open in default editor">Open in Editor ↗</button>
                     {workflow.trim() && (
                       <button className="insert-prompt-btn" onClick={async () => {
