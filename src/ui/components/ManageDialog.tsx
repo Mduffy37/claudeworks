@@ -333,9 +333,16 @@ function ProjectsTab() {
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [projEnvNewKey, setProjEnvNewKey] = useState("");
   const [projEnvNewVal, setProjEnvNewVal] = useState("");
+  const [globalEnvForProject, setGlobalEnvForProject] = useState<Record<string, string>>({});
+  const [knownVars, setKnownVars] = useState<Array<{ name: string; description: string; values: string[] | null }>>([]);
+  const [projEnvSuggestions, setProjEnvSuggestions] = useState<Array<{ name: string; description: string }>>([]);
+  const [showProjEnvSuggestions, setShowProjEnvSuggestions] = useState(false);
+  const [showProjEnvValueSuggestions, setShowProjEnvValueSuggestions] = useState(false);
 
   useEffect(() => {
     window.api.getImportedProjects().then(setProjects);
+    window.api.getGlobalEnv().then(setGlobalEnvForProject);
+    window.api.getKnownEnvVars().then(setKnownVars);
   }, []);
 
   const refreshProjectData = () => {
@@ -413,6 +420,32 @@ function ProjectsTab() {
   };
 
   const projEnvEntries = Object.entries(projSettings.env ?? {});
+  const inheritedEnv = Object.entries(globalEnvForProject).filter(([key]) => !(key in (projSettings.env ?? {})));
+
+  const knownValuesForProjEnvKey = knownVars.find((v) => v.name === projEnvNewKey)?.values ?? null;
+
+  const handleProjEnvNewKeyChange = (value: string) => {
+    const cleaned = value.replace(/\s/g, "");
+    setProjEnvNewKey(cleaned);
+    if (cleaned.length > 0) {
+      const filtered = knownVars.filter(
+        (v) => v.name.toLowerCase().includes(cleaned.toLowerCase()) && !(v.name in (projSettings.env ?? {})),
+      );
+      setProjEnvSuggestions(filtered);
+      setShowProjEnvSuggestions(filtered.length > 0);
+    } else {
+      setShowProjEnvSuggestions(false);
+    }
+  };
+
+  const handleAddProjEnv = () => {
+    const key = projEnvNewKey.trim();
+    if (!key) return;
+    setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: projEnvNewVal } }));
+    setProjEnvNewKey("");
+    setProjEnvNewVal("");
+    setSettingsDirty(true);
+  };
 
   return (
     <div className="manage-dialog-split">
@@ -655,19 +688,95 @@ function ProjectsTab() {
               </div>
               <div className="modal-fields" style={{ marginTop: "8px" }}>
                 <div className="manage-section-label" style={{ padding: 0, margin: 0 }}>Environment Variables</div>
+                <div className="field-hint" style={{ marginBottom: "2px" }}>Project-level env vars override global settings for sessions launched in this directory.</div>
+                {inheritedEnv.length > 0 && (
+                  <>
+                    <div className="field-hint" style={{ marginBottom: "2px" }}>Inherited from global settings</div>
+                    {inheritedEnv.map(([key, value]) => (
+                      <div className="env-var-row" key={`global-${key}`}>
+                        <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
+                        <input type="text" value={value} disabled aria-label={`${key} value`} />
+                        <span className="field-managed-label">Global</span>
+                        <button className="btn-secondary" style={{ fontSize: "0.769rem", padding: "2px 8px" }}
+                          onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: value } })); setSettingsDirty(true); }}
+                        >Override</button>
+                      </div>
+                    ))}
+                    <div className="field-divider" />
+                  </>
+                )}
                 {projEnvEntries.map(([key, value]) => (
                   <div className="env-var-row" key={key}>
-                    <input type="text" value={key} disabled aria-label="Variable name" />
+                    <input
+                      type="text"
+                      value={key}
+                      disabled
+                      aria-label="Variable name"
+                      title={knownVars.find((v) => v.name === key)?.description ?? (globalEnvForProject[key] !== undefined ? `${key} (overriding global)` : key)}
+                      style={globalEnvForProject[key] !== undefined ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
+                    />
                     <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} placeholder="value" aria-label={`${key} value`} />
                     <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>Remove</button>
                   </div>
                 ))}
-                {projEnvEntries.length > 0 && <div className="field-divider" />}
+                {(projEnvEntries.length > 0 || inheritedEnv.length > 0) && <div className="field-divider" />}
                 <div className="env-var-row">
-                  <input type="text" value={projEnvNewKey} onChange={(e) => setProjEnvNewKey(e.target.value.replace(/\s/g, ""))} placeholder="NEW_VAR_NAME" aria-label="New variable name" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
-                  <input type="text" value={projEnvNewVal} onChange={(e) => setProjEnvNewVal(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter" && projEnvNewKey.trim()) { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); } }} />
-                  <button className="btn-secondary" disabled={!projEnvNewKey.trim()} onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [projEnvNewKey.trim()]: projEnvNewVal } })); setProjEnvNewKey(""); setProjEnvNewVal(""); setSettingsDirty(true); }}>Add</button>
+                  <div className="env-input-wrapper">
+                    <input
+                      type="text"
+                      value={projEnvNewKey}
+                      onChange={(e) => handleProjEnvNewKeyChange(e.target.value)}
+                      placeholder="NEW_VAR_NAME"
+                      aria-label="New variable name"
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddProjEnv(); }}
+                      onFocus={() => { if (projEnvNewKey.length > 0 && projEnvSuggestions.length > 0) setShowProjEnvSuggestions(true); }}
+                      onBlur={() => setTimeout(() => setShowProjEnvSuggestions(false), 150)}
+                    />
+                    {showProjEnvSuggestions && (
+                      <div className="env-autocomplete-dropdown">
+                        {projEnvSuggestions.map((s) => (
+                          <button
+                            key={s.name}
+                            className="env-autocomplete-item"
+                            onMouseDown={(e) => { e.preventDefault(); setProjEnvNewKey(s.name); setShowProjEnvSuggestions(false); }}
+                          >
+                            <span className="env-autocomplete-name">{s.name}</span>
+                            <span className="env-autocomplete-desc">{s.description}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="env-input-wrapper">
+                    <input
+                      type="text"
+                      value={projEnvNewVal}
+                      onChange={(e) => setProjEnvNewVal(e.target.value)}
+                      placeholder="value"
+                      aria-label="New variable value"
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddProjEnv(); }}
+                      onFocus={() => { if (knownValuesForProjEnvKey && knownValuesForProjEnvKey.length > 0) setShowProjEnvValueSuggestions(true); }}
+                      onBlur={() => setTimeout(() => setShowProjEnvValueSuggestions(false), 150)}
+                    />
+                    {showProjEnvValueSuggestions && knownValuesForProjEnvKey && knownValuesForProjEnvKey.length > 0 && (
+                      <div className="env-autocomplete-dropdown">
+                        {knownValuesForProjEnvKey.map((v) => (
+                          <button
+                            key={v}
+                            className="env-autocomplete-item"
+                            onMouseDown={(e) => { e.preventDefault(); setProjEnvNewVal(v); setShowProjEnvValueSuggestions(false); }}
+                          >
+                            <span className="env-autocomplete-name">{v}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button className="btn-secondary" onClick={handleAddProjEnv} disabled={!projEnvNewKey.trim()}>Add</button>
                 </div>
+                {projEnvEntries.length === 0 && inheritedEnv.length === 0 && (
+                  <div className="field-hint">No environment variables configured.</div>
+                )}
               </div>
             </div>
           </div>
