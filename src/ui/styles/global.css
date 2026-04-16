@@ -40,7 +40,7 @@
   --error-crimson:  #b53333;
 
   /* Shared warm neutral (works against both surface tones) */
-  --stone-gray:     #87867f;
+  --stone-gray:     #9b9a93;
 
   /* Dark-warm primitives */
   --deep-dark:            #141413;
@@ -52,7 +52,7 @@
      Strong border uses Stone Gray for prominent separators. */
   --dark-border:          #45443f;
   --dark-border-strong:   #5e5d59;
-  --warm-silver:          #b0aea5;
+  --warm-silver:          #bfbdb4;
   --ring-dark:            #5a5954;
   --ring-dark-strong:     #6e6d67;
 
@@ -76,7 +76,7 @@
   --sage:   #788c5d;  /* skill   — Anthropic brand green */
   --walnut: #9a7a5e;  /* agent   — warm umber   (3.58 L / 3.35 D) */
   --brass:  #9a7a2e;  /* command — deep amber   (3.66 L / 3.27 D) */
-  --plum:   #987585;  /* team    — earthy mauve (3.65 L / 3.29 D) */
+  --plum:   #a88494;  /* team    — earthy mauve (3.65 L / 3.29 D) */
 
   /* ══ Semantic aliases — dark defaults ═══════════════════════════════ */
 
@@ -214,6 +214,12 @@
   --ring-strong:    0 0 0 1px var(--ring-deep);
   --shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.05);
   --shadow-inset:   inset 0 0 0 1px rgba(20, 20, 19, 0.15);
+}
+
+/* Dark-mode danger — less harsh red, still clearly destructive */
+:root:not([data-theme="light"]) {
+  --color-danger: #c94a4a;
+  --color-danger-dim: rgba(201, 74, 74, 0.16);
 }
 
 /* ─── Typography utility classes (opt-in handles) ─────────────────────────── */
@@ -5773,7 +5779,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .curated-featured-desc {
   font-size: 0.769rem;
-  color: var(--text-secondary);
+  color: color-mix(in srgb, var(--text-primary) 75%, transparent);
   line-height: 1.4;
   flex: 1;
   display: -webkit-box;
