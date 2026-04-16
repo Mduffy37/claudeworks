@@ -58,6 +58,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [tags, setTags] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
   const handleSave = useCallback(async () => {
@@ -67,7 +68,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     const aliasNames = aliases.filter(a => a.name).map(a => a.name);
     const dupes = aliasNames.filter((n, i) => aliasNames.indexOf(n) !== i);
     if (dupes.length > 0) {
-      return; // silently block — the UI already shows duplicate warnings
+      setSaveError(`Cannot save: duplicate alias name "${dupes[0]}". Each alias must have a unique name.`);
+      return;
     }
 
     // Block save if any alias conflicts with another profile's alias
@@ -76,7 +78,8 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       try {
         const conflict = await window.api.checkAliasConflict(alias.name, name.trim());
         if (conflict?.source === "profile") {
-          return; // silently block — the UI shows conflict warnings on blur
+          setSaveError(`Cannot save: alias "${alias.name}" is ${conflict.detail.toLowerCase()}. Rename or remove it first.`);
+          return;
         }
       } catch {}
     }
@@ -289,6 +292,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     tags, setTags,
     projects, setProjects,
     saving,
+    saveError, setSaveError,
     saveStatus,
     // Callbacks
     handleSave,

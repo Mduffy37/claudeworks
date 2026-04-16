@@ -485,6 +485,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     tags, setTags,
     projects, setProjects,
     saving,
+    saveError, setSaveError,
     saveStatus,
     handleSave,
     handleToggleMcp,
@@ -1243,6 +1244,18 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
             removeOneMissingPlugin(pid);
           }}
           onCancel={() => setMissingNotFoundPluginId(null)}
+        />
+      )}
+
+      {/* Save error dialog (alias conflicts, etc.) */}
+      {saveError && (
+        <ConfirmDialog
+          title="Cannot Save"
+          description={saveError}
+          confirmLabel="OK"
+          confirmVariant="primary"
+          onConfirm={() => setSaveError(null)}
+          onCancel={() => setSaveError(null)}
         />
       )}
 
