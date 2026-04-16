@@ -36,6 +36,7 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
   const [running, setRunning] = useState<"detect" | "repair" | null>("detect");
   const [error, setError] = useState<string | null>(null);
   const [repaired, setRepaired] = useState(false);
+  const [exportPath, setExportPath] = useState<string | null>(null);
 
   // Auto-run detect on mount.
   useEffect(() => {
@@ -193,6 +194,23 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
             </>
           ) : (
             <>
+              <button
+                className="btn-secondary"
+                onClick={async () => {
+                  const result = await window.api.exportDiagnostics();
+                  if (result.ok && result.path) {
+                    setExportPath(result.path.split("/").pop() ?? result.path);
+                  }
+                }}
+                disabled={running !== null}
+                title="Export a diagnostic snapshot as JSON for attaching to a bug report"
+              >
+                Export diagnostics
+              </button>
+              {exportPath && (
+                <span className="doctor-export-label">Saved: {exportPath}</span>
+              )}
+              <span style={{ flex: 1 }} />
               <button className="btn-secondary" onClick={onClose} disabled={running !== null}>
                 Close
               </button>

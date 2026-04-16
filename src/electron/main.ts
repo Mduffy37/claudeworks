@@ -409,6 +409,17 @@ ipcMain.handle("import-prompt", async () => {
 ipcMain.handle("check-credential-status", () => checkCredentialStatus());
 ipcMain.handle("run-diagnostics", () => runDiagnostics());
 ipcMain.handle("run-profiles-doctor", (_e, mode: "detect" | "repair") => runProfilesDoctor(mode));
+ipcMain.handle("export-diagnostics", async () => {
+  const { exportDiagnostics } = require("./core");
+  const data = await exportDiagnostics();
+  const { filePath, canceled } = await dialog.showSaveDialog({
+    defaultPath: `claude-profiles-diagnostics-${Date.now()}.json`,
+    filters: [{ name: "JSON", extensions: ["json"] }],
+  });
+  if (canceled || !filePath) return { ok: false, cancelled: true };
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+  return { ok: true, path: filePath };
+});
 ipcMain.handle("get-app-preferences", () => {
   try {
     const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude-profiles", "global-defaults.json"), "utf-8"));

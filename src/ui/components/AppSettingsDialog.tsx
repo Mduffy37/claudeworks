@@ -169,8 +169,8 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
             <div className="manage-section-header">
               <span className="manage-section-label">Diagnostics</span>
               <div style={{ display: "flex", gap: "6px" }}>
-                <button className="btn-warning" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onOpenDoctor} title="Open Profiles Doctor — detailed checks with repair actions">
-                  Run Repair
+                <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onOpenDoctor} title="Open Profiles Doctor — diagnostics, repair actions, and export for bug reports">
+                  Profiles Doctor
                 </button>
                 <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleRunDiagnostics} disabled={diagLoading}>
                   {diagLoading ? "Running..." : "Run Check"}

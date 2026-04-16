@@ -3111,6 +3111,205 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 }
 
 // ---------------------------------------------------------------------------
+// Diagnostics export
+// ---------------------------------------------------------------------------
+
+/**
+ * Gather a diagnostic snapshot of the app state for bug report attachments.
+ * Returns a plain JSON-serialisable object — no secrets, no env var values,
+ * no customClaudeMd / workflow / tools content. Safe to attach to a GitHub
+ * issue as a .json file.
+ */
+export async function exportDiagnostics(): Promise<Record<string, any>> {
+  const profiles = loadProfiles();
+  const teams = loadTeams();
+  const plugins = getPluginsWithItems();
+  const health = checkAllProfileHealth(profiles);
+  const mcpServers = scanMcpServers();
+  const launches = getLaunchLog();
+  const globalDefaults = getGlobalDefaults();
+  const marketplaces = listMarketplaces();
+  const activeSessions = getActiveSessions();
+  const globalHooks = getGlobalHooks();
+
+  // GitHub backend — async
+  let ghBackend: any = null;
+  try { ghBackend = await getGitHubBackendState(); } catch {}
+
+  // Credential status — async, can fail on keychain issues
+  let credStatus: any = null;
+  try { credStatus = await checkCredentialStatus(); } catch {}
+
+  // Doctor findings — run detect mode for comprehensive checks
+  let doctorFindings: any = null;
+  try {
+    const { runProfilesDoctor } = require("./doctor");
+    const report = runProfilesDoctor("detect");
+    doctorFindings = {
+      summary: report.summary,
+      issues: report.findings
+        .filter((f: any) => f.status !== "healthy")
+        .map((f: any) => ({ check: f.check, status: f.status, title: f.title, severity: f.severity })),
+    };
+  } catch {}
+
+  // Per-profile assembly state — the detail needed to diagnose overlay,
+  // container-pattern, and MCP toggle issues.
+  const profileDetails = profiles.map((p) => {
+    const configDir = path.join(PROFILES_DIR, p.name, "config");
+    const cacheDir = path.join(configDir, "plugins", "cache");
+
+    // Check assembly fingerprint state.
+    const markerPath = path.join(configDir, ".assembly-fingerprint.json");
+    let fingerprint: any = null;
+    try {
+      if (fs.existsSync(markerPath)) {
+        const raw = JSON.parse(fs.readFileSync(markerPath, "utf-8"));
+        fingerprint = { hash: raw.fingerprint?.slice(0, 16), ts: raw.ts ? new Date(raw.ts).toISOString() : null };
+      }
+    } catch {}
+
+    // Per-plugin: is it overlayed or symlinked? Does it use the container pattern?
+    const pluginStates: Record<string, any> = {};
+    for (const pluginId of p.plugins) {
+      const plugin = plugins.find((pl) => pl.name === pluginId);
+      if (!plugin) { pluginStates[pluginId] = { status: "not-installed" }; continue; }
+
+      const pluginCacheDir = path.join(cacheDir, plugin.marketplace, plugin.pluginName);
+      let cacheState = "unknown";
+      try {
+        if (!fs.existsSync(pluginCacheDir)) {
+          cacheState = "missing";
+        } else if (fs.lstatSync(pluginCacheDir).isSymbolicLink()) {
+          cacheState = "symlink";
+        } else {
+          cacheState = "overlay";
+        }
+      } catch {}
+
+      // Check for container-pattern fix (skills/ dir created by our assembly).
+      const versionDir = path.join(pluginCacheDir, plugin.version);
+      let hasSkillsDir = false;
+      let hasContainerPattern = false;
+      try {
+        hasSkillsDir = fs.existsSync(path.join(versionDir, "skills"));
+        const manifest = readPluginManifest(plugin.installPath);
+        if (manifest) {
+          const skillsDecl = normaliseManifestPaths(manifest.skills);
+          hasContainerPattern = !!(skillsDecl && skillsDecl.some((s: string) => s === "./" || s === "."));
+        }
+      } catch {}
+
+      const excluded = p.excludedItems?.[pluginId] ?? [];
+      pluginStates[pluginId] = {
+        version: plugin.version,
+        cacheState,
+        excludedCount: excluded.length,
+        containerPattern: hasContainerPattern,
+        hasSkillsDir,
+        itemCount: plugin.items.length,
+      };
+    }
+
+    return {
+      name: p.name,
+      pluginCount: p.plugins.length,
+      model: p.model ?? "default",
+      effortLevel: p.effortLevel ?? "default",
+      hasCustomClaudeMd: !!p.customClaudeMd,
+      hasWorkflow: !!p.workflow,
+      disabledMcpServers: p.disabledMcpServers ?? null,
+      assemblyFingerprint: fingerprint,
+      plugins: pluginStates,
+      lastLaunched: p.lastLaunched ? new Date(p.lastLaunched).toISOString() : null,
+    };
+  });
+
+  return {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+
+    environment: {
+      appVersion: (() => { try { return require(path.join(__dirname, "..", "..", "package.json")).version; } catch { return "unknown"; } })(),
+      electronVersion: process.versions.electron ?? "unknown",
+      nodeVersion: process.versions.node ?? "unknown",
+      os: `${os.platform()} ${os.release()}`,
+      arch: os.arch(),
+    },
+
+    githubBackend: ghBackend ? {
+      kind: ghBackend.kind,
+      rateLimit: ghBackend.rateLimit,
+    } : null,
+
+    credentials: credStatus ? {
+      hasDefaultEntry: credStatus.hasDefaultEntry,
+      profileCount: credStatus.profileCount,
+    } : null,
+
+    globalDefaults: {
+      model: globalDefaults.model || "default",
+      effortLevel: globalDefaults.effortLevel || "default",
+      terminalApp: globalDefaults.terminalApp ?? "iterm2",
+      hasGlobalEnv: !!globalDefaults.env && Object.keys(globalDefaults.env).length > 0,
+      hasCustomFlags: !!globalDefaults.customFlags,
+    },
+
+    globalHooks: {
+      eventCount: Object.keys(globalHooks).length,
+      events: Object.keys(globalHooks),
+    },
+
+    profiles: profileDetails,
+
+    teams: {
+      count: teams.length,
+      names: teams.map((t) => t.name),
+    },
+
+    plugins: {
+      installedCount: plugins.length,
+      marketplaces: [...new Set(plugins.map((p) => p.marketplace))].sort(),
+      registeredMarketplaces: marketplaces.map((m) => ({
+        name: m.name,
+        repo: m.repo,
+        lastUpdated: m.lastUpdated,
+      })),
+      list: plugins.map((p) => ({
+        name: p.name,
+        version: p.version,
+        itemCount: p.items.length,
+        mcpCount: p.mcpServers.length,
+        hookCount: p.hooks.length,
+        source: (p as any).source?.type ?? null,
+      })),
+    },
+
+    mcpServers: {
+      userServers: mcpServers.filter((m) => m.scope === "user").map((m) => m.name),
+      projectServers: mcpServers.filter((m) => m.scope === "project").map((m) => ({
+        name: m.name,
+        project: m.projectPath?.split("/").pop() ?? null,
+      })),
+    },
+
+    doctor: doctorFindings,
+    healthIssues: Object.keys(health).length > 0 ? health : null,
+
+    activeSessions: activeSessions.map((s) => ({
+      profile: s.profile,
+      pid: s.pid,
+    })),
+
+    recentLaunches: launches.slice(-10).reverse().map((l) => ({
+      type: l.type,
+      name: l.name,
+      timestamp: new Date(l.timestamp).toISOString(),
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Launch
 // ---------------------------------------------------------------------------
 

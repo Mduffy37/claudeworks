@@ -439,6 +439,7 @@ export interface ElectronAPI {
   checkCredentialStatus: () => Promise<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> }>;
   runDiagnostics: () => Promise<{ version: string; configDir: string; claudeHome: string; profileCount: number; teamCount: number; issues: string[] }>;
   runProfilesDoctor: (mode: "detect" | "repair") => Promise<DoctorReport>;
+  exportDiagnostics: () => Promise<{ ok: boolean; path?: string; cancelled?: boolean }>;
   getAppPreferences: () => Promise<{ fontSize: number; theme?: string }>;
   saveAppPreferences: (prefs: { fontSize: number; theme?: string }) => Promise<void>;
   getGlobalEnv: () => Promise<Record<string, string>>;
