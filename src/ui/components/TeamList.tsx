@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import type { Team } from "../../electron/types";
+import { checkTeamEnvRequirement, addTeamEnvVar } from "../helpers/teamEnvCheck";
+import { ConfirmDialog } from "./shared/ConfirmDialog";
 
 interface Props {
   teams: Team[];
@@ -27,6 +29,8 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
     return stored && importedProjects.includes(stored) ? stored : "";
   });
   const [launching, setLaunching] = useState(false);
+  const [showEnvPrompt, setShowEnvPrompt] = useState(false);
+  const [pendingDir, setPendingDir] = useState<string | undefined>();
   const lead = team.members.find((m) => m.isLead);
 
   useEffect(() => {
@@ -45,6 +49,16 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
     else window.localStorage.removeItem(storageKey);
   };
 
+  const proceedLaunch = async (dir?: string) => {
+    setShowEnvPrompt(false);
+    setLaunching(true);
+    try {
+      await window.api.launchTeam(team, dir);
+    } finally {
+      setLaunching(false);
+    }
+  };
+
   const handleLaunch = async () => {
     if (!lead) return;
     let dir = selectedDir || undefined;
@@ -54,45 +68,76 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
       dir = picked;
     }
 
-    setLaunching(true);
-    try {
-      await window.api.launchTeam(team, dir);
-    } finally {
-      setLaunching(false);
+    const result = await checkTeamEnvRequirement(dir);
+    if (!result.satisfied) {
+      setPendingDir(dir);
+      setShowEnvPrompt(true);
+      return;
     }
+
+    await proceedLaunch(dir);
   };
 
   return (
-    <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
-      <select
-        className="sidebar-launch-select"
-        aria-label={`Launch directory for ${team.name}`}
-        value={selectedDir}
-        onChange={(e) => updateSelectedDir(e.target.value)}
-        onMouseDown={(e) => {
-          if (importedProjects.length === 0) {
-            e.preventDefault();
-            onOpenProjectsConfig?.();
+    <>
+      <div className="sidebar-launch-group" onClick={(e) => e.stopPropagation()}>
+        <select
+          className="sidebar-launch-select"
+          aria-label={`Launch directory for ${team.name}`}
+          value={selectedDir}
+          onChange={(e) => updateSelectedDir(e.target.value)}
+          onMouseDown={(e) => {
+            if (importedProjects.length === 0) {
+              e.preventDefault();
+              onOpenProjectsConfig?.();
+            }
+          }}
+        >
+          <option value="">None</option>
+          {importedProjects.map((dir) => (
+            <option key={dir} value={dir}>{shortPath(dir)}</option>
+          ))}
+        </select>
+        <button
+          className="btn-launch-sidebar"
+          onClick={handleLaunch}
+          disabled={!lead || launching}
+          title={lead ? "Launch team" : "No lead profile set"}
+        >
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
+        </button>
+      </div>
+      {showEnvPrompt && (
+        <ConfirmDialog
+          title="Teams Environment Variable Required"
+          description={
+            <>
+              Teams require the environment variable{" "}
+              <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS</code> to be set to{" "}
+              <code>1</code>. Where would you like to add it?
+            </>
           }
-        }}
-      >
-        <option value="">None</option>
-        {importedProjects.map((dir) => (
-          <option key={dir} value={dir}>{shortPath(dir)}</option>
-        ))}
-      </select>
-      <button
-        className="btn-launch-sidebar"
-        onClick={handleLaunch}
-        disabled={!lead || launching}
-        title={lead ? "Launch team" : "No lead profile set"}
-      >
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-          <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
-      </button>
-    </div>
+          confirmLabel="Add to Global Settings"
+          confirmVariant="primary"
+          onConfirm={async () => {
+            await addTeamEnvVar("global");
+            await proceedLaunch(pendingDir);
+          }}
+          extraLabel={pendingDir ? `Add to Project: ${pendingDir.split("/").pop()}` : undefined}
+          onExtra={pendingDir ? async () => {
+            await addTeamEnvVar("project", pendingDir);
+            await proceedLaunch(pendingDir);
+          } : undefined}
+          onCancel={() => {
+            setShowEnvPrompt(false);
+            setPendingDir(undefined);
+          }}
+        />
+      )}
+    </>
   );
 }
 

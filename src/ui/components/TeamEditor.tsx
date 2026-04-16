@@ -21,6 +21,7 @@ import { MergePreview } from "./MergePreview";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 import { InfoCard } from "./profile/InfoCard";
 import { TagsProjectsEditor } from "./shared/TagsProjectsEditor";
+import { checkTeamEnvRequirement, addTeamEnvVar } from "../helpers/teamEnvCheck";
 import { DraggableProfile } from "./team/DraggableProfile";
 import { SortableMember } from "./team/SortableMember";
 import { EditorTopBar } from "./shared/EditorTopBar";
@@ -76,6 +77,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   };
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
+  const [showEnvPrompt, setShowEnvPrompt] = useState(false);
+  const [pendingLaunchFn, setPendingLaunchFn] = useState<(() => Promise<void>) | null>(null);
+  const [envPromptDir, setEnvPromptDir] = useState<string | undefined>();
 
   const handleLaunchWithOptions = async (options: LaunchOptions) => {
     const lead = draft.members.find((m) => m.isLead);
@@ -91,12 +95,22 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
 
     setLaunching(true);
     setLaunchError(null);
-    try {
-      await window.api.launchTeamWithOptions(draft, dir, options);
-    } catch (err: any) {
-      setLaunchError(err?.message ?? "Team launch failed");
-    } finally {
-      setLaunching(false);
+    const doLaunch = async () => {
+      try {
+        await window.api.launchTeamWithOptions(draft, dir, options);
+      } catch (err: any) {
+        setLaunchError(err?.message ?? "Team launch failed");
+      } finally {
+        setLaunching(false);
+      }
+    };
+    const check = await checkTeamEnvRequirement(dir);
+    if (check.satisfied) {
+      await doLaunch();
+    } else {
+      setEnvPromptDir(dir);
+      setPendingLaunchFn(() => doLaunch);
+      setShowEnvPrompt(true);
     }
   };
 
@@ -114,12 +128,22 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
 
     setLaunching(true);
     setLaunchError(null);
-    try {
-      await window.api.launchTeam(draft, dir);
-    } catch (err: any) {
-      setLaunchError(err?.message ?? "Team launch failed");
-    } finally {
-      setLaunching(false);
+    const doLaunch = async () => {
+      try {
+        await window.api.launchTeam(draft, dir);
+      } catch (err: any) {
+        setLaunchError(err?.message ?? "Team launch failed");
+      } finally {
+        setLaunching(false);
+      }
+    };
+    const check = await checkTeamEnvRequirement(dir);
+    if (check.satisfied) {
+      await doLaunch();
+    } else {
+      setEnvPromptDir(dir);
+      setPendingLaunchFn(() => doLaunch);
+      setShowEnvPrompt(true);
     }
   };
 
@@ -431,6 +455,40 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           confirmLabel="Delete"
           onConfirm={() => { setShowDeleteConfirm(false); onDelete(draft.name); }}
           onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
+      {/* Env var gate for team launches */}
+      {showEnvPrompt && (
+        <ConfirmDialog
+          title="Teams Environment Variable Required"
+          description={
+            <>
+              Teams require the environment variable{" "}
+              <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS</code> to be set to{" "}
+              <code>1</code>. Where would you like to add it?
+            </>
+          }
+          confirmLabel="Add to Global Settings"
+          confirmVariant="primary"
+          onConfirm={async () => {
+            await addTeamEnvVar("global");
+            setShowEnvPrompt(false);
+            if (pendingLaunchFn) await pendingLaunchFn();
+            setPendingLaunchFn(null);
+          }}
+          extraLabel={envPromptDir ? `Add to Project: ${envPromptDir.split("/").pop()}` : undefined}
+          onExtra={envPromptDir ? async () => {
+            await addTeamEnvVar("project", envPromptDir);
+            setShowEnvPrompt(false);
+            if (pendingLaunchFn) await pendingLaunchFn();
+            setPendingLaunchFn(null);
+          } : undefined}
+          onCancel={() => {
+            setShowEnvPrompt(false);
+            setPendingLaunchFn(null);
+            setLaunching(false);
+          }}
         />
       )}
 
