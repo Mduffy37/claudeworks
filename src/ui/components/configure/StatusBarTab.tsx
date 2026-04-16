@@ -36,6 +36,7 @@ const WIDGET_LABELS: Record<string, string> = {
   plugins: "Plugin count",
   burn: "Burn rate ($/min)",
   limitEta: "Rate limit time-to-full",
+  usage7dSonnet: "7-day Sonnet usage",
   // Special:
   break: "— Section break —",
 };
