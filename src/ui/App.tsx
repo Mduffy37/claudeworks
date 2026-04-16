@@ -46,7 +46,9 @@ export function App() {
   const [teamHealth, setTeamHealth] = useState<Record<string, string[]>>({});
 
   const SIDEBAR_MIN = 240;
-  const SIDEBAR_MAX = 480;
+  const SIDEBAR_MAX_FIXED = 480;
+  const MAIN_MIN = 660;
+  const SIDEBAR_MAX = Math.min(SIDEBAR_MAX_FIXED, Math.max(SIDEBAR_MIN, window.innerWidth - MAIN_MIN));
   const SIDEBAR_STORAGE_KEY = "claude-profiles:sidebarWidth";
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(SIDEBAR_STORAGE_KEY) : null;
@@ -64,10 +66,12 @@ export function App() {
   const handleSidebarResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     const startX = e.clientX;
-    const startWidth = sidebarWidth;
+    // Read the actual rendered width (CSS max-width may have clamped it below state)
+    const startWidth = e.currentTarget.parentElement?.getBoundingClientRect().width ?? sidebarWidth;
     setIsResizingSidebar(true);
     const onMove = (ev: PointerEvent) => {
-      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + (ev.clientX - startX)));
+      const max = Math.min(SIDEBAR_MAX_FIXED, Math.max(SIDEBAR_MIN, window.innerWidth - MAIN_MIN));
+      const next = Math.min(max, Math.max(SIDEBAR_MIN, startWidth + (ev.clientX - startX)));
       setSidebarWidth(next);
     };
     const onUp = () => {

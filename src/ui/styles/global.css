@@ -316,6 +316,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .sidebar {
   width: var(--sidebar-width, 240px);
+  max-width: min(480px, calc(100vw - 660px));
   flex-shrink: 0;
   position: relative;
   background: var(--bg-secondary);
@@ -323,6 +324,9 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   padding-top: 38px;
+  overflow: hidden;
+  contain: inline-size style;
+  will-change: max-width;
 }
 
 .sidebar-resizer {
@@ -2006,12 +2010,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .main {
   flex: 1;
+  min-width: 660px;
   overflow: hidden;
   padding-top: 38px;
   height: 100vh;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  contain: inline-size style;
 }
 
 /* ─── Profile editor ──────────────────────────────────────────────────────── */
@@ -4363,6 +4369,10 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
 }
 
+.plugin-list-sidebar > .pl-search {
+  padding: 8px 8px 4px;
+}
+
 .pl-search-area {
   flex-shrink: 0;
   padding: 8px 8px;
@@ -4947,7 +4957,6 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   gap: 10px;
   margin: 8px 16px 12px;
-  max-width: 720px;
   border: none;
   background: transparent;
   transition: background var(--transition-fast);
@@ -4965,6 +4974,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius);
   padding: 12px;
   box-shadow: var(--ring);
+  overflow: hidden;
 }
 
 .te-member-card.lead {
@@ -5141,6 +5151,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .te-field-input {
   flex: 1;
+  min-width: 0;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
@@ -5157,6 +5168,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .te-field-textarea {
   flex: 1;
+  min-width: 0;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
