@@ -197,6 +197,19 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
               <button
                 className="btn-secondary"
                 onClick={async () => {
+                  const home = await window.api.getClaudeHome();
+                  // getClaudeHome returns ~/.claude — go up one level for ~/.claude-profiles
+                  const profilesDir = home.replace(/\/\.claude$/, "/.claude-profiles");
+                  window.api.openInFinder(profilesDir);
+                }}
+                disabled={running !== null}
+                title="Open ~/.claude-profiles/ in Finder"
+              >
+                Open config folder
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={async () => {
                   const result = await window.api.exportDiagnostics();
                   if (result.ok && result.path) {
                     setExportPath(result.path.split("/").pop() ?? result.path);
