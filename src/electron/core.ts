@@ -1829,6 +1829,18 @@ export function assembleProfile(profile: Profile): string {
     }
   }
 
+  // Fix container-pattern plugins for ALL plugins in the profile (not just
+  // excluded ones). Plugins declaring "skills": "./" have skills at their root
+  // level instead of in a conventional skills/ subdirectory. Claude Code's
+  // runtime only scans <installPath>/skills/ for skill discovery, so these
+  // root-level skills are invisible. Fix: for each container-pattern plugin,
+  // create a skills/ directory and symlink the skill subdirs into it, then
+  // write a patched plugin.json without the "skills" field. For plugins with
+  // exclusions, applyExclusions already handles this inside the overlay; this
+  // step catches plugins WITHOUT exclusions where the cache is a plain symlink
+  // chain to the global cache.
+  fixContainerPatternPlugins(profile, configDir, installedPlugins);
+
   // Symlink shared resources
   symlinkShared(configDir, profile);
 
@@ -2024,16 +2036,26 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
       addAncestors(rel);
     }
 
-    // Container-pattern fix: some plugins declare "skills": "./" (the plugin
-    // root is a container of skill subdirectories) but ALSO ship a root-level
-    // SKILL.md (an aggregation/summary skill). Claude Code's scanner sees the
-    // root SKILL.md and treats the whole plugin as a single skill instead of
-    // descending into subdirectories. Exclude the root SKILL.md from the
-    // overlay so Claude Code falls through to subdirectory scanning.
+    // Container-pattern fix: plugins declaring "skills": "./" rely on Claude
+    // Code's scanner resolving "./" relative to installPath. But plugin.json
+    // is a symlink in the overlay, and Claude Code may follow the symlink
+    // and resolve "./" against the SOURCE directory instead — bypassing the
+    // overlay entirely. Additionally, the source may ship a root-level
+    // SKILL.md (an aggregation skill) that makes Claude Code treat the whole
+    // plugin as a single skill.
+    //
+    // Fix: for container-pattern plugins, write a MODIFIED plugin.json (real
+    // file, not a symlink) that replaces "skills": "./" with an explicit
+    // list of only the kept skill directories. This forces Claude Code to
+    // load exactly the skills that survived the exclusion filter, regardless
+    // of how it resolves relative paths or handles root SKILL.md files.
     const pluginManifest = readPluginManifest(resolvedInstallPath);
+    let isContainerPattern = false;
     if (pluginManifest) {
       const skillsDecl = normaliseManifestPaths(pluginManifest.skills);
       if (skillsDecl && skillsDecl.some((s: string) => s === "./" || s === ".")) {
+        isContainerPattern = true;
+        // Exclude the root SKILL.md (aggregation skill) from the overlay.
         const rootSkillMd = path.join(resolvedInstallPath, "SKILL.md");
         if (fs.existsSync(rootSkillMd)) {
           const rootSkillRel = versionRel ? path.join(versionRel, "SKILL.md") : "SKILL.md";
@@ -2078,6 +2100,183 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
         fs.writeFileSync(targetMarketplaceJson, JSON.stringify(manifest, null, 2));
       } catch {}
     }
+
+    // Container-pattern fix: plugins with "skills": "./" have skills at the
+    // root level, not in a skills/ subdirectory. Claude Code's runtime only
+    // supports conventional scanning (looks for <installPath>/skills/), so
+    // these root-level skills are invisible to it. Fix: create a conventional
+    // skills/ directory in the overlay and symlink the kept skills into it.
+    // Also write a patched plugin.json without the "skills" field so Claude
+    // Code falls through to conventional scanning instead of trying "./"
+    // resolution (which follows the symlink back to the source).
+    if (isContainerPattern) {
+      const overlayVersionDir = path.join(pluginDir, versionRel || "");
+      const skillsDir = path.join(overlayVersionDir, "skills");
+      fs.mkdirSync(skillsDir, { recursive: true });
+
+      // Find kept skill dirs in the overlay root and symlink them into skills/.
+      for (const entry of fs.readdirSync(overlayVersionDir, { withFileTypes: true })) {
+        if (entry.name.startsWith(".") || entry.name === "skills") continue;
+        const entryPath = path.join(overlayVersionDir, entry.name);
+        const isDir = entry.isDirectory() || (entry.isSymbolicLink() && (() => {
+          try { return fs.statSync(entryPath).isDirectory(); } catch { return false; }
+        })());
+        if (!isDir) continue;
+        if (fs.existsSync(path.join(entryPath, "SKILL.md"))) {
+          const tgt = path.join(skillsDir, entry.name);
+          if (!fs.existsSync(tgt)) {
+            // Symlink to the SOURCE skill dir (not the overlay symlink) for
+            // a clean resolution chain.
+            const sourcePath = path.join(resolvedInstallPath, entry.name);
+            fs.symlinkSync(sourcePath, tgt);
+          }
+        }
+      }
+
+      // Write a patched plugin.json without the "skills" field so Claude Code
+      // falls through to conventional skills/ dir scanning.
+      if (pluginManifest) {
+        const patched = { ...pluginManifest };
+        delete patched.skills;
+        const targetPluginJson = path.join(overlayVersionDir, ".claude-plugin", "plugin.json");
+        // Remove the symlink first if it exists.
+        try { fs.unlinkSync(targetPluginJson); } catch {}
+        fs.writeFileSync(targetPluginJson, JSON.stringify(patched, null, 2));
+      }
+    }
+  }
+}
+
+
+
+/**
+ * Fix container-pattern plugins that declare "skills": "./" but have no
+ * conventional skills/ subdirectory. Claude Code only scans <installPath>/skills/
+ * so these plugins load zero skills. For each such plugin, we:
+ *   1. Break the version-dir symlink if needed (create a mini-overlay)
+ *   2. Create a skills/ directory with symlinks to the kept skill subdirs
+ *   3. Write a patched plugin.json without the "skills" field
+ *
+ * Skips plugins that already have a skills/ dir (conventional layout) or
+ * that were already handled by applyExclusions (which builds a full overlay).
+ */
+function fixContainerPatternPlugins(
+  profile: Profile,
+  configDir: string,
+  plugins: PluginEntry[],
+): void {
+  const excludedPlugins = new Set(Object.keys(profile.excludedItems ?? {}).filter(
+    (k) => (profile.excludedItems?.[k]?.length ?? 0) > 0,
+  ));
+
+  for (const pluginName of profile.plugins) {
+    // Skip plugins that have exclusions — applyExclusions handles those.
+    if (excludedPlugins.has(pluginName)) continue;
+
+    const plugin = plugins.find((p) => p.name === pluginName);
+    if (!plugin) continue;
+
+    // Read the plugin manifest to check for container pattern.
+    const manifest = readPluginManifest(plugin.installPath);
+    if (!manifest) continue;
+    const skillsDecl = normaliseManifestPaths(manifest.skills);
+    if (!skillsDecl || !skillsDecl.some((s: string) => s === "./" || s === ".")) continue;
+
+    // Already has a conventional skills/ dir — nothing to fix.
+    if (fs.existsSync(path.join(plugin.installPath, "skills"))) continue;
+
+    // Locate the version dir inside the profile's cache.
+    const cachePluginDir = path.join(
+      configDir, "plugins", "cache",
+      plugin.marketplace, plugin.pluginName,
+    );
+    if (!fs.existsSync(cachePluginDir)) continue;
+
+    // The version dir might be a real dir (from a previous fix) or accessed
+    // through the marketplace symlink. Resolve to the real source.
+    const versionDir = path.join(cachePluginDir, plugin.version);
+    let realVersionDir: string;
+    try {
+      realVersionDir = fs.realpathSync(versionDir);
+    } catch {
+      continue;
+    }
+
+    // If the version dir is inside the global cache (i.e. not already an
+    // overlay), we need to break the symlink chain to create a writable layer.
+    // Strategy: replace the plugin-level dir with a mini-overlay containing
+    // just the version dir as a real directory with symlinked children.
+    const cachePluginStat = fs.lstatSync(cachePluginDir);
+    if (cachePluginStat.isSymbolicLink()) {
+      // cachePluginDir is a symlink — we're inside a marketplace symlink chain.
+      // Need to break the marketplace symlink first.
+      const marketplaceDir = path.dirname(cachePluginDir);
+      const marketplaceStat = fs.lstatSync(marketplaceDir);
+      if (marketplaceStat.isSymbolicLink()) {
+        const realMp = fs.realpathSync(marketplaceDir);
+        fs.unlinkSync(marketplaceDir);
+        fs.mkdirSync(marketplaceDir, { recursive: true });
+        for (const child of fs.readdirSync(realMp)) {
+          const tgt = path.join(marketplaceDir, child);
+          if (!fs.existsSync(tgt)) fs.symlinkSync(path.join(realMp, child), tgt);
+        }
+      }
+      // Now cachePluginDir is still a symlink inside the (now real) marketplace dir.
+      // Replace it with a real dir.
+      const realPluginDir = fs.realpathSync(cachePluginDir);
+      fs.unlinkSync(cachePluginDir);
+      fs.mkdirSync(cachePluginDir, { recursive: true });
+      // Symlink the version dir and any siblings.
+      for (const child of fs.readdirSync(realPluginDir)) {
+        const tgt = path.join(cachePluginDir, child);
+        if (!fs.existsSync(tgt)) fs.symlinkSync(path.join(realPluginDir, child), tgt);
+      }
+    }
+
+    // Now break the version dir symlink into a real dir with per-child symlinks.
+    const versionStat = fs.lstatSync(versionDir);
+    if (versionStat.isSymbolicLink()) {
+      const realVer = fs.realpathSync(versionDir);
+      fs.unlinkSync(versionDir);
+      fs.mkdirSync(versionDir, { recursive: true });
+      for (const child of fs.readdirSync(realVer)) {
+        // Skip the root SKILL.md (aggregation skill) for container-pattern plugins.
+        if (child === "SKILL.md") continue;
+        const tgt = path.join(versionDir, child);
+        if (!fs.existsSync(tgt)) fs.symlinkSync(path.join(realVer, child), tgt);
+      }
+    }
+
+    // Create the conventional skills/ directory.
+    const skillsDir = path.join(versionDir, "skills");
+    if (fs.existsSync(skillsDir)) continue; // already created (idempotent)
+    fs.mkdirSync(skillsDir, { recursive: true });
+
+    // Symlink skill subdirs into skills/.
+    for (const entry of fs.readdirSync(versionDir, { withFileTypes: true })) {
+      if (entry.name.startsWith(".") || entry.name === "skills") continue;
+      const entryPath = path.join(versionDir, entry.name);
+      const isDir = entry.isDirectory() || (entry.isSymbolicLink() && (() => {
+        try { return fs.statSync(entryPath).isDirectory(); } catch { return false; }
+      })());
+      if (!isDir) continue;
+      if (fs.existsSync(path.join(entryPath, "SKILL.md"))) {
+        const tgt = path.join(skillsDir, entry.name);
+        if (!fs.existsSync(tgt)) {
+          fs.symlinkSync(path.join(realVersionDir, entry.name), tgt);
+        }
+      }
+    }
+
+    // Write a patched plugin.json without the "skills" field.
+    const pluginJsonPath = path.join(versionDir, ".claude-plugin", "plugin.json");
+    const pluginJsonStat = fs.lstatSync(pluginJsonPath);
+    if (pluginJsonStat.isSymbolicLink()) {
+      fs.unlinkSync(pluginJsonPath);
+    }
+    const patched = { ...manifest };
+    delete patched.skills;
+    fs.writeFileSync(pluginJsonPath, JSON.stringify(patched, null, 2));
   }
 }
 
