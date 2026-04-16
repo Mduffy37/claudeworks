@@ -63,11 +63,22 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const handleSave = useCallback(async () => {
     if (!name.trim() || saving) return;
 
-    // Block save if there are duplicate alias names
+    // Block save if there are duplicate alias names (within this profile)
     const aliasNames = aliases.filter(a => a.name).map(a => a.name);
     const dupes = aliasNames.filter((n, i) => aliasNames.indexOf(n) !== i);
     if (dupes.length > 0) {
       return; // silently block — the UI already shows duplicate warnings
+    }
+
+    // Block save if any alias conflicts with another profile's alias
+    for (const alias of aliases) {
+      if (!alias.name) continue;
+      try {
+        const conflict = await window.api.checkAliasConflict(alias.name, name.trim());
+        if (conflict?.source === "profile") {
+          return; // silently block — the UI shows conflict warnings on blur
+        }
+      } catch {}
     }
 
     setSaving(true);
