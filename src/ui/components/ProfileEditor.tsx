@@ -455,7 +455,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     name, setName,
     description, setDescription,
     directories, setDirectories,
-    alias, setAlias,
+    aliases, setAliases, disableDefaultAlias, setDisableDefaultAlias,
     isDefault, setIsDefault,
     selectedPlugins, setSelectedPlugins,
     excludedItems, setExcludedItems,
@@ -1166,7 +1166,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               sonnetContext={sonnetContext}
               effortLevel={effortLevel}
               voiceEnabled={voiceEnabled}
-              alias={alias}
+              aliases={aliases}
+              onChangeAliases={(v) => { setAliases(v); markDirty(); }}
+              disableDefaultAlias={disableDefaultAlias}
+              onChangeDisableDefaultAlias={(v) => { setDisableDefaultAlias(v); markDirty(); }}
+              profileName={name}
+              pluginCount={selectedPlugins.length}
+              directories={[...new Set([...importedProjects, ...directories])]}
               isInPath={binInPath}
               launchFlags={launchFlags}
               customFlags={customFlags}
@@ -1174,7 +1180,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               isDefault={isDefault}
               onSetAsDefault={() => {
                 setIsDefault(true);
-                setAlias("claude");
+                setAliases(prev => prev.some(a => a.name === "claude") ? prev : [{ name: "claude" }, ...prev]);
                 markDirty();
               }}
               onChangeModel={(v) => { setModel(v); markDirty(); }}
@@ -1182,12 +1188,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               onChangeSonnetContext={(v) => { setSonnetContext(v); markDirty(); }}
               onChangeEffort={(v) => { setEffortLevel(v); markDirty(); }}
               onChangeVoice={(v) => { setVoiceEnabled(v); markDirty(); }}
-              onChangeAlias={(v) => { setAlias(v); markDirty(); }}
               onChangeLaunchFlags={(v) => { setLaunchFlags(v); markDirty(); }}
               onChangeCustomFlags={(v) => { setCustomFlags(v); markDirty(); }}
               onChangeUseDefaultAuth={(v) => { setUseDefaultAuth(v); markDirty(); }}
               env={env}
-              profileName={name}
               disabledHooks={disabledHooks}
               statusLineConfig={statusLineConfig}
               onChangeEnv={(v) => { setEnv(v); markDirty(); }}

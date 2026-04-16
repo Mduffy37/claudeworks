@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import type { Profile, StatusLineConfig } from "../../../electron/types";
+import React, { useState, useEffect, useCallback } from "react";
+import type { Profile, ProfileAlias, StatusLineConfig } from "../../../electron/types";
 
 interface HookEntry { event: string; index: number; command: string }
 
@@ -9,13 +9,18 @@ interface Props {
   sonnetContext: "200k" | "1m" | undefined;
   effortLevel: string;
   voiceEnabled: boolean | undefined;
-  alias: string;
+  aliases: ProfileAlias[];
+  onChangeAliases: (aliases: ProfileAlias[]) => void;
+  disableDefaultAlias: boolean;
+  onChangeDisableDefaultAlias: (v: boolean) => void;
+  profileName: string;
+  pluginCount: number;
+  directories: string[];
   isInPath: boolean;
   launchFlags: NonNullable<Profile["launchFlags"]>;
   customFlags: string;
   useDefaultAuth: boolean;
   env: Record<string, string>;
-  profileName: string;
   disabledHooks: Record<string, number[]>;
   statusLineConfig: StatusLineConfig | undefined;
   isDefault?: boolean;
@@ -25,7 +30,6 @@ interface Props {
   onChangeSonnetContext: (v: "200k" | "1m" | undefined) => void;
   onChangeEffort: (v: string) => void;
   onChangeVoice: (v: boolean) => void;
-  onChangeAlias: (v: string) => void;
   onChangeLaunchFlags: (v: NonNullable<Profile["launchFlags"]>) => void;
   onChangeCustomFlags: (v: string) => void;
   onChangeUseDefaultAuth: (v: boolean) => void;
@@ -37,11 +41,13 @@ interface Props {
 
 export function SettingsTab(props: Props) {
   const {
-    model, opusContext, sonnetContext, effortLevel, voiceEnabled, alias, isInPath,
-    launchFlags, customFlags, useDefaultAuth, env, profileName, disabledHooks,
+    model, opusContext, sonnetContext, effortLevel, voiceEnabled,
+    aliases, onChangeAliases, disableDefaultAlias, onChangeDisableDefaultAlias,
+    profileName, pluginCount, directories,
+    isInPath, launchFlags, customFlags, useDefaultAuth, env, disabledHooks,
     statusLineConfig,
     isDefault, onSetAsDefault,
-    onChangeModel, onChangeOpusContext, onChangeSonnetContext, onChangeEffort, onChangeVoice, onChangeAlias,
+    onChangeModel, onChangeOpusContext, onChangeSonnetContext, onChangeEffort, onChangeVoice,
     onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks,
     onChangeStatusLineConfig,
     onAddToPath,
@@ -55,6 +61,9 @@ export function SettingsTab(props: Props) {
   const [suggestions, setSuggestions] = useState<Array<{ name: string; description: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showValueSuggestions, setShowValueSuggestions] = useState(false);
+
+  // Per-alias conflict warnings, keyed by index
+  const [aliasConflicts, setAliasConflicts] = useState<Record<number, { conflict: boolean; source: string; detail: string } | null>>({});
 
   const toggleAdvanced = (id: string) =>
     setOpenAdvanced((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -145,6 +154,40 @@ export function SettingsTab(props: Props) {
     setNewValue(value);
     setShowValueSuggestions(false);
   };
+
+  // ── Alias helpers ───────────────────────────────────────────────────────────
+
+  const updateAlias = useCallback((index: number, patch: Partial<ProfileAlias>) => {
+    const next = aliases.map((a, i) => i === index ? { ...a, ...patch } : a);
+    onChangeAliases(next);
+  }, [aliases, onChangeAliases]);
+
+  const removeAlias = useCallback((index: number) => {
+    onChangeAliases(aliases.filter((_, i) => i !== index));
+    // Clear conflict for removed index
+    setAliasConflicts((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  }, [aliases, onChangeAliases]);
+
+  const addAlias = useCallback(() => {
+    onChangeAliases([...aliases, { name: "" }]);
+  }, [aliases, onChangeAliases]);
+
+  const checkConflict = useCallback(async (index: number, aliasName: string) => {
+    if (!aliasName) {
+      setAliasConflicts((prev) => ({ ...prev, [index]: null }));
+      return;
+    }
+    try {
+      const result = await window.api.checkAliasConflict(aliasName, profileName);
+      setAliasConflicts((prev) => ({ ...prev, [index]: result }));
+    } catch {
+      setAliasConflicts((prev) => ({ ...prev, [index]: null }));
+    }
+  }, [profileName]);
 
   return (
     <div className="pe-settings-tab">
@@ -442,32 +485,135 @@ export function SettingsTab(props: Props) {
       <div className="pe-settings-section">
         <div className="pe-settings-section-label">Launch Configuration</div>
         <div className="modal-fields">
+          {/* ── Default profile: claude alias toggle ── */}
+          {isDefault && (
+            <div className="field">
+              <div className="field-toggle">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={!disableDefaultAlias}
+                    onChange={(e) => onChangeDisableDefaultAlias(!e.target.checked)}
+                    aria-label="Override claude command"
+                  />
+                  <span className="toggle-track"><span className="toggle-thumb" /></span>
+                </label>
+                <span className="field-toggle-label">
+                  Override <code>claude</code> command
+                </span>
+              </div>
+              <div className="field-hint">
+                {!disableDefaultAlias
+                  ? <>Overriding <code>claude</code> loads {pluginCount} plugin{pluginCount !== 1 ? "s" : ""} into every session</>
+                  : <>The <code>claude</code> command uses stock behavior (no profile plugins)</>}
+              </div>
+            </div>
+          )}
+
+          {/* ── Alias list ── */}
           <div className="field">
-            <label>CLI Alias</label>
-            {isDefault ? (
-              <>
-                <div className="field-with-button">
-                  <input type="text" value="claude" disabled style={{ opacity: 0.5 }} />
-                  <span className="field-managed-label">managed</span>
-                </div>
-                <div className="field-hint">
-                  This profile intercepts the <code>claude</code> command. The alias is managed automatically.
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="field-with-button">
-                  <input type="text" value={alias} onChange={(e) => onChangeAlias(e.target.value.replace(/[^a-z0-9-]/g, ""))} placeholder="e.g. claude-research" />
-                  {!isInPath && <button className="btn-secondary" onClick={onAddToPath}>Add to PATH</button>}
-                </div>
-                {alias && (
-                  <div className="field-hint">
-                    {isInPath ? <>Run <code>{alias}</code> from any terminal to launch this profile</> : <>Saves to ~/.claude-profiles/bin/ — add to PATH to use</>}
+            <label>CLI Aliases</label>
+            {aliases.length === 0 && !isDefault && (
+              <div className="field-hint" style={{ marginBottom: "6px" }}>
+                Add aliases to launch this profile from the terminal.
+              </div>
+            )}
+            {aliases.map((alias, idx) => {
+              const isClaudeAlias = isDefault && alias.name === "claude";
+              const conflict = aliasConflicts[idx];
+              return (
+                <div key={idx} className="alias-row">
+                  {!isClaudeAlias && (
+                    <button
+                      className="alias-remove-btn btn-secondary"
+                      onClick={() => removeAlias(idx)}
+                      title="Remove alias"
+                      aria-label={`Remove alias ${alias.name || "(unnamed)"}`}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <div className="alias-row-fields">
+                    <div className="field">
+                      <label>Name</label>
+                      <input
+                        type="text"
+                        value={alias.name}
+                        onChange={(e) => updateAlias(idx, { name: e.target.value.replace(/[^a-z0-9-]/g, "") })}
+                        onBlur={() => checkConflict(idx, alias.name)}
+                        placeholder="e.g. claude-research"
+                        disabled={isClaudeAlias}
+                        style={isClaudeAlias ? { opacity: 0.5 } : undefined}
+                        aria-label={`Alias ${idx + 1} name`}
+                      />
+                      {isClaudeAlias && (
+                        <span className="field-managed-label" style={{ marginTop: "4px", display: "inline-block" }}>managed</span>
+                      )}
+                      {conflict && conflict.conflict && (
+                        <div className="field-warning">{conflict.detail}</div>
+                      )}
+                    </div>
+                    <div className="field">
+                      <label>Directory</label>
+                      <select
+                        value={alias.directory ?? ""}
+                        onChange={(e) => updateAlias(idx, { directory: e.target.value || undefined })}
+                        aria-label={`Alias ${idx + 1} directory`}
+                      >
+                        <option value="">Default (profile directory)</option>
+                        {directories.map((d) => (
+                          <option key={d} value={d}>{d.split("/").pop() || d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Launch Action</label>
+                      <select
+                        value={alias.launchAction ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value as "" | "workflow" | "prompt";
+                          updateAlias(idx, {
+                            launchAction: v || undefined,
+                            launchPrompt: v === "prompt" ? (alias.launchPrompt ?? "") : undefined,
+                          });
+                        }}
+                        aria-label={`Alias ${idx + 1} launch action`}
+                      >
+                        <option value="">None</option>
+                        <option value="workflow">/workflow</option>
+                        <option value="prompt">Custom prompt</option>
+                      </select>
+                    </div>
                   </div>
-                )}
-              </>
+                  {alias.launchAction === "prompt" && (
+                    <textarea
+                      className="alias-prompt-textarea"
+                      value={alias.launchPrompt ?? ""}
+                      onChange={(e) => updateAlias(idx, { launchPrompt: e.target.value })}
+                      placeholder="Enter the prompt to send on launch..."
+                      aria-label={`Alias ${idx + 1} custom prompt`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+            <button className="btn-secondary" style={{ marginTop: "4px" }} onClick={addAlias}>
+              + Add Alias
+            </button>
+            {!isInPath && aliases.length > 0 && (
+              <div className="field-hint" style={{ marginTop: "6px" }}>
+                Aliases are saved to ~/.claude-profiles/bin/.{" "}
+                <button className="btn-link" onClick={onAddToPath} style={{ fontSize: "inherit" }}>Add to PATH</button>{" "}
+                to use from any terminal.
+              </div>
+            )}
+            {isInPath && aliases.length > 0 && (
+              <div className="field-hint" style={{ marginTop: "6px" }}>
+                Run any alias name from your terminal to launch this profile.
+              </div>
             )}
           </div>
+
           {!isDefault && onSetAsDefault && (
             <>
               <div className="field-divider" />

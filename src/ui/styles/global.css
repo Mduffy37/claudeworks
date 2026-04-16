@@ -8197,6 +8197,50 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--text-secondary);
 }
 
+/* ── Alias list editor ────────────────────────────────────────────────────── */
+
+.alias-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.alias-row-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.alias-prompt-textarea {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 60px;
+  font-family: var(--font-mono);
+  font-size: 0.846rem;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.alias-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.769rem;
+  padding: 2px 6px;
+}
+
+.field-warning {
+  font-size: 0.769rem;
+  color: var(--color-warning, #e8a030);
+  margin-top: 4px;
+}
+
 /* Large / ultrawide — let content breathe */
 @media (min-width: 1800px) {
   .profile-editor {
