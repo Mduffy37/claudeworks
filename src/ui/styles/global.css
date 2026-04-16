@@ -5333,6 +5333,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Discover toggle ─────────────────────────────────────────────── */
 .discover-toggle {
   display: inline-flex;
+  align-self: flex-start;
   gap: 0;
   padding: 3px;
   background: var(--bg-surface);
@@ -5360,7 +5361,7 @@ h1, h2, h3, h4, h5, h6 {
 .discover-toggle-btn.active {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: inset 0 -2px 0 var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Marketplaces tab ────────────────────────────────────────────── */
