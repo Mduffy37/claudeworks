@@ -2101,10 +2101,6 @@ h1, h2, h3, h4, h5, h6 {
   gap: 6px;
 }
 
-.pe-topbar-controls-row-end {
-  justify-content: flex-end;
-}
-
 .pe-topbar-name-input {
   background: transparent;
   border: 1px solid transparent;
@@ -2145,6 +2141,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-left: 2px;
   display: flex;
   align-items: center;
+}
+
+.pe-topbar-secondary {
+  position: relative;
 }
 
 .pe-overflow-btn {
@@ -4717,6 +4717,9 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+  --pe-max-width: clamp(720px, 70vw, 1200px);
+  --pe-gutter: 24px;
 }
 
 .te-topbar {

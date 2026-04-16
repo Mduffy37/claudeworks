@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -23,7 +23,7 @@ import { InfoCard } from "./profile/InfoCard";
 import { TagsProjectsEditor } from "./shared/TagsProjectsEditor";
 import { DraggableProfile } from "./team/DraggableProfile";
 import { SortableMember } from "./team/SortableMember";
-import { LaunchOptionsPopover } from "./shared/LaunchOptionsPopover";
+import { EditorTopBar } from "./shared/EditorTopBar";
 
 interface Props {
   team: Team | null;
@@ -53,33 +53,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   const [mergeData, setMergeData] = useState<MergePreviewType | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [search, setSearch] = useState("");
-  const [showOverflow, setShowOverflow] = useState(false);
-  const overflowTriggerRef = useRef<HTMLButtonElement>(null);
-  const overflowMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!showOverflow) return;
-    const first = overflowMenuRef.current?.querySelector<HTMLButtonElement>("[role=menuitem]");
-    first?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setShowOverflow(false);
-        overflowTriggerRef.current?.focus();
-      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        const items = Array.from(overflowMenuRef.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]") ?? []);
-        if (items.length === 0) return;
-        const current = items.indexOf(document.activeElement as HTMLButtonElement);
-        const nextIdx = e.key === "ArrowDown"
-          ? (current + 1) % items.length
-          : (current - 1 + items.length) % items.length;
-        items[nextIdx]?.focus();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [showOverflow]);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [launchDir, setLaunchDir] = useState("");
 
   // Persist launch dir per team (shared with TeamList sidebar dropdown).
@@ -102,7 +76,6 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
   };
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
-  const [showLaunchOptions, setShowLaunchOptions] = useState(false);
 
   const handleLaunchWithOptions = async (options: LaunchOptions) => {
     const lead = draft.members.find((m) => m.isLead);
@@ -281,6 +254,8 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
     if (!draft.name.trim()) return;
     await onSave(draft);
     onDirtyChange(false);
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 1500);
   }, [draft, onSave, onDirtyChange]);
 
   useEffect(() => {
@@ -316,114 +291,39 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
 
   return (
     <div className="te-editor">
-      {/* Top bar — matches ProfileEditor layout */}
-      <div className="pe-topbar">
-        {/* Left: Name + subtitle, vertically centered */}
-        <div className="pe-topbar-identity">
-          <input
-            className="pe-topbar-name-input"
-            value={draft.name}
-            onChange={(e) => updateDraft({ name: e.target.value })}
-            placeholder={isNew ? "Team name..." : ""}
-            autoFocus={isNew}
-          />
-          <span className="pe-topbar-subtitle">
-            {draft.members.length} member{draft.members.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-
-        {/* Right: stacked controls */}
-        <div className="pe-topbar-right">
-          {/* Row 1: dir select + Launch */}
-          {!isNew && (
-            <div className="pe-topbar-controls-row">
-              <select
-                className="pe-launch-dir-select"
-                value={launchDir}
-                onChange={(e) => updateLaunchDir(e.target.value)}
-                onMouseDown={(e) => {
-                  if (importedProjects.length === 0) {
-                    e.preventDefault();
-                    onOpenProjectsConfig?.();
-                  }
-                }}
-              >
-                <option value="">Choose directory…</option>
-                {importedProjects.map((dir) => (
-                  <option key={dir} value={dir}>{dir.split("/").filter(Boolean).pop() ?? dir}</option>
-                ))}
-              </select>
-              <div className="btn-launch-group">
-                <button className="btn-launch" disabled={!draft.members.some((m) => m.isLead) || launching} onClick={handleLaunch} title={draft.members.some((m) => m.isLead) ? "Launch team" : "Set a lead profile first"}>
-                  <span className="btn-launch-icon">
-                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                      <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  {launching ? "Launching..." : "Launch Team"}
-                </button>
-                <button
-                  className="btn-launch-settings"
-                  onClick={() => setShowLaunchOptions(true)}
-                  aria-label="Launch settings"
-                  title="Launch settings"
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 3.5l3 3 3-3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                {showLaunchOptions && (
-                  <LaunchOptionsPopover
-                    onLaunch={(opts) => { setShowLaunchOptions(false); handleLaunchWithOptions(opts); }}
-                    onClose={() => setShowLaunchOptions(false)}
-                  />
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Row 2: ... + Save */}
-          <div className="pe-topbar-controls-row pe-topbar-controls-row-end">
-            {!isNew && (
-              <div className="pe-topbar-secondary">
-                <button
-                  className="pe-overflow-btn"
-                  onClick={() => setShowOverflow(!showOverflow)}
-                  title="More actions"
-                  aria-label="More actions"
-                >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <circle cx="3" cy="8" r="1.3" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1.3" fill="currentColor" />
-                    <circle cx="13" cy="8" r="1.3" fill="currentColor" />
-                  </svg>
-                </button>
-                {showOverflow && (
-                  <>
-                    <div className="pe-overflow-backdrop" onClick={() => setShowOverflow(false)} />
-                    <div className="pe-overflow-menu">
-                      <button onClick={() => { setShowOverflow(false); handlePreviewMerge(); }} disabled={draft.members.length === 0}>
-                        Preview Merge
-                      </button>
-                      <div className="pe-overflow-divider" />
-                      <button className="pe-overflow-danger" onClick={() => { setShowOverflow(false); setShowDeleteConfirm(true); }}>
-                        Delete Team
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-            <button
-              className="btn-primary"
-              disabled={!draft.name.trim() || !dirty}
-              onClick={handleSave}
-            >
-              {isNew ? "Create Team" : "Save"}
+      {/* Top bar — shared with ProfileEditor */}
+      <EditorTopBar
+        isNew={isNew}
+        name={draft.name}
+        dirty={dirty}
+        saving={false}
+        saveStatus={saveStatus}
+        subtitle={`${draft.members.length} member${draft.members.length !== 1 ? "s" : ""}`}
+        createLabel="Create Team"
+        namePlaceholder="Team name..."
+        directories={importedProjects}
+        launchDir={launchDir}
+        launching={launching}
+        importedProjectsCount={importedProjects.length}
+        onOpenProjectsConfig={onOpenProjectsConfig}
+        onChangeName={(v) => updateDraft({ name: v })}
+        markDirty={markDirty}
+        onSetLaunchDir={updateLaunchDir}
+        onSave={handleSave}
+        onLaunch={handleLaunch}
+        onLaunchWithOptions={handleLaunchWithOptions}
+        overflowMenu={team ? (close: () => void) => (
+          <>
+            <button role="menuitem" type="button" onClick={() => { close(); handlePreviewMerge(); }} disabled={draft.members.length === 0}>
+              Preview Merge
             </button>
-          </div>
-        </div>
-      </div>
+            <div className="pe-overflow-divider" role="separator" />
+            <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { close(); setShowDeleteConfirm(true); }}>
+              Delete Team
+            </button>
+          </>
+        ) : undefined}
+      />
 
       {launchError && (
         <div className="pe-error-banner">
