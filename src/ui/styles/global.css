@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap");
 @import "./statusbar-tab.css";
 
 /* ─── Fonts (self-hosted WOFF2, SIL OFL, see /fonts/README.md) ────────────── */
@@ -32,9 +33,10 @@
 
   /* ══ Palette primitives (DESIGN.md) ══════════════════════════════════ */
 
-  /* Shared brand */
-  --terracotta:     #c96442;
-  --coral:          #d97757;
+  /* Shared brand — Anthropic brand palette */
+  --terracotta:     #d97757;  /* brand orange */
+  --coral:          #e68a6a;  /* brand orange hover (lightened) */
+  --brand-blue:     #6a9bcc;  /* brand secondary accent */
   --error-crimson:  #b53333;
 
   /* Shared warm neutral (works against both surface tones) */
@@ -71,7 +73,7 @@
   /* Item-type earth spectrum — tuned so every pair passes 3.0:1 non-text contrast
      against both Parchment (#f5f4ed) and Dark Surface (#30302e) for indicator use.
      Not intended as primary text color; use --text-primary for item names. */
-  --sage:   #7a8b6e;  /* skill   — muted olive  (3.31 L / 3.62 D) */
+  --sage:   #788c5d;  /* skill   — Anthropic brand green */
   --walnut: #9a7a5e;  /* agent   — warm umber   (3.58 L / 3.35 D) */
   --brass:  #9a7a2e;  /* command — deep amber   (3.66 L / 3.27 D) */
   --plum:   #987585;  /* team    — earthy mauve (3.65 L / 3.29 D) */
@@ -135,10 +137,11 @@
 
   /* ══ Typography tokens ═══════════════════════════════════════════════ */
 
-  /* Families — system sans, Source Serif 4 for editorial moments, JetBrains Mono for code */
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font-sans:  -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-  --font-mono:  "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+  /* Families — Anthropic brand: Poppins for headings (24pt+), Lora for body */
+  --font-heading: "Poppins", Arial, sans-serif;
+  --font-serif:   "Poppins", Arial, sans-serif;   /* editorial heading moments */
+  --font-sans:    "Lora", Georgia, "Times New Roman", serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
 
   /* Size ramp (DESIGN.md-aligned) */
   --fs-display:  4rem;       /* 64px   — hero */
@@ -246,6 +249,11 @@ body {
 
 #root {
   height: 100vh;
+}
+
+/* ─── Anthropic brand headings — Poppins ──────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }
 
 /* ─── Drag region ─────────────────────────────────────────────────────────── */
@@ -449,7 +457,7 @@ body {
 }
 
 .profile-list-header h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-heading);
   font-size: var(--fs-body);
   font-weight: 500;
   letter-spacing: var(--ls-tight);
