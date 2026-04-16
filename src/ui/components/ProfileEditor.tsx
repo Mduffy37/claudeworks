@@ -921,7 +921,32 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
           {activeTab === "local" && (
             <div className="pe-local-tab">
-              {!launchDir ? (
+              {editingItem ? (
+                <div className="project-item-editor">
+                  <div className="manage-section-header">
+                    <span className="manage-section-label">{editingItem.type}: {editingItem.name}</span>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        className="open-in-editor-btn"
+                        onClick={() => window.api.openInFinder(editingItem.absolutePath)}
+                        title="Open in default editor"
+                      >
+                        Open in Editor ↗
+                      </button>
+                      {editingDirty && (
+                        <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEditingItem}>Save</button>
+                      )}
+                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleCloseEditor}>Close</button>
+                    </div>
+                  </div>
+                  <textarea
+                    className="manage-claudemd-editor"
+                    value={editingContent}
+                    onChange={(e) => { setEditingContent(e.target.value); setEditingDirty(true); }}
+                    placeholder={`${editingItem.type} content...`}
+                  />
+                </div>
+              ) : !launchDir ? (
                 <div className="empty-state" style={{ padding: "32px 0" }}>
                   <div className="empty-state-icon">&#9671;</div>
                   <div className="empty-state-title">Select a project directory</div>
@@ -1039,6 +1064,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                       Insert Prompt
                     </button>
+                    <button className="open-in-editor-btn" onClick={async () => {
+                      const configDir = await window.api.getProfileConfigDir(name);
+                      window.api.openInFinder(`${configDir}/CLAUDE.md`);
+                    }} title="Open in default editor">Open in Editor ↗</button>
                     {customClaudeMd.trim() && (
                       <button className="insert-prompt-btn" onClick={async () => {
                         const id = `prompt-${Date.now()}`;
@@ -1081,6 +1110,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                       Insert Prompt
                     </button>
+                    <button className="open-in-editor-btn" onClick={async () => {
+                      const configDir = await window.api.getProfileConfigDir(name);
+                      window.api.openInFinder(`${configDir}/commands/workflow.md`);
+                    }} title="Open in default editor">Open in Editor ↗</button>
                     {workflow.trim() && (
                       <button className="insert-prompt-btn" onClick={async () => {
                         const id = `prompt-${Date.now()}`;
@@ -1204,55 +1237,6 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         />
       )}
 
-      {/* Inline item editor modal */}
-      {editingItem && (
-        <div className="modal-backdrop" onClick={handleCloseEditor}>
-          <div
-            className="modal-dialog modal-dialog--editor"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="editor-title"
-          >
-            <div className="modal-header">
-              <span className="modal-title" id="editor-title">
-                {editingItem.type}: {editingItem.name}
-              </span>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                <button
-                  className="open-in-editor-btn"
-                  onClick={() => window.api.openInFinder(editingItem.absolutePath)}
-                  title="Open in default editor"
-                >
-                  Open in Editor ↗
-                </button>
-                {editingDirty && (
-                  <button
-                    className="btn-primary"
-                    style={{ fontSize: "0.846rem", padding: "3px 10px" }}
-                    onClick={handleSaveEditingItem}
-                  >
-                    Save
-                  </button>
-                )}
-                <button className="modal-close" onClick={handleCloseEditor} aria-label="Close">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="modal-body" style={{ padding: 0 }}>
-              <textarea
-                className="manage-claudemd-editor item-editor-textarea"
-                value={editingContent}
-                onChange={(e) => { setEditingContent(e.target.value); setEditingDirty(true); }}
-                placeholder={`${editingItem.type} content...`}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

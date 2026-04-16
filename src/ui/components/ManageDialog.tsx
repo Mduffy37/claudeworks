@@ -507,7 +507,7 @@ function ProjectsTab() {
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button
                     className="open-in-editor-btn"
-                    onClick={() => window.api.openInFinder(`${selected}/.claude/CLAUDE.md`)}
+                    onClick={() => window.api.openInFinder(`${selected}/CLAUDE.md`)}
                     title="Open in default editor"
                   >
                     Open in Editor ↗
