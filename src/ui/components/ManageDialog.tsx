@@ -1548,6 +1548,9 @@ export function ManageDialog({
     if (pluginSubTab === "sources" && !discoverLoaded && !discoverLoading) {
       loadAvailablePlugins();
     }
+    if (pluginSubTab === "sources") {
+      window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
+    }
   }, [pluginSubTab]);
   const [marketplaces, setMarketplaces] = useState<Array<{ name: string; repo: string; lastUpdated: string }>>([]);
 
@@ -2003,6 +2006,7 @@ export function ManageDialog({
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
   const [refreshingSource, setRefreshingSource] = useState<string | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
+  const [pluginUpdates, setPluginUpdates] = useState<Record<string, string>>({});
 
   const loadMarketplaces = async () => {
     const list = await window.api.listMarketplaces();
@@ -2047,6 +2051,7 @@ export function ManageDialog({
       await loadMarketplaces();
       onPluginsChanged?.();
       loadAvailablePlugins();
+      window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
     } catch (err: any) {
       setMarketplaceError(err?.message ?? "Failed to refresh marketplace");
     } finally {
@@ -2062,6 +2067,7 @@ export function ManageDialog({
       await loadMarketplaces();
       onPluginsChanged?.();
       loadAvailablePlugins();
+      window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
     } catch (err: any) {
       setMarketplaceError(err?.message ?? "Failed to update marketplaces");
     } finally {
@@ -2774,6 +2780,17 @@ export function ManageDialog({
                                 <div className="marketplace-item-name">
                                   <span className={`browse-marketplace-arrow${isExpanded ? " open" : ""}`} aria-hidden="true">&#9654;</span>
                                   {" "}{mp.name}
+                                  {(() => {
+                                    const sourceUpdateCount = Object.keys(pluginUpdates).filter((pid) =>
+                                      plugins.some((p) => p.name === pid && p.marketplace === mp.name)
+                                    ).length;
+                                    if (sourceUpdateCount === 0) return null;
+                                    return (
+                                      <span className="marketplace-update-badge">
+                                        {sourceUpdateCount} update{sourceUpdateCount !== 1 ? "s" : ""}
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                                 <div className="marketplace-item-meta">
                                   <span className="marketplace-item-repo">{mp.repo}</span>
@@ -2834,8 +2851,27 @@ export function ManageDialog({
                                     installed: false,
                                   })),
                               ];
+                              const sourceUpdateIds = Object.keys(pluginUpdates).filter((pid) =>
+                                plugins.some((p) => p.name === pid && p.marketplace === mp.name)
+                              );
                               return (
                                 <div className="source-plugins-list">
+                                  {sourceUpdateIds.length > 0 && (
+                                    <div className="marketplace-expanded-actions">
+                                      <button
+                                        className="btn-secondary btn-sm"
+                                        onClick={async () => {
+                                          for (const pid of sourceUpdateIds) {
+                                            await window.api.updatePlugin(pid);
+                                          }
+                                          onPluginsChanged?.();
+                                          window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
+                                        }}
+                                      >
+                                        Update All ({sourceUpdateIds.length})
+                                      </button>
+                                    </div>
+                                  )}
                                   {discoverLoading ? (
                                     <div className="discover-loading" style={{ padding: "8px 12px" }}>Loading plugins...</div>
                                   ) : allFromSource.length === 0 ? (
@@ -2847,22 +2883,37 @@ export function ManageDialog({
                                           <span className="source-plugin-name">{sp.displayName}</span>
                                           {sp.description && <span className="source-plugin-desc">{sp.description}</span>}
                                         </div>
-                                        {sp.installed ? (
-                                          <button
-                                            className="btn-danger-small"
-                                            onClick={() => requestUninstallPlugin(sp.id, sp.displayName)}
-                                            title="Uninstall"
-                                          >
-                                            Uninstall
-                                          </button>
-                                        ) : (
-                                          <button
-                                            className="btn-primary curated-install-btn"
-                                            onClick={() => handleInstallPlugin(sp.id)}
-                                          >
-                                            Install
-                                          </button>
-                                        )}
+                                        <div className="source-plugin-actions">
+                                          {sp.installed && sp.id in pluginUpdates && (
+                                            <button
+                                              className="btn-secondary btn-sm"
+                                              onClick={async (e) => {
+                                                e.stopPropagation();
+                                                await window.api.updatePlugin(sp.id);
+                                                onPluginsChanged?.();
+                                                window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
+                                              }}
+                                            >
+                                              Update
+                                            </button>
+                                          )}
+                                          {sp.installed ? (
+                                            <button
+                                              className="btn-danger-small"
+                                              onClick={() => requestUninstallPlugin(sp.id, sp.displayName)}
+                                              title="Uninstall"
+                                            >
+                                              Uninstall
+                                            </button>
+                                          ) : (
+                                            <button
+                                              className="btn-primary curated-install-btn"
+                                              onClick={() => handleInstallPlugin(sp.id)}
+                                            >
+                                              Install
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     ))
                                   )}

@@ -5602,6 +5602,37 @@ h1, h2, h3, h4, h5, h6 {
   text-overflow: ellipsis;
 }
 
+.source-plugin-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.marketplace-update-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--accent-warning, #e8a030);
+  color: #fff;
+  vertical-align: middle;
+}
+
+.marketplace-expanded-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+
+.btn-sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
 .marketplace-item {
   display: flex;
   align-items: center;
