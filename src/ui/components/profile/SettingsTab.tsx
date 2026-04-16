@@ -181,13 +181,19 @@ export function SettingsTab(props: Props) {
       setAliasConflicts((prev) => ({ ...prev, [index]: null }));
       return;
     }
+    // Check for duplicates within this profile first
+    const dupeIdx = aliases.findIndex((a, i) => i !== index && a.name === aliasName);
+    if (dupeIdx >= 0) {
+      setAliasConflicts((prev) => ({ ...prev, [index]: { conflict: true, source: "profile", detail: `Duplicate — already used above` } }));
+      return;
+    }
     try {
       const result = await window.api.checkAliasConflict(aliasName, profileName);
       setAliasConflicts((prev) => ({ ...prev, [index]: result }));
     } catch {
       setAliasConflicts((prev) => ({ ...prev, [index]: null }));
     }
-  }, [profileName]);
+  }, [profileName, aliases]);
 
   return (
     <div className="pe-settings-tab">
@@ -492,20 +498,20 @@ export function SettingsTab(props: Props) {
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
-                    checked={!disableDefaultAlias}
-                    onChange={(e) => onChangeDisableDefaultAlias(!e.target.checked)}
-                    aria-label="Override claude command"
+                    checked={disableDefaultAlias}
+                    onChange={(e) => onChangeDisableDefaultAlias(e.target.checked)}
+                    aria-label="Disable claude override"
                   />
                   <span className="toggle-track"><span className="toggle-thumb" /></span>
                 </label>
                 <span className="field-toggle-label">
-                  Override <code>claude</code> command
+                  Disable <code>claude</code> override <span style={{ fontSize: "0.769rem", color: "var(--text-muted)" }}>(not recommended)</span>
                 </span>
               </div>
               <div className="field-hint">
-                {!disableDefaultAlias
-                  ? <>Overriding <code>claude</code> loads {pluginCount} plugin{pluginCount !== 1 ? "s" : ""} into every session</>
-                  : <>The <code>claude</code> command uses stock behavior (no profile plugins)</>}
+                {disableDefaultAlias
+                  ? <><code>claude</code> will load with all {pluginCount} installed addon{pluginCount !== 1 ? "s" : ""} — no profile filtering applied</>
+                  : <>Profile controls which of the {pluginCount} addon{pluginCount !== 1 ? "s" : ""} load into <code>claude</code> sessions</>}
               </div>
             </div>
           )}
@@ -519,11 +525,11 @@ export function SettingsTab(props: Props) {
               </div>
             )}
             {aliases.map((alias, idx) => {
-              const isClaudeAlias = isDefault && alias.name === "claude";
+              const isManagedClaudeAlias = isDefault && idx === 0 && alias.name === "claude" && !disableDefaultAlias;
               const conflict = aliasConflicts[idx];
               return (
                 <div key={idx} className="alias-row">
-                  {!isClaudeAlias && (
+                  {!isManagedClaudeAlias && (
                     <button
                       className="alias-remove-btn btn-secondary"
                       onClick={() => removeAlias(idx)}
@@ -542,11 +548,11 @@ export function SettingsTab(props: Props) {
                         onChange={(e) => updateAlias(idx, { name: e.target.value.replace(/[^a-z0-9-]/g, "") })}
                         onBlur={() => checkConflict(idx, alias.name)}
                         placeholder="e.g. claude-research"
-                        disabled={isClaudeAlias}
-                        style={isClaudeAlias ? { opacity: 0.5 } : undefined}
+                        disabled={isManagedClaudeAlias}
+                        style={isManagedClaudeAlias ? { opacity: 0.5 } : undefined}
                         aria-label={`Alias ${idx + 1} name`}
                       />
-                      {isClaudeAlias && (
+                      {isManagedClaudeAlias && (
                         <span className="field-managed-label" style={{ marginTop: "4px", display: "inline-block" }}>managed</span>
                       )}
                       {conflict && conflict.conflict && (
