@@ -2808,18 +2808,18 @@ export function ManageDialog({
                                       title={new Date(mp.lastUpdated).toLocaleString()}
                                     >
                                       Last synced {formatRelativeTime(mp.lastUpdated)}
+                                      <button
+                                        className="marketplace-refresh-icon"
+                                        onClick={(e) => { e.stopPropagation(); handleRefreshSource(mp.name); }}
+                                        disabled={refreshingSource !== null || refreshingAll || marketplaceLoading}
+                                        aria-label={`Refresh source ${mp.name}`}
+                                        title="Refresh source"
+                                      >
+                                        {refreshingSource === mp.name ? "⟳" : "↻"}
+                                      </button>
                                     </span>
                                   )}
                                 </div>
-                              </button>
-                              <button
-                                className="btn-secondary"
-                                onClick={(e) => { e.stopPropagation(); handleRefreshSource(mp.name); }}
-                                disabled={refreshingSource !== null || refreshingAll || marketplaceLoading}
-                                aria-label={`Refresh source ${mp.name}`}
-                                title="Refresh source"
-                              >
-                                {refreshingSource === mp.name ? "Refreshing\u2026" : "Refresh"}
                               </button>
                               {mp.name !== "claude-plugins-official" && (
                                 <button

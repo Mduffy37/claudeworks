@@ -5696,6 +5696,31 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
 }
 
+.marketplace-refresh-icon {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.846rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  vertical-align: baseline;
+  line-height: 1;
+}
+
+.marketplace-refresh-icon:hover:not(:disabled) {
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+.marketplace-refresh-icon:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
 .marketplace-item-count {
   font-size: 0.769rem;
   font-weight: 500;
