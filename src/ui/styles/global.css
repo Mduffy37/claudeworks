@@ -7925,3 +7925,47 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-surface);
 }
 
+/* ─── Responsive / compact mode ────────────────────────────────────────────── */
+
+/* Compact mode — at or below default app width, use tighter layout */
+@media (max-width: 1280px) {
+  .profile-editor {
+    --pe-gutter: 14px;
+  }
+
+  .te-editor {
+    --pe-gutter: 14px;
+  }
+
+  .pe-settings-tab {
+    gap: 12px;
+  }
+
+  .pe-settings-section {
+    padding: 12px;
+  }
+
+  .pe-instructions-tab {
+    gap: 14px;
+  }
+
+  .te-member-card {
+    padding: 10px;
+  }
+
+  .te-members-list {
+    gap: 8px;
+  }
+}
+
+/* Large / ultrawide — let content breathe */
+@media (min-width: 1800px) {
+  .profile-editor {
+    --pe-max-width: clamp(720px, 65vw, 1400px);
+  }
+
+  .te-editor {
+    --pe-max-width: clamp(720px, 65vw, 1400px);
+  }
+}
+
