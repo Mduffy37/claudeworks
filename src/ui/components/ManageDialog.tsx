@@ -280,6 +280,20 @@ function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
       <div className="manage-section-header">
         <span className="manage-section-label">{type}: {name}</span>
         <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            className="open-in-editor-btn"
+            onClick={() => {
+              const absPath = type === "skill"
+                ? `${dir}/.claude/skills/${name}/SKILL.md`
+                : type === "agent"
+                  ? `${dir}/.claude/agents/${name}.md`
+                  : `${dir}/.claude/commands/${name}.md`;
+              window.api.openInFinder(absPath);
+            }}
+            title="Open in default editor"
+          >
+            Open in Editor ↗
+          </button>
           {dirty && (
             <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>Save</button>
           )}
@@ -491,6 +505,13 @@ function ProjectsTab() {
               <div className="manage-section-header">
                 <span className="manage-section-label">CLAUDE.md</span>
                 <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    className="open-in-editor-btn"
+                    onClick={() => window.api.openInFinder(`${selected}/.claude/CLAUDE.md`)}
+                    title="Open in default editor"
+                  >
+                    Open in Editor ↗
+                  </button>
                   <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
                   {claudeMdDirty && (
                     <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
@@ -579,6 +600,13 @@ function ProjectsTab() {
                 <span className="manage-section-label">MCP Servers</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   {mcpError && <span style={{ fontSize: "0.846rem", color: "var(--color-danger, #e55)" }}>{mcpError}</span>}
+                  <button
+                    className="open-in-editor-btn"
+                    onClick={() => window.api.openInFinder(`${selected}/.mcp.json`)}
+                    title="Open in default editor"
+                  >
+                    Open in Editor ↗
+                  </button>
                   {mcpDirty && (
                     <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveMcp}>Save</button>
                   )}
