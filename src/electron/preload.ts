@@ -62,6 +62,8 @@ const api: ElectronAPI = {
   saveGlobalDefaults: (defaults) => ipcRenderer.invoke("save-global-defaults", defaults),
   getFavouritePlugins: () => ipcRenderer.invoke("get-favourite-plugins"),
   saveFavouritePlugins: (ids) => ipcRenderer.invoke("save-favourite-plugins", ids),
+  getSavedStatusBarConfigs: () => ipcRenderer.invoke("get-saved-statusbar-configs"),
+  saveSavedStatusBarConfigs: (configs) => ipcRenderer.invoke("save-saved-statusbar-configs", configs),
   // Projects
   getImportedProjects: () => ipcRenderer.invoke("get-imported-projects"),
   addImportedProject: (dir) => ipcRenderer.invoke("add-imported-project", dir),

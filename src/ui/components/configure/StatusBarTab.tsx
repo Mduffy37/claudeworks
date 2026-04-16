@@ -126,6 +126,9 @@ export function StatusBarTab() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [presetMenuOpen, setPresetMenuOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [savedConfigs, setSavedConfigs] = useState<Array<{ name: string; config: any }>>([]);
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [saveInputName, setSaveInputName] = useState("");
 
   const addMenuRef = useRef<HTMLDivElement | null>(null);
   const presetMenuRef = useRef<HTMLDivElement | null>(null);
@@ -136,6 +139,10 @@ export function StatusBarTab() {
 
   useEffect(() => {
     window.api.getStatusLineConfig().then(setConfig);
+  }, []);
+
+  useEffect(() => {
+    window.api.getSavedStatusBarConfigs().then(setSavedConfigs);
   }, []);
 
   // Close popover menus when clicking outside them.
@@ -259,6 +266,36 @@ export function StatusBarTab() {
     setSelectedIndex(null);
     setDirty(true);
     setPresetMenuOpen(false);
+  }
+
+  function loadSavedConfig(saved: { name: string; config: any }) {
+    setConfig(JSON.parse(JSON.stringify(saved.config)) as StatusLineConfig);
+    setSelectedIndex(null);
+    setDirty(true);
+    setPresetMenuOpen(false);
+  }
+
+  async function handleSaveConfig() {
+    const name = saveInputName.trim();
+    if (!name || !config) return;
+    const existing = savedConfigs.findIndex((c) => c.name === name);
+    let next: typeof savedConfigs;
+    if (existing >= 0) {
+      next = [...savedConfigs];
+      next[existing] = { name, config: JSON.parse(JSON.stringify(config)) };
+    } else {
+      next = [...savedConfigs, { name, config: JSON.parse(JSON.stringify(config)) }];
+    }
+    setSavedConfigs(next);
+    await window.api.saveSavedStatusBarConfigs(next);
+    setShowSaveInput(false);
+    setSaveInputName("");
+  }
+
+  async function handleDeleteSavedConfig(name: string) {
+    const next = savedConfigs.filter((c) => c.name !== name);
+    setSavedConfigs(next);
+    await window.api.saveSavedStatusBarConfigs(next);
   }
 
   function changeSeparator(which: "field" | "section", value: string) {
@@ -479,9 +516,73 @@ export function StatusBarTab() {
                     {label}
                   </button>
                 ))}
+                {savedConfigs.length > 0 && (
+                  <>
+                    <div className="status-bar-preset-divider" />
+                    {savedConfigs.map((saved) => (
+                      <div key={saved.name} className="status-bar-preset-saved-row">
+                        <button
+                          type="button"
+                          className="status-bar-preset-saved-load"
+                          onClick={() => loadSavedConfig(saved)}
+                        >
+                          {saved.name}
+                        </button>
+                        <button
+                          type="button"
+                          className="status-bar-preset-saved-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSavedConfig(saved.name);
+                          }}
+                          title={`Delete "${saved.name}"`}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>
+          {showSaveInput ? (
+            <div className="status-bar-save-input-wrap">
+              <input
+                type="text"
+                className="status-bar-save-input"
+                placeholder="Config name…"
+                value={saveInputName}
+                onChange={(e) => setSaveInputName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveConfig();
+                  if (e.key === "Escape") { setShowSaveInput(false); setSaveInputName(""); }
+                }}
+                autoFocus
+              />
+              <button
+                className="btn-primary btn-sm"
+                disabled={!saveInputName.trim()}
+                onClick={handleSaveConfig}
+              >
+                Save
+              </button>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={() => { setShowSaveInput(false); setSaveInputName(""); }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn-secondary"
+              disabled={saving}
+              onClick={() => setShowSaveInput(true)}
+            >
+              Save current
+            </button>
+          )}
         </div>
         <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
           {saving ? "Saving…" : dirty ? "Save" : "Saved"}

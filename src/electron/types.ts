@@ -513,6 +513,8 @@ export interface ElectronAPI {
   getKnownEnvVars: () => Promise<KnownEnvVar[]>;
   getFavouritePlugins: () => Promise<string[]>;
   saveFavouritePlugins: (ids: string[]) => Promise<void>;
+  getSavedStatusBarConfigs: () => Promise<Array<{ name: string; config: any }>>;
+  saveSavedStatusBarConfigs: (configs: Array<{ name: string; config: any }>) => Promise<void>;
   checkAliasConflict: (aliasName: string, profileName: string) => Promise<{ conflict: boolean; source: string; detail: string } | null>;
 }
 

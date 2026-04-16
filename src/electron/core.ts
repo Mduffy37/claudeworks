@@ -792,11 +792,30 @@ export function detectGitSource(skillDir: string): Record<string, any> | null {
   const gitDir = path.join(skillDir, ".git");
   if (!fs.existsSync(gitDir)) return null;
 
+  // Validate this is actually a git repo before running subprocesses.
+  // A real git repo has .git/ as a directory containing HEAD.
+  // A submodule has .git as a file with "gitdir: ..." pointing elsewhere.
+  // Broken submodules, partial clones, or non-git .git markers should
+  // be skipped — not fed to git which would print "fatal: not a git
+  // repository" to stderr.
   let mtimeMs = 0;
   try {
-    mtimeMs = fs.statSync(path.join(gitDir, "HEAD")).mtimeMs;
+    const gitStat = fs.lstatSync(gitDir);
+    if (gitStat.isDirectory()) {
+      // Real .git directory — check for HEAD
+      mtimeMs = fs.statSync(path.join(gitDir, "HEAD")).mtimeMs;
+    } else if (gitStat.isFile()) {
+      // .git file (submodule marker) — validate the gitdir target exists
+      const content = fs.readFileSync(gitDir, "utf-8").trim();
+      if (!content.startsWith("gitdir:")) return null;
+      const target = path.resolve(skillDir, content.slice("gitdir:".length).trim());
+      if (!fs.existsSync(path.join(target, "HEAD"))) return null;
+      mtimeMs = fs.statSync(path.join(target, "HEAD")).mtimeMs;
+    } else {
+      return null; // symlink to nowhere, socket, etc.
+    }
   } catch {
-    // HEAD missing/unreadable — fall through and re-run; don't cache.
+    return null; // Can't validate — skip rather than run git and get "fatal:"
   }
   if (mtimeMs) {
     const cached = _gitSourceCache.get(skillDir);
@@ -4074,6 +4093,22 @@ export function saveFavouritePlugins(ids: string[]): void {
   let data: any = {};
   try { data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8")); } catch {}
   data.favouritePlugins = ids;
+  fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(data, null, 2));
+}
+
+export function getSavedStatusBarConfigs(): Array<{ name: string; config: any }> {
+  try {
+    const data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8"));
+    return Array.isArray(data.savedStatusBarConfigs) ? data.savedStatusBarConfigs : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSavedStatusBarConfigs(configs: Array<{ name: string; config: any }>): void {
+  let data: any = {};
+  try { data = JSON.parse(fs.readFileSync(GLOBAL_DEFAULTS_JSON, "utf-8")); } catch {}
+  data.savedStatusBarConfigs = configs;
   fs.writeFileSync(GLOBAL_DEFAULTS_JSON, JSON.stringify(data, null, 2));
 }
 

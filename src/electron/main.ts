@@ -52,6 +52,8 @@ import {
   saveGlobalDefaults,
   getFavouritePlugins,
   saveFavouritePlugins,
+  getSavedStatusBarConfigs,
+  saveSavedStatusBarConfigs,
   getImportedProjects,
   addImportedProject,
   removeImportedProject,
@@ -443,6 +445,8 @@ ipcMain.handle("get-global-defaults", () => getGlobalDefaults());
 ipcMain.handle("save-global-defaults", (_event, defaults: { model: string; opusContext?: "200k" | "1m"; sonnetContext?: "200k" | "1m"; effortLevel: string }) => saveGlobalDefaults(defaults));
 ipcMain.handle("get-favourite-plugins", () => getFavouritePlugins());
 ipcMain.handle("save-favourite-plugins", (_event, ids: string[]) => saveFavouritePlugins(ids));
+ipcMain.handle("get-saved-statusbar-configs", () => getSavedStatusBarConfigs());
+ipcMain.handle("save-saved-statusbar-configs", (_event, configs: Array<{ name: string; config: any }>) => saveSavedStatusBarConfigs(configs));
 
 // Projects
 ipcMain.handle("get-imported-projects", () => getImportedProjects());
