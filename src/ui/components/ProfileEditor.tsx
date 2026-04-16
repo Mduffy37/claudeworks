@@ -1245,6 +1245,12 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                         await window.api.writeProjectFile(configDir, relPath, variant.body ? frontmatter + variant.body : "");
                         window.api.openInFinder(`${configDir}/${relPath}`);
                       }} title="Open in default editor">Open in Editor ↗</button>
+                      {variant.body?.trim() && (
+                        <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(variant.body, variant.name ? `workflow-${variant.name}` : "Untitled variant")}>
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                          Save as Prompt
+                        </button>
+                      )}
                       <button
                         className="btn-danger-ghost"
                         style={{ fontSize: "0.769rem", padding: "2px 8px" }}

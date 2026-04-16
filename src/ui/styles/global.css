@@ -1332,14 +1332,28 @@ h1, h2, h3, h4, h5, h6 {
   border-bottom: 1px solid var(--border);
 }
 
-.prompt-picker-tags .bulk-tag-chip {
+.prompt-picker-tag-btn {
+  font-size: 0.769rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px 10px;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.prompt-picker-tags .bulk-tag-chip.active {
-  background: var(--accent);
-  color: #fff;
+.prompt-picker-tag-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+
+.prompt-picker-tag-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  font-weight: 600;
 }
 
 .prompt-picker-list {

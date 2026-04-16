@@ -66,7 +66,7 @@ export function PromptPicker({ onSelect, onClose }: Props) {
         {allTags.length > 0 && (
           <div className="prompt-picker-tags">
             <button
-              className={`bulk-tag-chip${activeTag === null ? " active" : ""}`}
+              className={`prompt-picker-tag-btn${activeTag === null ? " active" : ""}`}
               onClick={() => setActiveTag(null)}
             >
               All
@@ -74,7 +74,7 @@ export function PromptPicker({ onSelect, onClose }: Props) {
             {allTags.map((t) => (
               <button
                 key={t}
-                className={`bulk-tag-chip${activeTag === t ? " active" : ""}`}
+                className={`prompt-picker-tag-btn${activeTag === t ? " active" : ""}`}
                 onClick={() => setActiveTag(activeTag === t ? null : t)}
               >
                 {t}
