@@ -154,8 +154,8 @@ function OverviewModal({
               </div>
               {onGoToTab && (
                 <button
-                  className="btn-link"
-                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  className="btn-secondary"
+                  style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["plugins"])}
                 >
                   Go to Plugins tab →
@@ -177,8 +177,8 @@ function OverviewModal({
               </div>
               {onGoToTab && (
                 <button
-                  className="btn-link"
-                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  className="btn-secondary"
+                  style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["skills"])}
                 >
                   Go to Skills tab →
@@ -200,8 +200,8 @@ function OverviewModal({
               </div>
               {onGoToTab && (
                 <button
-                  className="btn-link"
-                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  className="btn-secondary"
+                  style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["agents"])}
                 >
                   Go to Agents tab →
@@ -223,8 +223,8 @@ function OverviewModal({
               </div>
               {onGoToTab && (
                 <button
-                  className="btn-link"
-                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  className="btn-secondary"
+                  style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["commands"])}
                 >
                   Go to Commands tab →
@@ -245,8 +245,8 @@ function OverviewModal({
               </div>
               {onGoToTab && (
                 <button
-                  className="btn-link"
-                  style={{ fontSize: "0.769rem", marginTop: "6px", padding: 0 }}
+                  className="btn-secondary"
+                  style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["mcps"])}
                 >
                   Go to MCP Servers tab →
