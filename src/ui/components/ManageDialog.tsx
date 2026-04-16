@@ -677,6 +677,7 @@ function GlobalSettingsTab() {
   const [knownVars, setKnownVars] = useState<Array<{ name: string; description: string; values: string[] | null }>>([]);
   const [envSuggestions, setEnvSuggestions] = useState<Array<{ name: string; description: string }>>([]);
   const [showEnvSuggestions, setShowEnvSuggestions] = useState(false);
+  const [showEnvValueSuggestions, setShowEnvValueSuggestions] = useState(false);
   const [hooksJson, setHooksJson] = useState("");
   const [hooksDirty, setHooksDirty] = useState(false);
   const [hooksError, setHooksError] = useState("");
@@ -786,10 +787,13 @@ function GlobalSettingsTab() {
   const selectEnvSuggestion = (name: string) => {
     setNewKey(name);
     setShowEnvSuggestions(false);
-    const known = knownVars.find((v) => v.name === name);
-    if (known?.values?.length === 1) {
-      setNewValue(known.values[0]);
-    }
+  };
+
+  const knownValuesForKey = knownVars.find((v) => v.name === newKey)?.values ?? null;
+
+  const selectEnvValueSuggestion = (value: string) => {
+    setNewValue(value);
+    setShowEnvValueSuggestions(false);
   };
 
   const envEntries = Object.entries(env);
@@ -926,7 +930,18 @@ function GlobalSettingsTab() {
                 </div>
               )}
             </div>
-            <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} />
+            <div className="env-input-wrapper">
+              <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder="value" aria-label="New variable value" onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }} onFocus={() => { if (knownValuesForKey && knownValuesForKey.length > 0) setShowEnvValueSuggestions(true); }} onBlur={() => setTimeout(() => setShowEnvValueSuggestions(false), 150)} />
+              {showEnvValueSuggestions && knownValuesForKey && knownValuesForKey.length > 0 && (
+                <div className="env-autocomplete-dropdown">
+                  {knownValuesForKey.map((v) => (
+                    <button key={v} className="env-autocomplete-item" onMouseDown={(e) => { e.preventDefault(); selectEnvValueSuggestion(v); }}>
+                      <span className="env-autocomplete-name">{v}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
           </div>
         </div>

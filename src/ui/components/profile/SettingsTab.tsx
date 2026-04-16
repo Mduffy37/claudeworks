@@ -54,6 +54,7 @@ export function SettingsTab(props: Props) {
   const [knownVars, setKnownVars] = useState<Array<{ name: string; description: string; values: string[] | null }>>([]);
   const [suggestions, setSuggestions] = useState<Array<{ name: string; description: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showValueSuggestions, setShowValueSuggestions] = useState(false);
 
   const toggleAdvanced = (id: string) =>
     setOpenAdvanced((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -136,10 +137,13 @@ export function SettingsTab(props: Props) {
   const selectSuggestion = (name: string) => {
     setNewKey(name);
     setShowSuggestions(false);
-    const known = knownVars.find((v) => v.name === name);
-    if (known?.values?.length === 1) {
-      setNewValue(known.values[0]);
-    }
+  };
+
+  const knownValuesForKey = knownVars.find((v) => v.name === newKey)?.values ?? null;
+
+  const selectValueSuggestion = (value: string) => {
+    setNewValue(value);
+    setShowValueSuggestions(false);
   };
 
   return (
@@ -355,14 +359,31 @@ export function SettingsTab(props: Props) {
                 </div>
               )}
             </div>
-            <input
-              type="text"
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-              placeholder="value"
-              aria-label="New variable value"
-              onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
-            />
+            <div className="env-input-wrapper">
+              <input
+                type="text"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="value"
+                aria-label="New variable value"
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
+                onFocus={() => { if (knownValuesForKey && knownValuesForKey.length > 0) setShowValueSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowValueSuggestions(false), 150)}
+              />
+              {showValueSuggestions && knownValuesForKey && knownValuesForKey.length > 0 && (
+                <div className="env-autocomplete-dropdown">
+                  {knownValuesForKey.map((v) => (
+                    <button
+                      key={v}
+                      className="env-autocomplete-item"
+                      onMouseDown={(e) => { e.preventDefault(); selectValueSuggestion(v); }}
+                    >
+                      <span className="env-autocomplete-name">{v}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
           </div>
           {envEntries.length === 0 && inheritedEnv.length === 0 && (
