@@ -1861,28 +1861,28 @@ export function assembleProfile(profile: Profile, launchDirectory?: string): str
   const commandsDir = path.join(configDir, "commands");
   fs.mkdirSync(commandsDir, { recursive: true });
 
-  // Clean up stale variant files
-  const validVariantFiles = new Set(
-    (profile.workflows ?? []).map((w) => `workflow-${w.name}.md`)
-  );
-  try {
-    for (const file of fs.readdirSync(commandsDir)) {
-      if (file.startsWith("workflow-") && file.endsWith(".md") && !validVariantFiles.has(file)) {
-        try { fs.unlinkSync(path.join(commandsDir, file)); } catch {}
-      }
-    }
-  } catch {}
-
-  // Write each variant
+  // Write each variant, tracking what was actually written
+  const writtenVariantFiles = new Set<string>();
   for (const variant of profile.workflows ?? []) {
     if (!variant.name || !variant.body?.trim()) continue;
     // Project-scoped: skip if launch directory doesn't match
     const effectiveDir = launchDirectory ?? profile.directory;
     if (variant.directory && effectiveDir && variant.directory !== effectiveDir) continue;
-    const variantPath = path.join(commandsDir, `workflow-${variant.name}.md`);
+    const filename = `workflow-${variant.name}.md`;
+    const variantPath = path.join(commandsDir, filename);
     const frontmatter = `---\ndescription: Run the ${variant.name} workflow\n---\n\n`;
     fs.writeFileSync(variantPath, frontmatter + variant.body);
+    writtenVariantFiles.add(filename);
   }
+
+  // Clean up: remove any workflow-*.md that wasn't written in this pass
+  try {
+    for (const file of fs.readdirSync(commandsDir)) {
+      if (file.startsWith("workflow-") && file.endsWith(".md") && !writtenVariantFiles.has(file)) {
+        try { fs.unlinkSync(path.join(commandsDir, file)); } catch {}
+      }
+    }
+  } catch {}
 
   // Handle per-profile status line config override (Phase 6)
   // When set, the Python renderer picks this up via $CLAUDE_CONFIG_DIR and
