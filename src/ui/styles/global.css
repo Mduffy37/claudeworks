@@ -8241,45 +8241,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 4px;
 }
 
-/* Workflow variant cards */
-.workflow-variant-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  margin-bottom: 8px;
-}
-
-.workflow-variant-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.workflow-variant-prefix {
-  font-family: var(--font-mono);
-  font-size: 0.846rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.workflow-variant-name {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-mono);
-}
-
-.workflow-variant-dir {
-  flex: 0 0 auto;
-  max-width: 180px;
-}
-
-.workflow-variant-remove {
-  flex-shrink: 0;
-  font-size: 0.769rem;
-  padding: 3px 8px;
-}
+/* Workflow variant cards — reuses .alias-row + .alias-row-fields from aliases */
 
 /* Large / ultrawide — let content breathe */
 @media (min-width: 1800px) {
