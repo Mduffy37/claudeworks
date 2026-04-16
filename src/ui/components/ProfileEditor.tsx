@@ -1172,9 +1172,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   </div>
                 </div>
 
-                {workflows.map((variant, idx) => {
-                  const allDirs = [...new Set([...importedProjects, ...directories])];
-                  return (
+                {workflows.map((variant, idx) => (
                   <div key={idx} className="alias-row">
                     <button
                       className="alias-remove-btn btn-secondary"
@@ -1204,27 +1202,25 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                           />
                         </div>
                       </div>
-                      <div className="field">
-                        <label>Directory</label>
-                        <select
-                          value={variant.directory ?? ""}
-                          onChange={(e) => {
-                            const next = [...workflows];
-                            next[idx] = { ...next[idx], directory: e.target.value || undefined };
-                            setWorkflows(next);
-                            markDirty();
-                          }}
-                        >
-                          <option value="">All directories</option>
-                          {allDirs.map(d => (
-                            <option key={d} value={d}>{d.split("/").pop() || d}</option>
-                          ))}
-                        </select>
+                      <div className="field" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "6px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.846rem", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={!!variant.directory}
+                            onChange={(e) => {
+                              const next = [...workflows];
+                              next[idx] = { ...next[idx], directory: e.target.checked ? (launchDir || directories[0] || undefined) : undefined };
+                              setWorkflows(next);
+                              markDirty();
+                            }}
+                          />
+                          Exclusive to {variant.directory ? (variant.directory.split("/").pop() || "project") : "this project"}
+                        </label>
                       </div>
                     </div>
                     <textarea
                       className="pe-instructions-editor"
-                      style={{ marginTop: "10px" }}
+                      style={{ marginTop: "16px" }}
                       value={variant.body}
                       onChange={(e) => {
                         const next = [...workflows];
@@ -1236,8 +1232,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       style={{ minHeight: "100px" }}
                     />
                   </div>
-                  );
-                })}
+                ))}
 
                 <button
                   className="btn-secondary"
