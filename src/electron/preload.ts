@@ -90,6 +90,10 @@ const api: ElectronAPI = {
   resetStatusLineConfig: () => ipcRenderer.invoke("reset-statusline-config"),
   renderStatusLinePreview: (config, mockSession) =>
     ipcRenderer.invoke("render-statusline-preview", config, mockSession),
+  // Plugin resolver
+  resolvePlugins: (ids) => ipcRenderer.invoke("resolve-plugins", ids),
+  // Known env vars
+  getKnownEnvVars: () => ipcRenderer.invoke("get-known-env-vars"),
 };
 
 contextBridge.exposeInMainWorld("api", api);

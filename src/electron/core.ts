@@ -26,6 +26,7 @@ import type {
   LaunchOptions,
   StatusLineConfig,
   StatusLineWidget,
+  KnownEnvVar,
 } from "./types";
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
@@ -645,7 +646,7 @@ export function isGsdInstalled(): boolean {
  * becomes its own plugin; loose commands and agents get catch-all plugins.
  */
 /** Read a skill folder's `.skillfish.json` provenance marker, or null if absent/invalid. */
-function readSkillfishMarker(skillDir: string): Record<string, any> | null {
+export function readSkillfishMarker(skillDir: string): Record<string, any> | null {
   const markerPath = path.join(skillDir, ".skillfish.json");
   if (!fs.existsSync(markerPath)) return null;
   try {
@@ -656,7 +657,7 @@ function readSkillfishMarker(skillDir: string): Record<string, any> | null {
 }
 
 /** Parse `owner/repo` out of a git remote URL. Returns null if we can't. */
-function parseRemoteOwnerRepo(url: string): { owner: string; repo: string } | null {
+export function parseRemoteOwnerRepo(url: string): { owner: string; repo: string } | null {
   // https://github.com/owner/repo.git  |  git@github.com:owner/repo.git  |  https://gitlab.com/group/sub/repo
   const clean = url.replace(/\.git$/, "").replace(/\/$/, "");
   const sshMatch = clean.match(/^[^@]+@[^:]+:(.+)$/);
@@ -676,7 +677,7 @@ function parseRemoteOwnerRepo(url: string): { owner: string; repo: string } | nu
  * source repo collapse into one synthetic plugin card. Blanket detector —
  * not hardcoded to any specific repo.
  */
-function detectSkillLockSource(
+export function detectSkillLockSource(
   skillDir: string,
   manifestCache: Map<string, any>,
 ): import("./types").PluginSource | null {
@@ -759,7 +760,7 @@ const _gitSourceCache = new Map<
   { mtimeMs: number; result: Record<string, any> | null }
 >();
 
-function detectGitSource(skillDir: string): Record<string, any> | null {
+export function detectGitSource(skillDir: string): Record<string, any> | null {
   const gitDir = path.join(skillDir, ".git");
   if (!fs.existsSync(gitDir)) return null;
 
@@ -2104,6 +2105,20 @@ function copyDirRecursive(src: string, dest: string): void {
 const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
 const BUILTIN_PLUGIN_VERSION = "1.0.0";
 
+const KNOWN_ENV_VARS: KnownEnvVar[] = [
+  {
+    name: "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
+    description: "Enable native agentic team mode (tmux-based multi-agent)",
+    values: ["0", "1"],
+    scope: "both",
+    requiredFor: "teams",
+  },
+];
+
+export function getKnownEnvVars(): KnownEnvVar[] {
+  return KNOWN_ENV_VARS;
+}
+
 export function ensureBuiltinPlugin(): string {
   // Install the built-in profiles-manager plugin so it appears as a normal
   // marketplace plugin. Three things need to exist:
@@ -3237,7 +3252,7 @@ export async function launchTeam(team: Team, directory?: string, options?: Launc
   // Write a launcher script to avoid nested escaping issues with tmux + AppleScript
   const projectName = path.basename(workDir);
   const sessionName = `Team: ${team.name} — ${projectName}`;
-  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux --name '${escSh(sessionName)}'${flagStr} '/start-team'`;
+  const innerCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --teammate-mode tmux --name '${escSh(sessionName)}'${flagStr} '/start-team'`;
   const launcherPath = path.join(configDir, ".team-launch.sh");
   fs.writeFileSync(launcherPath, `#!/bin/bash\n${innerCmd}\n`, { mode: 0o755 });
 
