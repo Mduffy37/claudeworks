@@ -1938,7 +1938,9 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
+  min-width: 110px;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   box-shadow: 0 1px 6px rgba(201, 100, 66, 0.35);
   letter-spacing: -0.01em;
@@ -1972,16 +1974,13 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 0.7;
 }
 
-.btn-launch.dimmed {
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  box-shadow: none;
-  border: 1px solid var(--border);
+.btn-launch-dirty {
+  box-shadow: 0 2px 14px rgba(201, 100, 66, 0.55), 0 0 0 3px rgba(201, 100, 66, 0.18);
+  font-weight: 600;
 }
 
-.btn-launch.dimmed:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
+.btn-launch-dirty:hover {
+  box-shadow: 0 3px 18px rgba(201, 100, 66, 0.65), 0 0 0 3px rgba(201, 100, 66, 0.22);
   box-shadow: none;
   transform: none;
 }
