@@ -2796,7 +2796,8 @@ export function ManageDialog({
                                   <span className="marketplace-item-repo">{mp.repo}</span>
                                   {(() => {
                                     const installedCount = plugins.filter((p) => p.marketplace === mp.name).length;
-                                    const totalCount = availablePlugins.filter((p) => p.marketplaceName === mp.name).length;
+                                    const availableCount = availablePlugins.filter((p) => p.marketplaceName === mp.name).length;
+                                    const totalCount = installedCount + availableCount;
                                     if (totalCount > 0) return <span className="marketplace-item-count">{installedCount} / {totalCount} Installed</span>;
                                     if (installedCount > 0) return <span className="marketplace-item-count">{installedCount} Installed</span>;
                                     return null;

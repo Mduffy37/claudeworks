@@ -5697,8 +5697,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .marketplace-item-count {
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 0.769rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 7px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: var(--font-mono);
+  opacity: 0.75;
 }
 
 .btn-danger-small {
