@@ -1543,6 +1543,12 @@ export function ManageDialog({
   // Discover view state
   type PluginSubTab = "installed" | "browse" | "sources";
   const [pluginSubTab, setPluginSubTab] = useState<PluginSubTab>("installed");
+
+  useEffect(() => {
+    if (pluginSubTab === "sources" && !discoverLoaded && !discoverLoading) {
+      loadAvailablePlugins();
+    }
+  }, [pluginSubTab]);
   const [marketplaces, setMarketplaces] = useState<Array<{ name: string; repo: string; lastUpdated: string }>>([]);
 
   // Curated marketplace state
@@ -2729,6 +2735,13 @@ export function ManageDialog({
                                 </div>
                                 <div className="marketplace-item-meta">
                                   <span className="marketplace-item-repo">{mp.repo}</span>
+                                  {(() => {
+                                    const installedCount = plugins.filter((p) => p.marketplace === mp.name).length;
+                                    const totalCount = availablePlugins.filter((p) => p.marketplaceName === mp.name).length;
+                                    if (totalCount > 0) return <span className="marketplace-item-count">{installedCount} / {totalCount} Installed</span>;
+                                    if (installedCount > 0) return <span className="marketplace-item-count">{installedCount} Installed</span>;
+                                    return null;
+                                  })()}
                                   {mp.lastUpdated && (
                                     <span
                                       className="marketplace-item-synced"
