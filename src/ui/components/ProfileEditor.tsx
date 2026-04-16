@@ -1172,49 +1172,57 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   </div>
                 </div>
 
-                {workflows.map((variant, idx) => (
+                {workflows.map((variant, idx) => {
+                  const allDirs = [...new Set([...importedProjects, ...directories])];
+                  return (
                   <div key={idx} className="workflow-variant-card">
-                    <div className="workflow-variant-header">
-                      <div className="workflow-variant-name-row">
-                        <span className="workflow-variant-prefix">workflow-</span>
-                        <input
-                          type="text"
-                          className="workflow-variant-name-input"
-                          value={variant.name}
+                    <div className="alias-row-fields">
+                      <div className="field">
+                        <label>Name</label>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.846rem", color: "var(--text-muted)", whiteSpace: "nowrap", marginRight: "2px" }}>workflow-</span>
+                          <input
+                            type="text"
+                            value={variant.name}
+                            onChange={(e) => {
+                              const next = [...workflows];
+                              next[idx] = { ...next[idx], name: e.target.value.replace(/[^a-z0-9-]/g, "") };
+                              setWorkflows(next);
+                              markDirty();
+                            }}
+                            placeholder="name"
+                          />
+                        </div>
+                      </div>
+                      <div className="field">
+                        <label>Directory</label>
+                        <select
+                          value={variant.directory ?? ""}
                           onChange={(e) => {
                             const next = [...workflows];
-                            next[idx] = { ...next[idx], name: e.target.value.replace(/[^a-z0-9-]/g, "") };
+                            next[idx] = { ...next[idx], directory: e.target.value || undefined };
                             setWorkflows(next);
                             markDirty();
                           }}
-                          placeholder="name"
-                        />
+                        >
+                          <option value="">All directories</option>
+                          {allDirs.map(d => (
+                            <option key={d} value={d}>{d.split("/").pop() || d}</option>
+                          ))}
+                        </select>
                       </div>
-                      <select
-                        className="workflow-variant-dir-select"
-                        value={variant.directory ?? ""}
-                        onChange={(e) => {
-                          const next = [...workflows];
-                          next[idx] = { ...next[idx], directory: e.target.value || undefined };
-                          setWorkflows(next);
-                          markDirty();
-                        }}
-                      >
-                        <option value="">All directories</option>
-                        {directories.map(d => (
-                          <option key={d} value={d}>{d.split("/").pop() || d}</option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn-danger-ghost"
-                        style={{ fontSize: "0.769rem", padding: "2px 6px" }}
-                        onClick={() => {
-                          setWorkflows(workflows.filter((_, i) => i !== idx));
-                          markDirty();
-                        }}
-                      >
-                        Remove
-                      </button>
+                      <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
+                        <button
+                          className="btn-danger-ghost"
+                          style={{ fontSize: "0.769rem", padding: "4px 8px" }}
+                          onClick={() => {
+                            setWorkflows(workflows.filter((_, i) => i !== idx));
+                            markDirty();
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       className="pe-instructions-editor"
@@ -1229,7 +1237,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       style={{ minHeight: "100px" }}
                     />
                   </div>
-                ))}
+                  );
+                })}
 
                 <button
                   className="btn-secondary"
