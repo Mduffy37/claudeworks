@@ -1857,6 +1857,32 @@ export function assembleProfile(profile: Profile): string {
     try { fs.unlinkSync(toolsPath); } catch {}
   }
 
+  // Handle workflow variants (/workflow-{name} commands)
+  const commandsDir = path.join(configDir, "commands");
+  fs.mkdirSync(commandsDir, { recursive: true });
+
+  // Clean up stale variant files
+  const validVariantFiles = new Set(
+    (profile.workflows ?? []).map((w) => `workflow-${w.name}.md`)
+  );
+  try {
+    for (const file of fs.readdirSync(commandsDir)) {
+      if (file.startsWith("workflow-") && file.endsWith(".md") && !validVariantFiles.has(file)) {
+        try { fs.unlinkSync(path.join(commandsDir, file)); } catch {}
+      }
+    }
+  } catch {}
+
+  // Write each variant
+  for (const variant of profile.workflows ?? []) {
+    if (!variant.name || !variant.body?.trim()) continue;
+    // Project-scoped: skip if directory doesn't match the profile's primary directory
+    if (variant.directory && profile.directory && variant.directory !== profile.directory) continue;
+    const variantPath = path.join(commandsDir, `workflow-${variant.name}.md`);
+    const frontmatter = `---\ndescription: Run the ${variant.name} workflow\n---\n\n`;
+    fs.writeFileSync(variantPath, frontmatter + variant.body);
+  }
+
   // Handle per-profile status line config override (Phase 6)
   // When set, the Python renderer picks this up via $CLAUDE_CONFIG_DIR and
   // uses it instead of the global ~/.claude/statusline-config.json.

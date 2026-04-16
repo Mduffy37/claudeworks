@@ -77,6 +77,12 @@ export interface ProfileAlias {
   launchPrompt?: string;
 }
 
+export interface ProfileWorkflow {
+  name: string;           // suffix after "workflow-", e.g. "debug" → /workflow-debug
+  body: string;           // workflow markdown body
+  directory?: string;     // if set, only written when launching in this directory
+}
+
 /** A plugin with its scanned items attached. */
 export interface PluginWithItems extends PluginEntry {
   items: PluginItem[];
@@ -123,6 +129,7 @@ export interface Profile {
   statusLine?: { type: "command"; command: string } | null;
   customClaudeMd?: string; // per-profile CLAUDE.md content (appended to global)
   workflow?: string; // body of the /workflow command, written to <config>/commands/workflow.md
+  workflows?: ProfileWorkflow[]; // named variant commands: /workflow-{name}
   tools?: string; // body of the /tools command — a persistent tool-set reference with rationale, written to <config>/commands/tools.md
   disabledMcpServers?: Record<string, string[]>;
   // key:   directory path (e.g. "/Users/me/Documents/The Vault")
