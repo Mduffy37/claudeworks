@@ -1224,6 +1224,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     </div>
                     <textarea
                       className="pe-instructions-editor"
+                      style={{ marginTop: "10px" }}
                       value={variant.body}
                       onChange={(e) => {
                         const next = [...workflows];

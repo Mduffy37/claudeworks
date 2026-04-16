@@ -8241,7 +8241,26 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 4px;
 }
 
-/* Workflow variant cards — reuses .alias-row + .alias-row-fields from aliases */
+/* Workflow variant cards — reuses .alias-row from aliases */
+.pe-instructions-section.variants .alias-row-fields {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Align the workflow- prefix + input row to match select height */
+.pe-instructions-section.variants .alias-row-fields .field > div {
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+
+.pe-instructions-section.variants .alias-row-fields .field > div > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pe-instructions-section.variants .alias-row-fields select {
+  height: 32px;
+}
 
 /* Large / ultrawide — let content breathe */
 @media (min-width: 1800px) {
