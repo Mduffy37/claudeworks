@@ -2686,7 +2686,6 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: var(--pe-max-width);
 }
 
 .pe-plugin-group {
@@ -2754,7 +2753,6 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: var(--pe-max-width);
 }
 
 .pe-mcp-context {
@@ -3007,15 +3005,10 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ─── Plugins tab — uses existing PluginPicker styles ────────────────────── */
 
-.pe-tab-content .plugin-picker {
-  max-width: var(--pe-max-width);
-}
-
 .pe-instructions-tab {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: var(--pe-max-width);
 }
 
 .pe-instructions-section {
@@ -4372,7 +4365,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .pl-search-area {
   flex-shrink: 0;
-  padding: 10px 14px;
+  padding: 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -4838,12 +4831,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .te-available .pl-search {
-  padding: 0;
+  padding: 4px 8px;
 }
 
 .te-available .pl-search-input {
   font-size: 0.769rem;
-  padding: 6px 10px;
+  padding: 6px 8px;
 }
 
 .te-avail-item {
@@ -5854,12 +5847,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-/* Earth-spectrum kind tints for the top-level collection filter chips */
-.curated-collection-chip.kind-skill     { color: var(--sage); }
-.curated-collection-chip.kind-agent     { color: var(--walnut); }
-.curated-collection-chip.kind-command   { color: var(--brass); }
-.curated-collection-chip.kind-mcpServer { color: var(--plum); }
-
+/* Kind-specific active states for collection filter chips — neutral in resting state */
 .curated-collection-chip.kind-skill.active {
   background: rgba(122, 139, 110, 0.22);
   border-color: var(--sage);
@@ -6636,7 +6624,6 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: var(--pe-max-width);
 }
 
 .pe-settings-section {
@@ -7974,14 +7961,6 @@ h1, h2, h3, h4, h5, h6 {
 
   .te-members-list {
     gap: 8px;
-  }
-
-  .pe-items-tab,
-  .pe-mcp-tab,
-  .pe-tab-content .plugin-picker,
-  .pe-instructions-tab,
-  .pe-settings-tab {
-    max-width: none;
   }
 }
 

@@ -2178,7 +2178,7 @@ export function ManageDialog({
                     <>
                       {/* Hero search — the one obvious entry into Browse */}
                       <div className="curated-hero">
-                        <div className="curated-hero-title">Browse Curated Plugins</div>
+                        <div className="curated-hero-title">Browse Curated Marketplaces</div>
                         <div className="curated-hero-sub">Search curated marketplaces, plugins, skills, agents, and commands.</div>
                         <div className="curated-toolbar curated-toolbar-hero">
                           <input
