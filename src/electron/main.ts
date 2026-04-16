@@ -37,6 +37,7 @@ import {
   getActiveSessions,
   checkForAppUpdate,
   runDiagnostics,
+  exportDiagnostics,
 } from "./diagnostics";
 import {
   loadProfiles,
@@ -419,7 +420,6 @@ ipcMain.handle("check-credential-status", () => checkCredentialStatus());
 ipcMain.handle("run-diagnostics", () => runDiagnostics());
 ipcMain.handle("run-profiles-doctor", (_e, mode: "detect" | "repair") => runProfilesDoctor(mode));
 ipcMain.handle("export-diagnostics", async () => {
-  const { exportDiagnostics } = require("./core");
   const data = await exportDiagnostics();
   const { filePath, canceled } = await dialog.showSaveDialog({
     defaultPath: `claude-profiles-diagnostics-${Date.now()}.json`,
