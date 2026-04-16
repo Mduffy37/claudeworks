@@ -12,7 +12,10 @@
     "dev:electron:watch": "node scripts/dev-electron.js",
     "build": "tsc -p tsconfig.electron.json && cp -r src/builtin-plugin dist/builtin-plugin && vite build",
     "start": "electron .",
-    "package": "npm run build && electron-builder"
+    "package": "npm run build && electron-builder",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "vitest run test/smoke.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -23,7 +26,8 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "typescript": "^5.4.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^4.1.4"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

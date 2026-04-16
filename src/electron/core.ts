@@ -1972,6 +1972,14 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
     // Skills exclude the containing directory (SKILL.md's parent);
     // agents/commands exclude the single file at item.path.
     const items = scanPluginItems(plugin);
+    // Resolve installPath through realpathSync so it uses the same prefix as
+    // realPluginDir — without this, any symlink in the path chain (e.g. macOS
+    // /tmp → /private/tmp) causes path.relative to produce a "../" traversal
+    // instead of the expected single-segment version dir.
+    let resolvedInstallPath = plugin.installPath;
+    try { resolvedInstallPath = fs.realpathSync(plugin.installPath); } catch {}
+    const versionRel = path.relative(realPluginDir, resolvedInstallPath);
+
     const excludedPaths = new Set<string>();
     const excludedAncestors = new Set<string>();
     const addAncestors = (rel: string) => {
@@ -1985,10 +1993,15 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
     };
     for (const item of items) {
       if (!excludedNames.includes(item.name)) continue;
-      const excludePath = item.type === "skill" ? path.dirname(item.path) : item.path;
-      const rel = path.relative(realPluginDir, excludePath);
-      // Defensive: refuse anything that escapes the plugin root.
-      if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) continue;
+      const excludeAbs = item.type === "skill" ? path.dirname(item.path) : item.path;
+      // item.path is based on plugin.installPath which may contain unresolved
+      // symlinks (e.g. /tmp → /private/tmp on macOS). Compute the path
+      // relative to installPath (guaranteed same prefix), then anchor it to
+      // realPluginDir via the resolved versionRel to stay in the right
+      // namespace.
+      const relToInstall = path.relative(plugin.installPath, excludeAbs);
+      if (!relToInstall || relToInstall.startsWith("..") || path.isAbsolute(relToInstall)) continue;
+      const rel = versionRel ? path.join(versionRel, relToInstall) : relToInstall;
       excludedPaths.add(rel);
       addAncestors(rel);
     }
@@ -1997,7 +2010,6 @@ function applyExclusions(profile: Profile, configDir: string, plugins: PluginEnt
     // shadow marketplace.json with a patched copy. Mark the file itself as
     // excluded (the overlay walker won't symlink it) and write it manually
     // after the walk.
-    const versionRel = path.relative(realPluginDir, plugin.installPath);
     const claudePluginRel = versionRel
       ? path.join(versionRel, ".claude-plugin")
       : ".claude-plugin";
