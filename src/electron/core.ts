@@ -301,9 +301,19 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
   } else {
     const agentsDir = path.join(base, "agents");
     if (fs.existsSync(agentsDir)) {
-      for (const file of fs.readdirSync(agentsDir)) {
-        if (!file.endsWith(".md") || file === "README.md") continue;
-        items.push(buildItem(plugin.name, path.join(agentsDir, file), "agent", path.basename(file, ".md")));
+      for (const entry of fs.readdirSync(agentsDir, { withFileTypes: true })) {
+        // Flat file: agents/foo.md
+        if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md") {
+          items.push(buildItem(plugin.name, path.join(agentsDir, entry.name), "agent", path.basename(entry.name, ".md")));
+          continue;
+        }
+        // Directory layout: agents/foo/AGENT.md (mirrors skills/<name>/SKILL.md)
+        if (direntIsDirLike(entry, agentsDir)) {
+          const agentMd = path.join(agentsDir, entry.name, "AGENT.md");
+          if (fs.existsSync(agentMd)) {
+            items.push(buildItem(plugin.name, agentMd, "agent", entry.name));
+          }
+        }
       }
     }
   }

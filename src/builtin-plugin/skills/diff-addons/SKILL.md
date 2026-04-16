@@ -58,10 +58,11 @@ Agents:   <N> / <N>
 ### Non-builtin leaks (investigate)
 - plugin:name
 ### Global builtins
-- (global):name
-- (global):name
+<N> global skills, <N> global agents (expected — not an isolation issue)
 (none → "No unexpected items.")
 ```
+
+**Global builtins are expected noise** — Claude Code always injects its own skills and agents regardless of profile. Do NOT enumerate them individually. Just show a one-line count. Only enumerate non-builtin leaks (those are the actionable items).
 
 **Verdict line at the end**: if Missing is empty AND the "Non-builtin leaks" subsection is empty, print `✓ Profile isolation verified.`. If either has entries, print `✗ Profile isolation issue: <N> missing, <N> unexpected (non-builtin).` and nothing else on that line.
 
