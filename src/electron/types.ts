@@ -123,7 +123,7 @@ export interface Profile {
   model?: "opus" | "sonnet" | "haiku";
   opusContext?: "200k" | "1m";   // default 1m
   sonnetContext?: "200k" | "1m"; // default 200k — 1m is billed as extra usage
-  effortLevel?: "low" | "medium" | "high" | "max";
+  effortLevel?: "low" | "medium" | "high" | "xhigh" | "max";
   voiceEnabled?: boolean;
   env?: Record<string, string>;
   statusLine?: { type: "command"; command: string } | null;
@@ -177,7 +177,7 @@ export interface Team {
   model?: "opus" | "sonnet" | "haiku";
   opusContext?: "200k" | "1m";   // default 1m
   sonnetContext?: "200k" | "1m"; // default 200k — 1m is billed as extra usage
-  effortLevel?: "low" | "medium" | "high" | "max";
+  effortLevel?: "low" | "medium" | "high" | "xhigh" | "max";
   customFlags?: string;
   tags?: string[];
   favourite?: boolean;

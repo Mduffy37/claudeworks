@@ -531,7 +531,7 @@ After plugins and `/workflow` are locked, collect the remaining fields. Ask each
 
 1. **Profile name** — *"What should I call this profile? Short and no-spaces is easiest (e.g. `frontend-dev`, `bug-triage`). It mustn't collide with existing profile names: [list from Step 1d]."*
 2. **Model** — present your provisional pick from Step 6c with a one-line justification: *"I was planning to use `claude-opus-4-7` because feature-development is deep-reasoning work and your project is non-trivial. Does that work, or do you want `claude-sonnet-4-6` (faster, cheaper) or `claude-haiku-4-5-20251001` (fastest, best for simple loops)?"*
-3. **Effort level** — same pattern: *"For effort I'd suggest `high` because [reason]. `medium` or `low` also valid if you want lighter reasoning."*
+3. **Effort level** — same pattern: *"For effort I'd suggest `high` because [reason]. `medium` or `low` also valid if you want lighter reasoning; `xhigh` or `max` available for deeper reasoning on Opus."*
 4. **customClaudeMd** — opt-in, with a specific recommendation:
    - If `existingAIConfig.hasClaudeMd` is true: *"Your project already has a `CLAUDE.md`, so I'd leave the profile's custom instructions slot empty to avoid duplication. Keep it empty, or add something profile-specific the project CLAUDE.md doesn't cover?"*
    - Otherwise: *"The profile can carry its own always-on instructions appended to every session's context. Want me to draft something profile-specific based on the picks we made, or skip it?"*

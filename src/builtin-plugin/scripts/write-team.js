@@ -33,7 +33,7 @@ const os = require("os");
 const SCHEMA_VERSION = 1;
 const ALLOWED_MODELS = new Set(["opus", "sonnet", "haiku"]);
 const ALLOWED_CONTEXTS = new Set(["200k", "1m"]);
-const ALLOWED_EFFORTS = new Set(["low", "medium", "high", "max"]);
+const ALLOWED_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
 
 function fail(error) {
   process.stdout.write(JSON.stringify({ ok: false, error }) + "\n");

@@ -49,7 +49,7 @@ const KNOWN_ENV_VARS: KnownEnvVar[] = [
   {
     name: "CLAUDE_CODE_EFFORT_LEVEL",
     description: "Reasoning effort level",
-    values: ["low", "medium", "high", "max", "auto"],
+    values: ["low", "medium", "high", "xhigh", "max", "auto"],
     scope: "both",
   },
   {

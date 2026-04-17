@@ -138,7 +138,7 @@ If yes, collect overrides one at a time:
 - Model: opus / sonnet / haiku (or keep lead's)
 - Opus context (if model is opus): 200k / 1m
 - Sonnet context (if model is sonnet): 200k / 1m
-- Effort: low / medium / high / max (or keep lead's)
+- Effort: low / medium / high / xhigh / max (or keep lead's)
 - Custom flags: raw additional CLI flags (or none)
 
 If no, skip directly to Step 7.
@@ -174,7 +174,7 @@ T_MEMBERS='[{"profile":"...","role":"...","instructions":"...","isLead":true/fal
 T_MODEL='<opus|sonnet|haiku or empty>' \
 T_OPUS_CTX='<200k|1m or empty>' \
 T_SONNET_CTX='<200k|1m or empty>' \
-T_EFFORT='<low|medium|high|max or empty>' \
+T_EFFORT='<low|medium|high|xhigh|max or empty>' \
 T_CUSTOM_FLAGS='<flags or empty>' \
 T_TAGS='["tag1","tag2"]' \
 node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/write-team.js"
