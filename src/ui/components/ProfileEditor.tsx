@@ -379,7 +379,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
   const [itemSearch, setItemSearch] = useState("");
   const [itemFilter, setItemFilter] = useState<FilterOption>("all");
-  const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow">(null);
+  const [promptPickerTarget, setPromptPickerTarget] = useState<null | "instructions" | "workflow" | `variant-${number}`>(null);
   const [itemSort, setItemSort] = useState<SortOption>("source");
 
   // ─── Inline item editor ─────────────────────────────────────────────────────

@@ -75,8 +75,9 @@ const ALLOWED_SET_FIELDS = new Set([
   "effortLevel",
   "customClaudeMd",
   "workflow",
+  "workflows",
   "tools",
-  "alias",
+  "aliases",
   "targetDirectory",
   "tags",
   "launchFlags",
@@ -231,6 +232,32 @@ if (op === "add-plugins") {
       if (typeof entry !== "string") fail(`set-field ${field}: every entry must be a string`);
     }
     profile[field] = parsed;
+  } else if (field === "workflows" || field === "aliases") {
+    // Array-of-objects fields. Pass "[]" to clear.
+    let parsed;
+    try { parsed = JSON.parse(rawValue); } catch (e) {
+      fail(`set-field ${field}: P_VALUE must be a JSON array, got ${JSON.stringify(rawValue)}`);
+    }
+    if (!Array.isArray(parsed)) fail(`set-field ${field}: P_VALUE must decode to a JSON array`);
+    if (field === "workflows") {
+      for (const w of parsed) {
+        if (!w || typeof w !== "object" || Array.isArray(w)) fail(`set-field workflows: each entry must be an object`);
+        if (typeof w.name !== "string" || w.name.trim() === "") fail(`set-field workflows: each entry needs a non-empty string 'name'`);
+        if (typeof w.body !== "string") fail(`set-field workflows: entry "${w.name}" needs a string 'body'`);
+        if (w.directory !== undefined && typeof w.directory !== "string") fail(`set-field workflows: entry "${w.name}" has a non-string 'directory'`);
+      }
+    } else {
+      const ALLOWED = new Set(["workflow", "prompt"]);
+      for (const a of parsed) {
+        if (!a || typeof a !== "object" || Array.isArray(a)) fail(`set-field aliases: each entry must be an object`);
+        if (typeof a.name !== "string" || a.name.trim() === "") fail(`set-field aliases: each entry needs a non-empty string 'name'`);
+        if (a.directory !== undefined && typeof a.directory !== "string") fail(`set-field aliases: entry "${a.name}" has a non-string 'directory'`);
+        if (a.launchAction !== undefined && !ALLOWED.has(a.launchAction)) fail(`set-field aliases: entry "${a.name}" has invalid launchAction "${a.launchAction}" (must be "workflow" or "prompt")`);
+        if (a.launchPrompt !== undefined && typeof a.launchPrompt !== "string") fail(`set-field aliases: entry "${a.name}" has a non-string 'launchPrompt'`);
+      }
+    }
+    if (parsed.length === 0) delete profile[field];
+    else profile[field] = parsed;
   } else if (rawValue === "undefined") {
     // Explicit unset path for optional fields (model, effortLevel, etc.).
     delete profile[field];

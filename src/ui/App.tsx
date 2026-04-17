@@ -293,7 +293,7 @@ export function App() {
       excludedItems: {},
       description: "Your default profile. Running `claude` launches with these plugins and settings.",
       isDefault: true,
-      alias: "claude",
+      aliases: [{ name: "claude" }],
       useDefaultAuth: true,
     };
     await createProfile(defaultProfile);

@@ -130,6 +130,29 @@ In either mode, work one stage at a time. Never draft the body unilaterally.
 
 When the user confirms every proposed stage, send the one-line confirmation from above and proceed to Step 4. Do not print the full body.
 
+## Step 3b — Named variants (standalone mode only)
+
+Most profiles need only a single `/workflow`. Some benefit from **named variants**: `/workflow-debug`, `/workflow-deploy`, `/workflow-review` — each a separate orchestration for a different situation. They live alongside the default `/workflow` in the same profile, not instead of it.
+
+**Parent mode: do not offer variants.** The `create-profile` handoff carries a single body; there's no slot for a variant array in the new-profile flow. If the user asks for variants during parent mode, tell them: *"I'll ship this profile with the default `/workflow` now. Once the profile is created, re-run `create-workflow` in standalone mode and I can add named variants."* Then continue parent-mode Step 4 as normal.
+
+**Standalone mode: offer variants selectively.** Ask *"any other one-shot flows you'd want as a variant?"* at the end of Step 3 only when at least one holds:
+
+- The profile covers multiple distinct activities the user switches between (e.g. feature-development + incident-response + docs-polish).
+- The user explicitly asked for more than one command up front ("I want a `/plan` and a `/ship` command").
+- Step 2 surfaced a workflow shape whose `signals` mention multiple distinct triggers (rare — check `workflow-shapes.json`).
+
+If none of these hold, **do not** offer variants. A single `/workflow` is the strongly-preferred default — variants multiply the surface area of the profile and the user's mental load, and most profiles don't earn them.
+
+**How to collect.** Loop Step 3 once per variant:
+
+1. Ask: *"Name for this variant? It'll be invoked as `/workflow-<name>`."* — slug-format, e.g. `debug`, `ship`, `review`. Reject names containing spaces or slashes.
+2. Sequence stages interactively exactly as you did for the default body.
+3. Collect each variant as `{ name: "<slug>", body: "<markdown body>" }` and keep them in an array.
+4. After each variant, ask *"Another variant, or done?"* until the user says done.
+
+The default `/workflow` body remains in the `workflow` field. Variants go into the `workflows` array — both can coexist in the same profile. See Step 4 standalone-mode section below for the write path.
+
 ## Step 4 — Write back
 
 Your behavior here depends on invocation mode.
@@ -179,6 +202,20 @@ Then tell the user:
 > *"Saved. The `/workflow` command will be active the next time you launch `<profile>` from the ClaudeWorks app. If you're currently running under this profile, you'll need to relaunch it to pick up the change."*
 
 The ClaudeWorks app's profile-assembly step writes the `workflow` field to `<config-dir>/commands/workflow.md` on each launch, which is why the relaunch is needed.
+
+#### Variants write path (standalone mode only)
+
+If you also collected named variants in Step 3b, write them in a second `patch-profile.js` call with `P_FIELD=workflows`. The value is a JSON array — each variant becomes `/workflow-<name>`. Pass the JSON as a single-line value (the bodies embed inside the JSON, so newlines become `\n`):
+
+```
+P_NAME='ux-review' \
+P_OP=set-field \
+P_FIELD=workflows \
+P_VALUE='[{"name":"debug","body":"1. Reproduce...\n2. Isolate...\n"},{"name":"ship","body":"1. Build...\n2. Tag...\n"}]' \
+node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/patch-profile.js"
+```
+
+Use Node to construct the JSON safely rather than hand-escaping — `JSON.stringify(variantArray)` handles newlines, quotes, and control characters correctly. Pass `P_VALUE='[]'` to clear existing variants. The variants render as separate `/workflow-<name>` commands on the next profile launch; they do not replace the default `/workflow` body.
 
 ## Notes
 

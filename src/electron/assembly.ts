@@ -21,6 +21,14 @@ import {
 // Profile assembly
 // ---------------------------------------------------------------------------
 
+// Bump these on Anthropic model releases. Claude CLI does not accept
+// `claude-opus-latest`-style aliases (verified 2026-04-17), so the latest
+// concrete IDs have to live in code.
+// Reference: https://docs.anthropic.com/claude/docs/models-overview
+const LATEST_OPUS = "claude-opus-4-7";
+const LATEST_SONNET = "claude-sonnet-4-6";
+const LATEST_HAIKU = "claude-haiku-4-5-20251001";
+
 // Resolve a model shorthand + context preference into an explicit Claude Code
 // model ID. Writing explicit IDs (rather than the "opus"/"sonnet" shorthand)
 // avoids Claude Code silently resolving the shorthand differently across
@@ -32,13 +40,13 @@ export function resolveModelId(
   sonnetContext: "200k" | "1m" | undefined,
 ): string {
   if (model === "opus") {
-    return opusContext === "200k" ? "claude-opus-4-6" : "claude-opus-4-6[1m]";
+    return opusContext === "200k" ? LATEST_OPUS : `${LATEST_OPUS}[1m]`;
   }
   if (model === "sonnet") {
-    return sonnetContext === "1m" ? "claude-sonnet-4-6[1m]" : "claude-sonnet-4-6";
+    return sonnetContext === "1m" ? `${LATEST_SONNET}[1m]` : LATEST_SONNET;
   }
   if (model === "haiku") {
-    return "claude-haiku-4-5-20251001";
+    return LATEST_HAIKU;
   }
   // Unknown / already-explicit model ID — pass through unchanged.
   return model;

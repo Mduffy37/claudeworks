@@ -5,6 +5,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import type { Profile, ProfileAlias, LaunchOptions } from "./types";
 import { writeMcpConfig } from "./plugins";
+import { resolveModelId } from "./assembly";
 import { PROFILES_DIR, ensureProfilesDir, getGlobalDefaults } from "./config";
 
 const execFileAsync = promisify(execFile);
@@ -322,6 +323,19 @@ export async function launchProfile(profile: Profile, directory?: string, option
   if (profile.launchFlags?.verbose) flagParts.push("--verbose");
   if (profile.customFlags?.trim()) flagParts.push(profile.customFlags.trim());
   if (options?.customFlags?.trim()) flagParts.push(options.customFlags.trim());
+
+  // Pass --model explicitly so the launched session honours the profile's model
+  // choice regardless of how Claude CLI resolves settings.json precedence.
+  const modelShorthand = profile.model ?? globalDefs.model;
+  if (modelShorthand) {
+    const modelId = resolveModelId(
+      modelShorthand,
+      profile.opusContext ?? globalDefs.opusContext,
+      profile.sonnetContext ?? globalDefs.sonnetContext,
+    );
+    flagParts.push(`--model '${escSh(modelId)}'`);
+  }
+
   const flagStr = flagParts.length > 0 ? " " + flagParts.join(" ") : "";
 
   const claudeBin = findRealClaudeBinary();

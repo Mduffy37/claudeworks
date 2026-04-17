@@ -305,7 +305,7 @@ Build a draft plugin shell with:
 - **`plugins[]`** — the union of stage picks + staples, as an array of plugin IDs. Marketplace plugins use the `<name>@<marketplace>` format (e.g. `frontend-design@claude-plugins-official`); local plugins use `local:<name>` (e.g. `local:uiux-toolkit`); framework plugins use `framework:<name>`. Mix all three freely — the profile engine handles each correctly.
 - **`excludedItems{}`** — populated ONLY for plugins where you want to keep a subset of items. See the exclusion-computation recipe below. Leave the key out entirely for plugins where you want every item enabled (the default).
 - **`enabledItemsSummary`** (for your own mental bookkeeping, not a real field) — for each plugin, note which items are effectively enabled. This feeds into Step 7a's presentation, where you'll show the `(N of M enabled)` ratio for exclusion-heavy plugins.
-- **provisional model choice** — `claude-opus-4-6` for deep-reasoning workflows (feature-development, refactoring, security-audit, research, prompt-engineering), `claude-sonnet-4-6` for balanced work, `claude-haiku-4-5-20251001` for high-loop-count lightweight work. The user will confirm or override in Step 7e.
+- **provisional model choice** — `claude-opus-4-7` for deep-reasoning workflows (feature-development, refactoring, security-audit, research, prompt-engineering), `claude-sonnet-4-6` for balanced work, `claude-haiku-4-5-20251001` for high-loop-count lightweight work. The user will confirm or override in Step 7e.
 - **provisional effort level** — `high` for research/refactoring/incident-investigation, `medium` for most feature work, `low` for lightweight loops. The user will confirm in Step 7e.
 
 **Do not draft the `/workflow` body here.** The `/workflow` body is not a composition artifact — it's the output of an interactive co-design step (7d) that runs only if the user explicitly opts in (7c). Leave `workflow` unset in the draft. Do not draft `customClaudeMd` either — that gets collected in Step 7e with an explicit opt-in and a recommendation based on whether the project already has a `CLAUDE.md`.
@@ -481,6 +481,7 @@ Now and only now, ask. Never assume — always explicit, and explain what it is 
 - **User says skip** → proceed to 7e
 - **User says yes** → proceed to 7d
 - **User asks "what would it look like?"** → sketch a one-paragraph version from the workflow shape's stages, then ask the question again
+- **User asks about named variants** (e.g. *"can I also have `/workflow-debug` and `/workflow-ship`?"*) → answer: *"Yes, but variant collection happens after the profile is created. Let's lock in the default `/workflow` first, then once the profile exists you can re-run `create-workflow` in standalone mode and I'll collect named variants there."* Then continue as if they said yes to the default `/workflow`.
 
 ### 7d. Hand off to `create-workflow` to sequence the tool set
 
@@ -529,7 +530,7 @@ Do not re-ask the workflow question, do not re-sequence stages, and do not re-as
 After plugins and `/workflow` are locked, collect the remaining fields. Ask each as a distinct question, not a batched form:
 
 1. **Profile name** — *"What should I call this profile? Short and no-spaces is easiest (e.g. `frontend-dev`, `bug-triage`). It mustn't collide with existing profile names: [list from Step 1d]."*
-2. **Model** — present your provisional pick from Step 6c with a one-line justification: *"I was planning to use `claude-opus-4-6` because feature-development is deep-reasoning work and your project is non-trivial. Does that work, or do you want `claude-sonnet-4-6` (faster, cheaper) or `claude-haiku-4-5-20251001` (fastest, best for simple loops)?"*
+2. **Model** — present your provisional pick from Step 6c with a one-line justification: *"I was planning to use `claude-opus-4-7` because feature-development is deep-reasoning work and your project is non-trivial. Does that work, or do you want `claude-sonnet-4-6` (faster, cheaper) or `claude-haiku-4-5-20251001` (fastest, best for simple loops)?"*
 3. **Effort level** — same pattern: *"For effort I'd suggest `high` because [reason]. `medium` or `low` also valid if you want lighter reasoning."*
 4. **customClaudeMd** — opt-in, with a specific recommendation:
    - If `existingAIConfig.hasClaudeMd` is true: *"Your project already has a `CLAUDE.md`, so I'd leave the profile's custom instructions slot empty to avoid duplication. Keep it empty, or add something profile-specific the project CLAUDE.md doesn't cover?"*

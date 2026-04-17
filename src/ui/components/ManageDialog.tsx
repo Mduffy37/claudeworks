@@ -1701,6 +1701,12 @@ export function ManageDialog({
   const [curatedData, setCuratedData] = useState<CuratedMarketplaceData | null>(null);
   const [curatedLoading, setCuratedLoading] = useState(false);
   const [curatedError, setCuratedError] = useState<string | null>(null);
+  const [githubBackend, setGithubBackend] = useState<{
+    kind: "gh" | "fetch-authed" | "fetch-anon";
+    rateLimit: string;
+    description: string;
+    upgradeHint: string | null;
+  } | null>(null);
   const [curatedCollection, setCuratedCollection] = useState<string | null>(null);
   const [curatedCollectionsExpanded, setCuratedCollectionsExpanded] = useState(false);
   const [curatedSearch, setCuratedSearch] = useState("");
@@ -1729,8 +1735,12 @@ export function ManageDialog({
     setCuratedLoading(true);
     setCuratedError(null);
     try {
-      const data = await window.api.getCuratedMarketplace();
+      const [data, backend] = await Promise.all([
+        window.api.getCuratedMarketplace(),
+        window.api.getGitHubBackend().catch(() => null),
+      ]);
       setCuratedData(data);
+      if (backend) setGithubBackend(backend);
     } catch (err: any) {
       setCuratedError(err?.message ?? "Failed to load curated plugins");
     } finally {
@@ -2413,6 +2423,12 @@ export function ManageDialog({
                 </>
               ) : pluginSubTab === "browse" ? (
                 <div className="curated-tab">
+                  {githubBackend?.kind === "fetch-anon" && (
+                    <div className="curated-backend-banner">
+                      <strong>Anonymous GitHub access — {githubBackend.rateLimit} rate limit.</strong>
+                      {githubBackend.upgradeHint && <span className="curated-backend-banner-hint"> {githubBackend.upgradeHint}</span>}
+                    </div>
+                  )}
                   {curatedLoading ? (
                     <div className="discover-loading">Loading curated plugins...</div>
                   ) : curatedError ? (

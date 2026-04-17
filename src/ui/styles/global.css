@@ -4318,6 +4318,26 @@ h1, h2, h3, h4, h5, h6 {
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
+.curated-backend-banner {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.846rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--color-warning-dim);
+  border: 1px solid color-mix(in srgb, #b08a3a 30%, transparent);
+  border-radius: 6px;
+}
+
+.curated-backend-banner strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.curated-backend-banner-hint {
+  opacity: 0.85;
+}
+
 .pe-default-banner code {
   font-family: var(--font-mono);
   font-size: 0.769rem;
