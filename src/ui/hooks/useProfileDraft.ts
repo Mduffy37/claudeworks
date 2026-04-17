@@ -42,6 +42,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
   const [customClaudeMd, setCustomClaudeMd] = useState("");
   const [workflow, setWorkflow] = useState("");
   const [workflows, setWorkflows] = useState<ProfileWorkflow[]>([]);
+  const [launchPrompt, setLaunchPrompt] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("plugins");
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -109,6 +110,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
         customClaudeMd: customClaudeMd || undefined,
         workflow: workflow.trim() ? workflow : undefined,
         workflows: workflows.length > 0 ? workflows : undefined,
+        launchPrompt: launchPrompt.trim() ? launchPrompt.trim() : undefined,
         disabledMcpServers: Object.keys(disabledMcpServers).length > 0 ? disabledMcpServers : undefined,
         launchFlags: Object.values(launchFlags).some(Boolean) ? launchFlags : undefined,
         customFlags: customFlags.trim() || undefined,
@@ -125,7 +127,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     } finally {
       setSaving(false);
     }
-  }, [name, description, directories, aliases, disableDefaultAlias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, workflows, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
+  }, [name, description, directories, aliases, disableDefaultAlias, isDefault, selectedPlugins, excludedItems, model, opusContext, sonnetContext, effortLevel, voiceEnabled, customClaudeMd, workflow, workflows, launchPrompt, disabledMcpServers, launchFlags, customFlags, useDefaultAuth, env, disabledHooks, statusLineConfig, tags, projects, onSave, onDirtyChange, saving]);
 
   // Sync state when profile prop changes
   useEffect(() => {
@@ -147,6 +149,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setCustomClaudeMd(profile.customClaudeMd ?? "");
       setWorkflow(profile.workflow ?? "");
       setWorkflows(profile.workflows ?? []);
+      setLaunchPrompt(profile.launchPrompt ?? "");
       setDisabledMcpServers(profile.disabledMcpServers ?? {});
       setLaunchFlags(profile.launchFlags ?? {});
       setCustomFlags(profile.customFlags ?? "");
@@ -192,6 +195,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       setCustomClaudeMd("");
       setWorkflow("");
       setWorkflows([]);
+      setLaunchPrompt("");
       setDisabledMcpServers({});
       setLaunchFlags({});
       setCustomFlags("");
@@ -284,6 +288,7 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
     customClaudeMd, setCustomClaudeMd,
     workflow, setWorkflow,
     workflows, setWorkflows,
+    launchPrompt, setLaunchPrompt,
     activeTab, setActiveTab,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,

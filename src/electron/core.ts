@@ -109,6 +109,48 @@ export function loadProfiles(): Profile[] {
  * Once seeded, the ledger records the name; future launches no-op regardless
  * of whether the seeded profile still exists.
  */
+const PROFILE_CREATOR_INTRO = `Welcome — this is the **ClaudeWorks profile-creator workspace**. It ships with the \`profiles-manager\` plugin enabled, giving you the tools to author and manage your profiles.
+
+**Quick start**
+
+- \`/create-profile\` — guided profile creation from a description of your work
+- \`/suggest-plugins\` — explore the curated marketplace and add plugins to an existing profile
+- \`/create-team\` — compose a team from your existing profiles
+- \`/create-workflow\` — draft a \`/workflow\` command for any profile
+- \`/profile-status\` — inspect the current profile's configuration
+- \`/list-addons\` — list every skill, command, agent, and MCP server this profile provides
+
+Everything you create here writes directly to \`~/.claudeworks/profiles.json\` — your new profiles appear in the ClaudeWorks app sidebar immediately.
+
+**Ready?** Tell me what kind of profile you want to build, or type \`/create-profile\` to start the guided flow.`;
+
+function seedProfileCreator(): void {
+  const store = readProfilesStore();
+  // Name-collision guard — if the user already has a profile called
+  // "profile-creator", don't overwrite it.
+  if (store.profiles["profile-creator"]) return;
+
+  const profile: Profile = {
+    name: "profile-creator",
+    plugins: ["profiles-manager@claudeworks"],
+    excludedItems: {},
+    description: "Dedicated workspace for creating and managing ClaudeWorks profiles.",
+    launchPrompt: "/intro",
+    intro: PROFILE_CREATOR_INTRO,
+    useDefaultAuth: true,
+  };
+
+  store.profiles[profile.name] = profile;
+  writeProfilesStore(store);
+  try { assembleProfile(profile); } catch {}
+}
+
+function seedProfilesManagerFavourite(): void {
+  const current = getFavouritePlugins();
+  if (current.includes("profiles-manager@claudeworks")) return;
+  saveFavouritePlugins([...current, "profiles-manager@claudeworks"]);
+}
+
 export function seedBuiltins(): void {
   const ledger = readBuiltinsLedger();
   const store = readProfilesStore();
@@ -118,6 +160,21 @@ export function seedBuiltins(): void {
   if (isFreshInstall && !ledger.profiles.includes("Default")) {
     ensureDefaultProfile();
     ledger.profiles.push("Default");
+    saveBuiltinsLedger(ledger);
+  }
+
+  // Profile-creator — seed on fresh install only. After the first seed,
+  // the ledger prevents re-creation even if the user deletes the profile.
+  if (isFreshInstall && !ledger.profiles.includes("profile-creator")) {
+    try { seedProfileCreator(); } catch {}
+    ledger.profiles.push("profile-creator");
+    saveBuiltinsLedger(ledger);
+  }
+
+  // profiles-manager favourite — seed on fresh install only.
+  if (isFreshInstall && !ledger.favourites.includes("profiles-manager@claudeworks")) {
+    try { seedProfilesManagerFavourite(); } catch {}
+    ledger.favourites.push("profiles-manager@claudeworks");
     saveBuiltinsLedger(ledger);
   }
 }

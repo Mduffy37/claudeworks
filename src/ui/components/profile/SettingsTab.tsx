@@ -23,6 +23,8 @@ interface Props {
   env: Record<string, string>;
   disabledHooks: Record<string, number[]>;
   statusLineConfig: StatusLineConfig | undefined;
+  launchPrompt: string;
+  onChangeLaunchPrompt: (v: string) => void;
   isDefault?: boolean;
   onSetAsDefault?: () => void;
   onChangeModel: (v: string) => void;
@@ -46,6 +48,7 @@ export function SettingsTab(props: Props) {
     profileName, pluginCount, directories,
     isInPath, launchFlags, customFlags, useDefaultAuth, env, disabledHooks,
     statusLineConfig,
+    launchPrompt, onChangeLaunchPrompt,
     isDefault, onSetAsDefault,
     onChangeModel, onChangeOpusContext, onChangeSonnetContext, onChangeEffort, onChangeVoice,
     onChangeLaunchFlags, onChangeCustomFlags, onChangeUseDefaultAuth, onChangeEnv, onChangeDisabledHooks,
@@ -635,6 +638,22 @@ export function SettingsTab(props: Props) {
               </div>
             </>
           )}
+          <div className="field-divider" />
+          <div className="field">
+            <label htmlFor="launch-prompt-input">Launch Prompt</label>
+            <input
+              id="launch-prompt-input"
+              type="text"
+              className="text-input"
+              value={launchPrompt}
+              onChange={(e) => onChangeLaunchPrompt(e.target.value)}
+              placeholder="e.g. /intro  |  summarise the repo  |  /workflow"
+            />
+            <div className="field-hint">
+              Fires automatically when launching this profile (no alias invoked). Supports slash commands like <code>/intro</code> or <code>/workflow</code>, or a free-form prompt. Leave empty to launch without an initial prompt.
+            </div>
+          </div>
+
           <div className="field-divider" />
           <div className="field">
             <label>Launch Flags</label>

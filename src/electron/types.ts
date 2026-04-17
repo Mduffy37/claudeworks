@@ -131,6 +131,8 @@ export interface Profile {
   workflow?: string; // body of the /workflow command, written to <config>/commands/workflow.md
   workflows?: ProfileWorkflow[]; // named variant commands: /workflow-{name}
   tools?: string; // body of the /tools command — a persistent tool-set reference with rationale, written to <config>/commands/tools.md
+  intro?: string; // body of the /intro command, written to <config>/commands/intro.md — profile-scoped only
+  launchPrompt?: string; // prompt passed to `claude -p` on launch when no alias is invoked (supports slash commands like `/intro` or `/workflow`)
   disabledMcpServers?: Record<string, string[]>;
   // key:   directory path (e.g. "/Users/me/Documents/The Vault")
   // value: array of disabled MCP server names for that directory

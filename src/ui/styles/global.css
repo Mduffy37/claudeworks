@@ -4548,6 +4548,18 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-placeholder);
 }
 
+.pl-filter-chip {
+  padding: 6px 10px;
+  font-size: 0.769rem;
+  white-space: nowrap;
+}
+
+.pl-filter-chip.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text-primary);
+}
+
 .pl-sort-select {
   background: var(--bg-elevated);
   border: 1px solid var(--border);

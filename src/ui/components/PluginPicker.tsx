@@ -42,6 +42,7 @@ export function PluginPicker({
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [enabledOnly, setEnabledOnly] = useState(false);
 
   const toggleExpand = (name: string) => {
     setExpanded((prev) => {
@@ -58,45 +59,47 @@ export function PluginPicker({
   const isLocal = (p: PluginWithItems) => p.marketplace === "local";
   const isFramework = (p: PluginWithItems) => p.marketplace === "framework";
 
+  const matchesEnabled = (p: PluginWithItems) => !enabledOnly || selectedPlugins.includes(p.name);
+
   const globalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isFramework(p) && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+    return plugins.filter((p) => p.scope === "user" && !isLocal(p) && !isFramework(p) && !isMcpOnly(p) && matchesEnabled(p) && (!q || p.pluginName.toLowerCase().includes(q)))
       .sort((a, b) => {
         const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
         const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
         return aFav - bFav;
       });
-  }, [plugins, search, favouritePlugins]);
+  }, [plugins, search, favouritePlugins, enabledOnly, selectedPlugins]);
 
   const frameworkPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => isFramework(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+    return plugins.filter((p) => isFramework(p) && matchesEnabled(p) && (!q || p.pluginName.toLowerCase().includes(q)))
       .sort((a, b) => {
         const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
         const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
         return aFav - bFav;
       });
-  }, [plugins, search, favouritePlugins]);
+  }, [plugins, search, favouritePlugins, enabledOnly, selectedPlugins]);
 
   const userLocalPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => isLocal(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+    return plugins.filter((p) => isLocal(p) && matchesEnabled(p) && (!q || p.pluginName.toLowerCase().includes(q)))
       .sort((a, b) => {
         const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
         const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
         return aFav - bFav;
       });
-  }, [plugins, search, favouritePlugins]);
+  }, [plugins, search, favouritePlugins, enabledOnly, selectedPlugins]);
 
   const localPlugins = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p) && (!q || p.pluginName.toLowerCase().includes(q)))
+    return plugins.filter((p) => p.scope === "project" && p.projectPath === directory && !isMcpOnly(p) && matchesEnabled(p) && (!q || p.pluginName.toLowerCase().includes(q)))
       .sort((a, b) => {
         const aFav = favouritePlugins?.includes(a.name) ? 0 : 1;
         const bFav = favouritePlugins?.includes(b.name) ? 0 : 1;
         return aFav - bFav;
       });
-  }, [plugins, directory, search, favouritePlugins]);
+  }, [plugins, directory, search, favouritePlugins, enabledOnly, selectedPlugins]);
 
   const renderPlugin = (plugin: PluginWithItems) => {
     const enabled = selectedPlugins.includes(plugin.name);
@@ -296,14 +299,24 @@ export function PluginPicker({
 
   return (
     <div className="plugin-picker">
-      <div className="pl-search" style={{ padding: "8px 0" }}>
+      <div className="pl-search" style={{ padding: "8px 0", display: "flex", gap: 8, alignItems: "center" }}>
         <input
           type="text"
           className="pl-search-input"
           placeholder="Search plugins..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1 }}
         />
+        <button
+          type="button"
+          className={`btn-secondary pl-filter-chip${enabledOnly ? " active" : ""}`}
+          onClick={() => setEnabledOnly((v) => !v)}
+          aria-pressed={enabledOnly}
+          title={enabledOnly ? "Show all plugins" : "Show only plugins enabled in this profile"}
+        >
+          Enabled only
+        </button>
       </div>
       <div className="plugin-section">
         <div className="plugin-section-header">

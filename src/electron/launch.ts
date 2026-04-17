@@ -341,7 +341,13 @@ export async function launchProfile(profile: Profile, directory?: string, option
   const claudeBin = findRealClaudeBinary();
   const projectName = path.basename(workDir);
   const sessionName = `${profile.name} — ${projectName}`;
-  const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --name '${escSh(sessionName)}'${flagStr}`;
+  // Profile-level launch prompt fires once on launch (supports slash commands
+  // like "/intro" or "/workflow"). Appended as a positional arg to `claude`,
+  // which the CLI interprets as the initial prompt. Skipped when empty.
+  const promptArg = profile.launchPrompt?.trim()
+    ? ` '${escSh(profile.launchPrompt.trim())}'`
+    : "";
+  const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --name '${escSh(sessionName)}'${flagStr}${promptArg}`;
   const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
 
   await launchInTerminal(shellCmd, terminal);

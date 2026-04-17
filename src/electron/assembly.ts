@@ -261,6 +261,18 @@ export function assembleProfile(profile: Profile, launchDirectory?: string): str
     try { fs.unlinkSync(toolsPath); } catch {}
   }
 
+  // Handle per-profile /intro command — a profile-scoped welcome/orientation
+  // body. Exists only in this profile's config dir, so /intro is invisible
+  // in other profiles' command menus. Same shape as workflow/tools above.
+  const introPath = path.join(configDir, "commands", "intro.md");
+  if (profile.intro && profile.intro.trim()) {
+    fs.mkdirSync(path.dirname(introPath), { recursive: true });
+    const frontmatter = `---\ndescription: Introduce this profile and its tools\n---\n\n`;
+    fs.writeFileSync(introPath, frontmatter + profile.intro);
+  } else {
+    try { fs.unlinkSync(introPath); } catch {}
+  }
+
   // Handle workflow variants (/workflow-{name} commands)
   const commandsDir = path.join(configDir, "commands");
   fs.mkdirSync(commandsDir, { recursive: true });

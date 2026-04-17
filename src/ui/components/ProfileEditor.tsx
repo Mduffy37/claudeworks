@@ -533,6 +533,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
     customClaudeMd, setCustomClaudeMd,
     workflow, setWorkflow,
     workflows, setWorkflows,
+    launchPrompt, setLaunchPrompt,
     activeTab, setActiveTab,
     overviewOpen, setOverviewOpen,
     launching, setLaunching,
@@ -1378,6 +1379,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               env={env}
               disabledHooks={disabledHooks}
               statusLineConfig={statusLineConfig}
+              launchPrompt={launchPrompt}
+              onChangeLaunchPrompt={(v) => { setLaunchPrompt(v); markDirty(); }}
               onChangeEnv={(v) => { setEnv(v); markDirty(); }}
               onChangeDisabledHooks={(v) => { setDisabledHooks(v); markDirty(); }}
               onChangeStatusLineConfig={(v) => { setStatusLineConfig(v); markDirty(); }}
