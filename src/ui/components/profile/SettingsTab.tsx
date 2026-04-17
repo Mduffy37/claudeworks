@@ -620,15 +620,17 @@ export function SettingsTab(props: Props) {
             )}
           </div>
 
-          {!isDefault && onSetAsDefault && (
+          {onSetAsDefault && (
             <>
               <div className="field-divider" />
               <div className="field">
                 <button className="btn-secondary" style={{ width: "100%" }} onClick={onSetAsDefault}>
-                  Set as Default Profile
+                  {isDefault ? "Remove as Default Profile" : "Set as Default Profile"}
                 </button>
                 <div className="field-hint">
-                  Makes this profile the default. Running <code>claude</code> will launch with this profile's plugins and settings.
+                  {isDefault
+                    ? <>Clears default status. Running <code>claude</code> will fall back to vanilla Claude (no profile), and another profile can take the default slot.</>
+                    : <>Makes this profile the default. Running <code>claude</code> will launch with this profile's plugins and settings.</>}
                 </div>
               </div>
             </>

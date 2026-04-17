@@ -79,6 +79,7 @@ import {
   getProfileConfigDir,
   getClaudeHome,
   ensureDefaultProfile,
+  seedBuiltins,
   getStatusLineConfig,
   setStatusLineConfig,
   resetStatusLineConfig,
@@ -581,7 +582,7 @@ ipcMain.handle("render-statusline-preview", (_event, config, mockSession) =>
 ipcMain.handle("resolve-plugins", (_event, ids: string[]) => resolvePlugins(ids));
 
 // Alias conflict detection
-ipcMain.handle("check-alias-conflict", (_event, aliasName: string, profileName: string) => checkAliasConflict(aliasName, profileName));
+ipcMain.handle("check-alias-conflict", (_event, aliasName: string, profileName: string, newIsDefault?: boolean) => checkAliasConflict(aliasName, profileName, newIsDefault));
 
 // Known env vars
 ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());
@@ -592,7 +593,7 @@ ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());
 
 app.whenReady().then(() => {
   ensureBuiltinPlugin();
-  ensureDefaultProfile();
+  seedBuiltins();
   createWindow();
 });
 

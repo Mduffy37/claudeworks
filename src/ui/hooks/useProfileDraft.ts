@@ -74,11 +74,14 @@ export function useProfileDraft({ profile, isNew, importedProjects, onSave, dirt
       return;
     }
 
-    // Block save if any alias conflicts with another profile's alias
+    // Block save if any alias conflicts with another profile's alias. Pass
+    // `isDefault` so the backend can skip the clash for the special
+    // "claude alias swapping between defaults" case — saveProfile handles
+    // that atomically.
     for (const alias of aliases) {
       if (!alias.name) continue;
       try {
-        const conflict = await window.api.checkAliasConflict(alias.name, name.trim());
+        const conflict = await window.api.checkAliasConflict(alias.name, name.trim(), isDefault);
         if (conflict?.source === "profile") {
           setSaveError(`Cannot save: alias "${alias.name}" is ${conflict.detail.toLowerCase()}. Rename or remove it first.`);
           return;

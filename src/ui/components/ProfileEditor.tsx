@@ -1356,8 +1356,15 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               useDefaultAuth={useDefaultAuth}
               isDefault={isDefault}
               onSetAsDefault={() => {
-                setIsDefault(true);
-                setAliases(prev => prev.some(a => a.name === "claude") ? prev : [{ name: "claude" }, ...prev]);
+                if (isDefault) {
+                  // Remove-as-default: clear flag, drop auto-managed "claude" alias.
+                  setIsDefault(false);
+                  setAliases(prev => prev.filter(a => a.name !== "claude"));
+                } else {
+                  // Set-as-default: flag + add "claude" alias if not already present.
+                  setIsDefault(true);
+                  setAliases(prev => prev.some(a => a.name === "claude") ? prev : [{ name: "claude" }, ...prev]);
+                }
                 markDirty();
               }}
               onChangeModel={(v) => { setModel(v); markDirty(); }}

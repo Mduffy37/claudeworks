@@ -13,6 +13,8 @@ import {
   GLOBAL_DEFAULTS_JSON,
   validateProfileName,
   ensureProfilesDir,
+  readBuiltinsLedger,
+  saveBuiltinsLedger,
 } from "./config";
 import { resetKnownPluginNamesCache } from "./plugins";
 import { assembleProfile } from "./assembly";
@@ -95,8 +97,41 @@ export function loadProfiles(): Profile[] {
 }
 
 /**
+ * Seed built-ins the app ships with — Default profile today, profile-creator +
+ * profiles-manager favourite later. Uses an append-only ledger to guarantee
+ * each built-in is seeded at most once per install: if the user deletes a
+ * seeded built-in, the app does NOT re-create it on subsequent launches.
+ *
+ * Called once on app startup in place of the old ensureDefaultProfile() call.
+ * A built-in only seeds when BOTH conditions hold:
+ *   1. its name is absent from the ledger, AND
+ *   2. the install is "fresh" (profiles.json empty or missing).
+ * Once seeded, the ledger records the name; future launches no-op regardless
+ * of whether the seeded profile still exists.
+ */
+export function seedBuiltins(): void {
+  const ledger = readBuiltinsLedger();
+  const store = readProfilesStore();
+  const isFreshInstall = Object.keys(store.profiles).length === 0;
+
+  // Default profile — seed on fresh install only.
+  if (isFreshInstall && !ledger.profiles.includes("Default")) {
+    ensureDefaultProfile();
+    ledger.profiles.push("Default");
+    saveBuiltinsLedger(ledger);
+  }
+}
+
+/**
  * Ensure a default profile exists. If none has `isDefault: true`,
- * create an empty "Default" profile. Called on app startup.
+ * create an empty "Default" profile.
+ *
+ * Formerly called on every app startup, which meant deleting the Default
+ * profile and restarting would silently re-create it — contradicting the
+ * "no default profile" nudge in Configure Claude. App startup now goes
+ * through seedBuiltins() instead, which gates creation on a fresh install
+ * plus an append-only ledger. This function is still exported for the
+ * ensure-default-profile IPC handler and for direct programmatic use.
  */
 export function ensureDefaultProfile(): void {
   const store = readProfilesStore();
@@ -238,12 +273,21 @@ export function saveProfile(profile: Profile): Profile {
 export async function checkAliasConflict(
   aliasName: string,
   profileName: string,
+  newIsDefault?: boolean,
 ): Promise<{ conflict: boolean; source: "profile" | "system" | "shell"; detail: string } | null> {
   // 1. Check other profiles
   const store = readProfilesStore();
   for (const [name, p] of Object.entries(store.profiles)) {
     if (name === profileName) continue;
     if ((p as Profile).aliases?.some(a => a.name === aliasName)) {
+      // Special case: setting this profile as default with the "claude" alias
+      // while the CURRENT default still holds the same alias. `saveProfile`
+      // atomically unflags the old default and strips its claude alias before
+      // generating this profile's aliases, so the clash is transient and the
+      // save is safe. Don't block it.
+      if (aliasName === "claude" && newIsDefault === true && (p as Profile).isDefault) {
+        continue;
+      }
       return { conflict: true, source: "profile", detail: `Already used by profile "${name}"` };
     }
   }
