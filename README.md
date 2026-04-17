@@ -63,7 +63,7 @@ ClaudeWorks gives each configuration a real isolated environment: its own `CLAUD
 
 macOS only at launch. Windows is planned and Linux likely follows. The Electron shell is already cross-platform, but the terminal launch and Keychain sync need ports.
 
-Profiles live on your machine, no cloud sync. Use `exportProfile` / `importProfile` to move them. The app doesn't phone home.
+Profiles live on your machine, no cloud sync. Use `exportProfile` / `importProfile` to move them.
 
 No GitHub token required. ClaudeWorks tries the `gh` CLI first, then `GITHUB_TOKEN`, then falls back to anonymous fetches (60 req/h). See [Architecture](#architecture) for the fallback chain.
 
