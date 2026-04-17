@@ -39,7 +39,15 @@ jobs:
         run: npm ci
 
       - name: Build and package DMG
-        run: npm run package
+        # Run build + electron-builder directly (not `npm run package`) so we
+        # can pass `--publish never`. When a tag is pushed, electron-builder's
+        # default behaviour is to auto-detect the tag and try to publish to a
+        # GitHub release itself, which fails here without GH_TOKEN AND would
+        # race the softprops/action-gh-release step below. We want the next
+        # step to be the sole publisher.
+        run: |
+          npm run build
+          npx electron-builder --publish never
 
       - name: Resolve release-notes path
         id: notes
