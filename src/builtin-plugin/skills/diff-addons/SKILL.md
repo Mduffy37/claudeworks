@@ -22,6 +22,7 @@ Now enumerate what's **actually available to you in this running session**. The 
 - Read directly from the system-reminder text in your context. Do not rely on memory of what a "typical" profile has.
 - Convert every listed skill to the same `plugin:name` format used in Phase 1. Items in the system reminder that already have a `plugin:name` prefix stay as-is. Items without a plugin prefix (e.g. `update-config`, `keybindings-help`, `simplify`, `loop`) are **builtin or globally-installed** — prefix them with the sentinel `(global):` so they diff cleanly.
 - Do the same for commands (user-invocable slash commands grouped under "user-invocable skills" or similar) and for agents (under the Agent tool's `subagent_type` list).
+- **Profile-scoped commands exception**: the declared inventory may include entries prefixed `(profile):` (e.g. `(profile):workflow`, `(profile):workflow-debug`, `(profile):intro`). These are slash commands the profile wrote into its own `config/commands/` directory — Claude Code loads them as bare command names, same as `(global):` items. When you see a bare command in the session whose short name matches a declared `(profile):<name>` entry, prefix it with `(profile):` (not `(global):`) so the diff matches. Only fall back to `(global):` when no `(profile):` declaration uses that name.
 - If a category (skills, commands, agents) is not visible in your context, say so explicitly in the report instead of guessing.
 
 Build three sets: `session.skills`, `session.commands`, `session.agents`.

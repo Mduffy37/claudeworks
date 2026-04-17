@@ -420,6 +420,29 @@ function main() {
     }
   }
 
+  // Profile-scoped commands — slash commands written by assembly into the
+  // profile's config/commands/ directory from Profile schema fields
+  // (workflow, workflows[], tools, intro). These are loaded by Claude Code
+  // alongside plugin commands, so they MUST appear in the declared inventory
+  // or diff-addons will flag them as "unexpected in session" false positives.
+  //
+  // The config/commands/ dir is profile-local — plugin commands live under
+  // config/plugins/ subtrees, so there's no double-counting risk here.
+  const profileCmdDir = path.join(cd, "commands");
+  if (fs.existsSync(profileCmdDir)) {
+    for (const file of fs.readdirSync(profileCmdDir)) {
+      if (!file.endsWith(".md")) continue;
+      const name = file.replace(/\.md$/, "");
+      const fm = readFrontmatter(path.join(profileCmdDir, file));
+      commands.push({
+        pluginShort: "(profile)",
+        name,
+        description: (fm.description ?? "").trim(),
+        excluded: false,
+      });
+    }
+  }
+
   // Local items from the working directory's .claude/ folder (independent of profile plugins).
   const wd = profile.directory || process.cwd();
   const localWd = path.join(wd, ".claude");
