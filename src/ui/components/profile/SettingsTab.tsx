@@ -647,10 +647,10 @@ export function SettingsTab(props: Props) {
               className="text-input"
               value={launchPrompt}
               onChange={(e) => onChangeLaunchPrompt(e.target.value)}
-              placeholder="e.g. /intro  |  summarise the repo  |  /workflow"
+              placeholder="e.g. /workflow  |  summarise the repo"
             />
             <div className="field-hint">
-              Fires automatically when launching this profile (no alias invoked). Supports slash commands like <code>/intro</code> or <code>/workflow</code>, or a free-form prompt. Leave empty to launch without an initial prompt.
+              Fires automatically when launching this profile (no alias invoked). Supports slash commands like <code>/workflow</code> or a free-form prompt. Leave empty to launch without an initial prompt.
             </div>
           </div>
 
