@@ -1,9 +1,9 @@
 ---
 name: suggest-plugins
-description: Interactive discovery-and-edit session for a Claude Profiles profile — search the curated marketplace and local plugins, install missing picks with the user's confirmation, add them to the active profile, and use smart exclusions so only the items that match the user's query get enabled on mega-bundle plugins. Stays resident across multiple user turns until the user signals they're done.
+description: Interactive discovery-and-edit session for a ClaudeWorks profile — search the curated marketplace and local plugins, install missing picks with the user's confirmation, add them to the active profile, and use smart exclusions so only the items that match the user's query get enabled on mega-bundle plugins. Stays resident across multiple user turns until the user signals they're done.
 ---
 
-You are running an **interactive discovery session** over the curated Claude Profiles marketplace and the user's local `~/.claude/{skills,agents,commands}/` plugins. Unlike a one-shot recommender, this skill stays resident across multiple user turns: the user searches, you present, the user refines, you re-search, the user picks, you install + add + exclude, the user searches again, and so on until they say they're done. Treat conversational follow-ups as *expected*, not as pivots.
+You are running an **interactive discovery session** over the curated ClaudeWorks marketplace and the user's local `~/.claude/{skills,agents,commands}/` plugins. Unlike a one-shot recommender, this skill stays resident across multiple user turns: the user searches, you present, the user refines, you re-search, the user picks, you install + add + exclude, the user searches again, and so on until they say they're done. Treat conversational follow-ups as *expected*, not as pivots.
 
 The skill can perform three kinds of mutation on the user's profile, each gated by an explicit confirmation turn:
 
@@ -31,9 +31,9 @@ The anchor line is not cosmetic — it is a state-persistence hack. Claude's con
 
 Run these `!` blocks at skill-load time so the downstream turns have fresh data to work from. They are safe to execute unconditionally — none of them mutate state, and the outputs prime the model with the static context it needs.
 
-!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/fetch-marketplace-cache.js" 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/fetch-marketplace-cache.js" 2>&1`
 
-!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-local-plugins.js" 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/list-local-plugins.js" 2>&1`
 
 !`node -e "
 const fs=require('fs'),path=require('path'),os=require('os');
@@ -43,7 +43,7 @@ const mf=fs.existsSync(mfPath)?JSON.parse(fs.readFileSync(mfPath,'utf-8')):{plug
 const installed=Object.keys(mf.plugins||{});
 let activeProfileName=null,activeProfilePlugins=[],activeProfileExcluded={},activeProfileWorkflow='';
 if(cd){const parts=cd.split(path.sep);const ci=parts.lastIndexOf('config');if(ci>0)activeProfileName=parts[ci-1];}
-const pfPath=path.join(os.homedir(),'.claude-profiles','profiles.json');
+const pfPath=path.join(os.homedir(),'.claudeworks','profiles.json');
 if(activeProfileName&&fs.existsSync(pfPath)){
   try{const pf=JSON.parse(fs.readFileSync(pfPath,'utf-8')).profiles||{};
     if(pf[activeProfileName]){
@@ -72,20 +72,20 @@ Runs every time the user asks for a new search. The user's message is the query;
 
 **Build keyword list.** Turn the user's intent into 5–10 keywords with synonyms. If the query is project-adjacent (*"for this repo", "for the stack I'm in"*) and `$PWD` looks like a code project, run `infer-project.js` first and fold its `languages` + `frameworks` into `techKeywords`. Otherwise leave `techKeywords` empty.
 
-!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/infer-project.js" "$PWD" 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/infer-project.js" "$PWD" 2>&1`
 
 **Call `retrieve-plugins.js`.** This script reads a **single JSON object from stdin**. It accepts no environment variables, no CLI flags, no argv — pipe the payload via heredoc or `echo`. Nothing else works. Construct the payload in your own Bash turn and run:
 
 ```
 echo '{"stages":[{"id":"<intent-slug>","keywords":["kw1","kw2","..."]}],"techKeywords":["tech1"],"cap":40}' \
-  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/retrieve-plugins.js"
+  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/retrieve-plugins.js"
 ```
 
 The response is a JSON object with `stages[]`, `plugins[]`, and `diagnostics`. If the full output is large (often the case — `plugins[]` alone can be 40 entries), **extract only what you need in the same Bash call** before presenting:
 
 ```
 echo '{"stages":[...],"techKeywords":[],"cap":40}' \
-  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/retrieve-plugins.js" \
+  | node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/retrieve-plugins.js" \
   | node -e "const r=JSON.parse(require('fs').readFileSync(0,'utf-8'));console.log(JSON.stringify({plugins:r.plugins,hits:r.stages[0].hits.slice(0,20),diag:r.diagnostics}));"
 ```
 
@@ -149,7 +149,7 @@ For each confirmed pick, in order:
 
 > *"`<displayName>` isn't installed yet. It's hosted at `<sourceUrl>`. Install now and add it to `<targetProfile>`? (y/n)"*
 
-- **User says yes** → run `install-plugins.js` with `MISSING_PLUGINS='[{"id":"<id>","marketplaceId":"<marketplace>","sourceUrl":"<url>"}]'`. The script uses the same binary-resolution logic as the Claude Profiles app, so the install lands in the central `~/.claude/plugins/` location and then shows up in the next `installed_plugins.json` read. Parse the response — if it failed, surface the error verbatim and skip this pick (do not proceed to add/exclude). Don't retry silently.
+- **User says yes** → run `install-plugins.js` with `MISSING_PLUGINS='[{"id":"<id>","marketplaceId":"<marketplace>","sourceUrl":"<url>"}]'`. The script uses the same binary-resolution logic as the ClaudeWorks app, so the install lands in the central `~/.claude/plugins/` location and then shows up in the next `installed_plugins.json` read. Parse the response — if it failed, surface the error verbatim and skip this pick (do not proceed to add/exclude). Don't retry silently.
 - **User says no** → skip this pick entirely, move to the next.
 
 **3c. List the plugin's real items.** After a successful install (or for an already-installed plugin), call `list-plugin-items.js` to get the on-disk item names. This script walks the real `installPath` and matches exactly what `applyExclusions` in `core.ts` sees at profile assembly — critical for mega-bundles where `items.ndjson` is silently truncated by the GitHub Contents API's 1000-entry cap.
@@ -157,7 +157,7 @@ For each confirmed pick, in order:
 The script takes the plugin ID as a **positional argv, not an env var**:
 
 ```
-node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-plugin-items.js" '<plugin id>'
+node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/list-plugin-items.js" '<plugin id>'
 ```
 
 Output shape: `{"ok": true, "pluginId": "...", "installPath": "...", "items": ["name1","name2",...]}` on success, `{"ok": false, "error": "..."}` on failure. The `items` array is flat (no skills/agents/commands split) — that's fine because it matches exactly what `excludedItems[pluginId]` must contain. Total item count is `items.length`.
@@ -191,7 +191,7 @@ Then ask:
 P_NAME='<targetProfile>' \
 P_OP=add-plugins \
 P_VALUE='["<plugin id>"]' \
-node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/patch-profile.js"
+node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/patch-profile.js"
 ```
 
 Parse the response. If the plugin was already in the profile (appears in the user's request but not in `added`), note it as a no-op.
@@ -203,7 +203,7 @@ P_NAME='<targetProfile>' \
 P_OP=set-excluded \
 P_PLUGIN='<plugin id>' \
 P_VALUE='["excluded-item-1","excluded-item-2","..."]' \
-node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/patch-profile.js"
+node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/patch-profile.js"
 ```
 
 **3g. Record, refresh, and confirm.** Append the pick to `addedThisSession` (with a note on whether exclusions were applied) and **add the plugin's ID to your in-memory `installed` set** so subsequent Step 1 searches in the same session don't re-offer it as "not installed". If you don't do this, a search later in the session that matches the plugin you just added will show it as needing another install — wrong and confusing.
@@ -241,7 +241,7 @@ Triggered by an explicit "done" signal or by a mid-session profile change / cros
 
 **Picks you explored but didn't add:** <optional short list from shownPicks minus addedThisSession>
 
-Relaunch `<targetProfile>` from the Claude Profiles app to pick up the new plugins in a live session.
+Relaunch `<targetProfile>` from the ClaudeWorks app to pick up the new plugins in a live session.
 ```
 
 If `hasWorkflow` is true and `addedThisSession.length > 0`, add:

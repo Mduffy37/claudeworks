@@ -26,7 +26,7 @@ import { CLAUDE_HOME } from "./config";
 
 const LOCAL_PLUGIN_PREFIX = "local:";
 const FRAMEWORK_PLUGIN_PREFIX = "framework:";
-const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
+const BUILTIN_PLUGIN_NAME = "profiles-manager@claudeworks";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ function isDirLike(base: string, name: string): boolean {
  *   2. `~/.claude/skills/`                         → local / framework / skill-lock / git plugins
  *   3. `~/.claude/commands/`                       → local command namespace plugins
  *   4. `~/.claude/agents/`                         → local agents bucket plugin
- *   5. The builtin `profiles-manager@claude-profiles`
+ *   5. The builtin `profiles-manager@claudeworks`
  *
  * For local skills, multiple ID forms are registered per directory so that
  * any ID a profile might have recorded will resolve correctly.
@@ -279,7 +279,7 @@ export function buildResolutionMap(): Map<string, ResolvedPlugin> {
     CLAUDE_HOME,
     "plugins",
     "cache",
-    "claude-profiles",
+    "claudeworks",
     "profiles-manager",
   );
   register(map, BUILTIN_PLUGIN_NAME, "builtin", builtinDir, "Profiles Manager");

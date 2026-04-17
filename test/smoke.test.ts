@@ -23,7 +23,7 @@ const originalHome = process.env.HOME;
 // Resolve the temp dir through realpathSync so macOS's /tmp → /private/tmp
 // symlink doesn't create path mismatches between fs.realpathSync output
 // (used by the overlay walker) and the fixture-registered installPath values.
-const testHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "claude-profiles-smoke-")));
+const testHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "claudeworks-smoke-")));
 process.env.HOME = testHome;
 
 // Dynamic import so core.ts sees our overridden HOME.
@@ -36,7 +36,7 @@ const core = {
 };
 
 const CLAUDE_HOME = path.join(testHome, ".claude");
-const PROFILES_DIR = path.join(testHome, ".claude-profiles");
+const PROFILES_DIR = path.join(testHome, ".claudeworks");
 
 // ---------------------------------------------------------------------------
 // Fixture helpers

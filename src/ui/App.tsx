@@ -49,7 +49,7 @@ export function App() {
   const SIDEBAR_MAX_FIXED = 480;
   const MAIN_MIN = 660;
   const SIDEBAR_MAX = Math.min(SIDEBAR_MAX_FIXED, Math.max(SIDEBAR_MIN, window.innerWidth - MAIN_MIN));
-  const SIDEBAR_STORAGE_KEY = "claude-profiles:sidebarWidth";
+  const SIDEBAR_STORAGE_KEY = "claudeworks:sidebarWidth";
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(SIDEBAR_STORAGE_KEY) : null;
     const parsed = raw ? parseInt(raw, 10) : NaN;
@@ -421,7 +421,7 @@ export function App() {
               <path d="M16 13v7M16 23v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </div>
-          <div className="app-error-title">Claude Profiles couldn't load</div>
+          <div className="app-error-title">ClaudeWorks couldn't load</div>
           <div className="app-error-subtitle">
             One or more config files failed to read. Run the Profiles Doctor to find and repair known issues.
           </div>
@@ -471,7 +471,7 @@ export function App() {
       <div className="drag-bar">
         <div className="drag-bar-brand">
           <img src="./logo.svg" alt="" width="16" height="16" className="drag-bar-logo" />
-          <h1 className="drag-bar-title">Claude Profiles</h1>
+          <h1 className="drag-bar-title">ClaudeWorks</h1>
         </div>
         <button
           className="app-refresh-btn"

@@ -854,19 +854,19 @@ function copyDirRecursive(src: string, dest: string): void {
   });
 }
 
-const BUILTIN_PLUGIN_NAME = "profiles-manager@claude-profiles";
+const BUILTIN_PLUGIN_NAME = "profiles-manager@claudeworks";
 const BUILTIN_PLUGIN_VERSION = "1.0.0";
 
 
 export function ensureBuiltinPlugin(): string {
   // Install the built-in profiles-manager plugin so it appears as a normal
   // marketplace plugin. Three things need to exist:
-  //   1. Plugin files in the cache: ~/.claude/plugins/cache/claude-profiles/profiles-manager/<version>/
-  //   2. Marketplace manifest: ~/.claude/plugins/marketplaces/claude-profiles/.claude-plugin/marketplace.json
+  //   1. Plugin files in the cache: ~/.claude/plugins/cache/claudeworks/profiles-manager/<version>/
+  //   2. Marketplace manifest: ~/.claude/plugins/marketplaces/claudeworks/.claude-plugin/marketplace.json
   //   3. Entry in ~/.claude/plugins/known_marketplaces.json
   //   4. Entry in ~/.claude/plugins/installed_plugins.json
-  const marketplaceRoot = path.join(CLAUDE_HOME, "plugins", "marketplaces", "claude-profiles");
-  const cacheDir = path.join(CLAUDE_HOME, "plugins", "cache", "claude-profiles", "profiles-manager", BUILTIN_PLUGIN_VERSION);
+  const marketplaceRoot = path.join(CLAUDE_HOME, "plugins", "marketplaces", "claudeworks");
+  const cacheDir = path.join(CLAUDE_HOME, "plugins", "cache", "claudeworks", "profiles-manager", BUILTIN_PLUGIN_VERSION);
 
   // Source: check dev path first, then production path
   const devPath = path.join(__dirname, "..", "..", "src", "builtin-plugin");
@@ -891,9 +891,9 @@ export function ensureBuiltinPlugin(): string {
   copyDirRecursive(src, mktPluginDir);
   fs.writeFileSync(path.join(pluginMetaDir, "marketplace.json"), JSON.stringify({
     "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-    name: "claude-profiles",
-    description: "Built-in plugins for the Claude Profiles app",
-    owner: { name: "Claude Profiles" },
+    name: "claudeworks",
+    description: "Built-in plugins for the ClaudeWorks app",
+    owner: { name: "ClaudeWorks" },
     plugins: [{
       name: "profiles-manager",
       description: "Self-management skills — list add-ons, create profiles and teams, check status, discover plugins.",
@@ -908,8 +908,8 @@ export function ensureBuiltinPlugin(): string {
   if (fs.existsSync(knownPath)) {
     try { known = JSON.parse(fs.readFileSync(knownPath, "utf-8")); } catch {}
   }
-  if (!known["claude-profiles"] || known["claude-profiles"].installLocation !== marketplaceRoot) {
-    known["claude-profiles"] = {
+  if (!known["claudeworks"] || known["claudeworks"].installLocation !== marketplaceRoot) {
+    known["claudeworks"] = {
       source: { source: "directory", path: marketplaceRoot },
       installLocation: marketplaceRoot,
       lastUpdated: now,
@@ -1069,7 +1069,7 @@ export function symlinkShared(configDir: string, profile: Profile): void {
   // auto-register them into the profile's installed_plugins.json with a
   // synthetic `version: "unknown"` entry — defeating profile isolation for
   // any plugin whose marketplace was installed globally, most notably the
-  // built-in `claude-profiles` marketplace containing profiles-manager.
+  // built-in `claudeworks` marketplace containing profiles-manager.
   const neededMarketplaces = new Set<string>();
   for (const pluginName of profile.plugins) {
     const marketplace = pluginName.split("@")[1];

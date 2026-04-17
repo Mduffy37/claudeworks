@@ -370,7 +370,7 @@ function main() {
   const parts = cd.split(path.sep);
   const profileName = parts[parts.lastIndexOf("config") - 1];
 
-  const profilesPath = path.join(os.homedir(), ".claude-profiles", "profiles.json");
+  const profilesPath = path.join(os.homedir(), ".claudeworks", "profiles.json");
   if (!fs.existsSync(profilesPath)) {
     console.log("profiles.json not found");
     return;

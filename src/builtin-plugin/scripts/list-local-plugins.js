@@ -13,9 +13,9 @@
  *
  * Usage:  node list-local-plugins.js
  * Output:
- *   - Writes ~/.claude-profiles/marketplace-cache/local-catalog.json
+ *   - Writes ~/.claudeworks/marketplace-cache/local-catalog.json
  *     (same shape as catalog.json, with marketplace: "local" on each plugin)
- *   - Writes ~/.claude-profiles/marketplace-cache/local-items.ndjson
+ *   - Writes ~/.claudeworks/marketplace-cache/local-items.ndjson
  *     (same shape as items.ndjson, one JSON object per line)
  *   - Prints a single-line JSON summary to stdout
  *
@@ -31,7 +31,7 @@ const path = require("path");
 const os = require("os");
 
 const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-const CACHE_DIR = path.join(os.homedir(), ".claude-profiles", "marketplace-cache");
+const CACHE_DIR = path.join(os.homedir(), ".claudeworks", "marketplace-cache");
 const CATALOG_OUT = path.join(CACHE_DIR, "local-catalog.json");
 const ITEMS_OUT = path.join(CACHE_DIR, "local-items.ndjson");
 

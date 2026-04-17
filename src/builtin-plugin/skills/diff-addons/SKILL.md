@@ -9,7 +9,7 @@ This skill is a **profile isolation validator**. It runs in three phases and pro
 
 Run the helper and parse its JSON output. This is what the profile *declares* should be loaded:
 
-!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-addons.js" --json 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/list-addons.js" --json 2>&1`
 
 Parse the JSON into three sets: `declared.skills`, `declared.commands`, `declared.agents`. Each is a sorted array of `plugin:name` strings. Remember the `profile`, `pluginCount`, `counts.excluded`, and `excludedSkills`/`excludedCommands`/`excludedAgents` fields — you'll need them for the final report.
 

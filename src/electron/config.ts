@@ -13,7 +13,7 @@ import * as path from "path";
 import * as os from "os";
 
 export const CLAUDE_HOME = path.join(os.homedir(), ".claude");
-export const PROFILES_DIR = path.join(os.homedir(), ".claude-profiles");
+export const PROFILES_DIR = path.join(os.homedir(), ".claudeworks");
 export const PROFILES_JSON = path.join(PROFILES_DIR, "profiles.json");
 export const GLOBAL_DEFAULTS_JSON = path.join(PROFILES_DIR, "global-defaults.json");
 

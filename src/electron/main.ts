@@ -92,7 +92,7 @@ import type { Profile, Team } from "./types";
 
 let mainWindow: BrowserWindow | null = null;
 
-const PREFS_PATH = path.join(os.homedir(), ".claude-profiles", "global-defaults.json");
+const PREFS_PATH = path.join(os.homedir(), ".claudeworks", "global-defaults.json");
 
 function loadWindowBounds(): { x?: number; y?: number; width: number; height: number } {
   try {
@@ -193,7 +193,7 @@ ipcMain.handle("update-profile", async (_event, profile: Profile) => {
 });
 
 ipcMain.handle("rename-profile", async (_event, oldName: string, profile: Profile) => {
-  const oldConfigDir = path.join(os.homedir(), ".claude-profiles", oldName, "config");
+  const oldConfigDir = path.join(os.homedir(), ".claudeworks", oldName, "config");
   const saved = renameProfile(oldName, profile);
   assembleProfile(saved);
   if (saved.useDefaultAuth !== false) await syncCredentials(saved, "rename", oldConfigDir);
@@ -286,7 +286,7 @@ ipcMain.handle("select-directory", async () => {
 });
 
 ipcMain.handle("is-bin-in-path", () => {
-  const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
+  const binDir = path.join(os.homedir(), ".claudeworks", "bin");
   const shell = process.env.SHELL ?? "/bin/zsh";
   const rcFile = shell.includes("zsh")
     ? path.join(os.homedir(), ".zshrc")
@@ -296,7 +296,7 @@ ipcMain.handle("is-bin-in-path", () => {
 });
 
 ipcMain.handle("add-bin-to-path", () => {
-  const binDir = path.join(os.homedir(), ".claude-profiles", "bin");
+  const binDir = path.join(os.homedir(), ".claudeworks", "bin");
   fs.mkdirSync(binDir, { recursive: true });
 
   const shell = process.env.SHELL ?? "/bin/zsh";
@@ -445,7 +445,7 @@ ipcMain.handle("run-profiles-doctor", (_e, mode: "detect" | "repair") => runProf
 ipcMain.handle("export-diagnostics", async () => {
   const data = await exportDiagnostics();
   const { filePath, canceled } = await dialog.showSaveDialog({
-    defaultPath: `claude-profiles-diagnostics-${Date.now()}.json`,
+    defaultPath: `claudeworks-diagnostics-${Date.now()}.json`,
     filters: [{ name: "JSON", extensions: ["json"] }],
   });
   if (canceled || !filePath) return { ok: false, cancelled: true };
@@ -454,12 +454,12 @@ ipcMain.handle("export-diagnostics", async () => {
 });
 ipcMain.handle("get-app-preferences", () => {
   try {
-    const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude-profiles", "global-defaults.json"), "utf-8"));
+    const data = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claudeworks", "global-defaults.json"), "utf-8"));
     return { fontSize: data.appFontSize ?? 1, theme: data.appTheme ?? "dark" };
   } catch { return { fontSize: 1, theme: "dark" }; }
 });
 ipcMain.handle("save-app-preferences", (_event, prefs: { fontSize: number; theme?: string }) => {
-  const filePath = path.join(os.homedir(), ".claude-profiles", "global-defaults.json");
+  const filePath = path.join(os.homedir(), ".claudeworks", "global-defaults.json");
   let data: any = {};
   try { data = JSON.parse(fs.readFileSync(filePath, "utf-8")); } catch {}
   data.appFontSize = prefs.fontSize;

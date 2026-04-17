@@ -1,5 +1,5 @@
-appId: com.claude-profiles.app
-productName: Claude Profiles
+appId: com.claudeworks.app
+productName: ClaudeWorks
 directories:
   output: release
 files:

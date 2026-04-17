@@ -198,12 +198,12 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
                 className="btn-secondary"
                 onClick={async () => {
                   const home = await window.api.getClaudeHome();
-                  // getClaudeHome returns ~/.claude — go up one level for ~/.claude-profiles
-                  const profilesDir = home.replace(/\/\.claude$/, "/.claude-profiles");
+                  // getClaudeHome returns ~/.claude — go up one level for ~/.claudeworks
+                  const profilesDir = home.replace(/\/\.claude$/, "/.claudeworks");
                   window.api.openInFinder(profilesDir);
                 }}
                 disabled={running !== null}
-                title="Open ~/.claude-profiles/ in Finder"
+                title="Open ~/.claudeworks/ in Finder"
               >
                 Open config folder
               </button>

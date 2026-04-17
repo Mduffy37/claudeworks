@@ -179,7 +179,7 @@ export const WIDGET_SCHEMAS: Record<string, WidgetSchema> = {
   profile: {
     id: "profile",
     label: "Active profile",
-    description: "The claude-profiles profile the current session is running under. Try 👤 as an icon.",
+    description: "The ClaudeWorks profile the current session is running under. Try 👤 as an icon.",
     options: [
       { key: "color", label: "Primary color", type: "color", default: DEFAULT_PRIMARY },
       { key: "icon", label: "Icon/prefix", type: "text", default: "" },

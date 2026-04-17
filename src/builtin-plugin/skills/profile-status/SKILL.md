@@ -10,7 +10,7 @@ const fs=require('fs'),path=require('path'),os=require('os');
 const cd=process.env.CLAUDE_CONFIG_DIR;
 if(!cd){console.log('Not running under a profile (no CLAUDE_CONFIG_DIR)');process.exit(0)}
 const pp=cd.split(path.sep),pn=pp[pp.lastIndexOf('config')-1];
-const pfPath=path.join(os.homedir(),'.claude-profiles','profiles.json');
+const pfPath=path.join(os.homedir(),'.claudeworks','profiles.json');
 if(!fs.existsSync(pfPath)){console.log('profiles.json not found');process.exit(0)}
 const pf=JSON.parse(fs.readFileSync(pfPath,'utf-8')).profiles[pn];
 if(!pf){console.log('Profile not found: '+pn);process.exit(0)}

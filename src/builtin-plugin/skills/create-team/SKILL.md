@@ -13,8 +13,8 @@ You are creating a new Claude Code team. A team is a composition of profiles tha
 
 !`node -e "
 const fs=require('fs'),path=require('path'),os=require('os');
-const pfPath=path.join(os.homedir(),'.claude-profiles','profiles.json');
-const tmPath=path.join(os.homedir(),'.claude-profiles','teams.json');
+const pfPath=path.join(os.homedir(),'.claudeworks','profiles.json');
+const tmPath=path.join(os.homedir(),'.claudeworks','teams.json');
 const profiles=fs.existsSync(pfPath)?JSON.parse(fs.readFileSync(pfPath,'utf-8')).profiles:{};
 const teams=fs.existsSync(tmPath)?JSON.parse(fs.readFileSync(tmPath,'utf-8')).teams:{};
 const list=Object.values(profiles).map(p=>({name:p.name,description:p.description,plugins:p.plugins.length}));
@@ -33,7 +33,7 @@ console.log(JSON.stringify({profiles:list,existingTeams:Object.keys(teams)}));
 
 !`node -e "
 const fs=require('fs'),path=require('path'),os=require('os');
-const tmPath=path.join(os.homedir(),'.claude-profiles','teams.json');
+const tmPath=path.join(os.homedir(),'.claudeworks','teams.json');
 let store=fs.existsSync(tmPath)?JSON.parse(fs.readFileSync(tmPath,'utf-8')):{teams:{}};
 const team={
   name: process.env.T_NAME,
@@ -52,5 +52,5 @@ Set T_NAME, T_DESC, and T_MEMBERS (JSON array of `{profile, role, instructions, 
 ## Important
 - Each member's `profile` field must match an existing profile name exactly
 - Exactly one member should have `isLead: true`
-- The team won't be assembled until launched from the Claude Profiles app
+- The team won't be assembled until launched from the ClaudeWorks app
 - If the user needs a profile that doesn't exist, suggest using the `create-profile` skill first

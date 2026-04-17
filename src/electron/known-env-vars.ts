@@ -1,6 +1,6 @@
 /**
  * known-env-vars.ts — registry of environment variables recognized by
- * Claude Code and Claude Profiles.
+ * Claude Code and ClaudeWorks.
  *
  * Suggestive, not restrictive: the UI autocompletes from this list but
  * still allows arbitrary user-defined variables. This is a curated

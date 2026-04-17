@@ -9,7 +9,7 @@ This skill shows the **declared inventory** for the current profile — what the
 
 Run the helper script (no flags — the default output is the human-readable inventory):
 
-!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claude-profiles/plugins/profiles-manager}/scripts/list-addons.js" 2>&1`
+!`node "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/marketplaces/claudeworks/plugins/profiles-manager}/scripts/list-addons.js" 2>&1`
 
 Present the output to the user as-is. The script already formats it with:
 - Profile name and plugin count

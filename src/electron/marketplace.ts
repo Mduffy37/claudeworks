@@ -176,7 +176,7 @@ async function githubApi(
   // whether we attach an Authorization header.
   const url = `https://api.github.com/${apiPath.replace(/^\//, "")}`;
   const headers: Record<string, string> = {
-    "User-Agent": "claude-profiles",
+    "User-Agent": "claudeworks",
     "Accept": accept,
   };
   if (backend.kind === "fetch-authed") {
@@ -218,7 +218,7 @@ function lruTouch<K, V>(cache: Map<K, V>, key: K, val: V, max: number): void {
 /** Fetches a file from the curator's own marketplace repo. */
 async function fetchGitHubFileContent(repoPath: string): Promise<string> {
   return githubApi(
-    `repos/Mduffy37/claude-profiles-marketplace/contents/${repoPath}`,
+    `repos/Mduffy37/claudeworks-marketplace/contents/${repoPath}`,
     { raw: true },
   );
 }

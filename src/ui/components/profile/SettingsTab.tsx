@@ -608,7 +608,7 @@ export function SettingsTab(props: Props) {
             </button>
             {!isInPath && aliases.length > 0 && (
               <div className="field-hint" style={{ marginTop: "6px" }}>
-                Aliases are saved to ~/.claude-profiles/bin/.{" "}
+                Aliases are saved to ~/.claudeworks/bin/.{" "}
                 <button className="btn-link" onClick={onAddToPath} style={{ fontSize: "inherit" }}>Add to PATH</button>{" "}
                 to use from any terminal.
               </div>

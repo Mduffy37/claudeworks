@@ -3,7 +3,7 @@
  * install-plugins.js
  *
  * Install one or more missing Claude Code plugins using the same CLI
- * commands the Claude Profiles Electron app uses internally. Invoked by
+ * commands the ClaudeWorks Electron app uses internally. Invoked by
  * create-profile Step 7.5 (and by suggest-plugins when the user opts in
  * to install a non-installed pick).
  *
@@ -16,7 +16,7 @@
  * Two load-bearing details that mirror src/electron/core.ts exactly:
  *
  *   1. Resolves the real `claude` binary by walking PATH and SKIPPING
- *      ~/.claude-profiles/bin. That directory contains alias scripts
+ *      ~/.claudeworks/bin. That directory contains alias scripts
  *      (including claude-default) that intentionally intercept bare
  *      `claude` invocations and hardcode their own CLAUDE_CONFIG_DIR
  *      inline on the command line. If we went through PATH, the alias
@@ -34,7 +34,7 @@ const os = require("os");
 const cp = require("child_process");
 
 function resolveRealClaude() {
-  const profilesBin = path.join(os.homedir(), ".claude-profiles", "bin");
+  const profilesBin = path.join(os.homedir(), ".claudeworks", "bin");
   for (const dir of (process.env.PATH || "").split(path.delimiter)) {
     try {
       if (path.resolve(dir) === profilesBin) continue;
@@ -70,7 +70,7 @@ if (!realClaude) {
     JSON.stringify({
       ok: false,
       error:
-        "Real claude binary not found in PATH outside ~/.claude-profiles/bin. Is Claude Code installed?",
+        "Real claude binary not found in PATH outside ~/.claudeworks/bin. Is Claude Code installed?",
       results: [],
     }) + "\n",
   );

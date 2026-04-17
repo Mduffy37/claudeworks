@@ -1,7 +1,7 @@
 /**
  * doctor.ts
  *
- * Diagnostic and repair pass over the Claude Profiles store and related
+ * Diagnostic and repair pass over the ClaudeWorks store and related
  * config files. Invoked via the `run-profiles-doctor` IPC from two places:
  *
  *   1. The error panel on App.tsx when any of the initial load hooks
@@ -354,7 +354,7 @@ function checkStaleBinAliases(mode: DoctorMode): DoctorFinding[] {
       title: "No bin directory",
       severity: "info",
       status: "healthy",
-      detail: "Nothing to check — ~/.claude-profiles/bin/ does not exist yet.",
+      detail: "Nothing to check — ~/.claudeworks/bin/ does not exist yet.",
     });
     return findings;
   }
@@ -421,7 +421,7 @@ function checkStaleBinAliases(mode: DoctorMode): DoctorFinding[] {
       title: "Stale bin aliases detected",
       severity: "warn",
       status: "detected",
-      detail: `${stale.length} alias(es) in ~/.claude-profiles/bin/ no longer match any profile.`,
+      detail: `${stale.length} alias(es) in ~/.claudeworks/bin/ no longer match any profile.`,
       itemsAffected: stale,
     });
   }
@@ -486,7 +486,7 @@ function checkOrphanProfileDirs(): DoctorFinding[] {
       title: "No orphan profile directories",
       severity: "info",
       status: "healthy",
-      detail: "Every directory under ~/.claude-profiles/ matches a known profile.",
+      detail: "Every directory under ~/.claudeworks/ matches a known profile.",
     });
   } else {
     findings.push({
@@ -494,7 +494,7 @@ function checkOrphanProfileDirs(): DoctorFinding[] {
       title: "Orphan profile directories",
       severity: "warn",
       status: "detected",
-      detail: `${orphans.length} director${orphans.length === 1 ? "y" : "ies"} under ~/.claude-profiles/ don't match any profile. Not auto-removing — they may be in-progress or leftover from deleted profiles.`,
+      detail: `${orphans.length} director${orphans.length === 1 ? "y" : "ies"} under ~/.claudeworks/ don't match any profile. Not auto-removing — they may be in-progress or leftover from deleted profiles.`,
       itemsAffected: orphans,
     });
   }

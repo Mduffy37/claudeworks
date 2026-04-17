@@ -326,7 +326,7 @@ export function exportProfileToJson(profileName: string): Record<string, any> {
 
   return {
     version: 1,
-    type: "claude-profiles-export",
+    type: "claudeworks-export",
     exportedAt: new Date().toISOString(),
     appVersion,
     profile: {
@@ -347,7 +347,7 @@ export function exportProfileToJson(profileName: string): Record<string, any> {
 export function importProfileFromJson(
   data: Record<string, any>,
 ): { profile: Profile; missingPlugins: string[] } {
-  if (data.type !== "claude-profiles-export" || !data.profile) {
+  if (data.type !== "claudeworks-export" || !data.profile) {
     throw new Error("Invalid profile export file — missing 'type' or 'profile' field");
   }
 

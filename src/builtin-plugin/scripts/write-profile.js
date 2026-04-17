@@ -2,7 +2,7 @@
 /**
  * write-profile.js
  *
- * Persist a new profile entry to ~/.claude-profiles/profiles.json from the
+ * Persist a new profile entry to ~/.claudeworks/profiles.json from the
  * create-profile skill's Step 8. Mirrors the validation and write semantics
  * of src/electron/core.ts (validateProfileName + writeProfilesStore) so the
  * skill cannot leave the store in a state the Electron app refuses to read.
@@ -59,7 +59,7 @@ if (
   );
 }
 
-const profilesDir = path.join(os.homedir(), ".claude-profiles");
+const profilesDir = path.join(os.homedir(), ".claudeworks");
 const pfPath = path.join(profilesDir, "profiles.json");
 
 // 2. Defence-in-depth: ensure the name resolves to a path inside profilesDir.

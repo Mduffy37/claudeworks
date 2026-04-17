@@ -2,7 +2,7 @@
 /**
  * patch-profile.js
  *
- * Targeted partial-update writer for `~/.claude-profiles/profiles.json`.
+ * Targeted partial-update writer for `~/.claudeworks/profiles.json`.
  * Companion to `write-profile.js` (which creates a profile from scratch):
  * this script reads an existing profile, mutates one field, and writes
  * the store back atomically. It exists so the `suggest-plugins` and
@@ -145,7 +145,7 @@ validateName(name);
 //    store or the target profile is missing — creating from scratch is
 //    write-profile.js's job, and a silent create here would mask caller
 //    bugs (e.g. typo'd profile name).
-const profilesDir = path.join(os.homedir(), ".claude-profiles");
+const profilesDir = path.join(os.homedir(), ".claudeworks");
 const pfPath = path.join(profilesDir, "profiles.json");
 if (!fs.existsSync(pfPath)) {
   fail(`profiles.json does not exist at ${pfPath}. patch-profile.js patches existing profiles; use write-profile.js to create new ones.`);

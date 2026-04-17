@@ -2,8 +2,8 @@
 /**
  * fetch-marketplace-cache.js
  *
- * Populate the marketplace cache at ~/.claude-profiles/marketplace-cache/ with
- * fresh catalog.json and items.ndjson from the claude-profiles-marketplace repo.
+ * Populate the marketplace cache at ~/.claudeworks/marketplace-cache/ with
+ * fresh catalog.json and items.ndjson from the claudeworks-marketplace repo.
  * Used by the create-profile and suggest-plugins skills as Step 1c.
  *
  * Usage:  node fetch-marketplace-cache.js
@@ -13,7 +13,7 @@
  *   1. Cache hit (24h TTL)
  *   2. HTTPS fetch to api.github.com with auth discovered from
  *      GITHUB_TOKEN / GH_TOKEN env vars or `gh auth token` CLI
- *   3. Sibling repo at $CLAUDE_PROFILES_MARKETPLACE_DIR (dev escape hatch)
+ *   3. Sibling repo at $CLAUDEWORKS_MARKETPLACE_DIR (dev escape hatch)
  *   4. UNAVAILABLE — the caller should surface an actionable error
  *
  * Never throws to the caller; failures surface as per-file status strings.
@@ -24,12 +24,12 @@ const path = require("path");
 const os = require("os");
 const cp = require("child_process");
 
-const cacheDir = path.join(os.homedir(), ".claude-profiles", "marketplace-cache");
+const cacheDir = path.join(os.homedir(), ".claudeworks", "marketplace-cache");
 fs.mkdirSync(cacheDir, { recursive: true });
 
 const FILES = ["catalog.json", "items.ndjson"];
 const TTL_MS = 24 * 60 * 60 * 1000;
-const REPO = "Mduffy37/claude-profiles-marketplace";
+const REPO = "Mduffy37/claudeworks-marketplace";
 
 // Discover an auth token once from env, then from the gh CLI.
 // Anonymous HTTPS fetch works for public repos but fails on private ones.
@@ -63,7 +63,7 @@ async function fetchFile(name) {
   try {
     const headers = {
       Accept: "application/vnd.github.raw",
-      "User-Agent": "claude-profiles-recommender",
+      "User-Agent": "claudeworks-recommender",
     };
     if (token) headers["Authorization"] = "Bearer " + token;
 
@@ -81,7 +81,7 @@ async function fetchFile(name) {
   }
 
   // 3. Sibling repo escape hatch (dev mode, opt-in via env var only).
-  const siblingDir = process.env.CLAUDE_PROFILES_MARKETPLACE_DIR;
+  const siblingDir = process.env.CLAUDEWORKS_MARKETPLACE_DIR;
   if (siblingDir) {
     try {
       const src = path.join(siblingDir, name);

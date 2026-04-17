@@ -15,7 +15,7 @@
  *
  * Behavior matches the old pipeline:
  *   - Reads both `local-items.ndjson` (first) and `items.ndjson` from
- *     `~/.claude-profiles/marketplace-cache/`.
+ *     `~/.claudeworks/marketplace-cache/`.
  *   - For each stage, filters lines by (stageKeywords AND techKeywords)
  *     case-insensitively. If techKeywords is empty the second filter is
  *     skipped — the "generic mode" fallback.
@@ -64,7 +64,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const CACHE_DIR = path.join(os.homedir(), ".claude-profiles", "marketplace-cache");
+const CACHE_DIR = path.join(os.homedir(), ".claudeworks", "marketplace-cache");
 const ITEMS_PATH = path.join(CACHE_DIR, "items.ndjson");
 const LOCAL_ITEMS_PATH = path.join(CACHE_DIR, "local-items.ndjson");
 const CATALOG_PATH = path.join(CACHE_DIR, "catalog.json");
