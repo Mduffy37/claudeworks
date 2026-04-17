@@ -5,13 +5,6 @@ dist/
 .DS_Store
 __pycache__/
 CLAUDE.md
-VAULT_LINKS.md
-HANDOVER.md
-FEATURES.md
-DESIGN.md
-ROADMAP.md
-TECH_DEBT.md
-PRE_RELEASE_CHECKLIST.md
 docs/
 .superpowers/
 release/
