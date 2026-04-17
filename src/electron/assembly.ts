@@ -870,11 +870,20 @@ function overlayDir(
  * hot path.
  */
 function copyDirRecursive(src: string, dest: string): void {
-  fs.cpSync(src, dest, {
-    recursive: true,
-    force: true,
-    mode: fs.constants.COPYFILE_FICLONE,
-  });
+  // Don't use fs.cpSync: its internal directory traversal throws
+  // "ENOTDIR: opendir" when src lives inside an asar archive (packaged
+  // Electron builds). readdirSync + copyFileSync are asar-aware.
+  fs.mkdirSync(dest, { recursive: true });
+  for (const name of fs.readdirSync(src)) {
+    const s = path.join(src, name);
+    const d = path.join(dest, name);
+    const stat = fs.statSync(s);
+    if (stat.isDirectory()) {
+      copyDirRecursive(s, d);
+    } else if (stat.isFile()) {
+      fs.copyFileSync(s, d);
+    }
+  }
 }
 
 const BUILTIN_PLUGIN_NAME = "profiles-manager@claudeworks";

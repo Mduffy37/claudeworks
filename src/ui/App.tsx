@@ -159,7 +159,7 @@ export function App() {
     // Apply saved preferences
     window.api.getAppPreferences().then((p) => {
       const scale = p.fontSize ?? 1;
-      if (scale !== 1) document.documentElement.style.fontSize = `${13 * scale}px`;
+      document.documentElement.style.fontSize = `${13 * scale}px`;
       const theme = p.theme ?? "dark";
       const resolved = theme === "auto"
         ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")

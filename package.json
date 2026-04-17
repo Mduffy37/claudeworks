@@ -4,13 +4,17 @@
   "description": "ClaudeWorks — desktop app for managing Claude Code profiles",
   "author": "Mduffy37",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mduffy37/claudeworks.git"
+  },
   "main": "dist/electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:electron:watch\"",
     "dev:renderer": "vite --config vite.config.ts",
     "dev:electron": "tsc -p tsconfig.electron.json && NODE_ENV=development electron .",
     "dev:electron:watch": "node scripts/dev-electron.js",
-    "build": "tsc -p tsconfig.electron.json && cp -r src/builtin-plugin dist/builtin-plugin && vite build",
+    "build": "tsc -p tsconfig.electron.json && rm -rf dist/builtin-plugin && cp -r src/builtin-plugin dist/builtin-plugin && vite build",
     "start": "electron .",
     "package": "npm run build && electron-builder",
     "test": "vitest run",

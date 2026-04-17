@@ -151,31 +151,59 @@ function seedProfilesManagerFavourite(): void {
   saveFavouritePlugins([...current, "profiles-manager@claudeworks"]);
 }
 
+// Append a line to ~/.claudeworks/startup.log. Best-effort — never throws.
+// Used to surface first-run seed failures that would otherwise be invisible
+// to users launching from Dock/Finder (stderr goes nowhere in that case).
+function logStartup(msg: string): void {
+  try {
+    fs.mkdirSync(PROFILES_DIR, { recursive: true });
+    fs.appendFileSync(
+      path.join(PROFILES_DIR, "startup.log"),
+      `[${new Date().toISOString()}] ${msg}\n`,
+    );
+  } catch {}
+}
+
 export function seedBuiltins(): void {
   const ledger = readBuiltinsLedger();
   const store = readProfilesStore();
   const isFreshInstall = Object.keys(store.profiles).length === 0;
+  logStartup(`seedBuiltins start: isFreshInstall=${isFreshInstall} ledger.profiles=${JSON.stringify(ledger.profiles)} ledger.favourites=${JSON.stringify(ledger.favourites)}`);
 
-  // Default profile — seed on fresh install only.
+  // Each block is independently try/catched so one failing step does not
+  // abort the remaining steps. Errors land in startup.log for diagnosis.
+
   if (isFreshInstall && !ledger.profiles.includes("Default")) {
-    ensureDefaultProfile();
-    ledger.profiles.push("Default");
-    saveBuiltinsLedger(ledger);
+    try {
+      ensureDefaultProfile();
+      ledger.profiles.push("Default");
+      saveBuiltinsLedger(ledger);
+      logStartup("seed: Default ok");
+    } catch (e: any) {
+      logStartup(`seed: Default FAILED: ${e?.stack ?? e?.message ?? String(e)}`);
+    }
   }
 
-  // Profile-creator — seed on fresh install only. After the first seed,
-  // the ledger prevents re-creation even if the user deletes the profile.
   if (isFreshInstall && !ledger.profiles.includes("profile-creator")) {
-    try { seedProfileCreator(); } catch {}
-    ledger.profiles.push("profile-creator");
-    saveBuiltinsLedger(ledger);
+    try {
+      seedProfileCreator();
+      ledger.profiles.push("profile-creator");
+      saveBuiltinsLedger(ledger);
+      logStartup("seed: profile-creator ok");
+    } catch (e: any) {
+      logStartup(`seed: profile-creator FAILED: ${e?.stack ?? e?.message ?? String(e)}`);
+    }
   }
 
-  // profiles-manager favourite — seed on fresh install only.
   if (isFreshInstall && !ledger.favourites.includes("profiles-manager@claudeworks")) {
-    try { seedProfilesManagerFavourite(); } catch {}
-    ledger.favourites.push("profiles-manager@claudeworks");
-    saveBuiltinsLedger(ledger);
+    try {
+      seedProfilesManagerFavourite();
+      ledger.favourites.push("profiles-manager@claudeworks");
+      saveBuiltinsLedger(ledger);
+      logStartup("seed: favourite ok");
+    } catch (e: any) {
+      logStartup(`seed: favourite FAILED: ${e?.stack ?? e?.message ?? String(e)}`);
+    }
   }
 }
 

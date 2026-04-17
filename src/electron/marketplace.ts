@@ -155,6 +155,16 @@ export async function getGitHubBackendState(): Promise<{
  * default from silently truncating large payloads — this previously broke
  * index.json fetching once the search index grew past the 1 MB default.
  */
+function formatRateLimitMessage(resetUnix: number | null): string {
+  if (!resetUnix || !Number.isFinite(resetUnix)) {
+    return "GitHub API rate limit reached. Try again in a few minutes.";
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const mins = Math.max(1, Math.ceil((resetUnix - now) / 60));
+  const resetAt = new Date(resetUnix * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `GitHub API rate limit reached. Retry in ~${mins} min (resets at ${resetAt}).`;
+}
+
 async function githubApi(
   apiPath: string,
   opts: { raw?: boolean; timeout?: number } = {},
@@ -164,12 +174,23 @@ async function githubApi(
   const accept = opts.raw ? "application/vnd.github.raw" : "application/vnd.github+json";
 
   if (backend.kind === "gh") {
-    const { stdout } = await execFileAsync(ghBinary(), [
-      "api",
-      apiPath,
-      "-H", `Accept: ${accept}`,
-    ], { timeout, maxBuffer: 50 * 1024 * 1024 });
-    return stdout;
+    try {
+      const { stdout } = await execFileAsync(ghBinary(), [
+        "api",
+        apiPath,
+        "-H", `Accept: ${accept}`,
+      ], { timeout, maxBuffer: 50 * 1024 * 1024 });
+      return stdout;
+    } catch (err: any) {
+      const msg = (err?.stderr ?? err?.message ?? "").toString();
+      if (/rate limit/i.test(msg) || /HTTP 403/.test(msg)) {
+        // gh formats timestamps as "timestamp 2026-04-17 16:05:22 UTC" — parse
+        const tsMatch = msg.match(/timestamp (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC/);
+        const resetUnix = tsMatch ? Math.floor(new Date(tsMatch[1] + "Z").getTime() / 1000) + 3600 : null;
+        throw new Error(formatRateLimitMessage(resetUnix));
+      }
+      throw err;
+    }
   }
 
   // fetch-authed and fetch-anon share the fetch path; the only difference is
@@ -187,6 +208,10 @@ async function githubApi(
     signal: AbortSignal.timeout(timeout),
   });
   if (!res.ok) {
+    if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0") {
+      const resetUnix = Number(res.headers.get("x-ratelimit-reset"));
+      throw new Error(formatRateLimitMessage(Number.isFinite(resetUnix) ? resetUnix : null));
+    }
     throw new Error(`GitHub API ${res.status} on ${apiPath}: ${res.statusText}`);
   }
   return await res.text();
@@ -593,7 +618,7 @@ export async function refreshCuratedMarketplace(): Promise<CuratedMarketplaceDat
     return curatedCache;
   } catch (err: any) {
     console.error("Failed to fetch curated marketplace:", err?.message);
-    return { marketplaces: [], plugins: [], collections: [] };
+    throw err;
   }
 }
 
@@ -621,6 +646,6 @@ export async function refreshCuratedIndex(): Promise<CuratedIndex> {
     return curatedIndexCache;
   } catch (err: any) {
     console.error("Failed to fetch curated index:", err?.message);
-    return { version: 1, generatedAt: "", entries: [] };
+    throw err;
   }
 }

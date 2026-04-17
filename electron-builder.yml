@@ -2,9 +2,17 @@ appId: com.claudeworks.app
 productName: ClaudeWorks
 directories:
   output: release
+  buildResources: build
+asar: true
 files:
   - dist/**/*
   - package.json
+  - "!**/.DS_Store"
+  - "!**/*.d.ts"
+  - "!**/*.map"
+  - "!**/*.tsbuildinfo"
 mac:
   category: public.app-category.developer-tools
   target: dmg
+  icon: build/icon.icns
+  identity: null

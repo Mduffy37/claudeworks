@@ -16,15 +16,25 @@ export function escSh(s: string): string {
 }
 
 /**
- * Find the real `claude` binary by walking PATH entries, skipping the
- * profiles bin directory so an alias named "claude" doesn't shadow itself.
+ * Find the real `claude` binary, skipping the profiles bin directory so an
+ * alias named "claude" doesn't shadow itself.
+ *
+ * Electron on macOS launched from a `.app` bundle inherits a minimal PATH
+ * (`/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin`) — which usually does NOT
+ * include where `claude` is typically installed (`~/.local/bin`, Apple
+ * Silicon Homebrew, npm global prefix). Walk PATH first for dev-mode hits,
+ * then fall back to hardcoded candidates for packaged-app reliability.
  */
 export function findRealClaudeBinary(): string {
   const profilesBin = path.join(PROFILES_DIR, "bin");
+  const tried: string[] = [];
+
   const pathDirs = (process.env.PATH ?? "").split(path.delimiter);
   for (const dir of pathDirs) {
+    if (!dir) continue;
     if (path.resolve(dir) === profilesBin) continue;
     const candidate = path.join(dir, "claude");
+    tried.push(candidate);
     try {
       fs.accessSync(candidate, fs.constants.X_OK);
       return candidate;
@@ -32,7 +42,28 @@ export function findRealClaudeBinary(): string {
       continue;
     }
   }
-  throw new Error("Could not find the claude binary in PATH. Is Claude Code installed?");
+
+  const home = os.homedir();
+  const fallbacks = [
+    path.join(home, ".local", "bin", "claude"),   // Anthropic installer default
+    "/opt/homebrew/bin/claude",                     // Apple Silicon Homebrew
+    "/usr/local/bin/claude",                        // Intel Homebrew / npm global
+    path.join(home, ".npm-global", "bin", "claude"),
+    path.join(home, ".volta", "bin", "claude"),
+    path.join(home, ".fnm", "aliases", "default", "bin", "claude"),
+  ];
+  for (const candidate of fallbacks) {
+    if (pathDirs.includes(path.dirname(candidate))) continue; // already tried
+    tried.push(candidate);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(`Could not find the claude binary. Tried: ${tried.join(", ")}. Is Claude Code installed?`);
 }
 
 export function generateAliases(profile: Profile): void {

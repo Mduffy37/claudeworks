@@ -592,8 +592,8 @@ ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());
 // ---------------------------------------------------------------------------
 
 app.whenReady().then(() => {
-  ensureBuiltinPlugin();
-  seedBuiltins();
+  try { ensureBuiltinPlugin(); } catch (e) { console.error("ensureBuiltinPlugin failed:", e); }
+  try { seedBuiltins(); } catch (e) { console.error("seedBuiltins failed:", e); }
   createWindow();
 });
 
