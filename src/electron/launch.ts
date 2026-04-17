@@ -291,11 +291,17 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 // Launch
 // ---------------------------------------------------------------------------
 
-function isITerm2Installed(): boolean {
-  return (
-    fs.existsSync("/Applications/iTerm.app") ||
-    fs.existsSync("/Applications/iTerm2.app")
-  );
+async function isITerm2Installed(): Promise<boolean> {
+  // Ask macOS LaunchServices rather than guessing filesystem paths.
+  // `osascript -e 'id of app "X"'` returns the bundle identifier if the app
+  // is registered, or errors if it isn't. Works regardless of whether the
+  // app lives in /Applications/, ~/Applications/, or a non-standard location.
+  try {
+    await execFileAsync("osascript", ["-e", 'id of app "iTerm2"'], { timeout: 2000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function launchInTerminal(shellCmd: string, terminalApp: string): Promise<void> {
@@ -304,7 +310,7 @@ export async function launchInTerminal(shellCmd: string, terminalApp: string): P
   // Auto-fallback: iTerm2 selected but not installed → use Terminal.app
   // silently. Terminal.app always ships with macOS, so this cannot fail
   // for that reason.
-  if (terminalApp === "iterm2" && !isITerm2Installed()) {
+  if (terminalApp === "iterm2" && !(await isITerm2Installed())) {
     terminalApp = "terminal";
   }
 

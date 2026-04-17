@@ -1,0 +1,70 @@
+name: Release
+
+# Fires whenever a tag of the shape vX.Y.Z is pushed. Regular pushes to main
+# do nothing — releases are deliberate.
+#
+# Flow:
+#   1. Tag a commit (e.g. `npm version patch` then `git push --tags`).
+#   2. This workflow builds the DMG on a macOS runner.
+#   3. A draft release is created with:
+#        - the DMG attached
+#        - release-notes/<tag>.md as the body, if present
+#        - otherwise GitHub-auto-generated notes (so you never get an empty draft)
+#   4. Review in the GitHub UI and click Publish.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and package DMG
+        run: npm run package
+
+      - name: Resolve release-notes path
+        id: notes
+        shell: bash
+        run: |
+          NOTES="release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$NOTES" ]; then
+            echo "path=$NOTES" >> "$GITHUB_OUTPUT"
+            echo "generate=false" >> "$GITHUB_OUTPUT"
+            echo "Using hand-written notes at $NOTES"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+            echo "generate=true" >> "$GITHUB_OUTPUT"
+            echo "No $NOTES found — falling back to auto-generated notes"
+          fi
+
+      - name: Create draft release with DMG attached
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          body_path: ${{ steps.notes.outputs.path }}
+          generate_release_notes: ${{ steps.notes.outputs.generate == 'true' }}
+          files: |
+            release/ClaudeWorks-*.dmg
+            release/ClaudeWorks-*.dmg.blockmap
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

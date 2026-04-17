@@ -1,5 +1,4 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
-import { execFileSync } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -389,12 +388,27 @@ ipcMain.handle("check-team-health", () => {
 });
 
 ipcMain.handle("check-tmux-installed", () => {
-  try {
-    execFileSync("which", ["tmux"], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
+  // Packaged macOS apps inherit a minimal launchd PATH that excludes common
+  // tmux install locations (/opt/homebrew/bin for Apple Silicon Homebrew,
+  // MacPorts, etc.), so `which tmux` here fails even when the user has it
+  // installed and available in their shell. Check known paths directly.
+  const candidates = [
+    "/opt/homebrew/bin/tmux",
+    "/usr/local/bin/tmux",
+    "/opt/local/bin/tmux",
+    "/usr/bin/tmux",
+    path.join(os.homedir(), ".local", "bin", "tmux"),
+  ];
+  for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
+    if (dir) candidates.push(path.join(dir, "tmux"));
   }
+  for (const c of candidates) {
+    try {
+      fs.accessSync(c, fs.constants.X_OK);
+      return true;
+    } catch { /* try next */ }
+  }
+  return false;
 });
 
 ipcMain.handle("launch-team", async (_event, team: Team, directory?: string) => {

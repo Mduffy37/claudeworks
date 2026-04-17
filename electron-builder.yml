@@ -4,6 +4,12 @@ directories:
   output: release
   buildResources: build
 asar: true
+# The statusline renderer is invoked via child_process (python3), which
+# can't read asar-virtual paths. Unpacking forces electron-builder to place
+# these files on disk as real files while still referencing them via the
+# normal path join.
+asarUnpack:
+  - dist/scripts/**
 files:
   - dist/**/*
   - package.json

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
-import { execFile, spawn } from "child_process";
+import { execFile, execFileSync, spawn } from "child_process";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
@@ -33,7 +33,19 @@ import type {
 } from "./types";
 
 const STATUSLINE_CONFIG_PATH = path.join(os.homedir(), ".claude", "statusline-config.json");
-const STATUSLINE_RENDERER_PATH = path.join(os.homedir(), ".claude", "scripts", "statusline-render.py");
+// Bundled renderer ships with the app at dist/scripts/statusline-render.py.
+// In dev, __dirname is dist/electron/, so ../scripts resolves correctly.
+// In a packaged build, __dirname is inside app.asar, but the file is
+// asarUnpack'd so it lives on real disk at app.asar.unpacked/. Python can't
+// read asar-virtual paths (child processes bypass Electron's fs patches),
+// so redirect the path explicitly. electron-builder does NOT do this for
+// you — you have to pass the unpacked path yourself.
+const STATUSLINE_RENDERER_PATH = (() => {
+  const base = path.join(__dirname, "..", "scripts", "statusline-render.py");
+  return base.includes(`${path.sep}app.asar${path.sep}`)
+    ? base.replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`)
+    : base;
+})();
 
 // ---------------------------------------------------------------------------
 // Profile persistence
@@ -911,10 +923,58 @@ export async function resetStatusLineConfig(): Promise<StatusLineConfig> {
   return fresh;
 }
 
+// Locate a Python 3.10+ interpreter. The statusline renderer uses PEP 604
+// `dict | None` syntax which requires 3.10+. Packaged Electron apps inherit
+// a minimal launchd PATH that usually resolves `python3` to /usr/bin/python3
+// = the Xcode Command Line Tools 3.9.6 stub, which is too old. Claude Code's
+// own runtime invocation works because it runs inside a terminal shell with
+// the user's full PATH; only the in-app preview needs this explicit lookup.
+// Cached after first successful resolution so the version check only runs
+// once per session.
+let _cachedPython3: string | null | undefined = undefined;
+
+function findPython3(): string | null {
+  if (_cachedPython3 !== undefined) return _cachedPython3;
+
+  const candidates = [
+    "/opt/homebrew/bin/python3",                                              // Apple Silicon Homebrew
+    "/usr/local/bin/python3",                                                 // Intel Homebrew
+    "/Library/Frameworks/Python.framework/Versions/Current/bin/python3",      // python.org installer
+  ];
+  for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
+    if (dir) candidates.push(path.join(dir, "python3"));
+  }
+
+  for (const c of candidates) {
+    try {
+      fs.accessSync(c, fs.constants.X_OK);
+      execFileSync(
+        c,
+        ["-c", "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"],
+        { timeout: 2000, stdio: "ignore" },
+      );
+      _cachedPython3 = c;
+      return c;
+    } catch {
+      // either not present, not executable, or version < 3.10 → try next
+    }
+  }
+
+  _cachedPython3 = null;
+  return null;
+}
+
 export async function renderStatusLinePreview(
   config: StatusLineConfig,
   mockSession?: Record<string, unknown>,
 ): Promise<string> {
+  const python3 = findPython3();
+  if (!python3) {
+    throw new Error(
+      "Statusline preview needs Python 3.10 or newer. Install it (e.g. `brew install python@3.12`) and restart ClaudeWorks. Your saved config is still written to disk either way.",
+    );
+  }
+
   const tmpConfig = path.join(os.tmpdir(), `claude-statusline-preview-${process.pid}-${Date.now()}.json`);
   await fs.promises.writeFile(tmpConfig, JSON.stringify(config) + "\n", "utf-8");
   const mock = JSON.stringify(mockSession ?? {
@@ -930,7 +990,7 @@ export async function renderStatusLinePreview(
   const env = { ...process.env, CLAUDE_STATUSLINE_CONFIG_OVERRIDE: tmpConfig };
   return new Promise((resolve, reject) => {
     const child = execFile(
-      "python3",
+      python3,
       [STATUSLINE_RENDERER_PATH],
       { env, timeout: 10000, maxBuffer: 1024 * 1024 },
       (err, stdout) => {
