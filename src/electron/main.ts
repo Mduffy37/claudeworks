@@ -500,8 +500,22 @@ ipcMain.handle("get-project-claude-md", (_event, dir: string) => getProjectClaud
 ipcMain.handle("save-project-claude-md", (_event, dir: string, content: string) => saveProjectClaudeMd(dir, content));
 
 // Project file operations
+//
+// Every handler below confines the resolved path to the caller-supplied dir.
+// Without this check, a renderer (or a compromised renderer — XSS through
+// react-markdown, etc.) could pass relativePath = "../../.ssh/authorized_keys"
+// and read/write/delete arbitrary files outside the project.
+function resolveProjectPath(dir: string, relativePath: string): string | null {
+  if (typeof dir !== "string" || typeof relativePath !== "string") return null;
+  const resolvedDir = path.resolve(dir);
+  const resolved = path.resolve(resolvedDir, relativePath);
+  if (resolved !== resolvedDir && !resolved.startsWith(resolvedDir + path.sep)) return null;
+  return resolved;
+}
+
 ipcMain.handle("read-project-file", async (_event, dir: string, relativePath: string) => {
-  const filePath = path.join(dir, relativePath);
+  const filePath = resolveProjectPath(dir, relativePath);
+  if (!filePath) return "";
   try {
     return fs.readFileSync(filePath, "utf-8");
   } catch {
@@ -510,14 +524,16 @@ ipcMain.handle("read-project-file", async (_event, dir: string, relativePath: st
 });
 
 ipcMain.handle("write-project-file", async (_event, dir: string, relativePath: string, content: string) => {
-  const filePath = path.join(dir, relativePath);
+  const filePath = resolveProjectPath(dir, relativePath);
+  if (!filePath) throw new Error("Invalid path: must be within the project directory.");
   const dirPath = path.dirname(filePath);
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
   fs.writeFileSync(filePath, content, "utf-8");
 });
 
 ipcMain.handle("delete-project-file", async (_event, dir: string, relativePath: string) => {
-  const filePath = path.join(dir, relativePath);
+  const filePath = resolveProjectPath(dir, relativePath);
+  if (!filePath) return;
   if (fs.existsSync(filePath)) {
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -572,7 +588,19 @@ ipcMain.handle("get-git-context", async (_event, dir: string) => {
 });
 ipcMain.handle("open-in-finder", (_event, filePath: string) => shell.openPath(filePath));
 ipcMain.handle("reveal-in-finder", (_event, filePath: string) => shell.showItemInFolder(filePath));
-ipcMain.handle("open-external-url", (_event, url: string) => shell.openExternal(url));
+ipcMain.handle("open-external-url", (_event, url: string) => {
+  // Only open http(s) URLs. Anything else (file:, smb:, javascript:, data:,
+  // etc.) is a potential exfil or RCE vector when URLs flow through from
+  // untrusted content (e.g. upstream marketplace sourceUrl fields rendered
+  // in CuratedDetailModal or ManageDialog). A poisoned smb:// opens the
+  // user's machine to NTLM hash theft; file:// can launch a .app or .command
+  // bundle; javascript: historically escaped into Electron's own process.
+  if (typeof url !== "string") return;
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { return; }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
+  shell.openExternal(url);
+});
 ipcMain.handle("get-profile-config-dir", (_event, name: string) => getProfileConfigDir(name));
 ipcMain.handle("get-claude-home", () => getClaudeHome());
 ipcMain.handle("get-curated-marketplace", () => getCuratedMarketplace());

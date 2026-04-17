@@ -193,6 +193,16 @@ try {
     if (typeof a.name !== "string" || a.name.trim() === "") {
       throw new Error("Each P_ALIASES entry needs a non-empty string 'name'");
     }
+    // Alias names become filenames in ~/.claudeworks/bin/. Unrestricted
+    // names ("../.zshrc", "foo/bar") let a malicious write overwrite files
+    // outside that directory; the shell also sources .zshrc on login. Mirror
+    // the safe-slug check in src/electron/launch.ts:isSafeAliasName.
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/.test(a.name) || a.name.includes("..")) {
+      throw new Error(
+        `P_ALIASES entry "${a.name}" has an unsafe name. ` +
+        `Aliases must be 1–64 chars, start with a letter or digit, and use only letters, digits, underscore, dot, or hyphen.`,
+      );
+    }
     if (a.directory !== undefined && typeof a.directory !== "string") {
       throw new Error(`P_ALIASES entry "${a.name}" has a non-string 'directory'`);
     }

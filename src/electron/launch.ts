@@ -15,6 +15,31 @@ export function escSh(s: string): string {
   return s.replace(/'/g, "'\\''");
 }
 
+// customFlags are concatenated raw into the shell command that gets wrapped
+// in AppleScript, so any shell metacharacter is a command injection vector.
+// Legitimate Claude CLI flags (`--verbose`, `--model claude-opus-4-7`,
+// `--allowedTools "Read,Edit"`) never contain these. Rejecting at launch
+// rather than at save keeps existing profiles compatible — if a user had
+// saved a dangerous value from a previous version, we refuse to launch with
+// it instead of silently executing the injection.
+const FORBIDDEN_FLAG_CHARS = /[;&|`$<>\n\r]/;
+function assertSafeCustomFlags(source: string, flags: string): void {
+  if (FORBIDDEN_FLAG_CHARS.test(flags)) {
+    throw new Error(
+      `Refusing to launch: ${source} contains shell metacharacters (; & | \` $ < >). Remove them and try again.`,
+    );
+  }
+}
+
+// Alias names become filenames in ~/.claudeworks/bin/. Without validation,
+// an alias named "../.zshrc" would let a user (or an LLM-generated name
+// from create-profile) overwrite ~/.zshrc via fs.writeFileSync, which the
+// shell sources on next login — sandbox escape. Allow only a safe slug.
+const ALIAS_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+function isSafeAliasName(name: unknown): name is string {
+  return typeof name === "string" && ALIAS_NAME_RE.test(name) && !name.includes("..");
+}
+
 /**
  * Find the real `claude` binary, skipping the profiles bin directory so an
  * alias named "claude" doesn't shadow itself.
@@ -74,6 +99,10 @@ export function generateAliases(profile: Profile): void {
   writeMcpHelper(binDir);
 
   for (const alias of profile.aliases ?? []) {
+    if (!isSafeAliasName(alias.name)) {
+      console.warn(`Skipping alias with unsafe name on profile "${profile.name}":`, alias.name);
+      continue;
+    }
     const workDir = alias.directory ?? profile.directory ?? "$PWD";
     const workDirStr = workDir === "$PWD" ? "$PWD" : `'${escSh(workDir)}'`;
 
@@ -96,6 +125,7 @@ cd "$WORK_DIR" && node '${escSh(path.join(binDir, ".regenerate-mcp.js"))}' '${es
 
 export function removeAliases(aliases: ProfileAlias[] | undefined): void {
   for (const alias of aliases ?? []) {
+    if (!isSafeAliasName(alias.name)) continue;
     const scriptPath = path.join(PROFILES_DIR, "bin", alias.name);
     try { fs.unlinkSync(scriptPath); } catch {}
   }
@@ -368,12 +398,24 @@ export async function launchProfile(profile: Profile, directory?: string, option
   // Build launch flags — global defaults first, profile overrides on top, then one-shot overrides
   const flagParts: string[] = [];
   const globalDefs = getGlobalDefaults();
-  if (globalDefs.customFlags?.trim()) flagParts.push(globalDefs.customFlags.trim());
+  if (globalDefs.customFlags?.trim()) {
+    const f = globalDefs.customFlags.trim();
+    assertSafeCustomFlags("global default customFlags", f);
+    flagParts.push(f);
+  }
   const skipPerms = options?.dangerouslySkipPermissions ?? profile.launchFlags?.dangerouslySkipPermissions;
   if (skipPerms) flagParts.push("--dangerously-skip-permissions");
   if (profile.launchFlags?.verbose) flagParts.push("--verbose");
-  if (profile.customFlags?.trim()) flagParts.push(profile.customFlags.trim());
-  if (options?.customFlags?.trim()) flagParts.push(options.customFlags.trim());
+  if (profile.customFlags?.trim()) {
+    const f = profile.customFlags.trim();
+    assertSafeCustomFlags(`profile "${profile.name}" customFlags`, f);
+    flagParts.push(f);
+  }
+  if (options?.customFlags?.trim()) {
+    const f = options.customFlags.trim();
+    assertSafeCustomFlags("launch-options customFlags", f);
+    flagParts.push(f);
+  }
 
   // Pass --model explicitly so the launched session honours the profile's model
   // choice regardless of how Claude CLI resolves settings.json precedence.
