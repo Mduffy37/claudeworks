@@ -4329,6 +4329,23 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 6px;
 }
 
+.team-experimental-banner {
+  margin: 8px 12px 4px;
+  padding: 8px 12px;
+  font-size: 0.769rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: var(--color-warning-dim);
+  border: 1px solid color-mix(in srgb, #b08a3a 28%, transparent);
+  border-radius: 6px;
+}
+
+.team-experimental-banner strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 2px;
+}
+
 .curated-backend-banner strong {
   color: var(--text-primary);
   font-weight: 600;

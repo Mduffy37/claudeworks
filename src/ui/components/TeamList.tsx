@@ -193,6 +193,10 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
         </button>
       </div>
 
+      <div className="team-experimental-banner" role="note">
+        <strong>Experimental.</strong> Teams are actively evolving — behaviour and data shape may change between releases.
+      </div>
+
       {teams.length > 0 && (
         <div className="pl-search-area">
           <div className="pl-search">
