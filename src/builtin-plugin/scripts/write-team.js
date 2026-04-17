@@ -86,6 +86,18 @@ try {
   if (leadCount !== 1) {
     throw new Error(`Exactly one member must have isLead: true (got ${leadCount}).`);
   }
+  const seen = new Set();
+  const dupes = new Set();
+  for (const m of members) {
+    if (seen.has(m.profile)) dupes.add(m.profile);
+    seen.add(m.profile);
+  }
+  if (dupes.size > 0) {
+    const list = Array.from(dupes).map((n) => `"${n}"`).join(", ");
+    throw new Error(
+      `Duplicate profile(s) in T_MEMBERS: ${list}. Each profile may appear at most once per team.`,
+    );
+  }
 } catch (e) {
   fail("Failed to parse T_MEMBERS: " + String(e.message || e));
 }

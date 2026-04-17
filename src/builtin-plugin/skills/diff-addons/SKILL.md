@@ -27,6 +27,16 @@ Now enumerate what's **actually available to you in this running session**. The 
 
 Build three sets: `session.skills`, `session.commands`, `session.agents`.
 
+## Phase 2.5 — Extraction self-check (required before Phase 3)
+
+Phase 2 is an LLM extraction step and is prone to skim errors that silently drop declared items from `session.*` sets — producing false positives in "Missing from session". Run both checks below before diffing. If either catches a discrepancy, fix the extraction and re-run.
+
+1. **Count cross-check.** For each of the three categories, count the raw bullet lines in the system-reminder block (ignoring sub-bullets and descriptions) and compare to the size of the extracted set. A mismatch means you dropped or doubled items — re-extract that category.
+
+2. **Declared-item recheck.** For every declared entry (`plugin:name`) that would land in "Missing from session" after the diff, scan the raw system-reminder text for both the short name (`name`) and the full form (`plugin:name`). If either appears anywhere in the reminder, the item IS in the session — add it to the correct `session.*` set and re-run the diff.
+
+If the recheck rescued any items, add a one-line note to the report directly under the `Declared` / `Session` summary: `Extraction self-check: rescued N item(s) that Phase 2 missed.` Otherwise, omit the line entirely.
+
 ## Phase 3 — Diff and report
 
 Compute three deltas per category:

@@ -5,12 +5,11 @@ description: Draft or revise a profile's `/workflow` slash command — a dormant
 
 You are creating or revising the `/workflow` command for a ClaudeWorks profile. `/workflow` is a dormant slash command stored in the profile's `workflow` field in `~/.claudeworks/profiles.json` — when the user types `/workflow` inside a session running under that profile, Claude Code walks through a specific orchestration of the profile's tools (plan → scaffold → implement → verify → ship, or whatever sequence you co-design with the user).
 
-**You always run interactively.** You never draft the body unilaterally — you propose one stage at a time and let the user confirm, tweak, or add. This is true whether the skill is invoked standalone ("add a `/workflow` to my `frontend-dev` profile") or chained from `create-profile` during new-profile assembly.
+**You always run interactively.** You never draft the body unilaterally — you propose one stage at a time and let the user confirm, tweak, or add. This is true whether the user invoked the skill themselves (e.g. *"add a `/workflow` to my `frontend-dev` profile"*) or `create-profile` chained it during new-profile assembly.
 
-This skill has two invocation modes:
+The default path is direct invocation: the skill reads the user's current profile (from `CLAUDE_CONFIG_DIR`), walks them through shape + sequencing, and patches `profiles.json` in place. There is one special case — **parent mode** — when `create-profile` hands over a context block so new-profile assembly can include the workflow in a single write. The rest of this SKILL.md spells out how to handle that handoff; everything else is the default.
 
 - **Parent mode** — `create-profile` hands over a context block with the profile description, the picked plugins, the chosen workflow shape, and the stage list. You skip profile selection and shape picking and go straight to sequencing. When done, you emit the final body between marker lines so the parent skill can capture it as `P_WORKFLOW` and fold it into its own `write-profile.js` call.
-- **Standalone mode** — no context block present. You ask which profile, read its plugin list, interactively pick a workflow shape (or let the user describe a custom one), sequence the stages, then patch `profiles.json` in place and tell the user to relaunch the profile to pick up the change.
 
 ## Step 0 — Detect invocation mode
 
@@ -29,11 +28,11 @@ END_CREATE_WORKFLOW_CONTEXT
 ```
 
 - **If the block is present**, parse it and jump straight to **Step 3** (sequencing). Use `profileDescription`, `pickedPlugins`, and `stages` from the block — do not ask the user to restate any of these.
-- **If the block is absent**, you are in standalone mode. Proceed to Step 1.
+- **If the block is absent**, proceed to Step 1.
 
-Do not mix modes — either the parent hands over context, or the user drives the whole flow. Never fall through "half-handed-over" because the block was malformed; if parsing fails, tell the user the handoff broke and ask them to re-run `create-profile`, rather than silently starting over in standalone mode inside a half-completed profile creation.
+Do not mix modes — either the parent hands over context, or the user drives the whole flow. Never fall through "half-handed-over" because the block was malformed; if parsing fails, tell the user the handoff broke and ask them to re-run `create-profile`, rather than silently restarting the direct flow inside a half-completed profile creation.
 
-## Step 1 — Standalone: pick the target profile
+## Step 1 — Pick the target profile
 
 !`node -e "
 const fs=require('fs'),path=require('path'),os=require('os');
@@ -51,13 +50,13 @@ Parse the output:
 - `profiles` — every profile in `profiles.json` with its description, plugin count, and whether it already has a `workflow` set.
 - `active` — the profile the user is currently running under (derived from `CLAUDE_CONFIG_DIR`), or `null` if none.
 
-**If the user's opening message already named a profile** (e.g. *"add a workflow to my `frontend-dev` profile"*), validate it against the list and use it. If the name doesn't exist, show the list and ask them to pick.
+Pick the target profile in this order — **do not ask the user to pick unless step 3 applies**:
 
-**If the user didn't name a profile**, show the list and ask:
+1. **User named a specific profile in their opening message** (e.g. *"add a workflow to my `frontend-dev` profile"*). Validate it against the list and use it. If the name doesn't exist, show the list and ask them to pick.
+2. **`active` is non-null** — use it silently. The user invoked this skill from inside a running profile session, so that profile is the obvious target. Do not announce it, do not ask "which profile?", just proceed. Show the profile's name in passing once you get to the first substantive prompt (e.g. *"Adding a `/workflow` to `<name>`. Loading plugins..."*).
+3. **`active` is null AND no profile was named** — genuinely ambiguous; the user ran the skill from a non-profile shell. Show the list and ask *"Which profile should I add a `/workflow` command to?"*. Present each as `<name> — <description> (N plugins)<, already has /workflow>`.
 
-> *"Which profile should I add a `/workflow` command to?"* Present each as `<name> — <description> (N plugins)<, already has /workflow>` so the user can see which ones already have a workflow they might be replacing.
-
-If the target profile already has a `workflow` set, warn before proceeding:
+If the chosen profile already has a `workflow` set, warn before proceeding:
 
 > *"`<profile>` already has a `/workflow` command. I'll show it to you before we start, and you can tell me whether to revise it in place or start over from scratch."*
 
@@ -73,7 +72,7 @@ if(w)process.stdout.write(w);else console.log('(no existing workflow)');
 "
 ```
 
-## Step 2 — Standalone: load plugins and pick a workflow shape
+## Step 2 — Load plugins and pick a workflow shape
 
 Read the profile's plugin list via the Bash tool — again not an `!` block, since the target name isn't known at load time. Construct and run (substitute the real profile name for `ux-review`):
 
@@ -126,17 +125,17 @@ In either mode, work one stage at a time. Never draft the body unilaterally.
 2. **On confirmation**, ask *"Anything else at this stage or between here and the next?"* — keep this question short. Do not pre-list example additions.
 3. **Move to the next stage** (in amendment mode, skip any the user didn't name). Acknowledge with at most one word.
 
-**Tool-set boundary.** The `/workflow` body is a sequence over the existing tool set; it does not add or remove tools. If the user realises during sequencing that they're missing a plugin, pause: in standalone mode point them at the profile editor or `/suggest-plugins`; in parent mode tell them to cancel and restart `create-profile`.
+**Tool-set boundary.** The `/workflow` body is a sequence over the existing tool set; it does not add or remove tools. If the user realises during sequencing that they're missing a plugin, pause: in direct invocation point them at the profile editor or `/suggest-plugins`; in parent mode tell them to cancel and restart `create-profile`.
 
 When the user confirms every proposed stage, send the one-line confirmation from above and proceed to Step 4. Do not print the full body.
 
-## Step 3b — Named variants (standalone mode only)
+## Step 3b — Named variants (direct invocation only)
 
 Most profiles need only a single `/workflow`. Some benefit from **named variants**: `/workflow-debug`, `/workflow-deploy`, `/workflow-review` — each a separate orchestration for a different situation. They live alongside the default `/workflow` in the same profile, not instead of it.
 
-**Parent mode: do not offer variants.** The `create-profile` handoff carries a single body; there's no slot for a variant array in the new-profile flow. If the user asks for variants during parent mode, tell them: *"I'll ship this profile with the default `/workflow` now. Once the profile is created, re-run `create-workflow` in standalone mode and I can add named variants."* Then continue parent-mode Step 4 as normal.
+**Parent mode: do not offer variants.** The `create-profile` handoff carries a single body; there's no slot for a variant array in the new-profile flow. If the user asks for variants during parent mode, tell them: *"I'll ship this profile with the default `/workflow` now. Once the profile is created, re-run `create-workflow` in direct invocation and I can add named variants."* Then continue parent-mode Step 4 as normal.
 
-**Standalone mode: offer variants selectively.** Ask *"any other one-shot flows you'd want as a variant?"* at the end of Step 3 only when at least one holds:
+**Direct invocation: offer variants selectively.** Ask *"any other one-shot flows you'd want as a variant?"* at the end of Step 3 only when at least one holds:
 
 - The profile covers multiple distinct activities the user switches between (e.g. feature-development + incident-response + docs-polish).
 - The user explicitly asked for more than one command up front ("I want a `/plan` and a `/ship` command").
@@ -151,7 +150,7 @@ If none of these hold, **do not** offer variants. A single `/workflow` is the st
 3. Collect each variant as `{ name: "<slug>", body: "<markdown body>" }` and keep them in an array.
 4. After each variant, ask *"Another variant, or done?"* until the user says done.
 
-The default `/workflow` body remains in the `workflow` field. Variants go into the `workflows` array — both can coexist in the same profile. See Step 4 standalone-mode section below for the write path.
+The default `/workflow` body remains in the `workflow` field. Variants go into the `workflows` array — both can coexist in the same profile. See Step 4 direct-invocation section below for the write path.
 
 ## Step 4 — Write back
 
@@ -173,7 +172,7 @@ If the user opted out of the workflow mid-way, write an **empty file** at the sa
 
 After the Write tool call, say **one** short line to the user — e.g. *"Workflow drafted — continuing with the final profile settings."* — and **immediately, in the same assistant turn**, proceed to `create-profile` Step 7e by asking the user for the profile name. Do not stop, do not wait for a user nudge, do not print the body or its path. The whole point of this contract is a streamlined handoff.
 
-### Standalone mode — patch profiles.json via patch-profile.js
+### Direct invocation — patch profiles.json via patch-profile.js
 
 Write the final body to the target profile's `workflow` field via the `patch-profile.js` helper, which handles atomic writes, name validation, and schema invariants in one place (the same writer `suggest-plugins` uses for plugin mutations). Do not inline your own `node -e` snippet — route through the helper for consistency.
 
@@ -203,7 +202,7 @@ Then tell the user:
 
 The ClaudeWorks app's profile-assembly step writes the `workflow` field to `<config-dir>/commands/workflow.md` on each launch, which is why the relaunch is needed.
 
-#### Variants write path (standalone mode only)
+#### Variants write path (direct invocation only)
 
 If you also collected named variants in Step 3b, write them in a second `patch-profile.js` call with `P_FIELD=workflows`. The value is a JSON array — each variant becomes `/workflow-<name>`. Pass the JSON as a single-line value (the bodies embed inside the JSON, so newlines become `\n`):
 
@@ -220,9 +219,9 @@ Use Node to construct the JSON safely rather than hand-escaping — `JSON.string
 ## Notes
 
 - **Always interactive, always stage-by-stage.** A one-shot body dump is a failure mode. The point of this skill is for the user to co-design the sequence.
-- **Never invent plugins.** Only reference plugins that are actually in `pickedPlugins` (parent mode) or the profile's `plugins` list (standalone mode).
+- **Never invent plugins.** Only reference plugins that are actually in `pickedPlugins` (parent mode) or the profile's `plugins` list (direct invocation).
 - **Respect `excludedItems`.** If the profile has items excluded from a plugin (mega-bundle filtering), don't reference the excluded items in the workflow body — they won't be active at runtime.
 - **Do not write a `/tools` command here.** That's a separate concern handled by `create-profile` Step 7e. This skill is scoped to `/workflow` only.
 - **If the user says "actually skip the workflow"** at any point, respect it:
   - In parent mode, write an **empty file** at `<$TMPDIR>/claudeworks-pending-workflow.md` and tell them the parent will treat this as "no workflow". The parent's write-profile.js call leaves `P_WORKFLOW` unset and no `/workflow` is created. Do NOT print marker lines — those are gone.
-  - In standalone mode, do not touch `profiles.json`. Tell them nothing changed.
+  - In direct invocation, do not touch `profiles.json`. Tell them nothing changed.

@@ -39,16 +39,19 @@ export function resolveModelId(
   opusContext: "200k" | "1m" | undefined,
   sonnetContext: "200k" | "1m" | undefined,
 ): string {
-  if (model === "opus") {
+  const isOpus = model === "opus" || model.startsWith("claude-opus");
+  const isSonnet = model === "sonnet" || model.startsWith("claude-sonnet");
+  const isHaiku = model === "haiku" || model.startsWith("claude-haiku");
+
+  if (isOpus) {
     return opusContext === "200k" ? LATEST_OPUS : `${LATEST_OPUS}[1m]`;
   }
-  if (model === "sonnet") {
+  if (isSonnet) {
     return sonnetContext === "1m" ? `${LATEST_SONNET}[1m]` : LATEST_SONNET;
   }
-  if (model === "haiku") {
+  if (isHaiku) {
     return LATEST_HAIKU;
   }
-  // Unknown / already-explicit model ID — pass through unchanged.
   return model;
 }
 
