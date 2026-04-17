@@ -300,7 +300,7 @@ export async function exportDiagnostics(): Promise<Record<string, any>> {
     globalDefaults: {
       model: globalDefaults.model || "default",
       effortLevel: globalDefaults.effortLevel || "default",
-      terminalApp: globalDefaults.terminalApp ?? "iterm2",
+      terminalApp: globalDefaults.terminalApp ?? "terminal",
       hasGlobalEnv: !!globalDefaults.env && Object.keys(globalDefaults.env).length > 0,
       hasCustomFlags: !!globalDefaults.customFlags,
     },

@@ -7069,9 +7069,30 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--brass);
 }
 
+.home-update-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .home-update-current {
   font-size: 0.769rem;
   color: var(--text-muted);
+}
+
+.home-update-action {
+  font-size: 0.769rem;
+  color: var(--brass);
+  background: transparent;
+  border: 1px solid rgba(176, 138, 58, 0.5);
+  border-radius: calc(var(--radius) * 0.6);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.home-update-action:hover {
+  background: rgba(176, 138, 58, 0.15);
+  border-color: var(--brass);
 }
 
 .home-stats {

@@ -11,7 +11,7 @@ interface Props {
 const POPOVER_MARGIN = 12;
 
 export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaunch, onClose }: Props) {
-  const [terminalApp, setTerminalApp] = useState("iterm2");
+  const [terminalApp, setTerminalApp] = useState("terminal");
   const [tmuxMode, setTmuxMode] = useState<"cc" | "plain" | "none">("cc");
   const [customFlags, setCustomFlags] = useState("");
   const [dangerous, setDangerous] = useState(defaultDangerous ?? false);
@@ -90,8 +90,8 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
             setTerminalApp(e.target.value);
             if (e.target.value !== "iterm2" && tmuxMode === "cc") setTmuxMode("plain");
           }}>
-            <option value="iterm2">iTerm2</option>
             <option value="terminal">Terminal.app</option>
+            <option value="iterm2">iTerm2</option>
           </select>
         </div>
 

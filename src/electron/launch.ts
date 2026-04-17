@@ -291,8 +291,22 @@ export function getLaunchLog(since?: number): LaunchLogEntry[] {
 // Launch
 // ---------------------------------------------------------------------------
 
+function isITerm2Installed(): boolean {
+  return (
+    fs.existsSync("/Applications/iTerm.app") ||
+    fs.existsSync("/Applications/iTerm2.app")
+  );
+}
+
 export async function launchInTerminal(shellCmd: string, terminalApp: string): Promise<void> {
   const fullCmd = shellCmd;
+
+  // Auto-fallback: iTerm2 selected but not installed → use Terminal.app
+  // silently. Terminal.app always ships with macOS, so this cannot fail
+  // for that reason.
+  if (terminalApp === "iterm2" && !isITerm2Installed()) {
+    terminalApp = "terminal";
+  }
 
   if (terminalApp === "terminal") {
     const script = [
@@ -379,7 +393,7 @@ export async function launchProfile(profile: Profile, directory?: string, option
     ? ` '${escSh(profile.launchPrompt.trim())}'`
     : "";
   const shellCmd = `cd '${escSh(workDir)}' && CLAUDE_CONFIG_DIR='${escSh(configDir)}' '${escSh(claudeBin)}' --mcp-config '${escSh(mcpConfigPath)}' --strict-mcp-config --name '${escSh(sessionName)}'${flagStr}${promptArg}`;
-  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
+  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "terminal";
 
   await launchInTerminal(shellCmd, terminal);
   recordLaunch({ type: "profile", name: profile.name, directory: workDir, timestamp: Date.now() });

@@ -854,7 +854,7 @@ function GlobalSettingsTab() {
       setSonnetContext(d.sonnetContext);
       setEffort(d.effortLevel);
       setCustomFlags(d.customFlags ?? "");
-      setTerminalApp(d.terminalApp ?? "iterm2");
+      setTerminalApp(d.terminalApp ?? "terminal");
       setTmuxMode(hasTmux ? (d.tmuxMode ?? "cc") : "none");
       setDefaultsDirty(false);
     });
@@ -1147,8 +1147,8 @@ function GlobalSettingsTab() {
           <div className="field">
             <label>Terminal App</label>
             <select value={terminalApp} onChange={(e) => { setTerminalApp(e.target.value); setDefaultsDirty(true); }}>
-              <option value="iterm2">iTerm2</option>
               <option value="terminal">Terminal.app</option>
+              <option value="iterm2">iTerm2</option>
             </select>
           </div>
           <div className="field">

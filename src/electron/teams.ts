@@ -359,7 +359,7 @@ export async function launchTeam(team: Team, directory?: string, options?: Launc
     shellCmd = `tmux -CC new-session '${escSh(launcherPath)}'`;
   }
 
-  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "iterm2";
+  const terminal = options?.terminalApp ?? globalDefs.terminalApp ?? "terminal";
   await launchInTerminal(shellCmd, terminal);
   recordLaunch({ type: "team", name: team.name, directory: workDir, timestamp: Date.now() });
 }

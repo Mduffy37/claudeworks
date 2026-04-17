@@ -171,8 +171,20 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Update banner */}
       {updateInfo?.available && (
         <div className="home-update-banner">
-          <span>Update available: v{updateInfo.latest}</span>
-          <span className="home-update-current">Current: v{updateInfo.current}</span>
+          <div className="home-update-text">
+            <span>Update available: v{updateInfo.latest}</span>
+            <span className="home-update-current">Current: v{updateInfo.current}</span>
+          </div>
+          <button
+            className="home-update-action"
+            onClick={() =>
+              window.api.openExternalUrl(
+                "https://github.com/Mduffy37/claudeworks/releases/latest",
+              )
+            }
+          >
+            View release ↗
+          </button>
         </div>
       )}
 
