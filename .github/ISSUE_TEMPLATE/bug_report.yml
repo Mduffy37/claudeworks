@@ -1,0 +1,37 @@
+name: Bug Report
+about: Something isn't working
+labels: bug
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ClaudeWorks version
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "e.g. Sequoia 15.3"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      placeholder: Describe what you did, what you expected, and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open app\n2. Click...\n3. See error"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics bundle (optional but helpful)
+      description: In the app, open Help → Export Diagnostics and paste the JSON here.

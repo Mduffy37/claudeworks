@@ -1,0 +1,20 @@
+name: Feature Request
+about: Suggest something new
+labels: enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the specific workflow pain. "I want X" is less useful than "When I Y, I have to Z manually."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      placeholder: What would you want the app to do?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you've tried
