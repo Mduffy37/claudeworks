@@ -77,7 +77,7 @@ We don't generate or manage Claude API keys. Run `claude login` first. The app c
 
 1. Download the latest `.dmg` from the [Releases](https://github.com/Mduffy37/claudeworks/releases) page.
 2. Open the DMG and drag ClaudeWorks to Applications.
-3. First launch, macOS will flag the app as unsigned; right-click, Open, confirm. _(Unsigned on v0.1; signing is tracked in the launch checklist.)_
+3. First launch, macOS will flag the app as unsigned; right-click, Open, confirm.
 4. Run `gh auth login` if you haven't. ClaudeWorks uses the `gh` CLI for GitHub API calls, which gives you 5,000 req/h instead of 60.
 
 ### From source
