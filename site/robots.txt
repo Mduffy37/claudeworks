@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mduffy37.github.io/claudeworks/sitemap.xml
