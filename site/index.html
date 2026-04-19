@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClaudeWorks — Named profiles for Claude Code</title>
+  <meta name="description" content="ClaudeWorks gives Claude Code real isolated profiles. Each profile runs in its own CLAUDE_CONFIG_DIR — only the plugins, MCP servers, skills, and commands you chose load into that session." />
+  <meta property="og:title" content="ClaudeWorks — Named profiles for Claude Code" />
+  <meta property="og:description" content="Stop loading every plugin into every session. Named profiles with real CLAUDE_CONFIG_DIR isolation, a curated marketplace, and multi-alias launch." />
+  <meta property="og:image" content="https://mduffy37.github.io/claudeworks/assets/hero.gif" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ClaudeWorks — Named profiles for Claude Code" />
+  <meta name="twitter:description" content="Stop loading every plugin into every session. Named profiles with real CLAUDE_CONFIG_DIR isolation." />
+  <meta name="twitter:image" content="https://mduffy37.github.io/claudeworks/assets/hero.gif" />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --deep-dark:      #141413;
+      --dark-surface:   #30302e;
+      --dark-elevated:  #3d3d3a;
+      --dark-border:    #45443f;
+      --border-strong:  #5e5d59;
+      --warm-silver:    #bfbdb4;
+      --stone-gray:     #9b9a93;
+      --text-muted:     rgba(176,174,165,0.65);
+      --terracotta:     #d97757;
+      --coral:          #e68a6a;
+      --brand-blue:     #6a9bcc;
+      --sage:           #788c5d;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--deep-dark);
+      color: var(--warm-silver);
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--terracotta); text-decoration: none; }
+    a:hover { color: var(--coral); }
+
+    /* ── Nav ──────────────────────────────────────────────────────── */
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(20,20,19,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--dark-border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--warm-silver);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .nav-logo img {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+    }
+
+    .nav-docs-link {
+      font-size: 0.8rem;
+      color: var(--stone-gray);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-docs-link:hover { color: var(--warm-silver); }
+
+    .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    .btn-primary {
+      background: var(--terracotta);
+      color: #fff;
+      box-shadow: 0 0 0 1px var(--terracotta);
+    }
+    .btn-primary:hover {
+      background: var(--coral);
+      box-shadow: 0 0 0 1px var(--coral);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--warm-silver);
+      box-shadow: 0 0 0 1px var(--dark-border);
+    }
+    .btn-ghost:hover {
+      background: var(--dark-elevated);
+      color: var(--warm-silver);
+      box-shadow: 0 0 0 1px var(--border-strong);
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────── */
+
+    .hero {
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(217,119,87,0.12);
+      box-shadow: 0 0 0 1px rgba(217,119,87,0.3);
+      color: var(--terracotta);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      margin-bottom: 1.75rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 span { color: var(--terracotta); }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--stone-gray);
+      max-width: 560px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3.5rem;
+    }
+
+    .hero-actions .btn { font-size: 0.95rem; padding: 0.65rem 1.35rem; }
+
+    .hero-sub-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: -2rem;
+      margin-bottom: 3rem;
+    }
+
+    .hero-media {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--dark-border), 0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    .hero-media img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ── Problem ──────────────────────────────────────────────────── */
+
+    .problem {
+      padding: 5rem 2rem;
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--terracotta);
+      margin-bottom: 1rem;
+    }
+
+    .problem h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      line-height: 1.3;
+    }
+
+    .problem p {
+      color: var(--stone-gray);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .problem p + p { margin-top: 1rem; }
+
+    .problem-cta { margin-top: 2.5rem; }
+
+    /* ── Features ─────────────────────────────────────────────────── */
+
+    .features {
+      padding: 2rem 2rem 5rem;
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .features-header h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .features-header p {
+      color: var(--stone-gray);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .feature-card {
+      background: var(--dark-surface);
+      box-shadow: 0 0 0 1px var(--dark-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .feature-card:hover { box-shadow: 0 0 0 1px var(--border-strong); }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(217,119,87,0.1);
+      box-shadow: 0 0 0 1px rgba(217,119,87,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .feature-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--warm-silver);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--stone-gray);
+      line-height: 1.6;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-top: 0.75rem;
+      background: rgba(106,155,204,0.12);
+      color: var(--brand-blue);
+      box-shadow: 0 0 0 1px rgba(106,155,204,0.2);
+    }
+
+    /* ── Screenshot strip ─────────────────────────────────────────── */
+
+    .screenshots {
+      padding: 2rem 2rem 5rem;
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .screenshot-item {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--dark-border);
+    }
+
+    .screenshot-item img { width: 100%; display: block; }
+
+    .screenshot-caption {
+      background: var(--dark-surface);
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      color: var(--stone-gray);
+      border-top: 1px solid var(--dark-border);
+    }
+
+    /* ── Install ──────────────────────────────────────────────────── */
+
+    .install {
+      padding: 5rem 2rem;
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .install h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .install > p {
+      color: var(--stone-gray);
+      margin-bottom: 2.5rem;
+    }
+
+    .install-options {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+
+    .install-card {
+      background: var(--dark-surface);
+      box-shadow: 0 0 0 1px var(--dark-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+
+    .install-card h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--warm-silver);
+      margin-bottom: 0.75rem;
+    }
+
+    .install-card ol {
+      padding-left: 1.25rem;
+      color: var(--stone-gray);
+      font-size: 0.875rem;
+      line-height: 1.8;
+    }
+
+    .install-card code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      background: var(--dark-elevated);
+      box-shadow: 0 0 0 1px var(--dark-border);
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      color: var(--warm-silver);
+    }
+
+    pre {
+      background: var(--dark-surface);
+      box-shadow: 0 0 0 1px var(--dark-border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      text-align: left;
+      margin-top: 0.75rem;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.82rem;
+      color: var(--stone-gray);
+      line-height: 1.7;
+    }
+
+    pre code .prompt { color: var(--terracotta); user-select: none; }
+
+    .install-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Stats bar ────────────────────────────────────────────────── */
+
+    .stats {
+      border-top: 1px solid var(--dark-border);
+      border-bottom: 1px solid var(--dark-border);
+      background: var(--dark-surface);
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      flex-wrap: wrap;
+    }
+
+    .stat { text-align: center; }
+
+    .stat-num {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-num span { color: var(--terracotta); }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--stone-gray);
+    }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+
+    footer {
+      padding: 2.5rem 2rem;
+      text-align: center;
+      border-top: 1px solid var(--dark-border);
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .footer-logo img { width: 20px; height: 20px; border-radius: 4px; }
+    .footer-logo span { font-weight: 600; font-size: 0.9rem; color: var(--warm-silver); }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .footer-links a { font-size: 0.85rem; color: var(--stone-gray); }
+    .footer-links a:hover { color: var(--warm-silver); }
+
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Divider ──────────────────────────────────────────────────── */
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--dark-border);
+      margin: 0;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .hero { padding: 3rem 1.25rem 2.5rem; }
+      .stats { gap: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div style="display:flex;align-items:center;gap:1.25rem;">
+      <a class="nav-logo" href="/">
+        <img src="assets/logo.png" alt="ClaudeWorks" />
+        ClaudeWorks
+      </a>
+      <a class="nav-docs-link" href="docs/">Docs</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a class="btn btn-primary" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">
+        Download free
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      macOS · Free · No telemetry
+    </div>
+    <h1>Named profiles for<br><span>Claude Code</span></h1>
+    <p>Only the plugins, MCP servers, and skills you actually need load into each session — no bleed between contexts, ever. Each profile runs in its own <code style="font-size:0.95rem;background:var(--dark-surface);box-shadow:0 0 0 1px var(--dark-border);border-radius:4px;padding:0.1rem 0.45rem;color:var(--terracotta)">CLAUDE_CONFIG_DIR</code>.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for macOS
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="hero-sub-note">No account. No telemetry. Works alongside your existing Claude setup.</p>
+    <div class="hero-media">
+      <img src="assets/hero.gif" alt="ClaudeWorks: profile sidebar, Launch, two terminals running side by side with different skill sets" loading="eager" />
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="problem">
+    <p class="section-label">The problem</p>
+    <h2>Every plugin you install loads whether you're using it or not</h2>
+    <p>Your work session doesn't need your personal research skills. Your personal session doesn't need your API deployment MCPs. They all load anyway — every session, you're giving a slice of your context window to tools you're not even using.</p>
+    <p>Swapping between setups meant editing <code>~/.claude.json</code> and <code>mcp.json</code> by hand, then undoing it next session. Claude Code has no native multi-profile support.</p>
+    <div class="problem-cta">
+      <a class="btn btn-primary" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download free for macOS
+      </a>
+      <p class="hero-sub-note" style="margin-top:0.75rem;margin-bottom:0">No account. No telemetry. Works alongside your existing Claude setup.</p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- Features -->
+  <section class="features">
+    <div class="features-header">
+      <p class="section-label">What it does</p>
+      <h2>One app, real isolation</h2>
+      <p>Not config swapping. Each profile is a real isolated environment.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⧗</div>
+        <h3>Real per-profile isolation</h3>
+        <p>Each profile gets its own <code>CLAUDE_CONFIG_DIR</code>. MCP servers and skills from profile A physically cannot appear in profile B's session.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⊞</div>
+        <h3>Curated plugin marketplace</h3>
+        <p>Find what you need without trawling GitHub. Browse 647 plugins across 114 marketplaces in one place — one search bar queries 7,009 entries at once.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⌘</div>
+        <h3>One command per project</h3>
+        <p>Each alias cd's to its directory and optionally runs <code>/workflow</code> or a prefilled prompt. One profile can intercept bare <code>claude</code> in any terminal.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⤷</div>
+        <h3>Custom slash commands per profile</h3>
+        <p>Write a <code>/workflow</code> body once per profile and it becomes a real Claude Code command in that session. Named variants let one profile ship multiple runbooks.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⟳</div>
+        <h3>Status bar builder</h3>
+        <p>See cost, context remaining, and rate limits at a glance. 17 drag-to-reorder widgets, save configs by name, and override per-profile.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">↯</div>
+        <h3>Multi-agent teams <span class="feature-tag">experimental</span></h3>
+        <p>Compose a team from existing profiles. Assign roles, pick a lead, and launch. The lead spawns teammates via Claude Code's native agent-teams feature.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Screenshots -->
+  <section class="screenshots">
+    <div class="screenshot-item">
+      <img src="assets/browse.png" alt="ClaudeWorks Browse tab showing plugin marketplace" loading="lazy" />
+      <div class="screenshot-caption">Curated marketplace with global search</div>
+    </div>
+    <div class="screenshot-item">
+      <img src="assets/statusbar.png" alt="ClaudeWorks Status Bar builder" loading="lazy" />
+      <div class="screenshot-caption">Status bar builder with live preview</div>
+    </div>
+    <div class="screenshot-item">
+      <img src="assets/teams.png" alt="ClaudeWorks Team editor" loading="lazy" />
+      <div class="screenshot-caption">Multi-agent team composition</div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num"><span>114</span></div>
+      <div class="stat-label">curated marketplaces</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>647</span></div>
+      <div class="stat-label">featured plugins</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>7,009</span></div>
+      <div class="stat-label">searchable entries</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>MIT</span></div>
+      <div class="stat-label">open source</div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Install -->
+  <section class="install">
+    <p class="section-label">Get started</p>
+    <h2>Up in two minutes</h2>
+    <p>Requires macOS. Windows and Linux ports are planned.</p>
+
+    <div class="install-options">
+      <div class="install-card">
+        <h3>From a release</h3>
+        <ol>
+          <li>Download the <code>.dmg</code> from <a href="https://github.com/Mduffy37/claudeworks/releases" target="_blank" rel="noopener">Releases</a></li>
+          <li>Open the DMG, drag to Applications</li>
+          <li>First launch: right-click → Open → confirm <span style="color:var(--text-muted)">(macOS Gatekeeper — source is fully auditable on GitHub)</span></li>
+          <li>Run <code>gh auth login</code> for full marketplace access</li>
+        </ol>
+      </div>
+      <div class="install-card">
+        <h3>From source</h3>
+        <pre><code><span class="prompt">$ </span>git clone https://github.com/Mduffy37/claudeworks
+<span class="prompt">$ </span>cd claudeworks
+<span class="prompt">$ </span>npm install
+<span class="prompt">$ </span>npm run build
+<span class="prompt">$ </span>npm start</code></pre>
+      </div>
+    </div>
+
+    <p class="install-note">Requires Node 20+ and Electron 33. Run <code>claude login</code> before launching — ClaudeWorks uses your existing Claude Code credentials.</p>
+
+    <div style="margin-top:2.5rem;">
+      <a class="btn btn-primary" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener" style="font-size:1rem; padding:0.75rem 1.75rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download free for macOS
+      </a>
+      <p class="hero-sub-note" style="margin-top:0.75rem;margin-bottom:0">No account. No telemetry. Works alongside your existing Claude setup.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo">
+      <img src="assets/logo.png" alt="ClaudeWorks" />
+      <span>ClaudeWorks</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Mduffy37/claudeworks/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/Mduffy37/claudeworks/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/Mduffy37/claudeworks/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+    <p>An independent open-source tool built by a Claude Code user, for Claude Code users.</p>
+  </footer>
+
+</body>
+</html>

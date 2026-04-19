@@ -14,6 +14,16 @@
 </p>
 
 <p align="center">
+  <a href="https://mduffy37.github.io/claudeworks/">Home</a>
+  &nbsp;·&nbsp;
+  <a href="https://mduffy37.github.io/claudeworks/docs/">Docs</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Mduffy37/claudeworks/releases">Releases</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Mduffy37/claudeworks/issues">Issues</a>
+</p>
+
+<p align="center">
   <img src="./.github/assets/hero.gif" alt="ClaudeWorks: profile sidebar, Launch, two terminals running side by side, each showing a different curated skill set" />
 </p>
 
@@ -210,6 +220,18 @@ Planned. The Electron shell is already cross-platform; the terminal launch and m
 **"Can I use this without the marketplace?"**
 
 Yes. Every profile feature works standalone. The marketplace is one tab inside one modal. Ignore it and the rest of the app is an offline profile manager.
+
+## Documentation
+
+Full docs at [mduffy37.github.io/claudeworks/docs](https://mduffy37.github.io/claudeworks/docs/).
+
+- [Installation](https://mduffy37.github.io/claudeworks/docs/getting-started.html)
+- [Quick Start](https://mduffy37.github.io/claudeworks/docs/quick-start.html)
+- [Profile Editor](https://mduffy37.github.io/claudeworks/docs/profile-editor.html) (every tab)
+- [Configure Claude](https://mduffy37.github.io/claudeworks/docs/configure-claude.html)
+- [Aliases & Launch](https://mduffy37.github.io/claudeworks/docs/aliases.html)
+- [Teams](https://mduffy37.github.io/claudeworks/docs/team-editor.html)
+- [Profiles Doctor](https://mduffy37.github.io/claudeworks/docs/doctor.html)
 
 ## Contributing
 
