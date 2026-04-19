@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile Editor | ClaudeWorks Docs</title>
+  <meta name="description" content="Every tab in the ClaudeWorks profile editor: Plugins, Skills, MCP, Project Items, Instructions, and Settings." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Profile Editor</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link active" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Profile Editor</h1>
+      <p class="page-subtitle">The core of ClaudeWorks. Every profile is configured across eight tabs.</p>
+
+      <h2>Top bar</h2>
+      <p>Everything global to the profile lives at the top of the editor:</p>
+      <ul>
+        <li>The <strong>name</strong> is an inline text input. Renaming the profile also renames its config directory.</li>
+        <li>The <strong>directory dropdown</strong> picks which imported project this launch will <code>cd</code> into. Defaults to "None".</li>
+        <li><strong>Launch</strong> opens a terminal with the profile's <code>CLAUDE_CONFIG_DIR</code> set. A chevron menu next to it toggles <code>--verbose</code> or <code>--dangerously-skip-permissions</code> for the current launch only.</li>
+        <li><strong>Save</strong> writes changes to <code>profiles.json</code> and rebuilds the profile's config directory.</li>
+        <li><strong>Export</strong> writes a self-contained JSON of the profile: plugins, exclusions, aliases, workflows, MCP overrides, env vars, and settings. See <a href="import-export.html">Import &amp; Export</a>.</li>
+        <li><strong>Profile Overview</strong> opens a modal with enabled-item counts (Plugins, Skills, Agents, Commands, MCP Servers). Each count links to its tab.</li>
+        <li><strong>Copy to Clipboard</strong> copies the current profile JSON.</li>
+      </ul>
+
+      <h3>Info card</h3>
+      <p>A collapsible card below the top bar holds:</p>
+      <ul>
+        <li>A <strong>description</strong> field for free-form notes.</li>
+        <li><strong>Tags</strong>: comma-separated labels used by the sidebar tag filter.</li>
+        <li><strong>Projects</strong>: imported project directories this profile is scoped to. These feed the sidebar's project filter.</li>
+      </ul>
+
+      <h3>Tabs at a glance</h3>
+      <div class="tab-grid">
+        <a class="tab-card" href="#plugins"><div class="tab-card-title">Plugins</div><div class="tab-card-desc">Toggle plugins on or off, favourite the ones you use most.</div></a>
+        <a class="tab-card" href="#skills"><div class="tab-card-title">Skills</div><div class="tab-card-desc">Flat view of every skill across enabled plugins.</div></a>
+        <a class="tab-card" href="#skills"><div class="tab-card-title">Agents</div><div class="tab-card-desc">Flat view of every agent across enabled plugins.</div></a>
+        <a class="tab-card" href="#skills"><div class="tab-card-title">Commands</div><div class="tab-card-desc">Every slash command, user-invocable or internal.</div></a>
+        <a class="tab-card" href="#mcp"><div class="tab-card-title">MCP Servers</div><div class="tab-card-desc">Plugin, user, and project MCPs with per-profile disable.</div></a>
+        <a class="tab-card" href="#project-items"><div class="tab-card-title">Project Items</div><div class="tab-card-desc">Edit skills, agents, and commands living in the project directory.</div></a>
+        <a class="tab-card" href="#instructions"><div class="tab-card-title">Instructions</div><div class="tab-card-desc">Custom CLAUDE.md and per-profile <code>/workflow</code>.</div></a>
+        <a class="tab-card" href="#settings"><div class="tab-card-title">Settings</div><div class="tab-card-desc">Model, effort, voice, auth, env vars, hooks, and launch config.</div></a>
+      </div>
+
+      <h2 id="plugins">Plugins tab</h2>
+      <p>The Plugins tab is the primary on/off switch for everything else. Skills, agents, commands, and plugin-provided MCP servers only appear if their plugin is enabled here.</p>
+      <ul>
+        <li>The <strong>star</strong> pins a plugin to the top of the list.</li>
+        <li><strong>Plugin group headers</strong> are collapsible, grouped by source (marketplace, local, skillfish, git).</li>
+        <li>The <strong>per-plugin toggle</strong> is the big switch. Off means every item inside is excluded from this profile.</li>
+        <li>Within an enabled plugin, <strong>item checkboxes</strong> let you disable specific skills, agents, or commands without disabling the whole plugin. ClaudeWorks writes a small overlay for the excluded items so the rest of the plugin stays symlinked and cache-shared.</li>
+      </ul>
+
+      <h2 id="skills">Skills, Agents &amp; Commands tabs</h2>
+      <p>Three tabs with the same layout. Each one shows a flat list of every item of that type across currently enabled plugins.</p>
+      <ul>
+        <li>The <strong>search bar</strong> matches item name and parent plugin name.</li>
+        <li>The <strong>filter</strong> has three options: All, Enabled, and Disabled.</li>
+        <li>The <strong>sort</strong> groups by source plugin or flattens to A–Z by name.</li>
+        <li><strong>Group headers</strong> (when sorting by source) are collapsible and include an <strong>All / None</strong> toggle per group.</li>
+        <li>Each row has a checkbox, the item name (with a <code>/</code> prefix for commands), and its source plugin. An <span class="ui-label">internal</span> badge marks items that aren't user-invocable.</li>
+      </ul>
+
+      <h2 id="mcp">MCP Servers tab</h2>
+      <p>Every MCP server available to your profile surfaces here, grouped by where it comes from. You can disable servers per-profile or per-directory.</p>
+      <p>A header indicator shows which launch directory is currently selected. This affects the project-level section.</p>
+      <h3>From Plugins</h3>
+      <p>MCP servers declared by any currently enabled plugin. Disabling a row here disables the source plugin item itself, since plugin MCPs travel with their plugin.</p>
+      <h3>User</h3>
+      <p>MCP servers declared in <code>~/.claude.json</code> under <code>mcpServers</code>. These are global to your user and appear in every profile by default. Toggle off per-profile.</p>
+      <h3>Project</h3>
+      <p>MCP servers declared under <code>~/.claude.json → projects[&lt;directory&gt;].mcpServers</code>, plus any <code>.mcp.json</code> in the project directory. They're scoped to whichever project directory you're launching into, and disabling a row scopes the disable to that directory.</p>
+
+      <h2 id="project-items">Project Items tab</h2>
+      <p>When your profile has a launch directory selected, this tab surfaces every skill, agent, and command defined inside that project's <code>.claude/</code> folder. You can edit them inline without leaving the app.</p>
+      <ul>
+        <li>The <strong>empty state</strong> ("Select a project directory") shows when no directory is selected.</li>
+        <li>A <strong>helper card</strong> appears when a project has fewer than three items, with a quick button to open its <code>.claude/</code> folder in Finder.</li>
+        <li>The <strong>grouped browser</strong> splits items into Skills, Agents, and Commands sections. Click any row to open the inline editor.</li>
+        <li>The <strong>inline editor</strong> has a textarea plus Open in Editor, Save (when dirty), Delete, and Close actions.</li>
+      </ul>
+
+      <h2 id="instructions">Instructions tab</h2>
+      <p>Two editors side by side: one always-on, one on-demand. Plus named workflow variants if you want to ship more than one runbook from the same profile.</p>
+
+      <h3>Always-on: CLAUDE.md</h3>
+      <p>A per-profile CLAUDE.md body. Anything you write here is appended to the global CLAUDE.md that Claude reads every turn. Use it for profile-specific instructions that should always be in context.</p>
+      <p>The toolbar has three actions: Insert Prompt, Open in Editor, and Save as Prompt. Save as Prompt stores the current body as a reusable prompt.</p>
+
+      <h3>On-demand: /workflow</h3>
+      <p>A dormant body stored in <code>&lt;config-dir&gt;/commands/workflow.md</code>. It only loads into context when you type <code>/workflow</code> in the session. Good for runbooks you want at hand without paying the token cost every turn.</p>
+
+      <h3>Workflow variants</h3>
+      <p>Named variants become <code>/workflow-&lt;name&gt;</code> commands. Each variant can optionally be scoped to a specific launch directory, so <code>/workflow-deploy</code> might exist only when you launch into <code>~/code/api</code>.</p>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">ℹ</span>
+        <div>Every editor shows live character and line counts beneath it.</div>
+      </div>
+
+      <h2 id="settings">Settings tab</h2>
+      <p>Per-profile session configuration. Anything left at its default inherits from the global value in <a href="configure-claude.html#global">Configure Claude → Global</a>.</p>
+
+      <h3>Session Behavior</h3>
+      <ul>
+        <li><strong>Model</strong>: Default, Opus, Sonnet, or Haiku.</li>
+        <li><strong>Context</strong> (shown only when Opus or Sonnet is picked): 200k or 1M.</li>
+        <li><strong>Effort Level</strong>: Default, Low, Medium, High, X-High, or Max.</li>
+        <li><strong>Voice</strong>: Default, Enabled, or Disabled.</li>
+      </ul>
+
+      <h3>Status Bar</h3>
+      <p>Toggle <strong>Override global status bar</strong> to use a profile-specific status bar config. Build the config under <a href="configure-claude.html#status-bar">Configure Claude → Status Bar</a>.</p>
+
+      <h3>Authentication</h3>
+      <p>Toggle <strong>Use default authentication</strong> to share credentials with the default Claude Code login. Turn it off to give this profile its own separate Keychain entry.</p>
+
+      <h3>Environment Variables</h3>
+      <p>Three stacked lists:</p>
+      <ul>
+        <li><strong>Inherited from global</strong>: read-only, with an Override button per row.</li>
+        <li><strong>Overridden in this profile</strong>: editable, with a Remove button.</li>
+        <li><strong>Add new</strong>: key and value inputs, with autocomplete for known Claude Code env vars.</li>
+      </ul>
+
+      <h3>Hooks</h3>
+      <p>If global hooks are defined in <code>~/.claude/settings.json</code>, they appear here with a per-hook toggle to disable them for this profile. Each row shows <code>event: command</code>.</p>
+
+      <h3>Launch Configuration</h3>
+      <p>The most configured section in the app.</p>
+      <ul>
+        <li><strong>Set as Default Profile</strong>: makes plain <code>claude</code> launch this profile.</li>
+        <li><strong>Disable claude override</strong> (default profile only): prevents the <code>claude</code> alias from being installed, even though this is the default profile.</li>
+        <li><strong>CLI Aliases</strong>: shell aliases that launch this profile. Each alias has a name, an optional directory, and a launch action: none, <code>/workflow</code>, or a custom prompt. Conflict warnings surface if another profile declares the same alias name. See <a href="aliases.html">Aliases &amp; Launch</a> for the full walkthrough.</li>
+        <li><strong>Launch Prompt</strong>: a prompt passed via <code>claude -p "..."</code> when launching from the editor's Launch button. Doesn't affect alias launches, which have their own per-alias prompts.</li>
+        <li><strong>Launch Flags</strong>: toggles for <code>--dangerously-skip-permissions</code> and <code>--verbose</code>, plus a free-form field for custom flags.</li>
+      </ul>
+
+      <h3>Profile Config</h3>
+      <p><strong>Open Config Directory in Finder</strong> is a shortcut to <code>~/.claudeworks/profiles/&lt;name&gt;/</code>.</p>
+
+      <h2>Unsaved changes</h2>
+      <p>A dirty indicator appears next to the profile name when you have unsaved changes. Switching profiles or tabs while dirty shows a confirm dialog with three options: Discard &amp; Switch, Save &amp; Switch, and Cancel.</p>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="sidebar.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Sidebar</span>
+        </a>
+        <a class="page-nav-btn next" href="team-editor.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Team Editor</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

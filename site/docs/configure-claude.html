@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configure Claude | ClaudeWorks Docs</title>
+  <meta name="description" content="The Configure Claude dialog: marketplace, projects, prompts, global settings, status bar, and health." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Configure Claude</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link active" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Configure Claude</h1>
+      <p class="page-subtitle">The global dialog for everything shared across profiles. Opens from the <strong>Configure Claude</strong> button in the sidebar dock.</p>
+
+      <h2 id="plugins">Plugins &amp; Marketplace</h2>
+      <p>The first tab and the most-used view in the dialog. Two modes along the top.</p>
+
+      <h3>Browse</h3>
+      <p>A curated marketplace of plugins, skills, agents, commands, and MCP servers. 7,009 entries across 114 marketplaces at the time of writing.</p>
+      <ul>
+        <li>The <strong>global search</strong> bar queries every item across every marketplace at once. It matches names, descriptions, and source marketplace.</li>
+        <li><strong>Marketplace chips</strong> filter results to a specific marketplace.</li>
+        <li><strong>Collection chips</strong> filter by curated collection, like "Testing" or "Observability".</li>
+        <li>Click any <strong>plugin card</strong> to open the split-pane detail modal. The upstream README renders inline on the left, with a peer-plugin list beside it. Install from the modal.</li>
+      </ul>
+
+      <h3>Manage</h3>
+      <p>The inventory of plugins already installed in Claude Code, read from <code>~/.claude/plugins/installed_plugins.json</code>.</p>
+      <ul>
+        <li>Each plugin shows name, version, and installed date.</li>
+        <li>An <strong>Update</strong> button appears if a newer version is available on the source marketplace.</li>
+        <li><strong>Uninstall</strong> removes the plugin from the shared cache and disables it across every profile.</li>
+        <li>The update check runs automatically when the dialog opens.</li>
+      </ul>
+
+      <h2 id="projects">Projects</h2>
+      <p>Register project directories so they appear in the directory dropdowns across every profile and team.</p>
+      <ul>
+        <li><strong>Add project</strong> opens a directory picker. ClaudeWorks stores the absolute path.</li>
+        <li>The <strong>list of imported projects</strong> shows each one with a remove button.</li>
+        <li>Imported projects appear in the directory dropdown on every profile and team card, in the per-profile tag and project filters, and in workflow variant directory scoping.</li>
+      </ul>
+
+      <h2 id="prompts">Prompts</h2>
+      <p>Saved prompts are reusable blocks of text you can insert into any Instructions or <code>/workflow</code> editor.</p>
+      <ul>
+        <li>The <strong>browse list</strong> shows every saved prompt with its name, description, and tags.</li>
+        <li><strong>Search and filter</strong> work on name or tag.</li>
+        <li><strong>Use in editor</strong> inserts the prompt at the current cursor position, or appends if no editor is focused.</li>
+        <li><strong>Delete</strong> removes the prompt from the store.</li>
+      </ul>
+      <p>Create a prompt from inside any Instructions or workflow editor using the <strong>Save as Prompt</strong> button.</p>
+
+      <h2 id="global">Global Settings</h2>
+      <p>Settings that apply to every profile unless the profile explicitly overrides them. Mirrors the shape of the profile editor's Settings tab.</p>
+      <ul>
+        <li><strong>Environment variables</strong>: global env vars with autocomplete for known Claude Code vars.</li>
+        <li><strong>Hooks</strong>: hooks read from <code>~/.claude/settings.json</code>, each showing event and command.</li>
+        <li><strong>Default model and effort</strong>: the baseline every profile inherits.</li>
+        <li><strong>Default authentication</strong>: the shared Keychain entry profiles use unless they turn off "Use default authentication".</li>
+      </ul>
+
+      <h2 id="status-bar">Status Bar</h2>
+      <p>The status bar builder. 17 widgets in a drag-to-reorder layout with live preview.</p>
+      <ul>
+        <li>The <strong>widget list</strong> has every available widget: model, branch, context window, cost, rate limits, 7-day Sonnet usage, section breaks, and more.</li>
+        <li><strong>Drag to reorder</strong> the bar without touching JSON.</li>
+        <li><strong>Per-widget options</strong> cover colour, format, truncation, and unit display.</li>
+        <li>The <strong>live preview</strong> renders the bar as you build it.</li>
+        <li><strong>Save as preset</strong> names a status bar config so you can load it later.</li>
+        <li><strong>Load preset</strong> swaps in any saved config instantly.</li>
+      </ul>
+      <p>Per-profile override is toggled from the <a href="profile-editor.html#settings">profile editor's Settings tab</a>, under Status Bar.</p>
+
+      <h2 id="health">Health</h2>
+      <p>A diagnostic summary across every profile.</p>
+      <ul>
+        <li>A health score per profile: healthy, warning, or broken.</li>
+        <li>A list of findings: missing plugins, broken plugin references, MCP configs that won't parse, orphaned config directories.</li>
+        <li><strong>Open in Doctor</strong> hands off to the Profiles Doctor modal for detect or repair. See <a href="doctor.html">Profiles Doctor</a>.</li>
+      </ul>
+
+      <h2>Bulk Manage dialog</h2>
+      <p>Opens from the <strong>Manage</strong> button in the sidebar dock, next to Configure Claude. It has tabs for Profiles and Teams, with bulk actions: enable or disable a plugin across many profiles at once, or delete multiple profiles or teams.</p>
+
+      <h2>App Settings dialog</h2>
+      <p>Opens from the app settings button in the top drag bar. Distinct from Configure Claude. These are appearance and tool preferences for the ClaudeWorks app itself, not Claude Code config.</p>
+      <ul>
+        <li><strong>Theme</strong>: Auto, Dark, or Light.</li>
+        <li><strong>Font size</strong>: slider for UI scale.</li>
+        <li><strong>Open Doctor</strong>: shortcut to Profiles Doctor.</li>
+      </ul>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="team-editor.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Team Editor</span>
+        </a>
+        <a class="page-nav-btn next" href="aliases.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Aliases &amp; Launch</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

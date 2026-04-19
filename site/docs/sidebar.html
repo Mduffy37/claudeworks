@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sidebar | ClaudeWorks Docs</title>
+  <meta name="description" content="The ClaudeWorks sidebar: profiles, teams, search, filters, and the bottom dock." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Sidebar</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link active" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Sidebar</h1>
+      <p class="page-subtitle">The left pane. Your profiles, teams, and the global controls that apply to everything.</p>
+
+      <h2>Top bar</h2>
+      <p>A drag bar sits across the top of the window with three controls:</p>
+      <ul>
+        <li>The <strong>ClaudeWorks logo and title</strong> returns you home.</li>
+        <li><strong>Hard refresh</strong> reloads plugins, profiles, and teams from disk. Use it after editing plugin manifests or <code>installed_plugins.json</code> by hand.</li>
+        <li><strong>App settings</strong> opens the App Settings dialog for theme, font size, and a shortcut to Doctor.</li>
+      </ul>
+
+      <h2>Resizing and density</h2>
+      <p>Drag the right edge of the sidebar to resize between 240px and 480px. Display density switches automatically based on width:</p>
+      <ul>
+        <li>Below 280px: compact rows with minimal meta.</li>
+        <li>280 to 360px: comfortable, the default.</li>
+        <li>Above 360px: wide, with full meta visible and relaxed spacing.</li>
+      </ul>
+
+      <h2>Tab switcher</h2>
+      <p>Three tabs at the top: <span class="ui-label">Home</span>, <span class="ui-label">Profiles</span>, and <span class="ui-label">Teams</span>. Home clears the main pane back to the welcome state. The other two are covered below.</p>
+
+      <h2>Profiles tab</h2>
+      <p>Every profile you've created, searchable and filterable.</p>
+
+      <h3>Creating a profile</h3>
+      <p>Click the <strong>+</strong> button next to the Profiles heading. A new empty profile is created and opened in the editor.</p>
+
+      <h3>Search, filter, sort</h3>
+      <p>Above the list sit four controls:</p>
+      <ul>
+        <li>A <strong>search</strong> input that matches profile names as you type.</li>
+        <li>A <strong>tag filter</strong> to narrow by a specific label. Tags are editable per profile.</li>
+        <li>A <strong>project filter</strong> to narrow to profiles that include a specific imported project.</li>
+        <li>A <strong>sort dropdown</strong> with four options: A–Z, plugin count, most recently launched, and favourites.</li>
+      </ul>
+
+      <h3>Profile cards</h3>
+      <p>Each card shows:</p>
+      <ul>
+        <li>An <strong>icon</strong> with the profile's first letter, plus a <span class="ui-label">DEFAULT</span> badge if this profile is set as default, and a health warning if any enabled plugins are broken or missing.</li>
+        <li><strong>Meta</strong>: plugin count and last-launched timestamp.</li>
+        <li>A <strong>star</strong> to favourite the profile.</li>
+        <li>A <strong>directory selector</strong> for choosing which imported project to launch into. Defaults to "None".</li>
+        <li>A <strong>Launch</strong> button that opens a terminal in the selected directory with this profile's <code>CLAUDE_CONFIG_DIR</code> set.</li>
+      </ul>
+
+      <h2>Teams tab</h2>
+      <p>Same structure as Profiles, for multi-agent teams. A persistent experimental banner sits above the list because the underlying Anthropic feature is still flagged behind an environment variable.</p>
+
+      <ul>
+        <li>Search, tag filter, project filter, and sort work the same as Profiles. Sort options are A–Z, member count, and favourites.</li>
+        <li>Team cards show the team colour, name, member count, and the name of the lead profile.</li>
+        <li>The Launch button is disabled until a lead is designated. On click, ClaudeWorks checks for <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code>. If it's missing, a gate modal offers to add it to global or project settings before proceeding.</li>
+      </ul>
+
+      <h2>Bottom dock</h2>
+      <p>Two buttons are pinned to the bottom of the sidebar:</p>
+      <ul>
+        <li><strong>Manage</strong> opens the Bulk Manage dialog for editing plugins across many profiles or teams at once.</li>
+        <li><strong>Configure Claude</strong> opens the main <a href="configure-claude.html">Configure Claude dialog</a>, covering the marketplace, projects, prompts, global settings, status bar, and health.</li>
+      </ul>
+
+      <h2>Unsaved changes guard</h2>
+      <p>If you switch profiles or tabs while the current profile has unsaved changes, ClaudeWorks shows a confirm dialog with three options: <strong>Discard &amp; Switch</strong>, <strong>Save &amp; Switch</strong>, and <strong>Cancel</strong>.</p>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="quick-start.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Quick Start</span>
+        </a>
+        <a class="page-nav-btn next" href="profile-editor.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Profile Editor</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profiles Doctor | ClaudeWorks Docs</title>
+  <meta name="description" content="Detect and repair broken profile config, orphaned plugins, and alias collisions." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Profiles Doctor</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link active" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Profiles Doctor</h1>
+      <p class="page-subtitle">A read-only scanner with an optional repair mode for broken config, orphaned plugins, and alias collisions.</p>
+
+      <h2>Opening Doctor</h2>
+      <p>Two ways in:</p>
+      <ul>
+        <li>App settings (top-right of the drag bar), then <strong>Open Doctor</strong>.</li>
+        <li>Configure Claude, <strong>Health</strong> tab, <strong>Open in Doctor</strong> next to any finding.</li>
+      </ul>
+
+      <h2>Modes</h2>
+
+      <h3>Detect mode</h3>
+      <p>Read-only. Doctor scans every file it knows about and reports findings, each with a severity of healthy, warning, or error. Nothing on disk is touched.</p>
+
+      <h3>Repair mode</h3>
+      <p>For findings Doctor knows how to fix, it offers a <strong>Repair</strong> button. Repairs are opt-in per finding. Before writing any change, Doctor creates a timestamped backup by copying the original file to <code>&lt;file&gt;.bak-&lt;YYYYMMDD-HHMMSS&gt;</code> in the same directory.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">✦</span>
+        <div>Repair is always explicit. If you don't click the Repair button on a finding, nothing changes.</div>
+      </div>
+
+      <h2>What Doctor checks</h2>
+
+      <h3><code>profiles.json</code></h3>
+      <ul>
+        <li>The file exists and parses as JSON.</li>
+        <li>Every profile has a valid name that maps to a directory.</li>
+        <li>Every profile's <code>configDir</code> exists on disk.</li>
+      </ul>
+
+      <h3><code>teams.json</code></h3>
+      <ul>
+        <li>The file parses.</li>
+        <li>Every team's lead profile still exists.</li>
+        <li>Every team member references a real profile.</li>
+      </ul>
+
+      <h3><code>installed_plugins.json</code></h3>
+      <ul>
+        <li>The file parses.</li>
+        <li>The shape matches the expected <code>{ plugins: {...} }</code>.</li>
+        <li>Every referenced cache directory exists under <code>~/.claude/plugins/cache/</code>.</li>
+      </ul>
+
+      <h3>Profile references</h3>
+      <ul>
+        <li>Every plugin a profile enables is actually installed.</li>
+        <li>Every disabled MCP server still exists in the source (<code>~/.claude.json</code> or project <code>.mcp.json</code>).</li>
+        <li>Every excluded item has a valid source plugin.</li>
+      </ul>
+
+      <h3>Aliases</h3>
+      <ul>
+        <li>No duplicate alias names across profiles.</li>
+        <li>Every alias script in <code>~/.claudeworks/bin/</code> traces back to a real profile.</li>
+        <li>Orphaned alias scripts are flagged (profile deleted but script remains).</li>
+      </ul>
+
+      <h3>Symlinks</h3>
+      <ul>
+        <li>Every profile's symlinks into <code>~/.claude/plugins/cache/</code> point at a real target.</li>
+        <li>Broken symlinks are flagged.</li>
+      </ul>
+
+      <h2>Export diagnostics</h2>
+      <p>From Doctor, click <strong>Export Diagnostics</strong> to write a sanitised snapshot of every finding. Safe to attach to a bug report. Personal paths, API keys, and env var values are stripped.</p>
+
+      <h2>What Doctor won't do</h2>
+      <ul>
+        <li>Install missing plugins. Use the marketplace for that.</li>
+        <li>Overwrite your CLAUDE.md or workflow contents.</li>
+        <li>Delete profiles you haven't explicitly asked to remove.</li>
+      </ul>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="aliases.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Aliases &amp; Launch</span>
+        </a>
+        <a class="page-nav-btn next" href="import-export.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Import &amp; Export</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs | ClaudeWorks</title>
+  <meta name="description" content="ClaudeWorks documentation: profiles, plugins, MCP servers, teams, and more." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" />
+      ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title">Docs</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="docs-content">
+      <h1>ClaudeWorks Docs</h1>
+      <p class="page-subtitle">Install the app, create your first profile, and work through every part of the interface.</p>
+
+      <h2>Getting Started</h2>
+      <p>New to ClaudeWorks? Start here.</p>
+      <div class="tab-grid">
+        <a class="tab-card" href="getting-started.html">
+          <div class="tab-card-title">Installation</div>
+          <div class="tab-card-desc">Install the DMG, build from source, and get through first launch.</div>
+        </a>
+        <a class="tab-card" href="quick-start.html">
+          <div class="tab-card-title">Quick Start</div>
+          <div class="tab-card-desc">Create your first profile, pick what loads, and launch in under two minutes.</div>
+        </a>
+      </div>
+
+      <h2>The Interface</h2>
+      <p>A page-by-page, tab-by-tab reference for every part of the app.</p>
+      <div class="tab-grid">
+        <a class="tab-card" href="sidebar.html">
+          <div class="tab-card-title">Sidebar</div>
+          <div class="tab-card-desc">Profiles list, Teams list, search, sort, and the bottom dock.</div>
+        </a>
+        <a class="tab-card" href="profile-editor.html">
+          <div class="tab-card-title">Profile Editor</div>
+          <div class="tab-card-desc">All eight tabs: Plugins, Skills, MCP, Instructions, Settings, and more.</div>
+        </a>
+        <a class="tab-card" href="team-editor.html">
+          <div class="tab-card-title">Team Editor</div>
+          <div class="tab-card-desc">Compose multi-agent teams from existing profiles with drag-and-drop.</div>
+        </a>
+        <a class="tab-card" href="configure-claude.html">
+          <div class="tab-card-title">Configure Claude</div>
+          <div class="tab-card-desc">Marketplace, projects, prompts, global settings, status bar, and health.</div>
+        </a>
+      </div>
+
+      <h2>Features</h2>
+      <div class="tab-grid">
+        <a class="tab-card" href="aliases.html">
+          <div class="tab-card-title">Aliases &amp; Launch</div>
+          <div class="tab-card-desc">Per-alias directories, auto-run workflows, and bare <code>claude</code> interception.</div>
+        </a>
+        <a class="tab-card" href="doctor.html">
+          <div class="tab-card-title">Profiles Doctor</div>
+          <div class="tab-card-desc">Scan for broken config, orphaned plugins, and alias collisions.</div>
+        </a>
+        <a class="tab-card" href="import-export.html">
+          <div class="tab-card-title">Import &amp; Export</div>
+          <div class="tab-card-desc">Move profiles between machines with full fidelity.</div>
+        </a>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

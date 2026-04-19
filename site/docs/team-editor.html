@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Editor | ClaudeWorks Docs</title>
+  <meta name="description" content="Compose multi-agent teams from existing profiles, assign roles, and launch them together." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Team Editor</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link active" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Team Editor</h1>
+      <p class="page-subtitle">Compose multi-agent teams from existing profiles and launch them together.</p>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠</span>
+        <div><strong>Experimental.</strong> Teams rely on Claude Code's native agent-teams feature, which is still flagged behind <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code>. Behaviour may shift as the upstream matures.</div>
+      </div>
+
+      <h2>How teams work</h2>
+      <p>A team is a set of profiles wired together. One profile is the <strong>lead</strong>. It launches in the foreground terminal and spawns the others as teammates through Claude Code's native agent-teams mechanism. Each teammate gets its own isolated <code>CLAUDE_CONFIG_DIR</code> and its own <code>CLAUDE.md</code>, plus ownership tags so delegations from the lead route to the right member.</p>
+
+      <h2>Top bar</h2>
+      <ul>
+        <li>The <strong>name</strong> is an inline text input.</li>
+        <li>The <strong>members count</strong> updates as you add or remove profiles.</li>
+        <li>The <strong>directory dropdown</strong> picks the project directory to launch the lead into.</li>
+        <li><strong>Launch</strong> opens the lead in a terminal with <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code> set, then runs the generated <code>/start-team</code> command. It stays disabled until a lead is designated.</li>
+        <li>The <strong>overflow menu</strong> holds Preview Merge and Delete Team.</li>
+      </ul>
+
+      <h3>Info card</h3>
+      <p>Same shape as the profile editor: description, tags, and imported projects that scope the team to specific directories.</p>
+
+      <h2>Drag-and-drop composition</h2>
+      <p>The main pane is split in two.</p>
+
+      <h3>Left: Available Profiles</h3>
+      <ul>
+        <li>Every profile that isn't already in the team.</li>
+        <li>Search bar at the top.</li>
+        <li>Each row shows the profile name and its plugin count.</li>
+        <li>Drag any row to the right panel to add it to the team.</li>
+      </ul>
+
+      <h3>Right: Team Members</h3>
+      <p>A sortable list of added profiles. Drag rows to reorder. Each member card has:</p>
+      <ul>
+        <li>A <strong>role</strong> field. Free-form label like "backend", "reviewer", or "researcher", used in the generated ownership tags.</li>
+        <li>An <strong>instructions</strong> textarea. A per-member CLAUDE.md snippet that loads only in that teammate's session.</li>
+        <li>A <strong>colour</strong> override for the member's identity colour. Optional.</li>
+        <li>A <strong>lead</strong> toggle. Exactly one member can be the lead.</li>
+        <li><strong>Navigate to Profile</strong>, which jumps to the source profile's editor.</li>
+        <li><strong>Remove</strong>, which takes the member out of the team. The source profile is unaffected.</li>
+      </ul>
+      <p>If no members are added yet, a drop zone reads "Drag a profile here to add".</p>
+
+      <h2>Merge preview</h2>
+      <p>The <strong>Preview Merge</strong> modal shows the team's combined plugin, skill, agent, and command set. It's the union across every member. Useful for spotting collisions like two members both owning <code>/test</code>, or for checking the context budget before launching.</p>
+
+      <h2>Launch</h2>
+      <p>On launch ClaudeWorks does four things:</p>
+      <ol>
+        <li>Assembles a team-wide config directory at <code>~/.claudeworks/teams/&lt;name&gt;/</code>. Contains a filtered <code>installed_plugins.json</code> (the union across members) and a consolidated <code>settings.json</code>.</li>
+        <li>Writes per-member CLAUDE.md fragments with ownership tags so the lead's delegations route correctly.</li>
+        <li>Checks for <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code>. If it's missing, an env var gate modal offers three options:
+          <ul>
+            <li>Add to Global Settings, which writes the variable into <code>~/.claude/settings.json</code>.</li>
+            <li>Add to Project, which writes the variable into the selected project's <code>.claude/settings.json</code>.</li>
+            <li>Cancel.</li>
+          </ul>
+        </li>
+        <li>Opens the lead in a terminal and runs the generated <code>/start-team</code>.</li>
+      </ol>
+
+      <h2>Deleting a team</h2>
+      <p>Use Delete Team from the overflow menu. The source profiles stay intact. Only the team composition is removed.</p>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="profile-editor.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Profile Editor</span>
+        </a>
+        <a class="page-nav-btn next" href="configure-claude.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Configure Claude</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

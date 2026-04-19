@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation | ClaudeWorks Docs</title>
+  <meta name="description" content="Install ClaudeWorks on macOS from a release DMG or from source." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Installation</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link active" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Installation</h1>
+      <p class="page-subtitle">ClaudeWorks runs on macOS. Install from a DMG, or build from source.</p>
+
+      <h2>Requirements</h2>
+      <ul>
+        <li>macOS 12 or later.</li>
+        <li><a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener">Claude Code</a> already installed and signed in with <code>claude login</code>.</li>
+        <li>Optional: the <a href="https://cli.github.com/" target="_blank" rel="noopener">GitHub CLI</a>. With it, the marketplace gets 5,000 GitHub requests per hour instead of the anonymous 60.</li>
+      </ul>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">ℹ</span>
+        <div>ClaudeWorks uses your existing Claude Code credentials. It does not create or manage API keys. Run <code>claude login</code> at least once before launching a profile.</div>
+      </div>
+
+      <h2>Install from a release</h2>
+      <ol class="steps">
+        <li>Download the latest <code>.dmg</code> from the <a href="https://github.com/Mduffy37/claudeworks/releases" target="_blank" rel="noopener">Releases page</a>.</li>
+        <li>Open the DMG and drag ClaudeWorks to Applications.</li>
+        <li>On first launch, right-click the app, choose <strong>Open</strong>, and confirm. The app isn't notarized yet, so Gatekeeper flags it as unsigned. The full source is on GitHub if you want to audit it.</li>
+        <li>Optional: run <code>gh auth login</code> so the marketplace can hit the GitHub API at full rate.</li>
+      </ol>
+
+      <h2>Install from source</h2>
+      <p>Build locally if you want to hack on ClaudeWorks or run a specific commit. Requires Node 20 or later and Electron 33.</p>
+      <pre><code>git clone https://github.com/Mduffy37/claudeworks
+cd claudeworks
+npm install
+npm run build
+npm start</code></pre>
+      <p>Use <code>npm run dev</code> for the Vite dev server with live-reload on the UI side.</p>
+
+      <h2>What gets created</h2>
+      <p>On first launch ClaudeWorks creates a few directories under your home folder:</p>
+      <ul>
+        <li><code>~/.claudeworks/</code> holds profiles, teams, aliases, and logs.</li>
+        <li><code>~/.claudeworks/profiles/</code> contains a config directory per profile. Each one becomes a <code>CLAUDE_CONFIG_DIR</code> at launch time.</li>
+        <li><code>~/.claudeworks/bin/</code> holds the generated shell aliases. Add this directory to your <code>PATH</code> to use them.</li>
+      </ul>
+      <p>Your existing <code>~/.claude/</code> and <code>~/.claude.json</code> are not written to, with one exception. Installing or removing a plugin updates the shared cache at <code>~/.claude/plugins/</code>. This is by design: profiles share the cache so updates propagate across all of them automatically.</p>
+
+      <h2>Updating</h2>
+      <p>ClaudeWorks checks for updates on launch and shows a notification when a new release is available. Download the new DMG and replace the app in Applications. Your profiles, teams, and aliases carry over.</p>
+
+      <div class="page-nav">
+        <span></span>
+        <a class="page-nav-btn next" href="quick-start.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Quick Start</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

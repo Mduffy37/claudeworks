@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import &amp; Export | ClaudeWorks Docs</title>
+  <meta name="description" content="Move profiles between machines with exportProfile and importProfile." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Import &amp; Export</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link active" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Import &amp; Export</h1>
+      <p class="page-subtitle">Move profiles between machines with full fidelity.</p>
+
+      <h2>Exporting a profile</h2>
+      <p>Click <strong>Export</strong> in the profile editor's top bar. A file dialog prompts for a save location. The written file is a self-contained JSON snapshot of the profile.</p>
+
+      <h3>What's in the export</h3>
+      <ul>
+        <li>Profile name, description, tags, and imported projects.</li>
+        <li>The list of enabled plugins, each identified by <code>name@marketplace</code>.</li>
+        <li>Excluded skills, agents, commands, and MCP servers.</li>
+        <li>Aliases with their directories and launch actions.</li>
+        <li>Custom CLAUDE.md, the <code>/workflow</code> body, and any workflow variants.</li>
+        <li>MCP overrides (the per-directory disabled lists).</li>
+        <li>Environment variables, hook overrides, and launch flags.</li>
+        <li>Model, effort, voice, auth, and status-bar preferences.</li>
+      </ul>
+
+      <h3>What's not in the export</h3>
+      <ul>
+        <li>Your API keys or Keychain credentials.</li>
+        <li>The plugins themselves. Only their identifiers travel, and the target machine reinstalls them from the marketplace.</li>
+        <li>Machine-specific paths. Absolute directories are noted by name, not filesystem location.</li>
+      </ul>
+
+      <h2>Importing a profile</h2>
+      <p>On the receiving machine, use the Bulk Manage dialog's <strong>Import</strong> action, or click the profile list's <strong>+</strong> button and choose Import from file. Pick the JSON.</p>
+      <p>ClaudeWorks parses the file and shows a confirmation dialog:</p>
+      <ul>
+        <li>The incoming profile name. You can rename it before import if it would collide with an existing profile.</li>
+        <li>A <strong>missing plugins</strong> list. Any plugins the export references that aren't installed on this machine.</li>
+        <li>A <strong>missing projects</strong> list. Any imported projects the export references that don't exist here.</li>
+      </ul>
+
+      <h3>Missing plugins</h3>
+      <p>If the export references plugins you haven't installed, the profile imports anyway. Those plugins stay disabled until you install them. The import dialog lists them so you can jump to the marketplace first if you prefer.</p>
+
+      <h3>Missing projects</h3>
+      <p>If the export scopes aliases or workflow variants to project directories that don't exist on your machine, those references are left as configured. You can edit them in the profile editor or add the matching projects via Configure Claude → Projects.</p>
+
+      <h2>Use cases</h2>
+
+      <h3>Move between machines</h3>
+      <p>Export on your old laptop, copy the JSON, import on the new one. Install the missing plugins listed on import and you're running.</p>
+
+      <h3>Share a profile with a teammate</h3>
+      <p>Export and send the JSON. They can import and either adopt it as-is or rename it. None of your credentials travel with the file.</p>
+
+      <h3>Back up before a risky change</h3>
+      <p>Export the profile as a snapshot before you bulk-edit plugins or rework the instructions. Re-import if you want to roll back.</p>
+
+      <h3>Version-control your profiles</h3>
+      <p>Check exported JSON into a private repo. ClaudeWorks doesn't have a built-in VCS integration, but the exported format is stable and diff-friendly.</p>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">ℹ</span>
+        <div>Exports are point-in-time snapshots. Re-export after changes to keep your backup current. There's no automatic sync.</div>
+      </div>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="doctor.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Profiles Doctor</span>
+        </a>
+        <span></span>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aliases &amp; Launch | ClaudeWorks Docs</title>
+  <meta name="description" content="Per-alias directories, auto-run workflows, and intercepting bare claude." />
+  <link rel="icon" href="../assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="docs.css" />
+</head>
+<body>
+  <nav class="docs-nav">
+    <a class="docs-nav-logo" href="../">
+      <img src="../assets/logo.png" alt="ClaudeWorks" /> ClaudeWorks
+    </a>
+    <span class="docs-nav-divider">/</span>
+    <a class="docs-nav-title" href="index.html" style="color:var(--stone-gray);text-decoration:none;">Docs</a>
+    <span class="docs-nav-divider">/</span>
+    <span class="docs-nav-title" style="color:var(--warm-silver);">Aliases &amp; Launch</span>
+    <div class="docs-nav-links">
+      <a class="nav-link" href="https://github.com/Mduffy37/claudeworks" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn-nav" href="https://github.com/Mduffy37/claudeworks/releases/latest" target="_blank" rel="noopener">Download free</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar">
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Getting Started</p>
+        <a class="sidebar-link" href="getting-started.html">Installation</a>
+        <a class="sidebar-link" href="quick-start.html">Quick Start</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">The Interface</p>
+        <a class="sidebar-link" href="sidebar.html">Sidebar</a>
+        <a class="sidebar-link" href="profile-editor.html">Profile Editor</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#plugins">Plugins</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#skills">Skills, Agents &amp; Commands</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#mcp">MCP Servers</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#project-items">Project Items</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#instructions">Instructions &amp; Workflows</a>
+        <a class="sidebar-link sidebar-link-sub" href="profile-editor.html#settings">Settings</a>
+        <a class="sidebar-link" href="team-editor.html">Team Editor</a>
+        <a class="sidebar-link" href="configure-claude.html">Configure Claude</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#plugins">Plugins &amp; Marketplace</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#projects">Projects</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#prompts">Prompts</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#global">Global Settings</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#status-bar">Status Bar</a>
+        <a class="sidebar-link sidebar-link-sub" href="configure-claude.html#health">Health</a>
+      </div>
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Features</p>
+        <a class="sidebar-link active" href="aliases.html">Aliases &amp; Launch</a>
+        <a class="sidebar-link" href="doctor.html">Profiles Doctor</a>
+        <a class="sidebar-link" href="import-export.html">Import &amp; Export</a>
+      </div>
+    </aside>
+
+    <main class="docs-content">
+      <h1>Aliases &amp; Launch</h1>
+      <p class="page-subtitle">One shell command per project, with the right directory, the right workflow, and the right profile.</p>
+
+      <h2>Where to configure</h2>
+      <p>Open a profile, go to the <a href="profile-editor.html#settings">Settings tab</a>, and scroll to <strong>Launch Configuration</strong> → <strong>CLI Aliases</strong>.</p>
+
+      <h2>How an alias works</h2>
+      <p>Each alias is a generated shell script under <code>~/.claudeworks/bin/</code>. When you run it:</p>
+      <ol>
+        <li>ClaudeWorks sets <code>CLAUDE_CONFIG_DIR</code> to the profile's config directory.</li>
+        <li>If the alias has a directory set, it <code>cd</code>s there first.</li>
+        <li>It runs <code>claude</code> with the configured launch action: none, <code>/workflow</code>, or a prefilled prompt.</li>
+      </ol>
+
+      <h2>Anatomy of an alias</h2>
+      <ul>
+        <li>The <strong>name</strong> is the command you type, like <code>ship-api</code> or <code>debug-mobile</code>. It can't collide with another alias from another profile. Conflict detection flags this at save time.</li>
+        <li>The <strong>directory</strong> is optional. If set, the alias <code>cd</code>s there before launching. Uses your imported projects list.</li>
+        <li>The <strong>launch action</strong> has three options:
+          <ul>
+            <li><strong>None</strong> just opens Claude Code in the profile.</li>
+            <li><strong>/workflow</strong> auto-runs the profile's <code>/workflow</code> command once the session starts.</li>
+            <li><strong>Custom prompt</strong> shows a textarea. Whatever you write is passed via <code>claude -p "..."</code> so the session opens already working on it.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h2>Example</h2>
+      <pre><code># Added in Profile "work" → Settings → CLI Aliases
+ship-api      cd ~/code/api     then  /workflow
+debug-mobile  cd ~/code/mobile  then  custom prompt "investigate crash on login"</code></pre>
+      <p>With this setup, running <code>ship-api</code> in any terminal opens a Claude Code session inside <code>~/code/api</code> using the <code>work</code> profile's config directory, with <code>/workflow</code> already running.</p>
+
+      <h2>The default profile and bare <code>claude</code></h2>
+      <p>One profile can be marked as <strong>Default</strong> under Settings → Launch Configuration → <strong>Set as Default Profile</strong>. That profile installs a bare <code>claude</code> alias, so plain <code>claude</code> in any shell runs inside its config directory.</p>
+
+      <div class="callout callout-note">
+        <span class="callout-icon">ℹ</span>
+        <div>Don't want the override? On the default profile, toggle <strong>Disable claude override</strong> under Launch Configuration. The bare <code>claude</code> alias won't be installed.</div>
+      </div>
+
+      <h2>Adding the alias directory to your PATH</h2>
+      <p>Aliases live at <code>~/.claudeworks/bin/</code>. For your shell to find them, add that directory to <code>PATH</code>:</p>
+      <pre><code># zsh, append to ~/.zshrc
+export PATH="$HOME/.claudeworks/bin:$PATH"
+
+# bash, append to ~/.bashrc
+export PATH="$HOME/.claudeworks/bin:$PATH"</code></pre>
+      <p>ClaudeWorks shows a hint in the Aliases section if the directory isn't on <code>PATH</code>.</p>
+
+      <h2>Conflict detection</h2>
+      <p>If two profiles declare the same alias name, both rows show a warning at save time. ClaudeWorks won't write a conflicting alias script. Rename one of them first.</p>
+
+      <h2>Launch Prompt (editor only)</h2>
+      <p>Separate from aliases, the <strong>Launch Prompt</strong> field under Launch Configuration applies only to launches from the editor's Launch button. It's passed via <code>claude -p "..."</code> when you click Launch. Aliases have their own per-alias prompts, so this field is for one-off editor launches.</p>
+
+      <h2>Launch Flags</h2>
+      <p>Three toggles affect every launch from this profile:</p>
+      <ul>
+        <li><code>--dangerously-skip-permissions</code> skips the permissions prompt. Use with caution.</li>
+        <li><code>--verbose</code> enables extra Claude Code logging.</li>
+        <li><strong>Custom flags</strong> is a free-form text field appended to the <code>claude</code> command.</li>
+      </ul>
+
+      <div class="page-nav">
+        <a class="page-nav-btn" href="configure-claude.html">
+          <span class="page-nav-label">← Prev</span>
+          <span class="page-nav-title">Configure Claude</span>
+        </a>
+        <a class="page-nav-btn next" href="doctor.html">
+          <span class="page-nav-label">Next →</span>
+          <span class="page-nav-title">Profiles Doctor</span>
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
