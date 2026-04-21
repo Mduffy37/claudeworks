@@ -2,10 +2,7 @@
   <img src="./.github/assets/logo.png" alt="ClaudeWorks" width="140" />
 </p>
 <h1 align="center">ClaudeWorks</h1>
-<p align="center"><strong>Named profiles for Claude Code.</strong></p>
-<p align="center">
-  <em>A macOS desktop app that manages Claude Code configurations as named, isolated profiles: plugins, MCP servers, skills, slash commands, and settings per session.</em>
-</p>
+<p align="center">Run separate Claude Code setups without hand-editing config.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-macOS-lightgrey" alt="macOS">
@@ -23,8 +20,10 @@
   <a href="https://github.com/Mduffy37/claudeworks/issues">Issues</a>
 </p>
 
+Each profile is an isolated Claude Code config directory: its own MCP servers, skills, agents, slash commands, and settings. Work in one terminal, personal in another, both running Claude Code with different tools loaded. 647 curated plugins and 4,795 skills come built in.
+
 <p align="center">
-  <img src="./.github/assets/hero.gif" alt="ClaudeWorks: profile sidebar, Launch, two terminals running side by side, each showing a different curated skill set" />
+  <img src="./.github/assets/hero.gif" alt="ClaudeWorks profile sidebar with two terminals running Claude Code side by side, each with a different skill set" />
 </p>
 
 ---
@@ -33,41 +32,44 @@
 
 I kept managing two Claude Code setups by hand, the work one with its MCP servers and skill set, the personal one with a different CLAUDE.md and different tools. Swapping meant editing `~/.claude.json` and `mcp.json` by hand, then undoing it next session. Claude Code has no native multi-profile support, so I built this instead.
 
-ClaudeWorks gives each configuration a real isolated environment: its own `CLAUDE_CONFIG_DIR`, its own MCP servers, its own skills. Plugin caches are shared via symlinks so you install once and updates propagate automatically. A curated marketplace with 647 featured plugins and 4,795 skills ships inside the app.
+Plugin caches are shared across profiles via symlinks, so you install a plugin once and updates propagate everywhere.
 
 ## What it does
 
-- **Named profiles with real isolation.** Each profile runs in its own `CLAUDE_CONFIG_DIR`. MCP servers, skills, agents, and slash commands from profile A physically cannot appear in profile B's session (per-process isolation, not config swapping).
+Each profile runs in its own `CLAUDE_CONFIG_DIR`, which is Claude Code's built-in way to redirect its config root. MCP servers, skills, agents, and slash commands from profile A can't appear in profile B's session. Real per-process isolation, not config swapping.
 
-- **Curated plugin marketplace + global search.** Browse 114 curated marketplaces and 647 featured plugins without leaving the app. A single search bar queries **7,009 flat entries** (every marketplace, plugin, skill, command, agent, and MCP server) at once.
+A curated plugin marketplace ships inside the app. Browse 114 upstream marketplaces and 647 featured plugins without leaving ClaudeWorks. One search bar queries 7,009 flat entries (every marketplace, plugin, skill, command, agent, and MCP server) at once.
 
+<p align="center">
   <img src="./.github/assets/browse.png" alt="ClaudeWorks Browse tab showing featured plugins, collection chips, and curated marketplace list" />
+</p>
 
-- **Multi-alias launch with per-alias directory and action.** One profile ships arbitrary shell aliases, each one cd's to a directory and optionally auto-runs `/workflow` or a saved prompt. One profile can intercept the bare `claude` command so plain `claude` in any terminal lands in your default profile, without the bloat of the other profiles.
+Every profile ships arbitrary shell aliases. Each one cd's to a directory and optionally auto-runs `/workflow` or a saved prompt. One profile can claim the bare `claude` command, so plain `claude` in any terminal lands in your default profile without the bloat of the others.
 
-  ```
-  ship-api     → cd ~/code/api,    then /workflow
-  debug-mobile → cd ~/code/mobile, then runs a prefilled prompt
-  claude        → opens Default profile (bare-claude interception)
-  ```
+```
+ship-api     → cd ~/code/api,    then /workflow
+debug-mobile → cd ~/code/mobile, then runs a prefilled prompt
+claude       → opens Default profile (bare-claude interception)
+```
 
-- **Per-profile `/workflow` (and named variants).** Write a `/workflow` body once per profile and it becomes a real Claude Code command in that profile's session. Named variants (`/workflow-debug`, `/workflow-deploy`) can be scoped to specific launch directories.
+<details>
+<summary>More</summary>
 
-- **Multi-agent Teams _(experimental)_.** Compose a team from existing profiles with drag-and-drop, assign roles, pick a lead, and launch. The lead runs a generated `/start-team` that spawns each teammate via Claude Code's native agent-teams feature.
+Per-profile `/workflow` commands (and named variants like `/workflow-debug`, `/workflow-deploy`) become real Claude Code commands in that profile's session. Variants can be scoped to specific launch directories.
 
-  <img src="./.github/assets/teams.png" alt="ClaudeWorks Team editor with three profiles composed, one marked LEAD, experimental banner visible" />
+Multi-agent Teams _(experimental, behind `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)_: compose a team from existing profiles with drag-and-drop, assign roles, pick a lead, and launch. The lead opens with a generated `/start-team` that spawns each teammate.
 
-- **Per-profile MCP management, down to the directory.** Global MCP servers (`~/.claude.json`) and project-scoped ones (`~/.mcp.json`) both surface in every profile. Each profile can disable individual servers per-directory: load `context7` at home, skip it inside a sensitive repo.
+Per-directory MCP management: disable individual servers inside sensitive repos while keeping them available elsewhere.
 
-- **Status bar builder with 17 widgets, saveable.** Drag-to-reorder custom status bar (model, branch, context, usage, cost, rate limits, section breaks, per-widget options), named save/load, and per-profile override.
+Status bar builder: 17 widgets, drag to reorder, named save/load, per-profile override.
 
-  <img src="./.github/assets/statusbar.png" alt="ClaudeWorks Status Bar Widgets modal with live preview, widget list, and Load preset / Save current buttons" />
+Profile export / import: a self-contained JSON that lists exactly which plugins the target machine is missing.
 
-- Export a profile as a self-contained JSON (`exportProfile`) and import it on another machine. `importProfile` shows you exactly which plugins are missing before you try to run it.
+Profiles Doctor: read-only health check across profiles, plugins, and alias scripts. Repair mode is opt-in and always writes a `.bak-<ts>` first.
 
-- **Profiles Doctor** runs a health check across your profiles, plugins, and alias scripts, flagging orphaned config, broken plugin refs, and alias collisions. Detect mode is read-only. Repair mode prompts before touching anything and writes a `.bak-<ts>` first.
+Local skill provenance: skills in `~/.claude/skills/` show a `skillfish` or `git` origin tag when the source is detectable.
 
-- Local skills in `~/.claude/skills/` show where they came from: a `.skillfish.json` marker gets a cyan `skillfish` tag; a `.git/` directory with a resolvable remote gets a violet `git` tag.
+</details>
 
 ## What it doesn't do
 
