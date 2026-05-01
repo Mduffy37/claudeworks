@@ -30,7 +30,7 @@ import {
   checkAllTeamHealth,
   launchTeam,
 } from "./teams";
-import { launchProfile } from "./launch";
+import { launchProfile, migrateClaudeAliasIfPresent } from "./launch";
 import {
   getAnalytics,
   getActiveSessions,
@@ -636,6 +636,7 @@ ipcMain.handle("get-known-env-vars", () => getKnownEnvVars());
 app.whenReady().then(() => {
   try { ensureBuiltinPlugin(); } catch (e) { console.error("ensureBuiltinPlugin failed:", e); }
   try { seedBuiltins(); } catch (e) { console.error("seedBuiltins failed:", e); }
+  try { migrateClaudeAliasIfPresent(loadProfiles()); } catch (e) { console.error("migrateClaudeAliasIfPresent failed:", e); }
   createWindow();
 });
 
