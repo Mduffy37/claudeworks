@@ -171,19 +171,44 @@ function resolveSkillManifestEntry(pluginRoot: string, entry: string): string[] 
 }
 
 /**
- * Resolve a manifest-declared command/agent entry into a single .md file path.
- * Commands and agents don't support the container pattern — each entry points
- * at exactly one file.
+ * Resolve a manifest-declared command/agent entry into one or more .md file
+ * paths. The entry may be either a specific .md file or a directory containing
+ * many — for commands, a directory expands to its flat .md children; for
+ * agents, a directory expands to flat .md children AND nested foo/AGENT.md
+ * subdirectory layouts (mirrors skills/<name>/SKILL.md).
+ *
+ * Each result carries a fallback name: file basename for flat .md files,
+ * parent-dir basename for AGENT.md so the agent is named after its directory.
  */
-function resolveSingleFileManifestEntry(pluginRoot: string, entry: string): string | null {
-  if (typeof entry !== "string") return null;
+function resolveFlatItemManifestEntry(
+  pluginRoot: string,
+  entry: string,
+  itemType: "command" | "agent",
+): Array<{ path: string; name: string }> {
+  if (typeof entry !== "string") return [];
   const absolute = path.resolve(pluginRoot, entry);
   const rootResolved = path.resolve(pluginRoot);
-  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return null;
-  if (!fs.existsSync(absolute)) return null;
+  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return [];
+  if (!fs.existsSync(absolute)) return [];
   const stat = fs.statSync(absolute);
-  if (stat.isFile() && absolute.endsWith(".md")) return absolute;
-  return null;
+  if (stat.isFile() && absolute.endsWith(".md")) {
+    return [{ path: absolute, name: path.basename(absolute, ".md") }];
+  }
+  if (!stat.isDirectory()) return [];
+  const results: Array<{ path: string; name: string }> = [];
+  for (const child of fs.readdirSync(absolute, { withFileTypes: true })) {
+    if (child.isFile() && child.name.endsWith(".md") && child.name !== "README.md") {
+      results.push({ path: path.join(absolute, child.name), name: path.basename(child.name, ".md") });
+      continue;
+    }
+    if (itemType === "agent" && direntIsDirLike(child, absolute)) {
+      const agentMd = path.join(absolute, child.name, "AGENT.md");
+      if (fs.existsSync(agentMd)) {
+        results.push({ path: agentMd, name: child.name });
+      }
+    }
+  }
+  return results;
 }
 
 function buildItem(
@@ -246,10 +271,13 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
 
   // Commands
   if (manifestCommands) {
+    const seenCommandPaths = new Set<string>();
     for (const entry of manifestCommands) {
-      const resolved = resolveSingleFileManifestEntry(base, entry);
-      if (!resolved) continue;
-      items.push(buildItem(plugin.name, resolved, "command", path.basename(resolved, ".md")));
+      for (const resolved of resolveFlatItemManifestEntry(base, entry, "command")) {
+        if (seenCommandPaths.has(resolved.path)) continue;
+        seenCommandPaths.add(resolved.path);
+        items.push(buildItem(plugin.name, resolved.path, "command", resolved.name));
+      }
     }
   } else {
     const cmdsDir = path.join(base, "commands");
@@ -263,10 +291,13 @@ export function scanPluginItems(plugin: PluginEntry): PluginItem[] {
 
   // Agents
   if (manifestAgents) {
+    const seenAgentPaths = new Set<string>();
     for (const entry of manifestAgents) {
-      const resolved = resolveSingleFileManifestEntry(base, entry);
-      if (!resolved) continue;
-      items.push(buildItem(plugin.name, resolved, "agent", path.basename(resolved, ".md")));
+      for (const resolved of resolveFlatItemManifestEntry(base, entry, "agent")) {
+        if (seenAgentPaths.has(resolved.path)) continue;
+        seenAgentPaths.add(resolved.path);
+        items.push(buildItem(plugin.name, resolved.path, "agent", resolved.name));
+      }
     }
   } else {
     const agentsDir = path.join(base, "agents");
