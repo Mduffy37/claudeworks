@@ -111,15 +111,31 @@ function resolveSkillManifestEntry(pluginRoot, entry) {
   return [];
 }
 
-function resolveSingleFileManifestEntry(pluginRoot, entry) {
-  if (typeof entry !== "string") return null;
+function resolveFlatItemManifestEntry(pluginRoot, entry, itemType) {
+  if (typeof entry !== "string") return [];
   const absolute = path.resolve(pluginRoot, entry);
   const rootResolved = path.resolve(pluginRoot);
-  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return null;
-  if (!fs.existsSync(absolute)) return null;
+  if (absolute !== rootResolved && !absolute.startsWith(rootResolved + path.sep)) return [];
+  if (!fs.existsSync(absolute)) return [];
   const stat = fs.statSync(absolute);
-  if (stat.isFile() && absolute.endsWith(".md")) return absolute;
-  return null;
+  if (stat.isFile() && absolute.endsWith(".md")) {
+    return [{ path: absolute, name: path.basename(absolute, ".md") }];
+  }
+  if (!stat.isDirectory()) return [];
+  const results = [];
+  for (const child of fs.readdirSync(absolute, { withFileTypes: true })) {
+    if (child.isFile() && child.name.endsWith(".md") && child.name !== "README.md") {
+      results.push({ path: path.join(absolute, child.name), name: path.basename(child.name, ".md") });
+      continue;
+    }
+    if (itemType === "agent" && direntIsDirLike(child, absolute)) {
+      const agentMd = path.join(absolute, child.name, "AGENT.md");
+      if (fs.existsSync(agentMd)) {
+        results.push({ path: agentMd, name: child.name });
+      }
+    }
+  }
+  return results;
 }
 
 // ─── Item scanner (mirrors core.ts:scanPluginItems) ─────────────────────────
@@ -161,10 +177,13 @@ function scanPluginItems(installPath) {
 
   // Commands
   if (mCommands) {
+    const seen = new Set();
     for (const entry of mCommands) {
-      const resolved = resolveSingleFileManifestEntry(installPath, entry);
-      if (!resolved) continue;
-      pushCommand(out, resolved, path.basename(resolved, ".md"));
+      for (const resolved of resolveFlatItemManifestEntry(installPath, entry, "command")) {
+        if (seen.has(resolved.path)) continue;
+        seen.add(resolved.path);
+        pushCommand(out, resolved.path, resolved.name);
+      }
     }
   } else {
     const cmdsDir = path.join(installPath, "commands");
@@ -178,10 +197,13 @@ function scanPluginItems(installPath) {
 
   // Agents
   if (mAgents) {
+    const seen = new Set();
     for (const entry of mAgents) {
-      const resolved = resolveSingleFileManifestEntry(installPath, entry);
-      if (!resolved) continue;
-      pushAgent(out, resolved, path.basename(resolved, ".md"));
+      for (const resolved of resolveFlatItemManifestEntry(installPath, entry, "agent")) {
+        if (seen.has(resolved.path)) continue;
+        seen.add(resolved.path);
+        pushAgent(out, resolved.path, resolved.name);
+      }
     }
   } else {
     const agentsDir = path.join(installPath, "agents");

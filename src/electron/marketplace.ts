@@ -507,13 +507,56 @@ export async function fetchPluginItems(source: string, pluginPath: string): Prom
     return directItem ? [directItem] : [];
   };
 
-  // Helper: resolve a manifest-declared command/agent entry into a single item (or null).
-  const resolveSingleFileEntry = async (entry: string, type: "command" | "agent"): Promise<PluginItem | null> => {
+  // Helper: resolve a manifest-declared command/agent entry into 0+ items.
+  // Mirrors resolveFlatItemManifestEntry on the local side: an entry can be a
+  // .md file (single item) or a directory (enumerate flat .md children, plus
+  // nested foo/AGENT.md subdirs for agents).
+  const resolveFlatItemEntry = async (entry: string, type: "command" | "agent"): Promise<PluginItem[]> => {
     const cleaned = normalise(entry);
     const full = cleaned ? joinPath(basePath, cleaned) : basePath;
-    if (!full.endsWith(".md")) return null;
-    const fallbackName = full.split("/").pop()?.replace(/\.md$/, "") ?? "unknown";
-    return buildItem(full, type, fallbackName);
+    if (full.endsWith(".md")) {
+      const fallbackName = full.split("/").pop()?.replace(/\.md$/, "") ?? "unknown";
+      const item = await buildItem(full, type, fallbackName);
+      return item ? [item] : [];
+    }
+    let entries: Array<{ name: string; type: string; path: string }> = [];
+    try {
+      entries = await fetchAnyRepoDir(source, full);
+    } catch {
+      return [];
+    }
+    const result: PluginItem[] = [];
+    for (const e of entries) {
+      if (e.name.endsWith(".md") && e.name !== "README.md") {
+        let effectiveFile: string | null = null;
+        if (e.type === "file") {
+          effectiveFile = e.path;
+        } else if (e.type === "symlink") {
+          effectiveFile = await resolveSymlink(source, e.path);
+          if (!effectiveFile) continue;
+        } else {
+          continue;
+        }
+        const item = await buildItem(effectiveFile, type, e.name.replace(/\.md$/, ""));
+        if (item) result.push(item);
+        continue;
+      }
+      if (type === "agent") {
+        let effectiveDir: string | null = null;
+        if (e.type === "dir") {
+          effectiveDir = e.path;
+        } else if (e.type === "symlink") {
+          effectiveDir = await resolveSymlink(source, e.path);
+          if (!effectiveDir) continue;
+        } else {
+          continue;
+        }
+        const agentMd = joinPath(effectiveDir, "AGENT.md");
+        const item = await buildItem(agentMd, "agent", e.name);
+        if (item) result.push(item);
+      }
+    }
+    return result;
   };
 
   // Helper: enumerate a conventional directory (skills/, commands/, agents/) and fetch items
@@ -576,17 +619,25 @@ export async function fetchPluginItems(source: string, pluginPath: string): Prom
     items.push(...(await enumerateConventionalDir("skills", "skill")));
   }
   if (commandsDecl) {
+    const seenPaths = new Set<string>();
     for (const entry of commandsDecl) {
-      const item = await resolveSingleFileEntry(entry, "command");
-      if (item) items.push(item);
+      for (const item of await resolveFlatItemEntry(entry, "command")) {
+        if (seenPaths.has(item.path)) continue;
+        seenPaths.add(item.path);
+        items.push(item);
+      }
     }
   } else {
     items.push(...(await enumerateConventionalDir("commands", "command")));
   }
   if (agentsDecl) {
+    const seenPaths = new Set<string>();
     for (const entry of agentsDecl) {
-      const item = await resolveSingleFileEntry(entry, "agent");
-      if (item) items.push(item);
+      for (const item of await resolveFlatItemEntry(entry, "agent")) {
+        if (seenPaths.has(item.path)) continue;
+        seenPaths.add(item.path);
+        items.push(item);
+      }
     }
   } else {
     items.push(...(await enumerateConventionalDir("agents", "agent")));
