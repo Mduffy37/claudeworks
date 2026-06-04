@@ -25,7 +25,7 @@ import {
 // `claude-opus-latest`-style aliases (verified 2026-04-17), so the latest
 // concrete IDs have to live in code.
 // Reference: https://docs.anthropic.com/claude/docs/models-overview
-const LATEST_OPUS = "claude-opus-4-7";
+const LATEST_OPUS = "claude-opus-4-8";
 const LATEST_SONNET = "claude-sonnet-4-6";
 const LATEST_HAIKU = "claude-haiku-4-5-20251001";
 

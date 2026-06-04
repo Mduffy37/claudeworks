@@ -17,7 +17,7 @@ export function escSh(s: string): string {
 
 // customFlags are concatenated raw into the shell command that gets wrapped
 // in AppleScript, so any shell metacharacter is a command injection vector.
-// Legitimate Claude CLI flags (`--verbose`, `--model claude-opus-4-7`,
+// Legitimate Claude CLI flags (`--verbose`, `--model claude-opus-4-8`,
 // `--allowedTools "Read,Edit"`) never contain these. Rejecting at launch
 // rather than at save keeps existing profiles compatible — if a user had
 // saved a dangerous value from a previous version, we refuse to launch with
