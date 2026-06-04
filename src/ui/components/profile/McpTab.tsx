@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation, Trans } from "react-i18next";
 import type { PluginWithItems, StandaloneMcp } from "../../../electron/types";
 
 interface McpTabProps {
@@ -19,6 +20,7 @@ function mcpTitle(mcp: { type: string; command?: string; url?: string }): string
 }
 
 export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, launchDir, disabledMcpServers, onToggleMcp }: McpTabProps) {
+  const { t } = useTranslation(["plugin", "common"]);
   const pluginMcps = plugins
     .filter((p) => p.mcpServers.length > 0)
     .flatMap((p) =>
@@ -37,8 +39,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
   if (total === 0) {
     return (
       <div className="pe-tab-empty">
-        No MCP servers found. Install a plugin that provides MCP servers, or configure
-        servers in ~/.claude.json.
+        {t("plugin:mcp.noServers")}
       </div>
     );
   }
@@ -47,15 +48,15 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
     <div className="pe-mcp-tab">
       <div className="pe-mcp-context">
         {launchDir
-        ? <>Showing project MCPs for <strong>{launchDir.split("/").pop() ?? launchDir}</strong></>
-        : <>No directory selected — select one in the topbar to see project-specific MCP servers</>
+        ? t('plugin:mcp.showingProjectMcps')
+        : t("plugin:mcp.noDirSelected")
       }
       </div>
       {pluginMcps.length > 0 && (
         <div className="pe-mcp-section pe-mcp-section-plugins">
           <div className="pe-mcp-section-head">
-            <h3 className="pe-mcp-section-label">From plugins ({pluginMcps.length})</h3>
-            <span className="pe-mcp-section-hint">Toggling a row disables the source plugin for this profile.</span>
+            <h3 className="pe-mcp-section-label">{t("plugin:mcp.fromPlugins", { count: pluginMcps.length })}</h3>
+            <span className="pe-mcp-section-hint">{t("plugin:mcp.fromPluginsHint")}</span>
           </div>
           {pluginMcps.map((mcp) => (
             <div
@@ -71,7 +72,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
                   type="checkbox"
                   checked={mcp.enabled}
                   onChange={(e) => onTogglePlugin(mcp.pluginFullName, e.target.checked)}
-                  aria-label={`${mcp.enabled ? "Disable" : "Enable"} MCP server ${mcp.name} from plugin ${mcp.pluginDisplayName}`}
+                  aria-label={`${mcp.enabled ? t("plugin:mcp.disableMcp") : t("plugin:mcp.enableMcp")} — ${mcp.name} (${mcp.pluginDisplayName})`}
                 />
                 <span className="toggle-track">
                   <span className="toggle-thumb" />
@@ -88,8 +89,8 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
       {userMcps.length > 0 && (
         <div className="pe-mcp-section pe-mcp-section-user">
           <div className="pe-mcp-section-head">
-            <h3 className="pe-mcp-section-label">User ({userMcps.length}) <code>(~/.claude.json)</code></h3>
-            <span className="pe-mcp-section-hint">Global servers. Toggling disables for this profile only.</span>
+            <h3 className="pe-mcp-section-label">t('plugin:mcp.userLabel')</h3>
+            <span className="pe-mcp-section-hint">{t("plugin:mcp.userHint")}</span>
           </div>
           {userMcps.map((mcp) => {
             const isEnabled = !(disabledMcpServers["__user__"] ?? []).includes(mcp.name);
@@ -102,20 +103,20 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
                 <label
                   className="toggle-switch"
                   onClick={(e) => e.stopPropagation()}
-                  title={isEnabled ? "Disable MCP server for this profile" : "Enable MCP server for this profile"}
+                  title={isEnabled ? t("plugin:mcp.disableMcpForProfile") : t("plugin:mcp.enableMcpForProfile")}
                 >
                   <input
                     type="checkbox"
                     checked={isEnabled}
                     onChange={(e) => onToggleMcp("__user__", mcp.name, e.target.checked)}
-                    aria-label={`${isEnabled ? "Disable" : "Enable"} user MCP server ${mcp.name}`}
+                    aria-label={`${isEnabled ? t("plugin:mcp.disableMcp") : t("plugin:mcp.enableMcp")} — ${mcp.name}`}
                   />
                   <span className="toggle-track">
                     <span className="toggle-thumb" />
                   </span>
                 </label>
                 <span className="local-item-name">{mcp.name}</span>
-                <span className="pe-mcp-source">global</span>
+                <span className="pe-mcp-source">{t("plugin:mcp.globalLabel")}</span>
                 <span className="plugin-badge">{mcp.type}</span>
               </div>
             );
@@ -127,9 +128,9 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
         <div className="pe-mcp-section pe-mcp-section-project">
           <div className="pe-mcp-section-head">
             <h3 className="pe-mcp-section-label">
-              Project {launchDir ? `· ${launchDir.split("/").pop() ?? launchDir}` : ""} ({projectMcps.length})
+              {t("plugin:mcp.projectLabel", { dir: launchDir ? launchDir.split("/").pop() ?? launchDir : "", count: projectMcps.length })}
             </h3>
-            <span className="pe-mcp-section-hint">Toggles persist per directory.</span>
+            <span className="pe-mcp-section-hint">{t("plugin:mcp.projectTogglesHint")}</span>
           </div>
           {projectMcps.map((mcp) => {
             const isEnabled = !launchDir || !(disabledMcpServers[launchDir] ?? []).includes(mcp.name);
@@ -142,7 +143,7 @@ export function McpTab({ plugins, selectedPlugins, mcpServers, onTogglePlugin, l
                 <label
                   className="toggle-switch"
                   onClick={(e) => e.stopPropagation()}
-                  title={isEnabled ? "Disable MCP server" : "Enable MCP server"}
+                  title={isEnabled ? t("plugin:mcp.disableMcp") : t("plugin:mcp.enableMcp")}
                 >
                   <input
                     type="checkbox"

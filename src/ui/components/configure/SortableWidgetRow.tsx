@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { StatusLineWidget } from "../../../electron/types";
@@ -23,6 +24,7 @@ export function SortableWidgetRow({
   onSelect,
   onDelete,
 }: Props) {
+  const { t } = useTranslation(["settings"]);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: dragId });
 
@@ -41,16 +43,16 @@ export function SortableWidgetRow({
           className="status-bar-drag-handle"
           {...attributes}
           {...listeners}
-          aria-label="Drag break to reorder"
+          aria-label={t("settings:statusLine.dragBreak")}
         >
           ⋮⋮
         </span>
-        <div className="status-bar-break-line">— Section break —</div>
+        <div className="status-bar-break-line">{t("settings:statusLine.sectionBreak")}</div>
         <button
           type="button"
           className="status-bar-break-delete"
           onClick={onDelete}
-          aria-label="Remove break"
+          aria-label={t("settings:statusLine.removeBreak")}
         >
           ×
         </button>
@@ -78,7 +80,7 @@ export function SortableWidgetRow({
         className="status-bar-drag-handle"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${label}`}
+        aria-label={t("settings:statusLine.reorder", { label })}
         onClick={(e) => e.stopPropagation()}
       >
         ⋮⋮
@@ -91,7 +93,7 @@ export function SortableWidgetRow({
           e.stopPropagation();
           onDelete();
         }}
-        aria-label={`Remove ${label}`}
+        aria-label={t("settings:statusLine.remove", { label })}
       >
         ×
       </button>

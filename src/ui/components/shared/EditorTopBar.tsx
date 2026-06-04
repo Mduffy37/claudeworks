@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { LaunchOptions } from "../../../electron/types";
 import { LaunchOptionsPopover } from "./LaunchOptionsPopover";
 
@@ -87,6 +88,7 @@ export function EditorTopBar({
   overflowMenu,
   onImport,
 }: EditorTopBarProps) {
+  const { t } = useTranslation(["common"]);
   const [showOverflow, setShowOverflow] = useState(false);
   const [showLaunchOptions, setShowLaunchOptions] = useState(false);
   const overflowTriggerRef = useRef<HTMLButtonElement>(null);
@@ -116,7 +118,7 @@ export function EditorTopBar({
     return () => document.removeEventListener("keydown", onKey);
   }, [showOverflow]);
 
-  const subtitleText = dirty && !isNew ? `Unsaved changes \u00B7 ${subtitle}` : subtitle;
+  const subtitleText = dirty && !isNew ? `${t("common:status.unsavedChanges")} \u00B7 ${subtitle}` : subtitle;
 
   return (
     <div className="pe-topbar">
@@ -134,8 +136,8 @@ export function EditorTopBar({
             <span
               className="pe-topbar-unsaved-dot"
               role="status"
-              aria-label="Unsaved changes"
-              title="Unsaved changes"
+              aria-label={t("common:status.unsavedChanges")}
+              title={t("common:status.unsavedChanges")}
             />
           )}
         </div>
@@ -154,7 +156,7 @@ export function EditorTopBar({
                   className="pe-overflow-btn"
                   type="button"
                   onClick={() => setShowOverflow(!showOverflow)}
-                  aria-label="More actions"
+                  aria-label={t("common:labels.moreActions")}
                   aria-haspopup="menu"
                   aria-expanded={showOverflow}
                   aria-controls="pe-overflow-menu"
@@ -192,7 +194,7 @@ export function EditorTopBar({
                   }
                 }}
               >
-                <option value="">Choose directory...</option>
+                <option value="">{t("common:labels.chooseDirectory")}</option>
                 {directories.map((dir) => (
                   <option key={dir} value={dir}>{shortPath(dir)}</option>
                 ))}
@@ -206,7 +208,7 @@ export function EditorTopBar({
                 onClick={onImport}
                 style={{ marginRight: "6px", whiteSpace: "nowrap" }}
               >
-                Import
+                {t("common:buttons.import")}
               </button>
             )}
             <button
@@ -215,20 +217,20 @@ export function EditorTopBar({
               onClick={isNew || dirty ? onSave : onLaunch}
               style={isNew ? { whiteSpace: "nowrap" } : undefined}
             >
-              {saving ? "Saving\u2026"
-                : launching ? "Launching\u2026"
-                : saveStatus === "saved" ? "\u2713 Saved"
+              {saving ? t("common:status.saving")
+                : launching ? t("common:status.launchingEllipsis")
+                : saveStatus === "saved" ? t("common:status.savedCheck")
                 : isNew ? createLabel
-                : dirty ? "Save"
-                : "Launch"}
+                : dirty ? t("common:buttons.save")
+                : t("common:buttons.launch")}
             </button>
             {!isNew && onLaunchWithOptions && (
               <>
                 <button
                   className="btn-launch-settings"
                   onClick={() => setShowLaunchOptions(true)}
-                  aria-label="Launch settings"
-                  title="Launch settings"
+                  aria-label={t("common:labels.launchSettings")}
+                  title={t("common:labels.launchSettings")}
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M2 3.5l3 3 3-3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />

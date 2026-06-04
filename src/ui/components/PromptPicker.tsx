@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Prompt } from "../../electron/types";
+
+// ─── Translate known profile descriptions at display time ───────────────────
+
+function translateDescription(desc: string, t: any): string {
+  if (desc === "Your default profile. Running `claude` launches with these plugins and settings.") {
+    return t("profile:descriptions.default");
+  }
+  if (desc === "Dedicated workspace for creating and managing ClaudeWorks profiles.") {
+    return t("profile:descriptions.profileCreator");
+  }
+  return desc;
+}
 
 interface Props {
   onSelect: (content: string) => void;
@@ -7,6 +20,7 @@ interface Props {
 }
 
 export function PromptPicker({ onSelect, onClose }: Props) {
+  const { t } = useTranslation(["common", "profile"]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -47,8 +61,8 @@ export function PromptPicker({ onSelect, onClose }: Props) {
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="prompt-picker-modal" onClick={(e) => e.stopPropagation()}>
         <div className="prompt-picker-header">
-          <span className="prompt-picker-title">Insert Prompt</span>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
+          <span className="prompt-picker-title">{t("common:buttons.insertPrompt")}</span>
+          <button className="modal-close" onClick={onClose} aria-label={t("common:buttons.close")}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
@@ -57,7 +71,7 @@ export function PromptPicker({ onSelect, onClose }: Props) {
         <div className="prompt-picker-search">
           <input
             type="text"
-            placeholder="Search prompts..."
+            placeholder={t("common:labels.searchPrompts")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
@@ -69,7 +83,7 @@ export function PromptPicker({ onSelect, onClose }: Props) {
               className={`prompt-picker-tag-btn${activeTag === null ? " active" : ""}`}
               onClick={() => setActiveTag(null)}
             >
-              All
+              {t("common:labels.all")}
             </button>
             {allTags.map((t) => (
               <button
@@ -85,7 +99,7 @@ export function PromptPicker({ onSelect, onClose }: Props) {
         <div className="prompt-picker-list">
           {filtered.length === 0 ? (
             <div className="prompt-picker-empty">
-              {prompts.length === 0 ? "No prompts yet. Create one in Configure Claude > Prompts." : "No matches."}
+              {prompts.length === 0 ? t("common:emptyStates.noPromptsYet") + " " + t("plugin:prompts.reusableSnippets") : t("common:emptyStates.noMatches")}
             </div>
           ) : (
             filtered.map((p) => (
@@ -94,8 +108,8 @@ export function PromptPicker({ onSelect, onClose }: Props) {
                 className="prompt-picker-item"
                 onClick={() => { onSelect(p.content); onClose(); }}
               >
-                <div className="prompt-picker-item-name">{p.name || "Untitled"}</div>
-                {p.description && <div className="prompt-picker-item-desc">{p.description}</div>}
+                <div className="prompt-picker-item-name">{p.name || t("common:labels.untitled")}</div>
+                {p.description && <div className="prompt-picker-item-desc">{translateDescription(p.description, t)}</div>}
                 {p.tags.length > 0 && (
                   <div className="prompt-picker-item-tags">
                     {p.tags.map((t) => <span key={t} className="bulk-tag-chip">{t}</span>)}

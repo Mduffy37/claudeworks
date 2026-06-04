@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import {
   DndContext,
   DragOverlay,
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProjects = [], tagSuggestions = [], onSave, onDelete, onLaunch, onOpenProjectsConfig, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onNavigateToProfile }: Props) {
+  const { t } = useTranslation(["team", "common"]);
   const [draft, setDraft] = useState<Team>({
     name: "",
     description: "",
@@ -99,7 +101,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       try {
         await window.api.launchTeamWithOptions(draft, dir, options);
       } catch (err: any) {
-        setLaunchError(err?.message ?? "Team launch failed");
+        setLaunchError(err?.message ?? t("common:errors.teamLaunchFailed"));
       } finally {
         setLaunching(false);
       }
@@ -132,7 +134,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       try {
         await window.api.launchTeam(draft, dir);
       } catch (err: any) {
-        setLaunchError(err?.message ?? "Team launch failed");
+        setLaunchError(err?.message ?? t("common:errors.teamLaunchFailed"));
       } finally {
         setLaunching(false);
       }
@@ -304,9 +306,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       <div className="profile-editor empty">
         <div className="empty-state">
           <div className="empty-state-icon">&#9671;</div>
-          <div className="empty-state-title">No team selected</div>
+          <div className="empty-state-title">{t("team:editor.noTeamSelected")}</div>
           <div className="empty-state-body">
-            Choose a team from the sidebar, or create a new one to get started.
+            {t("team:editor.chooseTeam")}
           </div>
         </div>
       </div>
@@ -322,9 +324,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         dirty={dirty}
         saving={false}
         saveStatus={saveStatus}
-        subtitle={`${draft.members.length} member${draft.members.length !== 1 ? "s" : ""}`}
-        createLabel="Create Team"
-        namePlaceholder="Team name..."
+        subtitle={t("team:editor.membersSubtitle", { count: draft.members.length })}
+        createLabel={t("team:editor.createTeam")}
+        namePlaceholder={t("team:editor.namePlaceholder")}
         directories={importedProjects}
         launchDir={launchDir}
         launching={launching}
@@ -339,11 +341,11 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         overflowMenu={team ? (close: () => void) => (
           <>
             <button role="menuitem" type="button" onClick={() => { close(); handlePreviewMerge(); }} disabled={draft.members.length === 0}>
-              Preview Merge
+              {t("team:editor.previewMerge")}
             </button>
             <div className="pe-overflow-divider" role="separator" />
             <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { close(); setShowDeleteConfirm(true); }}>
-              Delete Team
+              {t("team:editor.deleteTeam")}
             </button>
           </>
         ) : undefined}
@@ -380,12 +382,12 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
         <div className="te-split">
           {/* Left: available profiles */}
           <div className="te-available">
-            <div className="te-available-header">Available Profiles</div>
+            <div className="te-available-header">{t("team:editor.availableProfiles")}</div>
             <div className="pl-search">
               <input
                 type="text"
                 className="pl-search-input"
-                placeholder="Search..."
+                placeholder={t("team:editor.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -402,7 +404,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
           {/* Right: team members */}
           <div className="te-members">
             <div className="te-members-header">
-              Team Members ({draft.members.length})
+              {t("team:editor.teamMembersHeader", { count: draft.members.length })}
             </div>
             <SortableContext items={draft.members.map((m) => `member-${m.profile}`)} strategy={verticalListSortingStrategy}>
               <div className="te-members-list">
@@ -420,7 +422,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
                     onNavigateToProfile={onNavigateToProfile}
                   />
                 ))}
-                <div className={`te-drop-zone${activeId ? " drag-active" : ""}`}>Drag a profile here to add</div>
+                <div className={`te-drop-zone${activeId ? " drag-active" : ""}`}>{t("team:editor.dragToAdd")}</div>
               </div>
             </SortableContext>
           </div>
@@ -434,7 +436,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
               <div className="te-drag-overlay-card">
                 <div className="te-avail-name">{name}</div>
                 <div className="te-avail-meta">
-                  {p ? `${p.plugins.length} plugin${p.plugins.length !== 1 ? "s" : ""}` : ""}
+                  {p ? t("team:member.pluginCount", { count: p.plugins.length }) : ""}
                 </div>
               </div>
             );
@@ -450,9 +452,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       {/* Delete confirmation */}
       {showDeleteConfirm && (
         <ConfirmDialog
-          title={`Delete ${draft.name}?`}
-          description="This team will be permanently deleted."
-          confirmLabel="Delete"
+          title={t("team:editor.deleteTitle", { name: draft.name })}
+          description={t("team:editor.deleteDescription")}
+          confirmLabel={t("common:buttons.delete")}
           onConfirm={() => { setShowDeleteConfirm(false); onDelete(draft.name); }}
           onCancel={() => setShowDeleteConfirm(false)}
         />
@@ -461,15 +463,9 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
       {/* Env var gate for team launches */}
       {showEnvPrompt && (
         <ConfirmDialog
-          title="Teams Environment Variable Required"
-          description={
-            <>
-              Teams require the environment variable{" "}
-              <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS</code> to be set to{" "}
-              <code>1</code>. Where would you like to add it?
-            </>
-          }
-          confirmLabel="Add to Global Settings"
+          title={t("team:editor.envVarTitle")}
+          description={t('team:editor.envVarDescription')}
+          confirmLabel={t("team:editor.addGlobalSettings")}
           confirmVariant="primary"
           onConfirm={async () => {
             await addTeamEnvVar("global");
@@ -477,7 +473,7 @@ export function TeamEditor({ team, profiles, isNew, brokenMembers, importedProje
             if (pendingLaunchFn) await pendingLaunchFn();
             setPendingLaunchFn(null);
           }}
-          extraLabel={envPromptDir ? `Add to Project: ${envPromptDir.split("/").pop()}` : undefined}
+          extraLabel={envPromptDir ? t("team:editor.addProjectLabel", { dir: envPromptDir.split("/").pop() }) : undefined}
           onExtra={envPromptDir ? async () => {
             await addTeamEnvVar("project", envPromptDir);
             setShowEnvPrompt(false);

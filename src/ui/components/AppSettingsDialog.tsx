@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface DiagResult {
   version: string;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
+  const { t, i18n } = useTranslation(["settings", "common"]);
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [diag, setDiag] = useState<DiagResult | null>(null);
@@ -93,7 +95,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="manage-dialog-header">
-          <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>App Settings</span>
+          <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>{t("dialog.appTitle")}</span>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -105,7 +107,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
           {/* Theme */}
           <div className="manage-section">
             <div className="manage-section-header">
-              <span className="manage-section-label">Theme</span>
+              <span className="manage-section-label">{t("general.theme")}</span>
             </div>
             <div className="theme-options" role="group" aria-label="Theme">
               {(["light", "dark", "auto"] as const).map((mode) => (
@@ -128,7 +130,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
           {/* Text Size */}
           <div className="manage-section">
             <div className="manage-section-header">
-              <span className="manage-section-label">Text Size</span>
+              <span className="manage-section-label">{t("general.textSize")}</span>
               <span className="text-size-readout" aria-hidden="true">
                 {Math.round(scale * 100)}%
               </span>
@@ -164,46 +166,73 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
             </div>
           </div>
 
+          {/* Language */}
+          <div className="manage-section">
+            <div className="manage-section-header">
+              <span className="manage-section-label">{t("language.label")}</span>
+            </div>
+            <div className="theme-options" role="group" aria-label={t("language.label")}>
+              {([
+                { code: "en", label: "English" },
+                { code: "zh", label: "简体中文" },
+              ] as const).map((lang) => (
+                <button
+                  key={lang.code}
+                  type="button"
+                  className={`theme-option${i18n.language === lang.code ? " active" : ""}`}
+                  onClick={() => {
+                    i18n.changeLanguage(lang.code);
+                    localStorage.setItem('claudeworks-lang', lang.code);
+                    window.api.sendLanguageChange(lang.code);
+                  }}
+                  aria-pressed={i18n.language === lang.code}
+                >
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Diagnostics */}
           <div className="manage-section">
             <div className="manage-section-header">
-              <span className="manage-section-label">Diagnostics</span>
+              <span className="manage-section-label">{t("general.diagnostics")}</span>
               <div style={{ display: "flex", gap: "6px" }}>
-                <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onOpenDoctor} title="Open Profiles Doctor — diagnostics, repair actions, and export for bug reports">
-                  Profiles Doctor
+                <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onOpenDoctor} title={t("general.profilesDoctor")}>
+                  {t("general.profilesDoctor")}
                 </button>
                 <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleRunDiagnostics} disabled={diagLoading}>
-                  {diagLoading ? "Running..." : "Run Check"}
+                  {diagLoading ? t("general.running") : t("general.runCheck")}
                 </button>
               </div>
             </div>
             {diag ? (
               <div className="modal-fields" style={{ marginTop: "8px" }}>
                 <div className="field">
-                  <label>App Version</label>
+                  <label>{t("general.appVersion")}</label>
                   <div className="field-hint" style={{ margin: 0 }}>{diag.version}</div>
                 </div>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Config Directory</label>
+                  <label>{t("general.configDirectory")}</label>
                   <div className="field-hint" style={{ margin: 0, fontFamily: '"SF Mono", monospace', fontSize: "0.846rem" }}>{diag.configDir}</div>
                 </div>
                 <div className="field">
-                  <label>Claude Home</label>
+                  <label>{t("general.claudeHome")}</label>
                   <div className="field-hint" style={{ margin: 0, fontFamily: '"SF Mono", monospace', fontSize: "0.846rem" }}>{diag.claudeHome}</div>
                 </div>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Summary</label>
+                  <label>{t("general.summary")}</label>
                   <div className="field-hint" style={{ margin: 0 }}>
                     {diag.profileCount} profile{diag.profileCount !== 1 ? "s" : ""}, {diag.teamCount} team{diag.teamCount !== 1 ? "s" : ""}
                   </div>
                 </div>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Health</label>
+                  <label>{t("general.health")}</label>
                   {diag.issues.length === 0 ? (
-                    <div style={{ fontSize: "0.923rem", color: "var(--color-skill)" }}>All checks passed</div>
+                    <div style={{ fontSize: "0.923rem", color: "var(--color-skill)" }}>{t("general.allChecksPassed")}</div>
                   ) : (
                     <div className="diag-issues">
                       {diag.issues.map((issue, i) => (
@@ -216,7 +245,7 @@ export function AppSettingsDialog({ onClose, onOpenDoctor }: Props) {
                 </div>
               </div>
             ) : (
-              <div className="manage-section-hint">Click "Run Check" to verify config directories, symlinks, and settings.</div>
+              <div className="manage-section-hint">{t("general.clickRunCheck")}</div>
             )}
           </div>
         </div>
