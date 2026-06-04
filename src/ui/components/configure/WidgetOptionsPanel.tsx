@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { WIDGET_SCHEMAS, WidgetOptionSchema } from "./widgetSchema";
 
 interface Props {
@@ -8,9 +9,10 @@ interface Props {
 }
 
 export function WidgetOptionsPanel({ widgetId, options, onChange }: Props) {
+  const { t } = useTranslation(["settings"]);
   const schema = WIDGET_SCHEMAS[widgetId];
   if (!schema || schema.options.length === 0) {
-    return <div className="widget-options-panel empty">No options for this widget.</div>;
+    return <div className="widget-options-panel empty">{t("settings:statusLine.noOptions")}</div>;
   }
 
   return (

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   title: string;
@@ -21,6 +22,7 @@ export function ConfirmDialog({
   extraLabel,
   onExtra,
 }: Props) {
+  const { t } = useTranslation(["common"]);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function ConfirmDialog({
       >
         <div className="modal-header">
           <span className="modal-title" id="confirm-title">{title}</span>
-          <button className="modal-close" onClick={onCancel} aria-label="Close">
+          <button className="modal-close" onClick={onCancel} aria-label={t("common:buttons.close")}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
@@ -55,7 +57,7 @@ export function ConfirmDialog({
           <p className="modal-description">{description}</p>
           <div className="modal-confirm-actions">
             <button className="btn-secondary" onClick={onCancel}>
-              Cancel
+              {t("common:buttons.cancel")}
             </button>
             {extraLabel && onExtra && (
               <button className="btn-primary" onClick={onExtra}>

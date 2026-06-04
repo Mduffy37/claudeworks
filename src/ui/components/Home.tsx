@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { AnalyticsData, ActiveSession, Profile } from "../../electron/types";
 
 interface Props {
@@ -22,6 +23,7 @@ function fillDays(data: AnalyticsData["dailyActivity"], days: number): Analytics
 }
 
 function ActivityChart({ data, days }: { data: AnalyticsData["dailyActivity"]; days?: number }) {
+  const { t } = useTranslation(["common"]);
   const [hovered, setHovered] = useState<{ date: string; messages: number; x: number; y: number } | null>(null);
   const filled = days ? fillDays(data, days) : data;
   if (filled.length === 0) return null;
@@ -56,7 +58,7 @@ function ActivityChart({ data, days }: { data: AnalyticsData["dailyActivity"]; d
             {new Date(hovered.date + "T12:00:00").toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" })}
           </div>
           <div className="home-chart-tooltip-value">
-            {hovered.messages.toLocaleString()} message{hovered.messages !== 1 ? "s" : ""}
+            {t("common:plurals.message", { count: hovered.messages })}
           </div>
         </div>
       )}
@@ -64,15 +66,15 @@ function ActivityChart({ data, days }: { data: AnalyticsData["dailyActivity"]; d
   );
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("common:status.justNow");
+  if (mins < 60) return t("common:status.minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t("common:status.hoursAgo", { count: hrs });
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return t("common:status.daysAgo", { count: days });
 }
 
 type TimePeriod = "7d" | "30d" | "all";
@@ -95,6 +97,7 @@ async function launchWithDirPicker(name: string, directory: string | undefined, 
 }
 
 export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
+  const { t } = useTranslation(["common", "profile"]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [allProjects, setAllProjects] = useState<string[]>([]);
@@ -133,7 +136,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
   if (loading) {
     return (
       <div className="home">
-        <div className="home-loading">Loading analytics...</div>
+        <div className="home-loading">{t("common:status.loadingAnalytics")}</div>
       </div>
     );
   }
@@ -150,7 +153,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
             className={`home-period-btn${period === p ? " active" : ""}`}
             onClick={() => setPeriod(p)}
           >
-            {p === "all" ? "All Time" : p === "7d" ? "7 Days" : "30 Days"}
+            {p === "all" ? t("common:buttons.allTime") : p === "7d" ? t("common:buttons.7days") : t("common:buttons.30days")}
           </button>
         ))}
         {allProjects.length > 0 && (
@@ -160,7 +163,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
           >
-            <option value="">All Projects</option>
+            <option value="">{t("common:buttons.allProjects")}</option>
             {allProjects.map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
@@ -172,8 +175,8 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {updateInfo?.available && (
         <div className="home-update-banner">
           <div className="home-update-text">
-            <span>Update available: v{updateInfo.latest}</span>
-            <span className="home-update-current">Current: v{updateInfo.current}</span>
+            <span>{t("common:status.updateAvailable", { version: updateInfo.latest })}</span>
+            <span className="home-update-current">{t("common:status.current", { version: updateInfo.current })}</span>
           </div>
           <button
             className="home-update-action"
@@ -183,7 +186,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
               )
             }
           >
-            View release ↗
+            {t("common:buttons.viewRelease")}
           </button>
         </div>
       )}
@@ -191,7 +194,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Favourites */}
       {profiles.some((p) => p.favourite) && (
         <div className="home-section">
-          <h2 className="home-section-title">Favourites</h2>
+          <h2 className="home-section-title">{t("common:sections.favourites")}</h2>
           <div className="home-favourites" role="list">
             {profiles.filter((p) => p.favourite).map((p) => (
               <div
@@ -206,7 +209,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                 <div className="home-profile-info">
                   <div className="home-profile-name">{p.name}</div>
                   <div className="home-profile-meta">
-                    {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
+                    {t("common:plurals.plugin", { count: p.plugins.length })}
                   </div>
                 </div>
                 <button
@@ -215,7 +218,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                     e.stopPropagation();
                     launchWithDirPicker(p.name, p.directory, onLaunch);
                   }}
-                  title="Launch profile"
+                  title={t("profile:list.launchTitle", { name: p.name })}
                 >
                   <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                     <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -231,26 +234,26 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       <div className="home-stats">
         <div className="home-stat">
           <div className="home-stat-value">{analytics.totalSessions.toLocaleString()}</div>
-          <div className="home-stat-label">Sessions</div>
+          <div className="home-stat-label">{t("common:stats.sessions")}</div>
         </div>
         <div className="home-stat">
           <div className="home-stat-value">{analytics.totalMessages.toLocaleString()}</div>
-          <div className="home-stat-label">Messages</div>
+          <div className="home-stat-label">{t("common:stats.messages")}</div>
         </div>
         <div className="home-stat">
           <div className="home-stat-value">{analytics.topProjects.length}</div>
-          <div className="home-stat-label">Projects</div>
+          <div className="home-stat-label">{t("common:stats.projects")}</div>
         </div>
         <div className="home-stat">
           <div className="home-stat-value">{profiles.length}</div>
-          <div className="home-stat-label">Profiles</div>
+          <div className="home-stat-label">{t("common:stats.profiles")}</div>
         </div>
       </div>
 
       {/* Active sessions */}
       {activeSessions.length > 0 && (
         <div className="home-section">
-          <h2 className="home-section-title">Active Sessions ({activeSessions.length})</h2>
+          <h2 className="home-section-title">{t("common:sections.activeSessions", { count: activeSessions.length })}</h2>
           <div className="home-active-list" role="list">
             {activeSessions.map((s) => (
               <div key={s.pid} role="listitem" className="home-active-item">
@@ -259,7 +262,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                   <span className="home-active-profile">{s.profile}</span>
                   <span className="home-active-cwd">{s.cwd.split("/").pop()}</span>
                 </div>
-                <span className="home-active-time">{timeAgo(s.startedAt)}</span>
+                <span className="home-active-time">{timeAgo(s.startedAt, t)}</span>
               </div>
             ))}
           </div>
@@ -268,7 +271,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
       {/* Activity chart */}
       <div className="home-section">
-        <h2 className="home-section-title">Activity</h2>
+        <h2 className="home-section-title">{t("common:sections.activity")}</h2>
         <ActivityChart data={analytics.dailyActivity} days={period === "7d" ? 7 : period === "30d" ? 30 : undefined} />
       </div>
 
@@ -276,7 +279,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       <div className="home-columns">
         {/* Profiles */}
         <div className="home-section">
-          <h2 className="home-section-title">Profiles</h2>
+          <h2 className="home-section-title">{t("common:stats.profiles")}</h2>
           <div className="home-profile-grid" role="list">
             {profiles.map((p) => {
               const usage = analytics.profileUsage.find((u) => u.name === p.name);
@@ -294,8 +297,8 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                     <div className="home-profile-info">
                       <div className="home-profile-name">{p.name}</div>
                       <div className="home-profile-meta">
-                        {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
-                        {usage ? ` · ${usage.messages} msgs` : ""}
+                        {t("common:plurals.plugin", { count: p.plugins.length })}
+                        {usage ? ` · ${t("common:stats.msgs", { count: usage.messages })}` : ""}
                       </div>
                     </div>
                   </div>
@@ -305,7 +308,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                       e.stopPropagation();
                       launchWithDirPicker(p.name, p.directory, onLaunch);
                     }}
-                    title="Launch profile"
+                    title={t("profile:list.launchTitle", { name: p.name })}
                   >
                     <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                       <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -319,7 +322,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
         {/* Top projects */}
         <div className="home-section">
-          <h2 className="home-section-title">Top Projects</h2>
+          <h2 className="home-section-title">{t("common:sections.topProjects")}</h2>
           <div className="home-project-list" role="list">
             {analytics.topProjects.map((p) => (
               <div key={p.name} role="listitem" className="home-project-item">
@@ -333,13 +336,13 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
 
       {/* Recent sessions */}
       <div className="home-section">
-        <h2 className="home-section-title">Recent Sessions</h2>
+        <h2 className="home-section-title">{t("common:sections.recentSessions")}</h2>
         <div className="home-session-header" aria-hidden="true">
           <span className="home-session-header-icon-spacer" />
-          <span className="home-session-header-project">Project</span>
-          <span className="home-session-header-profile">Profile</span>
-          <span className="home-session-header-msgs">Messages</span>
-          <span className="home-session-header-date">Date</span>
+          <span className="home-session-header-project">{t("common:stats.project")}</span>
+          <span className="home-session-header-profile">{t("common:stats.profile")}</span>
+          <span className="home-session-header-msgs">{t("common:stats.messages")}</span>
+          <span className="home-session-header-date">{t("common:stats.date")}</span>
         </div>
         <div className="home-session-list" role="list">
           {(showAllRecent ? analytics.recentSessions : analytics.recentSessions.slice(0, 10)).map((s) => {
@@ -353,7 +356,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                 )}
                 <span className="home-session-project">{s.project}</span>
                 {s.profile && <span className="home-session-profile">{s.profile}</span>}
-                <span className="home-session-msgs">{s.messages} msgs</span>
+                <span className="home-session-msgs">{t("common:stats.msgs", { count: s.messages })}</span>
                 <span className="home-session-date">
                   {new Date(s.date + "T12:00:00").toLocaleDateString("en", { month: "short", day: "numeric" })}
                 </span>
@@ -363,7 +366,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                     onClick={() => onLaunch(s.profile!, s.directory)}
                     title={`Start new ${s.profile} session in ${s.project}`}
                   >
-                    New session
+                    {t("common:buttons.newSession")}
                   </button>
                 )}
               </div>
@@ -376,8 +379,8 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
             onClick={() => setShowAllRecent((v) => !v)}
           >
             {showAllRecent
-              ? "Show less"
-              : `View all ${analytics.recentSessions.length}`}
+              ? t("common:buttons.showLess")
+              : t("common:buttons.viewAll", { count: analytics.recentSessions.length })}
           </button>
         )}
       </div>
@@ -385,7 +388,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
       {/* Profile usage */}
       {analytics.profileUsage.length > 0 && (
         <div className="home-section">
-          <h2 className="home-section-title">Profile Activity</h2>
+          <h2 className="home-section-title">{t("common:sections.profileActivity")}</h2>
           <div className="home-profile-grid" role="list">
             {analytics.profileUsage.map((pu) => {
               const profile = profiles.find((p) => p.name === pu.name);
@@ -403,7 +406,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                     <div className="home-profile-info">
                       <div className="home-profile-name">{pu.name}</div>
                       <div className="home-profile-meta">
-                        {pu.sessions} session{pu.sessions !== 1 ? "s" : ""} · {pu.messages} msgs
+                        {t("common:plurals.session", { count: pu.sessions })} · {t("common:stats.msgs", { count: pu.messages })}
                       </div>
                     </div>
                   </div>
@@ -414,7 +417,7 @@ export function Home({ profiles, onSelectProfile, onLaunch }: Props) {
                         e.stopPropagation();
                         launchWithDirPicker(profile.name, profile.directory, onLaunch);
                       }}
-                      title="Launch profile"
+                      title={t("profile:list.launchTitle", { name: pu.name })}
                     >
                       <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                         <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

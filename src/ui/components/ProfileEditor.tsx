@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import type {
   Profile,
   PluginWithItems,
@@ -80,6 +81,7 @@ function OverviewModal({
   onClose: () => void;
   onGoToTab?: (tab: TabId) => void;
 }) {
+  const { t } = useTranslation(["profile", "common"]);
   const [expanded, setExpanded] = useState<OverviewCategory>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -104,19 +106,19 @@ function OverviewModal({
   };
 
   const stats: { key: OverviewCategory; label: string; count: number }[] = [
-    { key: "plugins", label: "Plugins", count: overview.enabledPlugins.length },
-    { key: "skills", label: "Skills", count: overview.skills.length },
-    { key: "agents", label: "Agents", count: overview.agents.length },
-    { key: "commands", label: "Commands", count: overview.commands.length },
-    { key: "mcps", label: "MCP Servers", count: overview.pluginMcps.length + overview.standaloneMcps.length },
+    { key: "plugins", label: t("profile:editor.plugins"), count: overview.enabledPlugins.length },
+    { key: "skills", label: t("profile:editor.skills"), count: overview.skills.length },
+    { key: "agents", label: t("profile:editor.agents"), count: overview.agents.length },
+    { key: "commands", label: t("profile:editor.commands"), count: overview.commands.length },
+    { key: "mcps", label: t("profile:editor.mcpServers"), count: overview.pluginMcps.length + overview.standaloneMcps.length },
   ];
 
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-dialog modal-dialog--overview" role="dialog" aria-modal="true" aria-label="Profile Overview" ref={dialogRef} tabIndex={-1}>
+      <div className="modal-dialog modal-dialog--overview" role="dialog" aria-modal="true" aria-label={t("profile:overview.title")} ref={dialogRef} tabIndex={-1}>
         <div className="modal-header">
-          <span className="modal-title">Profile Overview</span>
-          <button className="modal-close" onClick={onClose} aria-label="Close overview">
+          <span className="modal-title">{t("profile:overview.title")}</span>
+          <button className="modal-close" onClick={onClose} aria-label={t("profile:overview.closeAriaLabel")}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
@@ -124,7 +126,7 @@ function OverviewModal({
         </div>
         <div className="modal-body">
           <p className="modal-description">
-            Summary of what this profile will load when launched. Click a category to see details.
+            {t("profile:overview.description")}
           </p>
           <div className="overview-grid">
             {stats.map((s) => (
@@ -141,13 +143,13 @@ function OverviewModal({
 
           {expanded === "plugins" && overview.enabledPlugins.length > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Enabled Plugins</div>
+              <div className="overview-section-label">{t("profile:overview.enabledPlugins")}</div>
               <div className="overview-list">
                 {overview.enabledPlugins.map((p) => (
                   <div key={p.name} className="overview-list-item">
                     <span>{p.pluginName}</span>
                     <span className="overview-list-meta">
-                      {p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name)).length} items
+                      {t("profile:overview.itemsCount", { count: p.items.filter((i) => !(excludedItems[p.name] ?? []).includes(i.name)).length })}
                     </span>
                   </div>
                 ))}
@@ -158,7 +160,7 @@ function OverviewModal({
                   style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["plugins"])}
                 >
-                  Go to Plugins tab →
+                  {t("profile:overview.goToTab", { tab: t("profile:editor.plugins") })}
                 </button>
               )}
             </div>
@@ -166,7 +168,7 @@ function OverviewModal({
 
           {expanded === "skills" && overview.skills.length > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Enabled Skills</div>
+              <div className="overview-section-label">{t("profile:overview.enabledSkills")}</div>
               <div className="overview-list">
                 {overview.skills.map((i) => (
                   <div key={i.name} className="overview-list-item">
@@ -181,7 +183,7 @@ function OverviewModal({
                   style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["skills"])}
                 >
-                  Go to Skills tab →
+                  {t("profile:overview.goToTab", { tab: t("profile:editor.skills") })}
                 </button>
               )}
             </div>
@@ -189,7 +191,7 @@ function OverviewModal({
 
           {expanded === "agents" && overview.agents.length > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Enabled Agents</div>
+              <div className="overview-section-label">{t("profile:overview.enabledAgents")}</div>
               <div className="overview-list">
                 {overview.agents.map((i) => (
                   <div key={i.name} className="overview-list-item">
@@ -204,7 +206,7 @@ function OverviewModal({
                   style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["agents"])}
                 >
-                  Go to Agents tab →
+                  {t("profile:overview.goToTab", { tab: t("profile:editor.agents") })}
                 </button>
               )}
             </div>
@@ -212,7 +214,7 @@ function OverviewModal({
 
           {expanded === "commands" && overview.commands.length > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Enabled Commands</div>
+              <div className="overview-section-label">{t("profile:overview.enabledCommands")}</div>
               <div className="overview-list">
                 {overview.commands.map((i) => (
                   <div key={i.name} className="overview-list-item">
@@ -227,7 +229,7 @@ function OverviewModal({
                   style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["commands"])}
                 >
-                  Go to Commands tab →
+                  {t("profile:overview.goToTab", { tab: t("profile:editor.commands") })}
                 </button>
               )}
             </div>
@@ -235,7 +237,7 @@ function OverviewModal({
 
           {expanded === "mcps" && (overview.pluginMcps.length + overview.standaloneMcps.length) > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Enabled MCP Servers</div>
+              <div className="overview-section-label">{t("profile:overview.enabledMcpServers")}</div>
               <div className="overview-list">
                 {[...overview.pluginMcps, ...overview.standaloneMcps].map((m) => (
                   <div key={m.name} className="overview-list-item">
@@ -249,7 +251,7 @@ function OverviewModal({
                   style={{ fontSize: "0.769rem", marginTop: "8px", padding: "3px 10px" }}
                   onClick={() => onGoToTab(categoryToTab["mcps"])}
                 >
-                  Go to MCP Servers tab →
+                  {t("profile:overview.goToTab", { tab: t("profile:editor.mcpServers") })}
                 </button>
               )}
             </div>
@@ -257,17 +259,17 @@ function OverviewModal({
 
           {model && (
             <div className="overview-section">
-              <div className="overview-section-label">Settings</div>
+              <div className="overview-section-label">{t("profile:editor.settings")}</div>
               <div className="overview-list">
-                {model && <div className="overview-list-item"><span>Model: {model}</span></div>}
-                {effortLevel && <div className="overview-list-item"><span>Effort: {effortLevel}</span></div>}
+                {model && <div className="overview-list-item"><span>{t("profile:overview.modelLabel", { model })}</span></div>}
+                {effortLevel && <div className="overview-list-item"><span>{t("profile:overview.effortLabel", { level: effortLevel })}</span></div>}
               </div>
             </div>
           )}
 
           {overview.flags.length > 0 && (
             <div className="overview-section">
-              <div className="overview-section-label">Launch Flags</div>
+              <div className="overview-section-label">{t("profile:editor.launchFlags")}</div>
               <div className="overview-list">
                 {overview.flags.map((f) => (
                   <div key={f} className="overview-list-item"><code>{f}</code></div>
@@ -278,7 +280,7 @@ function OverviewModal({
 
           {customClaudeMd && (
             <div className="overview-section">
-              <div className="overview-section-label">Instructions</div>
+              <div className="overview-section-label">{t("profile:editor.instructions")}</div>
               <div className="overview-instructions-preview">{customClaudeMd}</div>
             </div>
           )}
@@ -290,17 +292,6 @@ function OverviewModal({
 
 // ─── Tab bar ─────────────────────────────────────────────────────────────────
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "plugins", label: "Plugins" },
-  { id: "skills", label: "Skills" },
-  { id: "agents", label: "Agents" },
-  { id: "commands", label: "Commands" },
-  { id: "mcp", label: "MCP Servers" },
-  { id: "local", label: "Project Items" },
-  { id: "instructions", label: "Instructions" },
-  { id: "settings", label: "Settings" },
-];
-
 function TabBar({
   active,
   counts,
@@ -310,6 +301,17 @@ function TabBar({
   counts: Partial<Record<TabId, string>>;
   onChange: (id: TabId) => void;
 }) {
+  const { t } = useTranslation(["profile", "common"]);
+  const TABS: { id: TabId; label: string }[] = [
+    { id: "plugins", label: t("profile:editor.plugins") },
+    { id: "skills", label: t("profile:editor.skills") },
+    { id: "agents", label: t("profile:editor.agents") },
+    { id: "commands", label: t("profile:editor.commands") },
+    { id: "mcp", label: t("profile:editor.mcpServers") },
+    { id: "local", label: t("profile:tabs.projectItems") },
+    { id: "instructions", label: t("profile:editor.instructions") },
+    { id: "settings", label: t("profile:editor.settings") },
+  ];
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
@@ -325,7 +327,7 @@ function TabBar({
     tabRefs.current[nextId]?.focus();
   };
   return (
-    <div className="pe-tab-bar" role="tablist" aria-label="Profile sections" onKeyDown={onKeyDown}>
+    <div className="pe-tab-bar" role="tablist" aria-label={t("profile:tabs.sections")} onKeyDown={onKeyDown}>
       {TABS.map((tab) => {
         const count = counts[tab.id];
         const selected = active === tab.id;
@@ -356,6 +358,7 @@ function TabBar({
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
 export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, importedProjects = [], tagSuggestions = [], onSave, onLaunch, onDelete, onDuplicate, onOpenProjectsConfig, onOpenBrowseAt, focusTagsSignal, focusProjectsSignal, dirty, onDirtyChange, onRegisterSave }: Props) {
+  const { t } = useTranslation(["profile", "common"]);
   const draft = useProfileDraft({ profile, isNew, importedProjects, onSave, dirty, onDirtyChange });
 
   // Register the editor's save function so the sidebar can trigger it
@@ -579,7 +582,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         try {
           await handleSave();
         } catch (err: any) {
-          setLaunchError(`Save failed: ${err?.message ?? "Unknown error"}`);
+          setLaunchError(`${t("common:errors.saveFailed")} ${err?.message ?? t("common:errors.unknownError")}`);
           setLaunching(false);
           return;
         }
@@ -592,7 +595,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       }
       await onLaunch(profile.name, dir);
     } catch (err: any) {
-      setLaunchError(`Launch failed: ${err?.message ?? "Unknown error"}`);
+      setLaunchError(`${t("common:errors.launchFailed")} ${err?.message ?? t("common:errors.unknownError")}`);
     } finally {
       setLaunching(false);
     }
@@ -607,7 +610,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         try {
           await handleSave();
         } catch (err: any) {
-          setLaunchError(`Save failed: ${err?.message ?? "Unknown error"}`);
+          setLaunchError(`${t("common:errors.saveFailed")} ${err?.message ?? t("common:errors.unknownError")}`);
           setLaunching(false);
           return;
         }
@@ -620,7 +623,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       }
       await window.api.launchProfileWithOptions(profile.name, dir, options);
     } catch (err: any) {
-      setLaunchError(`Launch failed: ${err?.message ?? "Unknown error"}`);
+      setLaunchError(`${t("common:errors.launchFailed")} ${err?.message ?? t("common:errors.unknownError")}`);
     } finally {
       setLaunching(false);
     }
@@ -734,9 +737,9 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       <div className="profile-editor empty">
         <div className="empty-state">
           <div className="empty-state-icon">&#9671;</div>
-          <div className="empty-state-title">No profile selected</div>
+          <div className="empty-state-title">{t("profile:emptyState.noProfileSelected")}</div>
           <div className="empty-state-body">
-            Choose a profile from the sidebar, or create a new one to get started.
+            {t("profile:emptyState.chooseProfile")}
           </div>
         </div>
       </div>
@@ -777,7 +780,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
 
       {isDefault && (
         <div className="pe-default-banner">
-          This is your default profile. Running <code>claude</code> in any terminal launches with these plugins and settings. Add only what you need for everyday use.
+          {t('profile:defaultBanner')}
         </div>
       )}
 
@@ -801,7 +804,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               <circle cx="8" cy="11" r="0.7" fill="currentColor" />
             </svg>
             <span>
-              {brokenPlugins.length} missing plugin{brokenPlugins.length !== 1 ? "s" : ""} — choose "Add plugin" to find it in the marketplace or "Remove" to drop it from this profile.
+              {t("profile:health.missingPlugins", { count: brokenPlugins.length })}
             </span>
           </div>
           <ul className="pe-health-warning-list">
@@ -823,13 +826,13 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                       disabled={busy}
                       onClick={() => handleAddMissingPlugin(pid)}
                     >
-                      {busy ? "Looking up…" : "Add plugin"}
+                      {busy ? t("profile:health.lookingUp") : t("profile:health.addPlugin")}
                     </button>
                     <button
                       className="pe-health-remove"
                       onClick={() => removeOneMissingPlugin(pid)}
                     >
-                      Remove
+                      {t("profile:health.remove")}
                     </button>
                   </div>
                 </li>
@@ -888,17 +891,17 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   onSortChange={setItemSort}
                   placeholder={
                     activeTab === "skills"
-                      ? "Search skills by name or plugin…"
+                      ? t("profile:filter.skillsPlaceholder")
                       : activeTab === "agents"
-                        ? "Filter agents by name or plugin…"
-                        : "Search commands by name or plugin…"
+                        ? t("profile:filter.agentsPlaceholder")
+                        : t("profile:filter.commandsPlaceholder")
                   }
                 />
                 {items.length === 0 ? (
                   <div className="pe-tab-empty">
                     {itemSearch || itemFilter !== "all"
-                      ? "No matches"
-                      : `No ${activeTab} available. Install plugins to see ${activeTab} here.`}
+                      ? t("common:emptyStates.noMatches")
+                      : t("profile:noItems", { tab: activeTab })}
                   </div>
                 ) : (
                   <div className="pe-flat-list">
@@ -919,7 +922,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                                   className="pe-flat-group-collapse"
                                   onClick={() => toggleGroup(item.pluginDisplayName)}
                                   aria-expanded={!collapsed}
-                                  aria-label={`${collapsed ? "Expand" : "Collapse"} ${item.pluginDisplayName} group`}
+                                  aria-label={collapsed ? t("profile:group.expand", { name: item.pluginDisplayName }) : t("profile:group.collapse", { name: item.pluginDisplayName })}
                                 >
                                   <svg className="pe-flat-group-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                                     <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -934,10 +937,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                                     const payload = groupItems.map((gi) => ({ pluginName: gi.pluginName, itemName: gi.name }));
                                     handleToggleGroup(payload, !allEnabled);
                                   }}
-                                  title={allEnabled ? "Deselect all in group" : "Select all in group"}
-                                  aria-label={allEnabled ? `Deselect all ${item.pluginDisplayName} ${type}s` : `Select all ${item.pluginDisplayName} ${type}s`}
+                                  title={allEnabled ? t("profile:group.deselectTitle") : t("profile:group.selectTitle")}
+                                  aria-label={allEnabled ? `${t("profile:group.deselectTitle")} — ${item.pluginDisplayName} ${type}s` : `${t("profile:group.selectTitle")} — ${item.pluginDisplayName} ${type}s`}
                                 >
-                                  {allEnabled ? "None" : "All"}
+                                  {allEnabled ? t("profile:group.none") : t("profile:group.all")}
                                 </button>
                               </div>
                             );
@@ -975,7 +978,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                               {type === "command" ? `/${item.name}` : item.name}
                             </span>
                             {!groupCounts && <span className="pe-flat-item-source" title={item.pluginDisplayName}>{formatPluginTitle(item.pluginDisplayName)}</span>}
-                            {!item.userInvocable && <span className="skill-badge internal">internal</span>}
+                            {!item.userInvocable && <span className="skill-badge internal">{t("profile:internal")}</span>}
                           </div>
                           )}
                         </React.Fragment>
@@ -1004,65 +1007,65 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
               {editingItem ? (
                 <div className="project-item-editor">
                   <div className="manage-section-header">
-                    <span className="manage-section-label">{editingItem.type}: {editingItem.name}</span>
+                    <span className="manage-section-label">{t("profile:local.itemHeader", { type: editingItem.type, name: editingItem.name })}</span>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button
                         className="open-in-editor-btn"
                         onClick={() => window.api.openInFinder(editingItem.absolutePath)}
-                        title="Open in default editor"
+                        title={t("common:buttons.openInEditor")}
                       >
-                        Open in Editor ↗
+                        {t("common:buttons.openInEditor")}
                       </button>
                       {editingDirty && (
-                        <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEditingItem}>Save</button>
+                        <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEditingItem}>{t("common:buttons.save")}</button>
                       )}
-                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDeleteEditingItem}>Delete</button>
-                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleCloseEditor}>Close</button>
+                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDeleteEditingItem}>{t("common:buttons.delete")}</button>
+                      <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleCloseEditor}>{t("common:buttons.close")}</button>
                     </div>
                   </div>
                   <textarea
                     className="manage-claudemd-editor"
                     value={editingContent}
                     onChange={(e) => { setEditingContent(e.target.value); setEditingDirty(true); }}
-                    placeholder={`${editingItem.type} content...`}
+                    placeholder={t("profile:local.contentPlaceholder", { type: editingItem.type })}
                   />
                 </div>
               ) : !launchDir ? (
                 <div className="empty-state" style={{ padding: "32px 0" }}>
                   <div className="empty-state-icon">&#9671;</div>
-                  <div className="empty-state-title">Select a project directory</div>
+                  <div className="empty-state-title">{t("profile:local.selectDir")}</div>
                   <div className="empty-state-body">
-                    Choose a directory in the topbar to see project-specific skills, agents, and commands.
+                    {t("profile:local.selectDirHint")}
                   </div>
                 </div>
               ) : localItems.length === 0 ? (
                 <div className="pe-tab-empty">
-                  <p>No items found in {launchDir}/.claude/</p>
+                  <p>{t("profile:local.noItemsInDir", { dir: launchDir })}</p>
                   <p style={{ fontSize: "0.846rem", color: "var(--text-muted)", marginTop: "8px" }}>
-                    Add skills, agents, or commands to your project's <code>.claude/</code> directory and they'll appear here.
+                    {t('profile:local.noItemsHint')}
                   </p>
                   <button className="btn-outlined-accent" style={{ marginTop: "8px" }} onClick={() => window.api.openInFinder(launchDir + "/.claude")}>
-                    Open .claude/ directory
+                    {t("profile:local.openClaudeDir")}
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="local-items-note">
-                    Items from <strong>{launchDir.split("/").pop()}</strong>/.claude/ — these are loaded automatically when launching into this directory, independent of profile settings.
+                    {t('profile:local.itemsFromDir')}
                   </div>
                   {localItems.length < 3 && (
                     <div className="pe-local-helper-card">
                       <div className="pe-local-helper-body">
-                        <div className="pe-local-helper-title">Add more project items</div>
+                        <div className="pe-local-helper-title">{t("profile:local.addMoreItems")}</div>
                         <div className="pe-local-helper-text">
-                          Drop skills, agents, or commands into this project's <code>.claude/</code> directory and they'll appear here alongside profile-level items.
+                          {t('profile:local.addMoreItemsHint')}
                         </div>
                       </div>
                       <button
                         className="btn-outlined-accent"
                         onClick={() => window.api.openInFinder(launchDir + "/.claude")}
                       >
-                        Open .claude/
+                        {t("profile:local.openClaude")}
                       </button>
                     </div>
                   )}
@@ -1072,7 +1075,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     return (
                       <div key={type} className="pe-mcp-section">
                         <div className="pe-mcp-section-label">
-                          {type === "skill" ? "Skills" : type === "agent" ? "Agents" : "Commands"} ({items.length})
+                          {type === "skill" ? t("profile:editor.skills") : type === "agent" ? t("profile:editor.agents") : t("profile:editor.commands")} ({items.length})
                         </div>
                         {items.map((item) => (
                           <div
@@ -1080,7 +1083,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                             className="local-item enabled clickable"
                             role="button"
                             tabIndex={0}
-                            title={`Edit ${item.name}`}
+                            title={t("profile:local.editTitle", { name: item.name })}
                             onClick={() => handleOpenItemEditor(item)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
@@ -1142,27 +1145,26 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 <div className="pe-editor-toolbar">
                   <div className="pe-instructions-labels">
                     <span className="pe-instructions-heading">
-                      <span className="pe-instructions-state-pill always-on" aria-label="Always on">Always on</span>
+                      <span className="pe-instructions-state-pill always-on" aria-label={t("profile:instructions.alwaysOn")}>{t("profile:instructions.alwaysOn")}</span>
                       CLAUDE.md
                     </span>
-                    <span className="pe-instructions-hint">Appended to CLAUDE.md — Claude reads this every turn.</span>
+                    <span className="pe-instructions-hint">{t("profile:instructions.claudeMdHint")}</span>
                   </div>
                   <div className="pe-editor-toolbar-actions">
                     <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("instructions")}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                      Insert Prompt
+                      {t("common:buttons.insertPrompt")}
                     </button>
                     <button className="open-in-editor-btn" onClick={async () => {
                       const configDir = await window.api.getProfileConfigDir(name);
                       const filePath = `${configDir}/CLAUDE.md`;
-                      // Ensure file exists with current content before opening
                       await window.api.writeProjectFile(configDir, "CLAUDE.md", customClaudeMd || "");
                       window.api.openInFinder(filePath);
-                    }} title="Open in default editor">Open in Editor ↗</button>
+                    }} title={t("common:buttons.openInEditor")}>{t("common:buttons.openInEditor")}</button>
                     {customClaudeMd.trim() && (
                       <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(customClaudeMd, name || "Untitled")}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                        Save as Prompt
+                        {t("common:buttons.saveAsPrompt")}
                       </button>
                     )}
                   </div>
@@ -1171,10 +1173,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   className="pe-instructions-editor"
                   value={customClaudeMd}
                   onChange={(e) => { setCustomClaudeMd(e.target.value); markDirty(); }}
-                  placeholder="Additional instructions for this profile..."
+                  placeholder={t("profile:instructions.placeholder")}
                 />
                 <div className="pe-instructions-stats">
-                  {customClaudeMd.length.toLocaleString()} chars · {customClaudeMd ? customClaudeMd.split("\n").length : 0} lines
+                  {t("common:labels.charsLines", { chars: customClaudeMd.length.toLocaleString(), lines: customClaudeMd ? customClaudeMd.split("\n").length : 0 })}
                 </div>
               </section>
 
@@ -1183,30 +1185,29 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 <div className="pe-editor-toolbar">
                   <div className="pe-instructions-labels">
                     <span className="pe-instructions-heading">
-                      <span className="pe-instructions-state-pill on-demand" aria-label="On demand">On demand</span>
+                      <span className="pe-instructions-state-pill on-demand" aria-label={t("profile:instructions.onDemand")}>{t("profile:instructions.onDemand")}</span>
                       <code className="pe-instructions-command">/workflow</code>
                     </span>
                     <span className="pe-instructions-hint">
-                      Invoked on demand — runs when you type <code>/workflow</code> in a session.
+                      {t('profile:instructions.workflowHint')}
                     </span>
                   </div>
                   <div className="pe-editor-toolbar-actions">
                     <button className="insert-prompt-btn" onClick={() => setPromptPickerTarget("workflow")}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                      Insert Prompt
+                      {t("common:buttons.insertPrompt")}
                     </button>
                     <button className="open-in-editor-btn" onClick={async () => {
                       const configDir = await window.api.getProfileConfigDir(name);
                       const filePath = `${configDir}/commands/workflow.md`;
-                      // Ensure file + directory exist with current content before opening
                       const frontmatter = `---\ndescription: Run this profile's predefined workflow\n---\n\n`;
                       await window.api.writeProjectFile(configDir, "commands/workflow.md", workflow ? frontmatter + workflow : "");
                       window.api.openInFinder(filePath);
-                    }} title="Open in default editor">Open in Editor ↗</button>
+                    }} title={t("common:buttons.openInEditor")}>{t("common:buttons.openInEditor")}</button>
                     {workflow.trim() && (
                       <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(workflow, name ? `${name} workflow` : "Untitled workflow")}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                        Save as Prompt
+                        {t("common:buttons.saveAsPrompt")}
                       </button>
                     )}
                   </div>
@@ -1215,10 +1216,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                   className="pe-instructions-editor"
                   value={workflow}
                   onChange={(e) => { setWorkflow(e.target.value); markDirty(); }}
-                  placeholder="Describe how this profile should orchestrate its tools — e.g. “First run the code-explorer agent, then invoke systematic-debugging, then produce a bulleted report.”"
+                  placeholder={t("profile:instructions.workflowPlaceholder")}
                 />
                 <div className="pe-instructions-stats">
-                  {workflow.length.toLocaleString()} chars · {workflow ? workflow.split("\n").length : 0} lines
+                  {t("common:labels.charsLines", { chars: workflow.length.toLocaleString(), lines: workflow ? workflow.split("\n").length : 0 })}
                 </div>
               </section>
 
@@ -1227,10 +1228,10 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                 <div className="pe-editor-toolbar">
                   <div className="pe-instructions-labels">
                     <span className="pe-instructions-heading">
-                      Workflow Variants
+                      {t("profile:instructions.variants.title")}
                     </span>
                     <span className="pe-instructions-hint">
-                      Named variants become <code>/workflow-name</code> commands. Optionally scope to a specific project directory.
+                      {t('profile:instructions.variants.hint')}
                     </span>
                   </div>
                 </div>
@@ -1258,7 +1259,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                             setWorkflows(next);
                             markDirty();
                           }}
-                          placeholder="name"
+                          placeholder={t("profile:instructions.variants.namePlaceholder")}
                         />
                       </div>
                       <div className="field-toggle">
@@ -1275,11 +1276,11 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                           />
                           <span className="toggle-track"><span className="toggle-thumb" /></span>
                         </label>
-                        <span className="field-toggle-label">{variant.directory ? (variant.directory.split("/").pop() || "project") : (launchDir || directories[0] || "").split("/").pop() || "This project"} only</span>
+                        <span className="field-toggle-label">{variant.directory ? t("profile:instructions.variants.projectOnly", { project: variant.directory.split("/").pop() || "project" }) : t("profile:instructions.variants.thisProjectOnly")}</span>
                       </div>
                       <button className="insert-prompt-btn" style={{ marginLeft: "auto" }} onClick={() => setPromptPickerTarget(`variant-${idx}`)}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                        Insert Prompt
+                        {t("common:buttons.insertPrompt")}
                       </button>
                       <button className="open-in-editor-btn" onClick={async () => {
                         if (!variant.name) return;
@@ -1288,11 +1289,11 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                         const frontmatter = `---\ndescription: Run the ${variant.name} workflow\n---\n\n`;
                         await window.api.writeProjectFile(configDir, relPath, variant.body ? frontmatter + variant.body : "");
                         window.api.openInFinder(`${configDir}/${relPath}`);
-                      }} title="Open in default editor">Open in Editor ↗</button>
+                      }} title={t("common:buttons.openInEditor")}>{t("common:buttons.openInEditor")}</button>
                       {variant.body?.trim() && (
                         <button className="insert-prompt-btn" onClick={() => openSavePromptDialog(variant.body, variant.name ? `workflow-${variant.name}` : "Untitled variant")}>
                           <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-3H4a1 1 0 00-1 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M9 3v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                          Save as Prompt
+                          {t("common:buttons.saveAsPrompt")}
                         </button>
                       )}
                       <button
@@ -1303,7 +1304,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                           markDirty();
                         }}
                       >
-                        Remove
+                        {t("profile:instructions.variants.remove")}
                       </button>
                     </div>
                     {/* Editor */}
@@ -1317,7 +1318,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                         setWorkflows(next);
                         markDirty();
                       }}
-                      placeholder={`Describe the ${variant.name || "variant"} workflow...`}
+                      placeholder={t("profile:instructions.variants.variantPlaceholder", { name: variant.name || "variant" })}
                     />
                   </div>
                     );
@@ -1331,7 +1332,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
                     markDirty();
                   }}
                 >
-                  + Add Variant
+                  {t("profile:instructions.variants.addVariant")}
                 </button>
               </section>
             </div>
@@ -1393,17 +1394,17 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       {/* Delete confirmation */}
       {confirmDelete && profile && (
         <ConfirmDialog
-          title="Delete Profile"
+          title={t("profile:dialogs.deleteTitle")}
           description={
             <>
-              Are you sure you want to delete <strong>{profile.name}</strong>?
+              {t('profile:dialogs.deleteConfirm')}
               {profile.isDefault && (
-                <> This is your default profile. Deleting it means running <code>claude</code> will load all installed plugins.</>
+                <> t('profile:dialogs.deleteDefaultWarning')</>
               )}
-              {" "}This will remove the profile configuration and its assembled config directory. This cannot be undone.
+              {" "}{t("profile:dialogs.deleteCannotUndo")}
             </>
           }
-          confirmLabel="Delete Profile"
+          confirmLabel={t("profile:dialogs.deleteTitle")}
           onConfirm={() => { setConfirmDelete(false); onDelete(profile.name); }}
           onCancel={() => setConfirmDelete(false)}
         />
@@ -1413,17 +1414,17 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
           fails to find the plugin in any marketplace we know about. */}
       {missingNotFoundPluginId && (
         <ConfirmDialog
-          title="Plugin not found"
+          title={t("profile:dialogs.pluginNotFound")}
           description={
             <>
-              <strong>{missingNotFoundPluginId.split("@")[0]}</strong> isn't available in any curated marketplace we can see
+              {t('profile:dialogs.pluginNotFoundDesc')}
               {missingNotFoundPluginId.includes("@") && (
-                <> (searched for <code>{missingNotFoundPluginId}</code>)</>
+                <> t('profile:dialogs.pluginNotFoundSearched')</>
               )}
-              . It may have been removed, renamed, or only lives in a private marketplace you haven't added. Remove it from this profile?
+              . {t("profile:dialogs.pluginNotFoundRemove")}
             </>
           }
-          confirmLabel="Remove from profile"
+          confirmLabel={t("profile:dialogs.removeFromProfile")}
           onConfirm={() => {
             const pid = missingNotFoundPluginId;
             setMissingNotFoundPluginId(null);
@@ -1436,7 +1437,7 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
       {/* Save error dialog (alias conflicts, etc.) */}
       {saveError && (
         <ConfirmDialog
-          title="Cannot Save"
+          title={t("profile:dialogs.cannotSave")}
           description={saveError}
           confirmLabel="OK"
           confirmVariant="primary"
@@ -1450,8 +1451,8 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
         <div className="modal-backdrop" onClick={() => setSavePromptContent(null)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="modal-header">
-              <span className="modal-title">Save as Prompt</span>
-              <button className="modal-close" onClick={() => setSavePromptContent(null)} aria-label="Close">
+              <span className="modal-title">{t("profile:dialogs.savePromptTitle")}</span>
+              <button className="modal-close" onClick={() => setSavePromptContent(null)} aria-label={t("common:buttons.close")}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
@@ -1459,21 +1460,21 @@ export function ProfileEditor({ profile, plugins, isNew, brokenPlugins, imported
             </div>
             <div className="modal-body">
               <div className="field">
-                <label>Name</label>
-                <input type="text" value={savePromptName} onChange={(e) => setSavePromptName(e.target.value)} placeholder="My prompt" autoFocus />
+                <label>{t("common:fields.name")}</label>
+                <input type="text" value={savePromptName} onChange={(e) => setSavePromptName(e.target.value)} placeholder={t("profile:dialogs.namePlaceholder")} autoFocus />
               </div>
               <div className="field">
-                <label>Description</label>
-                <input type="text" value={savePromptDesc} onChange={(e) => setSavePromptDesc(e.target.value)} placeholder="Optional description" />
+                <label>{t("common:fields.description")}</label>
+                <input type="text" value={savePromptDesc} onChange={(e) => setSavePromptDesc(e.target.value)} placeholder={t("profile:dialogs.descriptionPlaceholder")} />
               </div>
               <div className="field">
-                <label>Tags</label>
-                <input type="text" value={savePromptTags} onChange={(e) => setSavePromptTags(e.target.value)} placeholder="tag1, tag2, tag3" />
-                <div className="field-hint">Comma-separated</div>
+                <label>{t("common:fields.tags")}</label>
+                <input type="text" value={savePromptTags} onChange={(e) => setSavePromptTags(e.target.value)} placeholder={t("profile:dialogs.tagsPlaceholder")} />
+                <div className="field-hint">{t("common:labels.commaSeparated")}</div>
               </div>
               <div className="modal-confirm-actions">
-                <button className="btn-secondary" onClick={() => setSavePromptContent(null)}>Cancel</button>
-                <button className="btn-primary" onClick={handleSavePrompt} disabled={!savePromptName.trim()}>Save</button>
+                <button className="btn-secondary" onClick={() => setSavePromptContent(null)}>{t("common:buttons.cancel")}</button>
+                <button className="btn-primary" onClick={handleSavePrompt} disabled={!savePromptName.trim()}>{t("common:buttons.save")}</button>
               </div>
             </div>
           </div>

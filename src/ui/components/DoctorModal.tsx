@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { DoctorFinding, DoctorReport } from "../../electron/types";
 
 interface Props {
@@ -32,6 +33,7 @@ interface Props {
  * never modifies state.
  */
 export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
+  const { t } = useTranslation(["settings", "common"]);
   const [report, setReport] = useState<DoctorReport | null>(null);
   const [running, setRunning] = useState<"detect" | "repair" | null>("detect");
   const [error, setError] = useState<string | null>(null);
@@ -119,12 +121,12 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
         <div className="manage-dialog-header">
           <div>
             <span style={{ fontSize: "1rem", fontWeight: 600, color: "var(--text-primary)" }}>
-              Profiles Doctor
+              {t("doctor.profilesTitle")}
             </span>
             <div className="doctor-subtitle">
               {fromErrorState
-                ? "The app couldn't load its data. Run a diagnostic to find and repair the issue."
-                : "Check your profiles store and related config files for known issues."}
+                ? t("doctor.subtitleError")
+                : t("doctor.subtitleNormal")}
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close" disabled={running !== null}>
@@ -138,20 +140,20 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
           {running === "detect" && (
             <div className="doctor-running">
               <div className="doctor-spinner" />
-              <div>Running diagnostic checks…</div>
+              <div>{t("doctor.runningDetect")}</div>
             </div>
           )}
 
           {running === "repair" && (
             <div className="doctor-running">
               <div className="doctor-spinner" />
-              <div>Applying repairs…</div>
+              <div>{t("doctor.runningRepair")}</div>
             </div>
           )}
 
           {error && (
             <div className="doctor-error">
-              <strong>Doctor failed:</strong> {error}
+              <strong>{t("doctor.failed")}</strong> {error}
             </div>
           )}
 
@@ -159,18 +161,18 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
             <>
               {summary && (
                 <div className="doctor-summary">
-                  <DoctorSummaryChip label="Healthy" count={summary.healthy} kind="healthy" />
+                  <DoctorSummaryChip label={t("doctor.healthy")} count={summary.healthy} kind="healthy" />
                   {summary.fixed > 0 && (
-                    <DoctorSummaryChip label="Fixed" count={summary.fixed} kind="fixed" />
+                    <DoctorSummaryChip label={t("doctor.fixed")} count={summary.fixed} kind="fixed" />
                   )}
                   {summary.detected > 0 && (
-                    <DoctorSummaryChip label="Detected" count={summary.detected} kind="detected" />
+                    <DoctorSummaryChip label={t("doctor.detected")} count={summary.detected} kind="detected" />
                   )}
                   {summary.unfixable > 0 && (
-                    <DoctorSummaryChip label="Unfixable" count={summary.unfixable} kind="unfixable" />
+                    <DoctorSummaryChip label={t("doctor.unfixable")} count={summary.unfixable} kind="unfixable" />
                   )}
                   {summary.skipped > 0 && (
-                    <DoctorSummaryChip label="Skipped" count={summary.skipped} kind="skipped" />
+                    <DoctorSummaryChip label={t("doctor.skipped")} count={summary.skipped} kind="skipped" />
                   )}
                 </div>
               )}
@@ -187,9 +189,9 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
         <div className="doctor-footer">
           {repaired ? (
             <>
-              <span className="doctor-repaired-label">Repairs applied. Reload the app to re-read the healed store.</span>
+              <span className="doctor-repaired-label">{t("doctor.repairedLabel")}</span>
               <button className="btn-primary" onClick={onReload}>
-                Reload app
+                {t("doctor.reloadApp")}
               </button>
             </>
           ) : (
@@ -203,9 +205,9 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
                   window.api.openInFinder(profilesDir);
                 }}
                 disabled={running !== null}
-                title="Open ~/.claudeworks/ in Finder"
+                title={t("doctor.openConfigFolder")}
               >
-                Open config folder
+                {t("doctor.openConfigFolder")}
               </button>
               <button
                 className="btn-secondary"
@@ -216,25 +218,25 @@ export function DoctorModal({ onReload, onClose, fromErrorState }: Props) {
                   }
                 }}
                 disabled={running !== null}
-                title="Export a diagnostic snapshot as JSON for attaching to a bug report"
+                title={t("doctor.exportDiagnostics")}
               >
-                Export diagnostics
+                {t("doctor.exportDiagnostics")}
               </button>
               {exportPath && (
-                <span className="doctor-export-label">Saved: {exportPath}</span>
+                <span className="doctor-export-label">{t("doctor.savedLabel", { path: exportPath })}</span>
               )}
               <span style={{ flex: 1 }} />
               <button className="btn-secondary" onClick={onClose} disabled={running !== null}>
-                Close
+                {t("common:buttons.close")}
               </button>
               {hasFixable && (
                 <button
                   className="btn-primary"
                   onClick={handleRepair}
                   disabled={running !== null}
-                  title="Back up affected files, then apply fixes"
+                  title={t("doctor.applyRepairs")}
                 >
-                  {running === "repair" ? "Applying…" : "Apply Repairs"}
+                  {running === "repair" ? t("doctor.applying") : t("doctor.applyRepairs")}
                 </button>
               )}
             </>
@@ -265,6 +267,7 @@ function DoctorSummaryChip({
 }
 
 function DoctorFindingRow({ finding }: { finding: DoctorFinding }) {
+  const { t } = useTranslation(["settings"]);
   const icon = statusIcon(finding.status, finding.severity);
   return (
     <li className={`doctor-finding doctor-finding-${finding.status}`}>
@@ -283,7 +286,7 @@ function DoctorFindingRow({ finding }: { finding: DoctorFinding }) {
         )}
         {finding.backupPath && (
           <div className="doctor-finding-backup">
-            Backup: <code>{finding.backupPath.split("/").pop()}</code>
+            {t("doctor.backup")} <code>{finding.backupPath.split("/").pop()}</code>
           </div>
         )}
       </div>

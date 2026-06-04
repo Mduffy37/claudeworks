@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export type SortOption = "name" | "source";
 export type FilterOption = "all" | "enabled" | "disabled";
@@ -20,14 +21,16 @@ export function FilterBar({
   onFilterChange,
   sort,
   onSortChange,
-  placeholder = "Search...",
+  placeholder,
 }: Props) {
+  const { t } = useTranslation(["common"]);
+
   return (
     <div className="filter-bar">
       <input
         type="text"
         className="filter-bar-search"
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("common:labels.searchPlugins")}
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
       />
@@ -35,20 +38,20 @@ export function FilterBar({
         className="filter-bar-select"
         value={filter}
         onChange={(e) => onFilterChange(e.target.value as FilterOption)}
-        title="Filter"
+        title={t("common:labels.all")}
       >
-        <option value="all">All</option>
-        <option value="enabled">Enabled</option>
-        <option value="disabled">Disabled</option>
+        <option value="all">{t("common:labels.all")}</option>
+        <option value="enabled">{t("common:labels.enabled")}</option>
+        <option value="disabled">{t("common:labels.disabled")}</option>
       </select>
       <select
         className="filter-bar-select"
         value={sort}
         onChange={(e) => onSortChange(e.target.value as SortOption)}
-        title="Sort by"
+        title={t("common:labels.name")}
       >
-        <option value="name">Name</option>
-        <option value="source">Source</option>
+        <option value="name">{t("common:labels.name")}</option>
+        <option value="source">{t("common:labels.source")}</option>
       </select>
     </div>
   );

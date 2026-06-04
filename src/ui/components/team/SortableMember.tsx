@@ -1,6 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "react-i18next";
 import type { TeamMember, Profile, TeammateColour } from "../../../electron/types";
 
 const TEAMMATE_COLOURS: { name: TeammateColour; hex: string }[] = [
@@ -40,6 +41,7 @@ export function SortableMember({
   onColourChange: (colour: TeammateColour | undefined) => void;
   onNavigateToProfile?: (name: string) => void;
 }) {
+  const { t } = useTranslation(["team", "common"]);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: `member-${member.profile}`,
   });
@@ -65,24 +67,24 @@ export function SortableMember({
           <div>
             <div className="te-member-name">
               {onNavigateToProfile ? (
-                <span className="te-member-name-link" onClick={(e) => { e.stopPropagation(); onNavigateToProfile(member.profile); }} title={`Go to ${member.profile}`}>
+                <span className="te-member-name-link" onClick={(e) => { e.stopPropagation(); onNavigateToProfile(member.profile); }} title={t("team:member.goToProfile", { name: member.profile })}>
                   {member.profile}
                 </span>
               ) : member.profile}
-              {member.isLead && <span className="te-lead-badge">LEAD</span>}
-              {isBroken && <span className="te-broken-badge">Missing</span>}
+              {member.isLead && <span className="te-lead-badge">{t("team:member.lead")}</span>}
+              {isBroken && <span className="te-broken-badge">{t("team:member.missing")}</span>}
             </div>
-            <div className="te-member-meta">{pluginCount} plugin{pluginCount !== 1 ? "s" : ""}</div>
+            <div className="te-member-meta">{t("team:member.pluginCount", { count: pluginCount })}</div>
           </div>
         </div>
         <div className="te-member-right">
           {!member.isLead && (
-            <button className="te-set-lead" onClick={onSetLead}>Set as lead</button>
+            <button className="te-set-lead" onClick={onSetLead}>{t("team:member.setAsLead")}</button>
           )}
           <button
             className="te-remove"
             onClick={onRemove}
-            aria-label={`Remove ${member.profile} from team`}
+            aria-label={t("team:member.removeFromTeam", { name: member.profile })}
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -94,21 +96,21 @@ export function SortableMember({
             TEAMMATE_COLOURS palette are ready; re-enable this UI block once Anthropic
             adds color support to the Agent tool's spawn input schema. */}
         <div className="te-field-row">
-          <span className="te-field-label">Role</span>
+          <span className="te-field-label">{t("team:editor.role")}</span>
           <input
             className="te-field-input"
             value={member.role}
             onChange={(e) => onRoleChange(e.target.value)}
-            placeholder="e.g. Lead Researcher"
+            placeholder={t("team:member.rolePlaceholder")}
           />
         </div>
         <div className="te-field-row">
-          <span className="te-field-label">Instructions</span>
+          <span className="te-field-label">{t("team:editor.instructions")}</span>
           <textarea
             className="te-field-textarea"
             value={member.instructions}
             onChange={(e) => onInstructionsChange(e.target.value)}
-            placeholder="Instructions for this agent in the team context..."
+            placeholder={t("team:member.instructionsPlaceholder")}
           />
         </div>
       </div>
