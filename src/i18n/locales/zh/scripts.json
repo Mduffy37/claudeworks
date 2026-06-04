@@ -1,0 +1,48 @@
+{
+  "listAddons": {
+    "notRunningUnderProfile": "未在 Profile 下运行（无 CLAUDE_CONFIG_DIR）",
+    "profilesJsonNotFound": "未找到 profiles.json",
+    "profileNotFound": "未找到 Profile：{{name}}",
+    "profile": "Profile",
+    "plugins": "Plugin",
+    "skills": "Skills",
+    "commands": "命令",
+    "agents": "代理",
+    "active": "{{count}} 个已启用",
+    "activeExcluded": "{{count}} 个已启用，{{excluded}} 个已排除",
+    "localItems": "本地（来自 {{dir}}/.claude/）"
+  },
+  "writeProfile": {
+    "success": "配置已保存：{{name}}",
+    "error": "保存失败：{{error}}"
+  },
+  "writeTeam": {
+    "success": "Team 已保存：{{name}}",
+    "error": "保存失败：{{error}}",
+    "nameRequired": "T_NAME 未设置或为空",
+    "invalidName": "T_NAME 包含无效字符",
+    "membersRequired": "T_MEMBERS 不能为空",
+    "duplicateProfiles": "T_MEMBERS 中存在重复的 Profile：{{profiles}}",
+    "profileNotExists": "Team 成员引用的 Profile \"{{name}}\" 不存在"
+  },
+  "installPlugins": {
+    "claudeNotFound": "未找到 claude 二进制文件。是否已安装 Claude Code？",
+    "installing": "正在安装 {{name}}...",
+    "success": "已安装：{{name}}",
+    "failed": "安装失败 {{name}}：{{error}}"
+  },
+  "listLocalPlugins": {
+    "title": "本地 Plugin"
+  },
+  "listPluginItems": {
+    "missingId": "缺少 Plugin ID 参数",
+    "skills": "Skills",
+    "commands": "命令",
+    "agents": "代理"
+  },
+  "inferProject": {
+    "analyzing": "正在分析项目...",
+    "detected": "检测到：{{type}}",
+    "unknown": "未知项目类型"
+  }
+}

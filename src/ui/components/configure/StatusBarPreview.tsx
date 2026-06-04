@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { StatusLineConfig } from "../../../electron/types";
 import { ansiToSegments, AnsiSegment } from "./ansiToSegments";
 
@@ -9,6 +10,7 @@ interface Props {
 const DEBOUNCE_MS = 200;
 
 export function StatusBarPreview({ config }: Props) {
+  const { t } = useTranslation(["settings"]);
   const [segments, setSegments] = useState<AnsiSegment[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function StatusBarPreview({ config }: Props) {
 
   return (
     <div className="status-bar-preview">
-      <div className="status-bar-preview-label">Preview</div>
+      <div className="status-bar-preview-label">{t("settings:statusLine.preview")}</div>
       {error ? (
         <div className="status-bar-preview-error">{error}</div>
       ) : (
@@ -44,9 +46,9 @@ export function StatusBarPreview({ config }: Props) {
         </div>
       )}
       <div className="status-bar-preview-hint">
-        <strong>Example data:</strong> model, context%, cost, uptime, lines, burn, and ctx-to-full use a mock session (Opus, 25% context, 30m, $0.50).
+        <strong>{t("settings:statusLine.exampleData")}</strong> {t("settings:statusLine.exampleHint")}
         <br />
-        <strong>Real data:</strong> time, git, cwd, 5h/7d usage, active profile, and plugin count are queried live.
+        <strong>{t("settings:statusLine.realData")}</strong> {t("settings:statusLine.realHint")}
       </div>
     </div>
   );

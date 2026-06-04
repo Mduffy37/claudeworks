@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Profile } from "../../../src/electron/types";
 
 interface Props {
@@ -22,15 +23,15 @@ function profileInitial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "P";
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("common:status.justNow");
+  if (mins < 60) return t("common:status.minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t("common:status.hoursAgo", { count: hrs });
   const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t("common:status.daysAgo", { count: days });
   return new Date(ts).toLocaleDateString();
 }
 
@@ -52,6 +53,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
   importedProjects?: string[];
   onOpenProjectsConfig?: () => void;
 }) {
+  const { t } = useTranslation(["profile", "common"]);
   const profileDirs = profile.directories ?? (profile.directory ? [profile.directory] : []);
   const dirs = [...new Set([...importedProjects, ...profileDirs])];
   const storageKey = `launchDir:${profile.name}`;
@@ -116,12 +118,12 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
       <button
         className="btn-launch-sidebar"
         onClick={handleLaunch}
-        title={`Launch "${profile.name}"${selectedDir ? ` in ${shortPath(selectedDir)}` : ""}`}
+        title={selectedDir ? t("profile:list.launchTitleInDir", { name: profile.name, dir: shortPath(selectedDir) }) : t("profile:list.launchTitle", { name: profile.name })}
       >
         <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
           <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="btn-launch-label">Launch</span>
+        <span className="btn-launch-label">{t("common:buttons.launch")}</span>
       </button>
     </div>
   );
@@ -130,6 +132,7 @@ function SidebarLaunch({ profile, onLaunch, onSave, isSelectedAndDirty, imported
 type SidebarSort = "name" | "plugins" | "recent" | "favourites";
 
 export function ProfileList({ profiles, selectedName, profileHealth, importedProjects, onSelect, onNew, onLaunch, onSave, dirty, onToggleFavourite, onOpenProjectsConfig, onRequestFocusTagsOnSelected, onRequestFocusProjectsOnSelected }: Props) {
+  const { t } = useTranslation(["profile", "common"]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
@@ -173,8 +176,8 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
   return (
     <div className="profile-list">
       <div className="profile-list-header">
-        <h2>Profiles</h2>
-        <button className="btn-icon" onClick={onNew} title="New profile" aria-label="New profile">
+        <h2>{t("profile:list.title")}</h2>
+        <button className="btn-icon" onClick={onNew} title={t("profile:list.newProfile")} aria-label={t("profile:list.newProfile")}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -187,7 +190,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
             <input
               type="text"
               className="pl-search-input"
-              placeholder="Search profiles..."
+              placeholder={t("profile:list.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -200,7 +203,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 onChange={(e) => setTagFilter(e.target.value)}
                 title="Filter by tag"
               >
-                <option value="">All tags</option>
+                <option value="">{t("profile:list.allTags")}</option>
                 {allTags.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
@@ -212,7 +215,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 onClick={() => onRequestFocusTagsOnSelected?.()}
                 title={selectedName ? "Add a tag to the selected profile" : "Select a profile first, then click to add a tag"}
               >
-                + Tag
+                {t("profile:list.addTag")}
               </button>
             )}
             {allProjects.length > 0 ? (
@@ -222,7 +225,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 onChange={(e) => setProjectFilter(e.target.value)}
                 title="Filter by project"
               >
-                <option value="">All projects</option>
+                <option value="">{t("profile:list.allProjects")}</option>
                 {allProjects.map((p) => (
                   <option key={p} value={p}>{shortPath(p)}</option>
                 ))}
@@ -235,7 +238,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                 title={selectedName ? "Add a project to the selected profile" : "Select a profile first, then click to add a project"}
                 aria-label={selectedName ? "Add project to selected profile" : "Add project (select a profile first)"}
               >
-                <span aria-hidden="true">+ </span>Project
+                {t("profile:list.addProject")}
               </button>
             )}
             <select
@@ -244,10 +247,10 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
               onChange={(e) => setSortBy(e.target.value as SidebarSort)}
               title="Sort by"
             >
-              <option value="name">A-Z</option>
-              <option value="plugins">Plugins</option>
-              <option value="recent">Recent</option>
-              <option value="favourites">Favourites</option>
+              <option value="name">{t("profile:list.sortBy.name")}</option>
+              <option value="plugins">{t("profile:list.sortBy.plugins")}</option>
+              <option value="recent">{t("profile:list.sortBy.recent")}</option>
+              <option value="favourites">{t("profile:list.sortBy.favourites")}</option>
             </select>
           </div>
         </div>
@@ -257,15 +260,14 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
         {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
-            <div className="empty-state-title">No profiles yet</div>
+            <div className="empty-state-title">{t("profile:list.emptyTitle")}</div>
             <div className="empty-state-body">
-              Profiles save named presets of plugins, skills, and settings for Claude Code sessions.
-              Click <strong>+</strong> above to create your first profile.
+              {t("profile:list.emptyBody")}
             </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
-            <div className="empty-state-title">No matches</div>
+            <div className="empty-state-title">{t("profile:list.noMatches")}</div>
           </div>
         ) : (
           filtered.map((p) => (
@@ -288,7 +290,7 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                   <div className="profile-item-name">
                     {p.name}
                     {p.isDefault && (
-                      <span className="default-badge" aria-hidden="true">DEFAULT</span>
+                      <span className="default-badge" aria-hidden="true">{t("profile:list.defaultBadge")}</span>
                     )}
                     {profileHealth[p.name] && (
                       <span
@@ -304,8 +306,8 @@ export function ProfileList({ profiles, selectedName, profileHealth, importedPro
                     )}
                   </div>
                   <div className="profile-item-meta" aria-hidden="true">
-                    {p.plugins.length} plugin{p.plugins.length !== 1 ? "s" : ""}
-                    {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched)}` : ""}
+                    {t("common:plurals.plugin", { count: p.plugins.length })}
+                    {p.lastLaunched ? ` · ${timeAgo(p.lastLaunched, t)}` : ""}
                   </div>
                 </div>
               </button>

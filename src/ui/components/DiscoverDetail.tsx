@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { AvailablePlugin } from "../../electron/types";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 
@@ -14,6 +15,7 @@ function formatCount(n: number): string {
 }
 
 export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
+  const { t } = useTranslation(["marketplace", "common"]);
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -22,7 +24,7 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
     return (
       <div className="pm-empty">
         <div className="empty-state">
-          <div className="empty-state-title">Select a plugin to view details</div>
+          <div className="empty-state-title">{t("common:emptyStates.selectPlugin")}</div>
         </div>
       </div>
     );
@@ -35,7 +37,7 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
     try {
       await onInstall(plugin.pluginId);
     } catch (err: any) {
-      setError(err?.message ?? "Installation failed");
+      setError(err?.message ?? t("common:errors.installationFailed"));
     } finally {
       setInstalling(false);
     }
@@ -54,19 +56,19 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
         <div>
           <h2 className="pm-name">{plugin.name}</h2>
           <div className="pm-subtitle">
-            {plugin.marketplaceName} &middot; {formatCount(plugin.installCount)} installs
+            {plugin.marketplaceName} &middot; {t("discover.installs", { count: plugin.installCount })}
           </div>
         </div>
         <div className="pm-actions">
           {isInstalled ? (
-            <span className="discover-installed-badge">Installed</span>
+            <span className="discover-installed-badge">{t("detail.installed")}</span>
           ) : (
             <button
               className="btn-primary"
               onClick={() => setShowConfirm(true)}
               disabled={installing}
             >
-              {installing ? "Installing..." : "Install"}
+              {installing ? t("detail.installing") : t("detail.install")}
             </button>
           )}
         </div>
@@ -77,7 +79,7 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
 
         {plugin.source.url && (
           <div className="discover-detail-section">
-            <div className="pm-label">Source</div>
+            <div className="pm-label">{t("detail.source")}</div>
             <a
               href={plugin.source.url}
               className="discover-source-link"
@@ -98,9 +100,9 @@ export function DiscoverDetail({ plugin, isInstalled, onInstall }: Props) {
 
       {showConfirm && (
         <ConfirmDialog
-          title={`Install ${plugin.name}?`}
-          description={`Install "${plugin.name}" from ${plugin.marketplaceName}? This will download and install the plugin globally.`}
-          confirmLabel="Install"
+          title={t("detail.installTitle", { name: plugin.name })}
+          description={t("detail.installDesc", { name: plugin.name, marketplace: plugin.marketplaceName })}
+          confirmLabel={t("detail.install")}
           confirmVariant="primary"
           onConfirm={handleInstall}
           onCancel={() => setShowConfirm(false)}

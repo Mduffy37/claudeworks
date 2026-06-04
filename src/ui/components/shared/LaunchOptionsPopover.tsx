@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { LaunchOptions } from "../../../electron/types";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 const POPOVER_MARGIN = 12;
 
 export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaunch, onClose }: Props) {
+  const { t } = useTranslation(["common"]);
   const [terminalApp, setTerminalApp] = useState("terminal");
   const [tmuxMode, setTmuxMode] = useState<"cc" | "plain" | "none">("cc");
   const [customFlags, setCustomFlags] = useState("");
@@ -82,10 +84,10 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
         ref={popoverRef}
         style={pos ? { top: pos.top, left: pos.left, right: "auto", visibility: "visible", ["--popover-arrow-left" as any]: `${pos.arrowLeft}px` } : { visibility: "hidden" }}
       >
-        <div className="launch-popover-title">Launch Settings</div>
+        <div className="launch-popover-title">{t("common:labels.launchSettings")}</div>
 
         <div className="launch-popover-field">
-          <label>Terminal</label>
+          <label>{t("settings:general.terminalApp")}</label>
           <select value={terminalApp} onChange={(e) => {
             setTerminalApp(e.target.value);
             if (e.target.value !== "iterm2" && tmuxMode === "cc") setTmuxMode("plain");
@@ -97,7 +99,7 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
 
         {showTmux && (
           <div className="launch-popover-field">
-            <label>tmux Mode</label>
+            <label>{t("settings:general.tmuxMode")}</label>
             {tmuxInstalled ? (
               <select value={tmuxMode} onChange={(e) => setTmuxMode(e.target.value as any)}>
                 {terminalApp === "iterm2" && <option value="cc">-CC (iTerm integration)</option>}
@@ -106,14 +108,14 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
               </select>
             ) : (
               <div className="launch-popover-hint" style={{ margin: 0, padding: "5px 0" }}>
-                tmux not installed — defaulting to no tmux
+                {t("settings:general.tmuxNotInstalled")}
               </div>
             )}
           </div>
         )}
 
         <div className="launch-popover-field">
-          <label>Custom Flags</label>
+          <label>{t("team:editor.customFlags")}</label>
           <input
             type="text"
             value={customFlags}
@@ -128,19 +130,19 @@ export function LaunchOptionsPopover({ defaultDangerous, showTmux = true, onLaun
             checked={dangerous}
             onChange={(e) => setDangerous(e.target.checked)}
           />
-          <span>Dangerous mode</span>
+          <span>{t("common:labels.dangerousMode")}</span>
           <span className="launch-popover-hint">--dangerously-skip-permissions</span>
         </label>
 
         <div className="launch-popover-actions">
-          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-secondary" onClick={onClose}>{t("common:buttons.cancel")}</button>
           <button className="btn-launch" onClick={handleLaunch}>
             <span className="btn-launch-icon">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            Launch
+            {t("common:buttons.launch")}
           </button>
         </div>
       </div>

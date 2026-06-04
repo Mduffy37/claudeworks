@@ -1,0 +1,48 @@
+{
+  "listAddons": {
+    "notRunningUnderProfile": "Not running under a profile (no CLAUDE_CONFIG_DIR)",
+    "profilesJsonNotFound": "profiles.json not found",
+    "profileNotFound": "Profile not found: {{name}}",
+    "profile": "Profile",
+    "plugins": "Plugins",
+    "skills": "Skills",
+    "commands": "Commands",
+    "agents": "Agents",
+    "active": "{{count}} active",
+    "activeExcluded": "{{count}} active, {{excluded}} excluded",
+    "localItems": "Local (from {{dir}}/.claude/)"
+  },
+  "writeProfile": {
+    "success": "Profile saved: {{name}}",
+    "error": "Failed to save: {{error}}"
+  },
+  "writeTeam": {
+    "success": "Team saved: {{name}}",
+    "error": "Failed to save: {{error}}",
+    "nameRequired": "T_NAME is not set or empty",
+    "invalidName": "T_NAME contains invalid characters",
+    "membersRequired": "T_MEMBERS cannot be empty",
+    "duplicateProfiles": "Duplicate profile(s) in T_MEMBERS: {{profiles}}",
+    "profileNotExists": "Team member references profile \"{{name}}\" which does not exist"
+  },
+  "installPlugins": {
+    "claudeNotFound": "Real claude binary not found. Is Claude Code installed?",
+    "installing": "Installing {{name}}...",
+    "success": "Installed: {{name}}",
+    "failed": "Failed to install {{name}}: {{error}}"
+  },
+  "listLocalPlugins": {
+    "title": "Local Plugins"
+  },
+  "listPluginItems": {
+    "missingId": "Missing plugin id argument",
+    "skills": "Skills",
+    "commands": "Commands",
+    "agents": "Agents"
+  },
+  "inferProject": {
+    "analyzing": "Analyzing project...",
+    "detected": "Detected: {{type}}",
+    "unknown": "Unknown project type"
+  }
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "react-i18next";
 import type { Profile } from "../../../electron/types";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function DraggableProfile({ profile, inTeam, onAdd }: Props) {
+  const { t } = useTranslation(["team", "common"]);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: `avail-${profile.name}`,
     disabled: inTeam,
@@ -31,14 +33,14 @@ export function DraggableProfile({ profile, inTeam, onAdd }: Props) {
         className="te-avail-grip"
         aria-hidden="true"
         {...(inTeam ? {} : { ...attributes, ...listeners })}
-        title={inTeam ? undefined : "Drag to add to team"}
+        title={inTeam ? undefined : t("team:member.dragToAdd")}
       >
         <span /><span /><span /><span /><span /><span />
       </div>
       <div className="te-avail-text">
         <div className="te-avail-name">{profile.name}</div>
         <div className="te-avail-meta">
-          {inTeam ? "In team \u2713" : `${profile.plugins.length} plugin${profile.plugins.length !== 1 ? "s" : ""}`}
+          {inTeam ? t("team:member.inTeam") : t("team:member.pluginCount", { count: profile.plugins.length })}
         </div>
       </div>
       {!inTeam && onAdd && (
@@ -46,8 +48,8 @@ export function DraggableProfile({ profile, inTeam, onAdd }: Props) {
           type="button"
           className="te-avail-add"
           onClick={onAdd}
-          aria-label={`Add ${profile.name} to team`}
-          title="Add to team"
+          aria-label={t("team:member.addProfileToTeam", { name: profile.name })}
+          title={t("team:member.addToTeam")}
         >
           +
         </button>

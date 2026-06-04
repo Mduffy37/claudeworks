@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import type { Profile, ProfileAlias, StatusLineConfig } from "../../../electron/types";
 
 interface HookEntry { event: string; index: number; command: string }
@@ -56,6 +57,7 @@ export function SettingsTab(props: Props) {
     onAddToPath,
   } = props;
 
+  const { t } = useTranslation(["profile", "common"]);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
   const [globalHooks, setGlobalHooks] = useState<HookEntry[]>([]);
@@ -187,7 +189,7 @@ export function SettingsTab(props: Props) {
     // Check for duplicates within this profile first
     const dupeIdx = aliases.findIndex((a, i) => i !== index && a.name === aliasName);
     if (dupeIdx >= 0) {
-      setAliasConflicts((prev) => ({ ...prev, [index]: { conflict: true, source: "profile", detail: `Duplicate — already used above` } }));
+      setAliasConflicts((prev) => ({ ...prev, [index]: { conflict: true, source: "profile", detail: t("profile:settings.duplicateAlias") } }));
       return;
     }
     try {
@@ -201,12 +203,12 @@ export function SettingsTab(props: Props) {
   return (
     <div className="pe-settings-tab">
       <div className="pe-settings-section">
-        <div className="pe-settings-section-label">Session Behavior</div>
+        <div className="pe-settings-section-label">{t("profile:settings.sessionBehavior")}</div>
         <div className="modal-fields">
           <div className="field">
-            <label>Model</label>
+            <label>{t("profile:editor.model")}</label>
             <select value={model} onChange={(e) => onChangeModel(e.target.value)}>
-              <option value="">Default (inherit global)</option>
+              <option value="">{t("profile:settings.defaultInheritGlobal")}</option>
               <option value="opus">Opus</option>
               <option value="sonnet">Sonnet</option>
               <option value="haiku">Haiku</option>
@@ -216,15 +218,15 @@ export function SettingsTab(props: Props) {
             <>
               <div className="field-divider" />
               <div className="field">
-                <label>Context</label>
+                <label>{t("common:fields.context")}</label>
                 <select
                   value={opusContext ?? "1m"}
                   onChange={(e) => onChangeOpusContext(e.target.value as "200k" | "1m")}
                 >
-                  <option value="1m">1M (default)</option>
+                  <option value="1m">{t("profile:settings.opusContextDefault")}</option>
                   <option value="200k">200k</option>
                 </select>
-                <div className="field-hint">Opus 1M context is included in your plan.</div>
+                <div className="field-hint">{t("profile:settings.opusContextHint")}</div>
               </div>
             </>
           )}
@@ -232,45 +234,45 @@ export function SettingsTab(props: Props) {
             <>
               <div className="field-divider" />
               <div className="field">
-                <label>Context</label>
+                <label>{t("common:fields.context")}</label>
                 <select
                   value={sonnetContext ?? "200k"}
                   onChange={(e) => onChangeSonnetContext(e.target.value as "200k" | "1m")}
                 >
-                  <option value="200k">200k (default)</option>
-                  <option value="1m">1M — billed as extra usage</option>
+                  <option value="200k">{t("profile:settings.sonnetContextDefault")}</option>
+                  <option value="1m">{t("profile:settings.sonnetContextExtra")}</option>
                 </select>
-                <div className="field-hint">Sonnet 1M context is billed as extra usage outside your plan.</div>
+                <div className="field-hint">{t("profile:settings.sonnetContextHint")}</div>
               </div>
             </>
           )}
           <div className="field-divider" />
           <div className="field">
-            <label>Effort Level</label>
+            <label>{t("profile:editor.effortLevel")}</label>
             <select value={effortLevel} onChange={(e) => onChangeEffort(e.target.value)}>
-              <option value="">Default (inherit global)</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="xhigh">X-High</option>
-              <option value="max">Max</option>
+              <option value="">{t("profile:settings.defaultInheritGlobal")}</option>
+              <option value="low">{t("profile:settings.effortLow")}</option>
+              <option value="medium">{t("profile:settings.effortMedium")}</option>
+              <option value="high">{t("profile:settings.effortHigh")}</option>
+              <option value="xhigh">{t("profile:settings.effortXhigh")}</option>
+              <option value="max">{t("profile:settings.effortMax")}</option>
             </select>
           </div>
           <div className="field-divider" />
           <div className="field">
-            <label>Voice</label>
+            <label>{t("common:fields.voice")}</label>
             <div className="field-toggle">
               <label className="toggle-switch">
                 <input
                   type="checkbox"
                   checked={voiceEnabled ?? true}
                   onChange={(e) => onChangeVoice(e.target.checked)}
-                  aria-label="Voice"
+                  aria-label={t("common:fields.voice")}
                 />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
               <span className="field-toggle-label">
-                {voiceEnabled === undefined ? "Default" : voiceEnabled ? "Enabled" : "Disabled"}
+                {voiceEnabled === undefined ? t("profile:settings.defaultVoice") : voiceEnabled ? t("profile:settings.enabledVoice") : t("profile:settings.disabledVoice")}
               </span>
             </div>
           </div>
@@ -278,7 +280,7 @@ export function SettingsTab(props: Props) {
       </div>
 
       <div className="pe-settings-section">
-        <div className="pe-settings-section-label">Status Bar</div>
+        <div className="pe-settings-section-label">{t("profile:settings.statusBar")}</div>
         <div className="modal-fields">
           <div className="field">
             <div className="field-toggle">
@@ -294,23 +296,23 @@ export function SettingsTab(props: Props) {
                       onChangeStatusLineConfig(undefined);
                     }
                   }}
-                  aria-label="Override global status bar for this profile"
+                  aria-label={t("profile:settings.overrideGlobalStatusBar")}
                 />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
-              <span className="field-toggle-label">Override global status bar for this profile</span>
+              <span className="field-toggle-label">{t("profile:settings.overrideGlobalStatusBar")}</span>
             </div>
             <div className="field-hint">
               {statusLineConfig
-                ? "This profile uses its own widget config, seeded from the global status bar. Edits made in Configure Claude \u2192 Status Bar apply to the global config only; per-profile overrides persist independently and take effect for sessions launched via this profile."
-                : "When off, sessions launched via this profile use the global status bar from Configure Claude \u2192 Status Bar."}
+                ? t("profile:settings.statusBarOverrideHint")
+                : t("profile:settings.statusBarDefaultHint")}
             </div>
           </div>
         </div>
       </div>
 
       <div className="pe-settings-section">
-        <div className="pe-settings-section-label">Authentication</div>
+        <div className="pe-settings-section-label">{t("profile:settings.authentication")}</div>
         <div className="modal-fields">
           <div className="field">
             <div className="field-toggle">
@@ -319,16 +321,16 @@ export function SettingsTab(props: Props) {
                   type="checkbox"
                   checked={useDefaultAuth}
                   onChange={(e) => onChangeUseDefaultAuth(e.target.checked)}
-                  aria-label="Use default authentication"
+                  aria-label={t("profile:settings.useDefaultAuth")}
                 />
                 <span className="toggle-track"><span className="toggle-thumb" /></span>
               </label>
-              <span className="field-toggle-label">Use default authentication</span>
+              <span className="field-toggle-label">{t("profile:settings.useDefaultAuth")}</span>
             </div>
             <div className="field-hint">
               {useDefaultAuth
-                ? "This profile shares credentials with your default Claude Code installation."
-                : "This profile will use its own credentials. You'll need to authenticate separately on first launch."}
+                ? t("profile:settings.authSharedHint")
+                : t("profile:settings.authOwnHint")}
             </div>
           </div>
         </div>
@@ -344,7 +346,7 @@ export function SettingsTab(props: Props) {
           <svg className="pe-settings-accordion-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="pe-settings-section-label">Environment Variables</span>
+          <span className="pe-settings-section-label">{t("profile:settings.envVars")}</span>
           {(envEntries.length > 0 || inheritedEnv.length > 0) && (
             <span className="pe-settings-section-count">{envEntries.length + inheritedEnv.length}</span>
           )}
@@ -353,12 +355,12 @@ export function SettingsTab(props: Props) {
         <div className="modal-fields">
           {inheritedEnv.length > 0 && (
             <>
-              <div className="field-hint" style={{ marginBottom: "2px" }}>Inherited from global settings</div>
+              <div className="field-hint" style={{ marginBottom: "2px" }}>{t("profile:settings.inheritedFromGlobal")}</div>
               {inheritedEnv.map(([key, value]) => (
                 <div className="env-var-row" key={`global-${key}`}>
-                  <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
+                  <input type="text" value={key} disabled aria-label={t("common:fields.name")} title={knownVars.find((v) => v.name === key)?.description} />
                   <input type="text" value={value} disabled aria-label={`${key} value`} />
-                  <button className="btn-secondary" onClick={() => { onChangeEnv({ ...env, [key]: value }); }} title="Override in this profile">Override</button>
+                  <button className="btn-secondary" onClick={() => { onChangeEnv({ ...env, [key]: value }); }} title={t("profile:settings.overrideInProfile")}>{t("profile:settings.overrideInProfile")}</button>
                 </div>
               ))}
               <div className="field-divider" />
@@ -370,7 +372,7 @@ export function SettingsTab(props: Props) {
                 type="text"
                 value={key}
                 disabled
-                aria-label="Variable name"
+                aria-label={t("common:fields.name")}
                 title={knownVars.find((v) => v.name === key)?.description ?? (globalEnv[key] !== undefined ? `${key} (overriding global)` : key)}
                 style={globalEnv[key] !== undefined ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
               />
@@ -378,10 +380,10 @@ export function SettingsTab(props: Props) {
                 type="text"
                 value={value}
                 onChange={(e) => handleUpdateEnvValue(key, e.target.value)}
-                placeholder="value"
+                placeholder={t("common:fields.value")}
                 aria-label={`${key} value`}
               />
-              <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
+              <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>{t("common:buttons.remove")}</button>
             </div>
           ))}
           {(envEntries.length > 0 || inheritedEnv.length > 0) && <div className="field-divider" />}
@@ -392,7 +394,7 @@ export function SettingsTab(props: Props) {
                 value={newKey}
                 onChange={(e) => handleNewKeyChange(e.target.value)}
                 placeholder="NEW_VAR_NAME"
-                aria-label="New variable name"
+                aria-label={t("common:fields.name")}
                 onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
                 onFocus={() => { if (newKey.length > 0 && suggestions.length > 0) setShowSuggestions(true); }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
@@ -417,8 +419,8 @@ export function SettingsTab(props: Props) {
                 type="text"
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
-                placeholder="value"
-                aria-label="New variable value"
+                placeholder={t("common:fields.value")}
+                aria-label={t("common:fields.value")}
                 onKeyDown={(e) => { if (e.key === "Enter") handleAddEnv(); }}
                 onFocus={() => { if (knownValuesForKey && knownValuesForKey.length > 0) setShowValueSuggestions(true); }}
                 onBlur={() => setTimeout(() => setShowValueSuggestions(false), 150)}
@@ -437,10 +439,10 @@ export function SettingsTab(props: Props) {
                 </div>
               )}
             </div>
-            <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
+            <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>{t("common:buttons.add")}</button>
           </div>
           {envEntries.length === 0 && inheritedEnv.length === 0 && (
-            <div className="field-hint">Environment variables set when this profile launches.</div>
+            <div className="field-hint">{t("profile:settings.envVarsHint")}</div>
           )}
         </div>
         )}
@@ -457,13 +459,13 @@ export function SettingsTab(props: Props) {
             <svg className="pe-settings-accordion-chevron" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M4 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="pe-settings-section-label">Hooks</span>
+            <span className="pe-settings-section-label">{t("profile:settings.hooks")}</span>
             <span className="pe-settings-section-count">{globalHooks.length}</span>
           </button>
           {openAdvanced.hooks && (
           <div className="modal-fields">
             <div className="field-hint" style={{ marginBottom: "4px" }}>
-              Global hooks inherited from ~/.claude/settings.json. Toggle off to disable for this profile.
+              {t("profile:settings.hooksHint")}
             </div>
             {globalHooks.map((h) => {
               const disabled = isHookDisabled(h.event, h.index);
@@ -493,7 +495,7 @@ export function SettingsTab(props: Props) {
       )}
 
       <div className="pe-settings-section">
-        <div className="pe-settings-section-label">Launch Configuration</div>
+        <div className="pe-settings-section-label">{t("profile:settings.launchConfig")}</div>
         <div className="modal-fields">
           {/* ── Default profile: claude alias toggle ── */}
           {isDefault && (
@@ -509,23 +511,23 @@ export function SettingsTab(props: Props) {
                   <span className="toggle-track"><span className="toggle-thumb" /></span>
                 </label>
                 <span className="field-toggle-label">
-                  Disable <code>claude</code> override <span style={{ fontSize: "0.769rem", color: "var(--text-muted)" }}>(not recommended)</span>
+                  {t('profile:settings.disableClaudeOverride')}
                 </span>
               </div>
               <div className="field-hint">
                 {disableDefaultAlias
-                  ? <><code>claude</code> will load with all {pluginCount} installed addon{pluginCount !== 1 ? "s" : ""} — no profile filtering applied</>
-                  : <>Profile controls which of the {pluginCount} addon{pluginCount !== 1 ? "s" : ""} load into <code>claude</code> sessions</>}
+                  ? t('profile:settings.claudeOverrideDisabledHint')
+                  : t('profile:settings.claudeOverrideEnabledHint')}
               </div>
             </div>
           )}
 
           {/* ── Alias list ── */}
           <div className="field">
-            <label>CLI Aliases</label>
+            <label>{t("profile:settings.cliAliases")}</label>
             {aliases.length === 0 && !isDefault && (
               <div className="field-hint" style={{ marginBottom: "6px" }}>
-                Add aliases to launch this profile from the terminal.
+                {t("profile:settings.addAliasesHint")}
               </div>
             )}
             {aliases.map((alias, idx) => {
@@ -537,47 +539,47 @@ export function SettingsTab(props: Props) {
                     <button
                       className="alias-remove-btn btn-secondary"
                       onClick={() => removeAlias(idx)}
-                      title="Remove alias"
-                      aria-label={`Remove alias ${alias.name || "(unnamed)"}`}
+                      title={t("profile:settings.removeAlias")}
+                      aria-label={`${t("profile:settings.removeAlias")} ${alias.name || "(unnamed)"}`}
                     >
-                      Remove
+                      {t("profile:settings.removeAlias")}
                     </button>
                   )}
                   <div className="alias-row-fields">
                     <div className="field">
-                      <label>Name</label>
+                      <label>{t("common:fields.name")}</label>
                       <input
                         type="text"
                         value={alias.name}
                         onChange={(e) => updateAlias(idx, { name: e.target.value.replace(/[^a-z0-9-]/g, "") })}
                         onBlur={() => checkConflict(idx, alias.name)}
-                        placeholder="e.g. claude-research"
+                        placeholder={t("profile:settings.aliasNamePlaceholder")}
                         disabled={isManagedClaudeAlias}
                         style={isManagedClaudeAlias ? { opacity: 0.5 } : undefined}
                         aria-label={`Alias ${idx + 1} name`}
                       />
                       {isManagedClaudeAlias && (
-                        <span className="field-managed-label" style={{ marginTop: "4px", display: "inline-block" }}>managed</span>
+                        <span className="field-managed-label" style={{ marginTop: "4px", display: "inline-block" }}>{t("common:labels.managed")}</span>
                       )}
                       {conflict && conflict.conflict && (
                         <div className="field-warning">{conflict.detail}</div>
                       )}
                     </div>
                     <div className="field">
-                      <label>Directory</label>
+                      <label>{t("common:fields.directory")}</label>
                       <select
                         value={alias.directory ?? ""}
                         onChange={(e) => updateAlias(idx, { directory: e.target.value || undefined })}
                         aria-label={`Alias ${idx + 1} directory`}
                       >
-                        <option value="">Default (profile directory)</option>
+                        <option value="">{t("profile:settings.defaultProfileDir")}</option>
                         {directories.map((d) => (
                           <option key={d} value={d}>{d.split("/").pop() || d}</option>
                         ))}
                       </select>
                     </div>
                     <div className="field">
-                      <label>Launch Action</label>
+                      <label>{t("profile:settings.launchAction")}</label>
                       <select
                         value={alias.launchAction ?? ""}
                         onChange={(e) => {
@@ -589,9 +591,9 @@ export function SettingsTab(props: Props) {
                         }}
                         aria-label={`Alias ${idx + 1} launch action`}
                       >
-                        <option value="">None</option>
-                        <option value="workflow">/workflow</option>
-                        <option value="prompt">Custom prompt</option>
+                        <option value="">{t("profile:settings.launchActionNone")}</option>
+                        <option value="workflow">{t("profile:settings.launchActionWorkflow")}</option>
+                        <option value="prompt">{t("profile:settings.launchActionPrompt")}</option>
                       </select>
                     </div>
                   </div>
@@ -600,7 +602,7 @@ export function SettingsTab(props: Props) {
                       className="alias-prompt-textarea"
                       value={alias.launchPrompt ?? ""}
                       onChange={(e) => updateAlias(idx, { launchPrompt: e.target.value })}
-                      placeholder="Enter the prompt to send on launch..."
+                      placeholder={t("profile:settings.aliasPromptPlaceholder")}
                       aria-label={`Alias ${idx + 1} custom prompt`}
                     />
                   )}
@@ -608,18 +610,16 @@ export function SettingsTab(props: Props) {
               );
             })}
             <button className="btn-secondary" style={{ marginTop: "4px" }} onClick={addAlias}>
-              + Add Alias
+              + {t("profile:editor.aliases")}
             </button>
             {!isInPath && aliases.length > 0 && (
               <div className="field-hint" style={{ marginTop: "6px" }}>
-                Aliases are saved to ~/.claudeworks/bin/.{" "}
-                <button className="btn-link" onClick={onAddToPath} style={{ fontSize: "inherit" }}>Add to PATH</button>{" "}
-                to use from any terminal.
+                {t('profile:settings.aliasesSavedHint')}
               </div>
             )}
             {isInPath && aliases.length > 0 && (
               <div className="field-hint" style={{ marginTop: "6px" }}>
-                Run any alias name from your terminal to launch this profile.
+                {t("profile:settings.runAliasHint")}
               </div>
             )}
           </div>
@@ -629,35 +629,35 @@ export function SettingsTab(props: Props) {
               <div className="field-divider" />
               <div className="field">
                 <button className="btn-secondary" style={{ width: "100%" }} onClick={onSetAsDefault}>
-                  {isDefault ? "Remove as Default Profile" : "Set as Default Profile"}
+                  {isDefault ? t("profile:settings.removeAsDefault") : t("profile:settings.setAsDefault")}
                 </button>
                 <div className="field-hint">
                   {isDefault
-                    ? <>Clears default status. Running <code>claude</code> will fall back to vanilla Claude (no profile), and another profile can take the default slot.</>
-                    : <>Makes this profile the default. Running <code>claude</code> will launch with this profile's plugins and settings.</>}
+                    ? t('profile:settings.removeAsDefaultHint')
+                    : t('profile:settings.setAsDefaultHint')}
                 </div>
               </div>
             </>
           )}
           <div className="field-divider" />
           <div className="field">
-            <label htmlFor="launch-prompt-input">Launch Prompt</label>
+            <label htmlFor="launch-prompt-input">{t("profile:editor.launchPrompt")}</label>
             <input
               id="launch-prompt-input"
               type="text"
               className="text-input"
               value={launchPrompt}
               onChange={(e) => onChangeLaunchPrompt(e.target.value)}
-              placeholder="e.g. /workflow  |  summarise the repo"
+              placeholder={t("profile:settings.launchPromptPlaceholder")}
             />
             <div className="field-hint">
-              Fires automatically when launching this profile (no alias invoked). Supports slash commands like <code>/workflow</code> or a free-form prompt. Leave empty to launch without an initial prompt.
+              {t('profile:settings.launchPromptHint')}
             </div>
           </div>
 
           <div className="field-divider" />
           <div className="field">
-            <label>Launch Flags</label>
+            <label>{t("profile:editor.launchFlags")}</label>
             <div className="flag-toggles">
               <div className="field-toggle">
                 <label className="toggle-switch">
@@ -684,21 +684,21 @@ export function SettingsTab(props: Props) {
                 <span className="field-toggle-label"><code>--verbose</code></span>
               </div>
             </div>
-            <input type="text" value={customFlags} onChange={(e) => onChangeCustomFlags(e.target.value)} placeholder="Additional flags, e.g. --max-turns 10" style={{ marginTop: "8px" }} />
-            <div className="field-hint">Flags passed to <code>claude</code> when launching this profile</div>
+            <input type="text" value={customFlags} onChange={(e) => onChangeCustomFlags(e.target.value)} placeholder={t("profile:settings.customFlagsPlaceholder")} style={{ marginTop: "8px" }} />
+            <div className="field-hint">t('profile:settings.customFlagsHint')</div>
           </div>
         </div>
       </div>
 
       {profileName && (
         <div className="pe-settings-section">
-          <div className="pe-settings-section-label">Profile Config</div>
+          <div className="pe-settings-section-label">{t("profile:settings.profileConfig")}</div>
           <div className="modal-fields">
             <div className="field">
               <button className="btn-secondary" style={{ width: "100%" }} onClick={async () => { const dir = await window.api.getProfileConfigDir(profileName); window.api.openInFinder(dir); }}>
-                Open Config Directory in Finder
+                {t("profile:settings.openConfigDir")}
               </button>
-              <div className="field-hint">View this profile's assembled settings, plugins, and CLAUDE.md</div>
+              <div className="field-hint">{t("profile:settings.configDirHint")}</div>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   closestCenter,
@@ -120,6 +121,7 @@ function parseDragIndex(id: string): number {
 }
 
 export function StatusBarTab() {
+  const { t } = useTranslation(["settings", "common"]);
   const [config, setConfig] = useState<StatusLineConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -163,7 +165,7 @@ export function StatusBarTab() {
   }, [addMenuOpen, presetMenuOpen]);
 
   if (!config) {
-    return <div className="status-bar-tab loading">Loading status bar config…</div>;
+    return <div className="status-bar-tab loading">{t("common:status.loadingConfig")}</div>;
   }
 
   function changeOption(idx: number, key: string, value: unknown) {
@@ -343,11 +345,9 @@ export function StatusBarTab() {
   return (
     <div className="status-bar-tab">
       <header className="status-bar-tab-header">
-        <h2>Status Bar Widgets</h2>
+        <h2>{t("statusLine.title")}</h2>
         <p className="status-bar-tab-hint">
-          Click a widget on the left to configure it in the inspector. Drag to
-          reorder. Drop in a section break to split a long bar into groups.
-          Changes apply on the next Claude Code session restart.
+          {t("statusLine.hint")}
         </p>
       </header>
 
@@ -356,7 +356,7 @@ export function StatusBarTab() {
       <div className="status-bar-split">
         <div className="status-bar-list-column">
           <section className="status-bar-section">
-            <h3 className="status-bar-section-label">Configured widgets</h3>
+            <h3 className="status-bar-section-label">{t("statusLine.configuredWidgets")}</h3>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -389,12 +389,12 @@ export function StatusBarTab() {
                 className="status-bar-add-widget"
                 onClick={() => setAddMenuOpen((prev) => !prev)}
               >
-                + Add widget
+                {t("statusLine.addWidget")}
               </button>
               {addMenuOpen && (
                 <div className="status-bar-add-menu">
                   <button type="button" onClick={() => addWidget("break")}>
-                    — Section break —
+                    {t("statusLine.sectionBreak")}
                   </button>
                   {widgetMenuEntries.map((schema) => (
                     <button
@@ -413,10 +413,10 @@ export function StatusBarTab() {
 
         <div className="status-bar-editor-column">
           <section className="status-bar-global-strip">
-            <h3 className="status-bar-section-label">Global</h3>
+            <h3 className="status-bar-section-label">{t("statusLine.global")}</h3>
             <div className="status-bar-global-row">
               <div className="status-bar-global-field">
-                <span className="status-bar-global-field-label" id="sb-master-color-label">Master color</span>
+                <span className="status-bar-global-field-label" id="sb-master-color-label">{t("statusLine.masterColor")}</span>
                 <input
                   type="color"
                   value={masterColor}
@@ -426,7 +426,7 @@ export function StatusBarTab() {
                 />
               </div>
               <div className="status-bar-global-field">
-                <span className="status-bar-global-field-label">Field separator</span>
+                <span className="status-bar-global-field-label">{t("statusLine.fieldSeparator")}</span>
                 <input
                   type="text"
                   value={fieldSep}
@@ -444,7 +444,7 @@ export function StatusBarTab() {
                 />
               </div>
               <div className="status-bar-global-field">
-                <span className="status-bar-global-field-label">Section separator</span>
+                <span className="status-bar-global-field-label">{t("statusLine.sectionSeparator")}</span>
                 <input
                   type="text"
                   value={sectionSep}
@@ -465,7 +465,7 @@ export function StatusBarTab() {
           </section>
 
           <section className="status-bar-inspector">
-            <h3 className="status-bar-inspector-label">Inspector</h3>
+            <h3 className="status-bar-inspector-label">{t("statusLine.inspector")}</h3>
             {selectedWidgetObj && selectedWidgetLabel && !selectedIsBreak ? (
               <>
                 <div className="status-bar-inspector-title">{selectedWidgetLabel}</div>
@@ -477,11 +477,11 @@ export function StatusBarTab() {
               </>
             ) : selectedIsBreak ? (
               <p className="status-bar-inspector-empty">
-                Section breaks have no options — they just split widgets into groups.
+                {t("statusLine.sectionBreakHint")}
               </p>
             ) : (
               <p className="status-bar-inspector-empty">
-                Select a widget on the left to configure it.
+                {t("statusLine.selectWidgetHint")}
               </p>
             )}
           </section>
@@ -496,7 +496,7 @@ export function StatusBarTab() {
             disabled={saving}
             onClick={() => setConfirmClear(true)}
           >
-            Clear all
+            {t("statusLine.clearAll")}
           </button>
           <div className="status-bar-preset-wrap" ref={presetMenuRef}>
             <button
@@ -504,7 +504,7 @@ export function StatusBarTab() {
               disabled={saving}
               onClick={() => setPresetMenuOpen((prev) => !prev)}
             >
-              Load preset ▾
+              {t("statusLine.loadPreset")}
             </button>
             {presetMenuOpen && (
               <div className="status-bar-preset-menu">
@@ -552,7 +552,7 @@ export function StatusBarTab() {
               <div className="field" style={{ flex: "0 0 auto", width: "180px", margin: 0 }}>
                 <input
                   type="text"
-                  placeholder="Config name…"
+                  placeholder={t("statusLine.configName")}
                   value={saveInputName}
                   onChange={(e) => setSaveInputName(e.target.value)}
                   onKeyDown={(e) => {
@@ -568,14 +568,14 @@ export function StatusBarTab() {
                 disabled={!saveInputName.trim()}
                 onClick={handleSaveConfig}
               >
-                Save
+                {t("common:buttons.save")}
               </button>
               <button
                 className="btn-secondary"
                 style={{ fontSize: "0.846rem", padding: "3px 10px" }}
                 onClick={() => { setShowSaveInput(false); setSaveInputName(""); }}
               >
-                Cancel
+                {t("common:buttons.cancel")}
               </button>
             </div>
           ) : (
@@ -584,20 +584,20 @@ export function StatusBarTab() {
               disabled={saving}
               onClick={() => setShowSaveInput(true)}
             >
-              Save current
+              {t("statusLine.saveCurrent")}
             </button>
           )}
         </div>
         <button className="btn-primary" disabled={!dirty || saving} onClick={handleSave}>
-          {saving ? "Saving…" : dirty ? "Save" : "Saved"}
+          {saving ? t("common:status.saving") : dirty ? t("common:buttons.save") : t("common:status.saved")}
         </button>
       </footer>
 
       {confirmClear && (
         <ConfirmDialog
-          title="Clear all widgets?"
-          description="Remove all widgets and reset to just the model. This can't be undone."
-          confirmLabel="Clear all"
+          title={t("statusLine.clearAllConfirm")}
+          description={t("statusLine.clearAllDesc")}
+          confirmLabel={t("statusLine.clearAll")}
           confirmVariant="danger"
           onConfirm={handleClearAll}
           onCancel={() => setConfirmClear(false)}

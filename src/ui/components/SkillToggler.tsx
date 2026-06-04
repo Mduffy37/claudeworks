@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { PluginItem, PluginWithItems } from "../../../src/electron/types";
 
 interface Props {
@@ -9,11 +10,7 @@ interface Props {
   onToggle: (itemName: string, enabled: boolean) => void;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  skill: "Skills",
-  agent: "Agents",
-  command: "Commands",
-};
+// TYPE_LABELS moved inside component to support i18n
 
 const TYPE_COLORS: Record<string, string> = {
   skill: "var(--color-skill)",
@@ -67,7 +64,14 @@ function ItemCheckbox({ checked, onChange, label }: { checked: boolean; onChange
 }
 
 export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, onToggle }: Props) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+
+  const TYPE_LABELS: Record<string, string> = {
+    skill: t("plugin:manage.skills"),
+    agent: t("plugin:manage.agents"),
+    command: t("plugin:manage.commands"),
+  };
 
   const handleContextMenu = useCallback((e: React.MouseEvent, itemPath: string) => {
     e.preventDefault();
@@ -82,7 +86,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
   }, [contextMenu]);
 
   if (items.length === 0) {
-    return <div className="skill-toggler-empty">No items found</div>;
+    return <div className="skill-toggler-empty">{t("common:emptyStates.noConfigurableItems")}</div>;
   }
 
   const depMap = useMemo(() => {
@@ -144,14 +148,14 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
                     {isCommand ? `/${item.name}` : item.name}
                   </span>
                   {!item.userInvocable && (
-                    <span className="skill-badge internal">internal</span>
+                    <span className="skill-badge internal">{t("common:labels.internal")}</span>
                   )}
                   {item.dependencies.length > 0 && (
                     <span
                       className="skill-badge deps"
                       title={"Requires:\n" + (depMap.get(item.name) ?? []).join("\n")}
                     >
-                      has deps
+                      deps
                     </span>
                   )}
                 </div>
@@ -171,7 +175,7 @@ export function SkillToggler({ items, allPlugins, pluginEnabled, excludedNames, 
               setContextMenu(null);
             }}
           >
-            Reveal in Finder
+            {t("common:buttons.openInFinder")}
           </button>
         </div>
       )}
