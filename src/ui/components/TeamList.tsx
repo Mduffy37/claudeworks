@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Team } from "../../electron/types";
 import { checkTeamEnvRequirement, addTeamEnvVar } from "../helpers/teamEnvCheck";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
@@ -22,6 +23,7 @@ function shortPath(dir: string): string {
 }
 
 function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }: { team: Team; importedProjects?: string[]; onOpenProjectsConfig?: () => void }) {
+  const { t } = useTranslation(["team", "common"]);
   const storageKey = `teamLaunchDir:${team.name}`;
   const [selectedDir, setSelectedDir] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -102,12 +104,12 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
           className="btn-launch-sidebar"
           onClick={handleLaunch}
           disabled={!lead || launching}
-          title={lead ? "Launch team" : "No lead profile set"}
+          title={lead ? t("team:list.launchTitle", { name: team.name }) : "No lead profile set"}
         >
           <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
             <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="btn-launch-label">{launching ? "..." : "Launch"}</span>
+          <span className="btn-launch-label">{launching ? "..." : t("team:list.launchLabel")}</span>
         </button>
       </div>
       {showEnvPrompt && (
@@ -144,6 +146,7 @@ function TeamSidebarLaunch({ team, importedProjects = [], onOpenProjectsConfig }
 type SidebarSort = "name" | "members" | "favourites";
 
 export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, onSelect, onNew, onToggleFavourite, onOpenProjectsConfig, onRequestFocusTagsOnSelected, onRequestFocusProjectsOnSelected }: Props) {
+  const { t } = useTranslation(["team", "common"]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SidebarSort>("name");
   const [tagFilter, setTagFilter] = useState("");
@@ -151,16 +154,16 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    for (const t of teams) {
-      for (const tag of t.tags ?? []) tags.add(tag);
+    for (const team of teams) {
+      for (const tag of team.tags ?? []) tags.add(tag);
     }
     return Array.from(tags).sort();
   }, [teams]);
 
   const allProjects = useMemo(() => {
     const set = new Set<string>();
-    for (const t of teams) {
-      for (const dir of t.projects ?? []) set.add(dir);
+    for (const team of teams) {
+      for (const dir of team.projects ?? []) set.add(dir);
     }
     return Array.from(set).sort();
   }, [teams]);
@@ -168,11 +171,11 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
   const filtered = useMemo(() => {
     let result = teams;
     const q = search.toLowerCase().trim();
-    if (q) result = result.filter((t) => t.name.toLowerCase().includes(q));
-    if (tagFilter) result = result.filter((t) => (t.tags ?? []).includes(tagFilter));
-    if (projectFilter) result = result.filter((t) => (t.projects ?? []).includes(projectFilter));
+    if (q) result = result.filter((tm) => tm.name.toLowerCase().includes(q));
+    if (tagFilter) result = result.filter((tm) => (tm.tags ?? []).includes(tagFilter));
+    if (projectFilter) result = result.filter((tm) => (tm.projects ?? []).includes(projectFilter));
     if (sortBy === "favourites") {
-      result = result.filter((t) => t.favourite);
+      result = result.filter((tm) => tm.favourite);
     }
     if (sortBy === "name" || sortBy === "favourites") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "members") result = [...result].sort((a, b) => b.members.length - a.members.length);
@@ -185,8 +188,8 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
   return (
     <div className="team-list">
       <div className="profile-list-header">
-        <h2>Teams</h2>
-        <button className="btn-icon" onClick={onNew} title="New team" aria-label="New team">
+        <h2>{t("team:list.title")}</h2>
+        <button className="btn-icon" onClick={onNew} title={t("team:list.newTeam")} aria-label={t("team:list.newTeam")}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -194,7 +197,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
       </div>
 
       <div className="team-experimental-banner" role="note">
-        <strong>Experimental.</strong> Teams are actively evolving — behaviour and data shape may change between releases.
+        <strong>{t("team:list.experimentalBanner")}</strong> {t("team:list.experimentalDesc")}
       </div>
 
       {teams.length > 0 && (
@@ -203,7 +206,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
             <input
               type="text"
               className="pl-search-input"
-              placeholder="Search teams..."
+              placeholder={t("team:list.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -216,9 +219,9 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 onChange={(e) => setTagFilter(e.target.value)}
                 title="Filter by tag"
               >
-                <option value="">All tags</option>
-                {allTags.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                <option value="">{t("team:list.allTags")}</option>
+                {allTags.map((tag) => (
+                  <option key={tag} value={tag}>{tag}</option>
                 ))}
               </select>
             ) : (
@@ -228,7 +231,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 onClick={() => onRequestFocusTagsOnSelected?.()}
                 title={selectedTeam ? "Add a tag to the selected team" : "Select a team first, then click to add a tag"}
               >
-                + Tag
+                {t("team:list.addTag")}
               </button>
             )}
             {allProjects.length > 0 ? (
@@ -238,7 +241,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 onChange={(e) => setProjectFilter(e.target.value)}
                 title="Filter by project"
               >
-                <option value="">All projects</option>
+                <option value="">{t("team:list.allProjects")}</option>
                 {allProjects.map((p) => (
                   <option key={p} value={p}>{shortPath(p)}</option>
                 ))}
@@ -251,7 +254,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 title={selectedTeam ? "Add a project to the selected team" : "Select a team first, then click to add a project"}
                 aria-label={selectedTeam ? "Add project to selected team" : "Add project (select a team first)"}
               >
-                <span aria-hidden="true">+ </span>Project
+                {t("team:list.addProject")}
               </button>
             )}
             <select
@@ -260,9 +263,9 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
               onChange={(e) => setSortBy(e.target.value as SidebarSort)}
               title="Sort by"
             >
-              <option value="name">A-Z</option>
-              <option value="members">Members</option>
-              <option value="favourites">Favourites</option>
+              <option value="name">{t("team:list.sortBy.name")}</option>
+              <option value="members">{t("team:list.sortBy.members")}</option>
+              <option value="favourites">{t("team:list.sortBy.favourites")}</option>
             </select>
           </div>
         </div>
@@ -272,39 +275,38 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
         {filtered.length === 0 && !search ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
             <div className="empty-state-icon">&#9711;</div>
-            <div className="empty-state-title">No teams yet</div>
+            <div className="empty-state-title">{t("team:list.emptyTitle")}</div>
             <div className="empty-state-body">
-              Teams group profiles into coordinated multi-agent sessions.
-              Click <strong>+</strong> above to create a team.
+              {t("team:list.emptyBody")}
             </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
-            <div className="empty-state-title">No matches</div>
+            <div className="empty-state-title">{t("team:list.noMatches")}</div>
           </div>
         ) : (
-          filtered.map((t) => {
-            const lead = t.members.find((m) => m.isLead);
-            const health = teamHealth[t.name];
+          filtered.map((tm) => {
+            const lead = tm.members.find((m) => m.isLead);
+            const health = teamHealth[tm.name];
             return (
               <div
-                key={t.name}
+                key={tm.name}
                 role="listitem"
-                className={`profile-item${t.name === selectedTeam ? " selected" : ""}`}
+                className={`profile-item${tm.name === selectedTeam ? " selected" : ""}`}
               >
                 <button
                   type="button"
                   className="profile-item-select"
-                  onClick={() => onSelect(t.name)}
-                  aria-current={t.name === selectedTeam ? "true" : undefined}
-                  aria-label={`Select team ${t.name}, ${t.members.length} member${t.members.length !== 1 ? "s" : ""}${lead ? `, led by ${lead.profile}` : ""}`}
+                  onClick={() => onSelect(tm.name)}
+                  aria-current={tm.name === selectedTeam ? "true" : undefined}
+                  aria-label={`Select team ${tm.name}, ${tm.members.length} member${tm.members.length !== 1 ? "s" : ""}${lead ? `, led by ${lead.profile}` : ""}`}
                 >
                   <div className="profile-item-icon" style={{ background: "var(--color-team-dim)", color: "var(--color-team)" }} aria-hidden="true">
-                    {t.name.trim().charAt(0).toUpperCase() || "T"}
+                    {tm.name.trim().charAt(0).toUpperCase() || "T"}
                   </div>
                   <div className="profile-item-body">
                     <div className="profile-item-name">
-                      {t.name}
+                      {tm.name}
                       {health && (
                         <span
                           className="health-badge"
@@ -319,7 +321,7 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                       )}
                     </div>
                     <div className="profile-item-meta" aria-hidden="true">
-                      {t.members.length} member{t.members.length !== 1 ? "s" : ""}
+                      {t("team:list.members", { count: tm.members.length })}
                       {lead ? ` · Lead: ${lead.profile}` : ""}
                     </div>
                   </div>
@@ -327,15 +329,15 @@ export function TeamList({ teams, selectedTeam, teamHealth, importedProjects, on
                 {onToggleFavourite && (
                   <button
                     type="button"
-                    className={`sidebar-fav-btn${t.favourite ? " active" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(t.name); }}
-                    aria-pressed={t.favourite}
-                    aria-label={t.favourite ? `Remove ${t.name} from favourites` : `Add ${t.name} to favourites`}
+                    className={`sidebar-fav-btn${tm.favourite ? " active" : ""}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavourite(tm.name); }}
+                    aria-pressed={tm.favourite}
+                    aria-label={tm.favourite ? `Remove ${tm.name} from favourites` : `Add ${tm.name} to favourites`}
                   >
-                    <span aria-hidden="true">{t.favourite ? "\u2605" : "\u2606"}</span>
+                    <span aria-hidden="true">{tm.favourite ? "★" : "☆"}</span>
                   </button>
                 )}
-                <TeamSidebarLaunch team={t} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />
+                <TeamSidebarLaunch team={tm} importedProjects={importedProjects} onOpenProjectsConfig={onOpenProjectsConfig} />
               </div>
             );
           })

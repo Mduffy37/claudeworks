@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { CuratedMarketplace, CuratedPlugin } from "../../electron/types";
@@ -54,6 +55,7 @@ export function CuratedDetailModal({
   curatedInstalling,
   curatedErrors,
 }: Props) {
+  const { t } = useTranslation(["marketplace", "common"]);
   const [readme, setReadme] = useState<string>("");
   const [readmeLoading, setReadmeLoading] = useState(false);
   const [readmeError, setReadmeError] = useState<string | null>(null);
@@ -72,7 +74,7 @@ export function CuratedDetailModal({
 
   useEffect(() => {
     if (!source) {
-      setReadmeError("Cannot resolve GitHub source for this entry.");
+      setReadmeError(t("common:status.cannotResolveSource"));
       return;
     }
     let cancelled = false;
@@ -82,7 +84,7 @@ export function CuratedDetailModal({
       .fetchRepoReadme(source)
       .then((content) => {
         if (cancelled) return;
-        if (!content) setReadmeError("No README available for this repository.");
+        if (!content) setReadmeError(t("common:status.noReadme"));
         else setReadme(content);
       })
       .catch((err: any) => {
@@ -154,9 +156,9 @@ export function CuratedDetailModal({
       <div className="curated-detail-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="curated-detail-header">
           <div className="curated-detail-heading">
-            <span className="curated-detail-kind-tag">{target.kind === "marketplace" ? "marketplace" : "plugin"}</span>
+            <span className="curated-detail-kind-tag">{target.kind === "marketplace" ? t("curated.addMarketplace").toLowerCase() : t("curated.installPlugin").toLowerCase()}</span>
             <h2 className="curated-detail-title">{displayName}</h2>
-            {featured && <span className="curated-detail-featured">featured</span>}
+            {featured && <span className="curated-detail-featured">{t("curated.featured")}</span>}
           </div>
           <button className="curated-detail-close" onClick={onClose} aria-label="Close">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -167,7 +169,7 @@ export function CuratedDetailModal({
 
         <div className="curated-detail-body">
           <div className="curated-detail-readme">
-            {readmeLoading && <div className="curated-detail-loading">Loading README…</div>}
+            {readmeLoading && <div className="curated-detail-loading">{t("common:status.loadingReadme")}</div>}
             {readmeError && <div className="curated-detail-message">{readmeError}</div>}
             {!readmeLoading && !readmeError && readme && (
               <div className="curated-detail-markdown">
@@ -228,14 +230,14 @@ export function CuratedDetailModal({
               <div className="curated-detail-description">{description}</div>
               <div className="curated-detail-meta">
                 <div>
-                  <span className="curated-detail-meta-label">by</span> {author}
+                  <span className="curated-detail-meta-label">{t("curated.by")}</span> {author}
                 </div>
                 <div>
-                  <span className="curated-detail-meta-label">added</span> {addedAt}
+                  <span className="curated-detail-meta-label">{t("curated.added")}</span> {addedAt}
                 </div>
                 {source && (
                   <div>
-                    <span className="curated-detail-meta-label">source</span>{" "}
+                    <span className="curated-detail-meta-label">{t("curated.source")}</span>{" "}
                     <a
                       href={sourceUrl}
                       onClick={(e) => {
@@ -249,7 +251,7 @@ export function CuratedDetailModal({
                 )}
                 {target.kind === "marketplace" && (
                   <div>
-                    <span className="curated-detail-meta-label">plugins</span> {target.entry.pluginCount}
+                    <span className="curated-detail-meta-label">{t("curated.plugins")}</span> {target.entry.pluginCount}
                   </div>
                 )}
               </div>
@@ -265,7 +267,7 @@ export function CuratedDetailModal({
             <div className="curated-detail-action">
               {isInstalled || isAlreadyAdded ? (
                 <button className="btn-secondary curated-detail-primary" disabled>
-                  {isInstalled ? "Installed" : "Added"}
+                  {isInstalled ? t("curated.installedLabel") : t("curated.addedLabel")}
                 </button>
               ) : (
                 <button
@@ -275,11 +277,11 @@ export function CuratedDetailModal({
                 >
                   {target.kind === "marketplace"
                     ? isInstalling
-                      ? "Adding…"
-                      : "Add marketplace"
+                      ? t("curated.adding")
+                      : t("curated.addMarketplace")
                     : isInstalling
-                      ? "Installing…"
-                      : "Install plugin"}
+                      ? t("curated.installing")
+                      : t("curated.installPlugin")}
                 </button>
               )}
               {installError && <div className="curated-install-error">{installError}</div>}
@@ -288,10 +290,10 @@ export function CuratedDetailModal({
             {target.kind === "marketplace" && (
               <div className="curated-detail-section">
                 <div className="curated-detail-section-title">
-                  Plugins in this marketplace
+                  {t("curated.pluginsInMarketplace")}
                   {peerPlugins.length > 0 && <span className="curated-detail-count"> · {peerPlugins.length}</span>}
                 </div>
-                {peerLoading && <div className="curated-detail-loading">Loading plugin list…</div>}
+                {peerLoading && <div className="curated-detail-loading">{t("curated.loadingPluginList")}</div>}
                 {peerError && <div className="curated-detail-message">{peerError}</div>}
                 {!peerLoading && !peerError && peerPlugins.length > 0 && (
                   <ul className="curated-detail-peer-list">
@@ -331,18 +333,18 @@ export function CuratedDetailModal({
                                 <button
                                   className="btn-danger-small"
                                   onClick={() => onUninstallPlugin(peerPluginId, p.name)}
-                                  title={`Uninstall ${p.name}`}
+                                  title={`${t("curated.remove")} ${p.name}`}
                                 >
-                                  Remove
+                                  {t("curated.remove")}
                                 </button>
                               ) : (
                                 <button
                                   className="btn-primary curated-install-btn"
                                   onClick={() => onInstallPeerPlugin(peerPluginId)}
                                   disabled={isPeerBusy}
-                                  title={`Install ${p.name}`}
+                                  title={`${t("curated.install")} ${p.name}`}
                                 >
-                                  {isPeerBusy ? "..." : "Install"}
+                                  {isPeerBusy ? "..." : t("curated.install")}
                                 </button>
                               )}
                             </div>

@@ -20,6 +20,8 @@
   <a href="https://github.com/Mduffy37/claudeworks/issues">Issues</a>
 </p>
 
+English · **[中文](./README.zh-CN.md)**
+
 Each profile is an isolated Claude Code config directory: its own MCP servers, skills, agents, slash commands, and settings. Work in one terminal, personal in another, both running Claude Code with different tools loaded. 647 curated plugins and 4,795 skills come built in.
 
 <p align="center">

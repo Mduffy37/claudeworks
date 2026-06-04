@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { PluginWithItems } from "../../../src/electron/types";
 import { SkillToggler } from "./SkillToggler";
 
@@ -40,6 +41,7 @@ export function PluginPicker({
   favouritePlugins,
   onToggleFavourite,
 }: Props) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [enabledOnly, setEnabledOnly] = useState(false);
@@ -247,7 +249,7 @@ export function PluginPicker({
         {isExpanded && (
           <div className="plugin-items">
             {plugin.items.length === 0 && plugin.hooks.length === 0 ? (
-              <div className="empty-state-inline">No configurable items</div>
+              <div className="empty-state-inline">{t("common:emptyStates.noConfigurableItems")}</div>
             ) : plugin.items.length === 0 ? null : (
               <SkillToggler
                 items={plugin.items}
@@ -261,7 +263,7 @@ export function PluginPicker({
               <div className="mcp-servers">
                 <div className="skill-group-label" style={{ color: "var(--color-command)" }}>
                   <span className="skill-group-label-dot" />
-                  MCP Servers
+                  {t("plugin:manage.mcpServers")}
                   <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
                     &nbsp;{plugin.mcpServers.length}
                   </span>
@@ -278,7 +280,7 @@ export function PluginPicker({
               <div className="mcp-servers">
                 <div className="skill-group-label" style={{ color: "var(--color-hook, var(--text-muted))" }}>
                   <span className="skill-group-label-dot" />
-                  Hooks
+                  {t("plugin:manage.hooks")}
                   <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
                     &nbsp;{plugin.hooks.length}
                   </span>
@@ -303,7 +305,7 @@ export function PluginPicker({
         <input
           type="text"
           className="pl-search-input"
-          placeholder="Search plugins..."
+          placeholder={t("plugin:picker.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ flex: 1 }}
@@ -313,59 +315,59 @@ export function PluginPicker({
           className={`btn-secondary pl-filter-chip${enabledOnly ? " active" : ""}`}
           onClick={() => setEnabledOnly((v) => !v)}
           aria-pressed={enabledOnly}
-          title={enabledOnly ? "Show all plugins" : "Show only plugins enabled in this profile"}
+          title={enabledOnly ? t("plugin:picker.showAll") : t("plugin:picker.showEnabled")}
         >
-          Enabled only
+          {t("plugin:picker.enabledOnly")}
         </button>
       </div>
       <div className="plugin-section">
         <div className="plugin-section-header">
-          <h3>Global Plugins</h3>
+          <h3>{t("plugin:picker.globalPlugins")}</h3>
           {globalPlugins.length > 0 && (
             <span className="plugin-section-count">{globalPlugins.length}</span>
           )}
         </div>
         {globalPlugins.length === 0 ? (
-          <div className="empty-state-inline">No global plugins installed</div>
+          <div className="empty-state-inline">{t("plugin:picker.noGlobal")}</div>
         ) : (
-          <div role="list" aria-label="Global plugins">{globalPlugins.map(renderPlugin)}</div>
+          <div role="list" aria-label={t("plugin:picker.globalPlugins")}>{globalPlugins.map(renderPlugin)}</div>
         )}
       </div>
 
       {frameworkPlugins.length > 0 && (
         <div className="plugin-section">
           <div className="plugin-section-header">
-            <h3>Frameworks</h3>
+            <h3>{t("plugin:picker.frameworks")}</h3>
             <span className="plugin-section-count">{frameworkPlugins.length}</span>
           </div>
-          <div role="list" aria-label="Frameworks">{frameworkPlugins.map(renderPlugin)}</div>
+          <div role="list" aria-label={t("plugin:picker.frameworks")}>{frameworkPlugins.map(renderPlugin)}</div>
         </div>
       )}
 
       {userLocalPlugins.length > 0 && (
         <div className="plugin-section">
           <div className="plugin-section-header">
-            <h3>Local</h3>
+            <h3>{t("plugin:picker.local")}</h3>
             <span className="plugin-section-count">{userLocalPlugins.length}</span>
           </div>
-          <div role="list" aria-label="Local plugins">{userLocalPlugins.map(renderPlugin)}</div>
+          <div role="list" aria-label={t("plugin:picker.local")}>{userLocalPlugins.map(renderPlugin)}</div>
         </div>
       )}
 
       {directory && (
         <div className="plugin-section">
           <div className="plugin-section-header">
-            <h3>Project Plugins</h3>
+            <h3>{t("plugin:picker.projectPlugins")}</h3>
             {localPlugins.length > 0 && (
               <span className="plugin-section-count">{localPlugins.length}</span>
             )}
           </div>
           {localPlugins.length === 0 ? (
             <div className="empty-state-inline">
-              No plugins installed for {directory}
+              {t("plugin:picker.noProjectFor", { dir: directory })}
             </div>
           ) : (
-            <div role="list" aria-label="Project plugins">{localPlugins.map(renderPlugin)}</div>
+            <div role="list" aria-label={t("plugin:picker.projectPlugins")}>{localPlugins.map(renderPlugin)}</div>
           )}
         </div>
       )}

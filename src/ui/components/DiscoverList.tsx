@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { AvailablePlugin } from "../../electron/types";
 
 type SortOption = "name" | "popular" | "marketplace";
@@ -16,6 +17,7 @@ function formatCount(n: number): string {
 }
 
 export function DiscoverList({ plugins, installedIds, selectedId, onSelect }: Props) {
+  const { t } = useTranslation(["marketplace", "common"]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("popular");
   const [marketplace, setMarketplace] = useState<string>("all");
@@ -48,7 +50,7 @@ export function DiscoverList({ plugins, installedIds, selectedId, onSelect }: Pr
         <div className="pl-search">
           <input
             type="text"
-            placeholder="Search available plugins..."
+            placeholder={t("common:labels.searchAvailablePlugins")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-search-input"
@@ -59,19 +61,19 @@ export function DiscoverList({ plugins, installedIds, selectedId, onSelect }: Pr
             className="pl-sort-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            title="Sort by"
+            title={t("discover.popular")}
           >
-            <option value="popular">Popular</option>
-            <option value="name">A-Z</option>
-            <option value="marketplace">Source</option>
+            <option value="popular">{t("discover.popular")}</option>
+            <option value="name">{t("discover.sortAZ")}</option>
+            <option value="marketplace">{t("discover.source")}</option>
           </select>
           <select
             className="pl-sort-select"
             value={marketplace}
             onChange={(e) => setMarketplace(e.target.value)}
-            title="Filter by marketplace"
+            title={t("discover.source")}
           >
-            <option value="all">All sources</option>
+            <option value="all">{t("discover.allSources")}</option>
             {marketplaces.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -99,16 +101,16 @@ export function DiscoverList({ plugins, installedIds, selectedId, onSelect }: Pr
               <div className="pl-item-name">{p.name}</div>
               <div className="pl-item-desc">{p.description}</div>
               <div className="pl-item-meta" style={{ fontSize: "0.692rem", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                {formatCount(p.installCount)} installs
+                {t("discover.installs", { count: p.installCount })}
                 <span className="discover-marketplace-tag">{p.marketplaceName.replace("claude-plugins-", "")}</span>
-                {isInstalled && <span className="default-badge" style={{ background: "var(--text-muted)" }}>Installed</span>}
+                {isInstalled && <span className="default-badge" style={{ background: "var(--text-muted)" }}>{t("discover.installed")}</span>}
               </div>
             </div>
           );
         })}
         {filtered.length === 0 && (
           <div className="empty-state" style={{ padding: "20px 8px" }}>
-            <div className="empty-state-title">{search ? "No matches" : "No plugins available"}</div>
+            <div className="empty-state-title">{search ? t("discover.noMatches") : t("discover.noPlugins")}</div>
           </div>
         )}
       </div>

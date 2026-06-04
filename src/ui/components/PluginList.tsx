@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { PluginWithItems } from "../../electron/types";
 
 interface Props {
@@ -23,6 +24,7 @@ function pluginSummary(plugin: PluginWithItems): string {
 }
 
 export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect }: Props) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -64,7 +66,7 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
       >
         <div className="pl-item-name">
           {plugin.pluginName}
-          {hasUpdate && <span className="pl-update-dot" title="Update available" />}
+          {hasUpdate && <span className="pl-update-dot" title={t("plugin:list.updateAvailable")} />}
           {projectName && (
             <span className="pl-project-chip" title={plugin.projectPath}>{projectName}</span>
           )}
@@ -81,7 +83,7 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
       <div className="pl-search">
         <input
           type="text"
-          placeholder="Search plugins..."
+          placeholder={t("common:labels.searchPlugins")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-search-input"
@@ -90,14 +92,14 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
 
       {globalPlugins.length > 0 && (
         <div className="pl-section">
-          <div className="pl-section-header">Global</div>
+          <div className="pl-section-header">{t("plugin:list.global")}</div>
           {globalPlugins.map(renderPlugin)}
         </div>
       )}
 
       {projectPlugins.length > 0 && (
         <div className="pl-section">
-          <div className="pl-section-header">Project</div>
+          <div className="pl-section-header">{t("plugin:list.project")}</div>
           {projectPlugins.map(renderPlugin)}
         </div>
       )}
@@ -105,7 +107,7 @@ export function PluginList({ plugins, selectedPlugin, availableUpdates, onSelect
       {filtered.length === 0 && (
         <div className="empty-state" style={{ padding: "20px 8px" }}>
           <div className="empty-state-title">
-            {search ? "No matches" : "No plugins installed"}
+            {search ? t("plugin:list.noMatches") : t("plugin:list.noInstalled")}
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { Profile, LaunchOptions } from "../../../electron/types";
 import { EditorTopBar, LaunchIcon, shortPath } from "../shared/EditorTopBar";
 
@@ -56,31 +57,32 @@ export function ProfileTopBar({
   onLaunch,
   onLaunchWithOptions,
 }: ProfileTopBarProps) {
+  const { t } = useTranslation(["profile", "common"]);
   const enabledCount = selectedPlugins.length;
   const subtitle = isNew
-    ? "Configure plugins and skills for this profile"
+    ? t("profile:topBar.configureSubtitle")
     : enabledCount === 0
-    ? "No plugins enabled"
-    : `${enabledCount} plugin${enabledCount !== 1 ? "s" : ""} enabled`;
+    ? t("profile:topBar.noPluginsEnabled")
+    : t("profile:topBar.pluginsEnabled", { count: enabledCount });
 
   const overflowMenu = profile ? (close: () => void) => (
     <>
       {onDuplicate && (
         <button role="menuitem" type="button" onClick={() => { close(); onDuplicate(profile.name); }}>
-          Duplicate
+          {t("profile:topBar.duplicate")}
         </button>
       )}
       {onExport && (
         <button role="menuitem" type="button" onClick={() => { close(); onExport(profile.name); }}>
-          Export
+          {t("profile:topBar.export")}
         </button>
       )}
       <button role="menuitem" type="button" onClick={() => { close(); onSetOverviewOpen(true); }}>
-        Overview
+        {t("profile:topBar.overview")}
       </button>
       <div className="pe-overflow-divider" role="separator" />
       <button role="menuitem" type="button" className="pe-overflow-danger" onClick={() => { close(); onSetConfirmDelete(true); }}>
-        Delete Profile
+        {t("profile:topBar.delete")}
       </button>
     </>
   ) : undefined;
@@ -93,8 +95,8 @@ export function ProfileTopBar({
       saving={saving}
       saveStatus={saveStatus}
       subtitle={subtitle}
-      createLabel="Create Profile"
-      namePlaceholder="Profile name..."
+      createLabel={t("profile:topBar.createProfile")}
+      namePlaceholder={t("profile:topBar.namePlaceholder")}
       directories={directories}
       launchDir={launchDir}
       launching={launching}
@@ -115,7 +117,7 @@ export function ProfileTopBar({
         const result = await window.api.importProfile();
         if (result.ok && result.profile) {
           if (result.missingPlugins && result.missingPlugins.length > 0) {
-            alert(`Profile imported as "${result.profile.name}".\n\n${result.missingPlugins.length} plugin(s) need installing:\n${result.missingPlugins.join("\n")}\n\nInstall them from Configure Claude > Plugins > Browse.`);
+            alert(t("profile:topBar.importResult", { name: result.profile.name, count: result.missingPlugins.length, plugins: result.missingPlugins.join("\n") }));
           }
           // Reload will be handled by the parent refreshing
           window.location.reload();

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { PluginList } from "./PluginList";
 import { PluginManager } from "./PluginManager";
 import { DiscoverList } from "./DiscoverList";
@@ -252,9 +253,21 @@ function itemStub(type: ItemType, name: string): string {
   return `---\nname: ${name}\ndescription: \n---\n\n`;
 }
 
+/** Translate known profile descriptions at display time. */
+function translateDescription(desc: string, t: any): string {
+  if (desc === "Your default profile. Running `claude` launches with these plugins and settings.") {
+    return t("profile:descriptions.default");
+  }
+  if (desc === "Dedicated workspace for creating and managing ClaudeWorks profiles.") {
+    return t("profile:descriptions.profileCreator");
+  }
+  return desc;
+}
+
 function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
   dir: string; type: ItemType; name: string; onClose: () => void; onRefresh: () => void;
 }) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [content, setContent] = useState("");
   const [dirty, setDirty] = useState(false);
 
@@ -284,7 +297,7 @@ function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
   return (
     <div className="project-item-editor">
       <div className="manage-section-header">
-        <span className="manage-section-label">{type}: {name}</span>
+        <span className="manage-section-label">{t("plugin:dialog.itemTypes." + type)}: {name}</span>
         <div style={{ display: "flex", gap: "6px" }}>
           <button
             className="open-in-editor-btn"
@@ -296,22 +309,22 @@ function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
                   : `${dir}/.claude/commands/${name}.md`;
               window.api.openInFinder(absPath);
             }}
-            title="Open in default editor"
+            title={t("common:buttons.openInEditor")}
           >
-            Open in Editor ↗
+            {t("common:buttons.openInEditor")}
           </button>
           {dirty && (
-            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+            <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>{t("common:buttons.save")}</button>
           )}
-          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
-          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onClose}>Close</button>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>{t("common:buttons.delete")}</button>
+          <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={onClose}>{t("common:buttons.close")}</button>
         </div>
       </div>
       <textarea
         className="manage-claudemd-editor"
         value={content}
         onChange={(e) => { setContent(e.target.value); setDirty(true); }}
-        placeholder={`${type} content...`}
+        placeholder={t("project.contentPlaceholder", { type })}
       />
     </div>
   );
@@ -322,6 +335,7 @@ function ProjectItemEditor({ dir, type, name, onClose, onRefresh }: {
 interface ProjectItem { name: string; type: ItemType; path: string }
 
 function ProjectsTab() {
+  const { t } = useTranslation(["plugin", "common"]);
   const [projects, setProjects] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [claudeMd, setClaudeMd] = useState("");
@@ -410,7 +424,7 @@ function ProjectsTab() {
       setMcpDirty(false);
       setMcpError("");
     } catch {
-      setMcpError("Invalid JSON");
+      setMcpError(t("plugin:dialog.invalidJson"));
     }
   };
 
@@ -457,17 +471,17 @@ function ProjectsTab() {
     <div className="manage-dialog-split">
       <div className="manage-dialog-sidebar">
         <div className="manage-projects-header">
-          <span className="manage-projects-title">Projects</span>
-          <button className="btn-icon" onClick={handleAdd} title="Add project" aria-label="Add project">
+          <span className="manage-projects-title">{t("project.title")}</span>
+          <button className="btn-icon" onClick={handleAdd} title={t("project.addProject")} aria-label={t("project.addProject")}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
-        <div className="manage-projects-list" role="listbox" aria-label="Imported projects">
+        <div className="manage-projects-list" role="listbox" aria-label={t("project.importedProjects")}>
           {projects.length === 0 ? (
             <div className="manage-projects-empty">
-              No projects imported. Click + to add a project directory.
+              {t("project.noProjects")}
             </div>
           ) : (
             projects.map((dir) => {
@@ -498,7 +512,7 @@ function ProjectsTab() {
                   <button
                     className="manage-project-remove"
                     onClick={(e) => { e.stopPropagation(); handleRemove(dir); }}
-                    aria-label={`Remove project ${shortPath(dir)}`}
+                    aria-label={t("project.removeProject", { name: shortPath(dir) })}
                   >
                     <span aria-hidden="true">&times;</span>
                   </button>
@@ -515,11 +529,11 @@ function ProjectsTab() {
             {gitContext?.isRepo && (
               <div className="manage-section">
                 <div className="manage-section-header">
-                  <span className="manage-section-label">Git</span>
+                  <span className="manage-section-label">{t("project.git")}</span>
                 </div>
                 <div className="manage-project-git">
                   <span className="manage-git-branch">{gitContext.branch}</span>
-                  {gitContext.dirty && <span className="manage-git-dirty">uncommitted changes</span>}
+                  {gitContext.dirty && <span className="manage-git-dirty">{t("project.uncommittedChanges")}</span>}
                 </div>
               </div>
             )}
@@ -527,13 +541,13 @@ function ProjectsTab() {
             {/* Directory buttons */}
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">Directory</span>
+                <span className="manage-section-label">{t("project.directory")}</span>
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected)}>
-                    Open Project
+                    {t("project.openProject")}
                   </button>
                   <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={() => window.api.openInFinder(selected + "/.claude")}>
-                    Open .claude/
+                    {t("project.openClaudeDir")}
                   </button>
                 </div>
               </div>
@@ -542,19 +556,19 @@ function ProjectsTab() {
             {/* CLAUDE.md */}
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">CLAUDE.md</span>
+                <span className="manage-section-label">{t("plugin:dialog.claudeMd")}</span>
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button
                     className="open-in-editor-btn"
                     onClick={() => window.api.openInFinder(`${selected}/CLAUDE.md`)}
-                    title="Open in default editor"
+                    title={t("common:buttons.openInEditor")}
                   >
-                    Open in Editor ↗
+                    {t("common:buttons.openInEditor")}
                   </button>
-                  <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
+                  <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>{t("project.insertPrompt")}</button>
                   {claudeMdDirty && (
                     <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
-                      Save
+                      {t("common:buttons.save")}
                     </button>
                   )}
                 </div>
@@ -569,17 +583,17 @@ function ProjectsTab() {
                 className="manage-claudemd-editor"
                 value={claudeMd}
                 onChange={(e) => { setClaudeMd(e.target.value); setClaudeMdDirty(true); }}
-                placeholder="Project-level instructions for Claude Code..."
+                placeholder={t("project.instructionsPlaceholder")}
               />
             </div>
 
             {/* Skills / Agents / Commands */}
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">Skills, Agents &amp; Commands</span>
+                <span className="manage-section-label">{t("project.skillsAgentsCommands")}</span>
               </div>
               {localItems.length === 0 && !editingItem ? (
-                <div className="manage-section-hint">No items in .claude/ yet. Create one below.</div>
+                <div className="manage-section-hint">{t("project.noItems")}</div>
               ) : (
                 <div className="project-items-list">
                   {(["skill", "agent", "command"] as const).map((type) => {
@@ -587,7 +601,7 @@ function ProjectsTab() {
                     if (items.length === 0) return null;
                     return (
                       <div key={type} className="project-items-group">
-                        <div className="project-items-group-label">{type === "skill" ? "Skills" : type === "agent" ? "Agents" : "Commands"}</div>
+                        <div className="project-items-group-label">{type === "skill" ? t("project.skills") : type === "agent" ? t("project.agents") : t("project.commands")}</div>
                         {items.map((item) => (
                           <div
                             key={item.path}
@@ -618,40 +632,40 @@ function ProjectsTab() {
               {/* Create new */}
               <div className="project-create-row">
                 <select value={newItemType} onChange={(e) => setNewItemType(e.target.value as ItemType)}>
-                  <option value="skill">Skill</option>
-                  <option value="agent">Agent</option>
-                  <option value="command">Command</option>
+                  <option value="skill">{t("plugin:dialog.itemTypes.skill")}</option>
+                  <option value="agent">{t("plugin:dialog.itemTypes.agent")}</option>
+                  <option value="command">{t("plugin:dialog.itemTypes.command")}</option>
                 </select>
                 <input
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder="Name..."
+                  placeholder={t("project.namePlaceholder")}
                   onKeyDown={(e) => { if (e.key === "Enter") handleCreateItem(); }}
                 />
-                <button className="btn-secondary" onClick={handleCreateItem} disabled={!newItemName.trim()}>Create</button>
+                <button className="btn-secondary" onClick={handleCreateItem} disabled={!newItemName.trim()}>{t("common:buttons.create")}</button>
               </div>
             </div>
 
             {/* MCP Servers */}
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">MCP Servers</span>
+                <span className="manage-section-label">{t("project.mcpServers")}</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   {mcpError && <span style={{ fontSize: "0.846rem", color: "var(--color-danger, #e55)" }}>{mcpError}</span>}
                   <button
                     className="open-in-editor-btn"
                     onClick={() => window.api.openInFinder(`${selected}/.mcp.json`)}
-                    title="Open in default editor"
+                    title={t("common:buttons.openInEditor")}
                   >
-                    Open in Editor ↗
+                    {t("common:buttons.openInEditor")}
                   </button>
                   {mcpDirty && (
-                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveMcp}>Save</button>
+                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveMcp}>{t("common:buttons.save")}</button>
                   )}
                 </div>
               </div>
-              <div className="manage-section-hint">Edit .mcp.json — raw JSON for project-level MCP server configuration.</div>
+              <div className="manage-section-hint">{t("project.mcpServersHint")}</div>
               <textarea
                 className="manage-claudemd-editor"
                 style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: "0.846rem", minHeight: "120px" }}
@@ -664,49 +678,49 @@ function ProjectsTab() {
             {/* Project Settings */}
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">Project Settings</span>
+                <span className="manage-section-label">{t("project.projectSettings")}</span>
                 {settingsDirty && (
-                  <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveSettings}>Save</button>
+                  <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveSettings}>{t("common:buttons.save")}</button>
                 )}
               </div>
-              <div className="manage-section-hint">Saved to .claude/settings.json — applies to all sessions in this directory.</div>
+              <div className="manage-section-hint">{t("project.projectSettingsHint")}</div>
               <div className="modal-fields" style={{ marginTop: "8px" }}>
                 <div className="field">
-                  <label>Model</label>
+                  <label>{t("project.model")}</label>
                   <select value={projSettings.model ?? ""} onChange={(e) => { setProjSettings((p) => ({ ...p, model: e.target.value || undefined })); setSettingsDirty(true); }}>
-                    <option value="">Default</option>
-                    <option value="opus">Opus</option>
-                    <option value="sonnet">Sonnet</option>
-                    <option value="haiku">Haiku</option>
+                    <option value="">{t("common:labels.defaultSettings")}</option>
+                    <option value="opus">{t("plugin:dialog.models.opus")}</option>
+                    <option value="sonnet">{t("plugin:dialog.models.sonnet")}</option>
+                    <option value="haiku">{t("plugin:dialog.models.haiku")}</option>
                   </select>
                 </div>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Effort Level</label>
+                  <label>{t("project.effortLevel")}</label>
                   <select value={projSettings.effortLevel ?? ""} onChange={(e) => { setProjSettings((p) => ({ ...p, effortLevel: e.target.value || undefined })); setSettingsDirty(true); }}>
-                    <option value="">Default</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="">{t("common:labels.defaultSettings")}</option>
+                    <option value="low">{t("plugin:dialog.effortLevels.low")}</option>
+                    <option value="medium">{t("plugin:dialog.effortLevels.medium")}</option>
+                    <option value="high">{t("plugin:dialog.effortLevels.high")}</option>
                     <option value="xhigh">X-High</option>
-                    <option value="max">Max</option>
+                    <option value="max">{t("plugin:dialog.effortLevels.max")}</option>
                   </select>
                 </div>
               </div>
               <div className="modal-fields" style={{ marginTop: "8px" }}>
-                <div className="manage-section-label" style={{ padding: 0, margin: 0 }}>Environment Variables</div>
-                <div className="field-hint" style={{ marginBottom: "2px" }}>Project-level env vars override global settings for sessions launched in this directory.</div>
+                <div className="manage-section-label" style={{ padding: 0, margin: 0 }}>{t("project.envVars")}</div>
+                <div className="field-hint" style={{ marginBottom: "2px" }}>{t("project.envVarsHint")}</div>
                 {inheritedEnv.length > 0 && (
                   <>
-                    <div className="field-hint" style={{ marginBottom: "2px" }}>Inherited from global settings</div>
+                    <div className="field-hint" style={{ marginBottom: "2px" }}>{t("project.inheritedFromGlobal")}</div>
                     {inheritedEnv.map(([key, value]) => (
                       <div className="env-var-row" key={`global-${key}`}>
                         <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
                         <input type="text" value={value} disabled aria-label={`${key} value`} />
-                        <span className="field-managed-label">Global</span>
+                        <span className="field-managed-label">{t("project.global")}</span>
                         <button className="btn-secondary" style={{ fontSize: "0.769rem", padding: "2px 8px" }}
                           onClick={() => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: value } })); setSettingsDirty(true); }}
-                        >Override</button>
+                        >{t("project.override")}</button>
                       </div>
                     ))}
                     <div className="field-divider" />
@@ -722,8 +736,8 @@ function ProjectsTab() {
                       title={knownVars.find((v) => v.name === key)?.description ?? (globalEnvForProject[key] !== undefined ? `${key} (overriding global)` : key)}
                       style={globalEnvForProject[key] !== undefined ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
                     />
-                    <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} placeholder="value" aria-label={`${key} value`} />
-                    <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>Remove</button>
+                    <input type="text" value={value as string} onChange={(e) => { setProjSettings((p) => ({ ...p, env: { ...(p.env ?? {}), [key]: e.target.value } })); setSettingsDirty(true); }} placeholder={t("common:fields.value")} aria-label={`${key} value`} />
+                    <button className="btn-secondary" onClick={() => { setProjSettings((p) => { const env = { ...(p.env ?? {}) }; delete env[key]; return { ...p, env: Object.keys(env).length > 0 ? env : undefined }; }); setSettingsDirty(true); }}>{t("common:buttons.remove")}</button>
                   </div>
                 ))}
                 {(projEnvEntries.length > 0 || inheritedEnv.length > 0) && <div className="field-divider" />}
@@ -779,10 +793,10 @@ function ProjectsTab() {
                       </div>
                     )}
                   </div>
-                  <button className="btn-secondary" onClick={handleAddProjEnv} disabled={!projEnvNewKey.trim()}>Add</button>
+                  <button className="btn-secondary" onClick={handleAddProjEnv} disabled={!projEnvNewKey.trim()}>{t("common:buttons.add")}</button>
                 </div>
                 {projEnvEntries.length === 0 && inheritedEnv.length === 0 && (
-                  <div className="field-hint">No environment variables configured.</div>
+                  <div className="field-hint">{t("common:emptyStates.noEnvVars")}</div>
                 )}
               </div>
             </div>
@@ -791,9 +805,9 @@ function ProjectsTab() {
           <div className="pm-empty">
             <div className="empty-state">
               <div className="empty-state-icon">&#9671;</div>
-              <div className="empty-state-title">Select a project</div>
+              <div className="empty-state-title">{t("project.selectProject")}</div>
               <div className="empty-state-body">
-                Choose a project from the list, or add one to manage its CLAUDE.md, skills, MCP servers, and settings.
+                {t("project.selectProjectDesc")}
               </div>
             </div>
           </div>
@@ -806,6 +820,7 @@ function ProjectsTab() {
 // ─── Global settings tab ────────────────────────────────────────────────────
 
 function GlobalSettingsTab() {
+  const { t } = useTranslation(["plugin", "common"]);
   const [claudeMd, setClaudeMd] = useState("");
   const [claudeMdDirty, setClaudeMdDirty] = useState(false);
   const [model, setModel] = useState("");
@@ -873,7 +888,7 @@ function GlobalSettingsTab() {
       setHooksDirty(false);
       setHooksError("");
     } catch {
-      setHooksError("Invalid JSON");
+      setHooksError(t("plugin:dialog.invalidJson"));
     }
   };
 
@@ -946,21 +961,21 @@ function GlobalSettingsTab() {
     <div className="manage-global-settings">
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Global Config</span>
+          <span className="manage-section-label">{t("global.globalConfig")}</span>
           <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={async () => { const dir = await window.api.getClaudeHome(); window.api.openInFinder(dir); }}>
-            Open in Finder
+            {t("global.openInFinder")}
           </button>
         </div>
       </div>
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Global CLAUDE.md</span>
+          <span className="manage-section-label">{t("global.globalClaudeMd")}</span>
           <div style={{ display: "flex", gap: "6px" }}>
-            <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>Insert Prompt</button>
+            <button className="insert-prompt-btn" onClick={() => setShowPromptPicker(true)}><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2"/><path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>{t("project.insertPrompt")}</button>
             {claudeMdDirty && (
               <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveClaudeMd}>
-                Save
+                {t("common:buttons.save")}
               </button>
             )}
           </div>
@@ -972,41 +987,41 @@ function GlobalSettingsTab() {
           />
         )}
         <div className="manage-section-hint">
-          Instructions that apply to every Claude Code session, regardless of profile.
+          {t("global.globalClaudeMdHint")}
         </div>
         <textarea
           className="manage-claudemd-editor"
           value={claudeMd}
           onChange={(e) => { setClaudeMd(e.target.value); setClaudeMdDirty(true); }}
-          placeholder="Global instructions for all Claude Code sessions..."
+          placeholder={t("global.globalClaudeMdPlaceholder")}
         />
       </div>
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Default Model &amp; Effort</span>
+          <span className="manage-section-label">{t("global.defaultModelEffort")}</span>
           {defaultsDirty && (
             <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
-              Save
+              {t("common:buttons.save")}
             </button>
           )}
         </div>
         <div className="manage-section-hint">
-          Fallback values used when a profile doesn't specify its own.
+          {t("global.defaultModelEffortHint")}
         </div>
         <div className="manage-defaults-row">
           <div className="field">
-            <label>Model</label>
+            <label>{t("global.model")}</label>
             <select value={model} onChange={(e) => { setModel(e.target.value); setDefaultsDirty(true); }}>
-              <option value="">System default</option>
-              <option value="opus">Opus</option>
-              <option value="sonnet">Sonnet</option>
-              <option value="haiku">Haiku</option>
+              <option value="">{t("global.systemDefault")}</option>
+              <option value="opus">{t("plugin:dialog.models.opus")}</option>
+              <option value="sonnet">{t("plugin:dialog.models.sonnet")}</option>
+              <option value="haiku">{t("plugin:dialog.models.haiku")}</option>
             </select>
           </div>
           {model === "opus" && (
             <div className="field">
-              <label>Opus Context</label>
+              <label>{t("global.opusContext")}</label>
               <select value={opusContext ?? "1m"} onChange={(e) => { setOpusContext(e.target.value as "200k" | "1m"); setDefaultsDirty(true); }}>
                 <option value="1m">1M (default)</option>
                 <option value="200k">200k</option>
@@ -1015,7 +1030,7 @@ function GlobalSettingsTab() {
           )}
           {model === "sonnet" && (
             <div className="field">
-              <label>Sonnet Context</label>
+              <label>{t("global.sonnetContext")}</label>
               <select value={sonnetContext ?? "200k"} onChange={(e) => { setSonnetContext(e.target.value as "200k" | "1m"); setDefaultsDirty(true); }}>
                 <option value="200k">200k (default)</option>
                 <option value="1m">1M — billed as extra</option>
@@ -1023,14 +1038,14 @@ function GlobalSettingsTab() {
             </div>
           )}
           <div className="field">
-            <label>Effort Level</label>
+            <label>{t("global.effortLevel")}</label>
             <select value={effort} onChange={(e) => { setEffort(e.target.value); setDefaultsDirty(true); }}>
-              <option value="">System default</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              <option value="">{t("global.systemDefault")}</option>
+              <option value="low">{t("plugin:dialog.effortLevels.low")}</option>
+              <option value="medium">{t("plugin:dialog.effortLevels.medium")}</option>
+              <option value="high">{t("plugin:dialog.effortLevels.high")}</option>
               <option value="xhigh">X-High</option>
-              <option value="max">Max</option>
+              <option value="max">{t("plugin:dialog.effortLevels.max")}</option>
             </select>
           </div>
         </div>
@@ -1038,22 +1053,22 @@ function GlobalSettingsTab() {
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Environment Variables</span>
+          <span className="manage-section-label">{t("global.envVars")}</span>
           {envDirty && (
             <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveEnv}>
-              Save
+              {t("common:buttons.save")}
             </button>
           )}
         </div>
         <div className="manage-section-hint">
-          From ~/.claude/settings.json — applied to all sessions. Per-profile env vars override these.
+          {t("global.envVarsHint")}
         </div>
         <div className="modal-fields" style={{ marginTop: "8px" }}>
           {envEntries.map(([key, value]) => (
             <div className="env-var-row" key={key}>
               <input type="text" value={key} disabled aria-label="Variable name" title={knownVars.find((v) => v.name === key)?.description} />
-              <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder="value" aria-label={`${key} value`} />
-              <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>Remove</button>
+              <input type="text" value={value} onChange={(e) => handleUpdateEnvValue(key, e.target.value)} placeholder={t("common:fields.value")} aria-label={`${key} value`} />
+              <button className="btn-secondary" onClick={() => handleRemoveEnv(key)}>{t("common:buttons.remove")}</button>
             </div>
           ))}
           {envEntries.length > 0 && <div className="field-divider" />}
@@ -1087,22 +1102,24 @@ function GlobalSettingsTab() {
                 </div>
               )}
             </div>
-            <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>Add</button>
+            <button className="btn-secondary" onClick={handleAddEnv} disabled={!newKey.trim()}>{t("common:buttons.add")}</button>
           </div>
         </div>
       </div>
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Default CLI Flags</span>
+          <span className="manage-section-label">{t("global.defaultCliFlags")}</span>
           {defaultsDirty && (
             <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
-              Save
+              {t("common:buttons.save")}
             </button>
           )}
         </div>
         <div className="manage-section-hint">
-          Flags passed to <code>claude</code> on every launch. Per-profile flags are appended after these.
+          <Trans i18nKey="global.defaultCliFlagsHint" ns="plugin">
+            Flags passed to <code>claude</code> on every launch. Per-profile flags are appended after these.
+          </Trans>
         </div>
         <div className="modal-fields" style={{ marginTop: "8px" }}>
           <div className="field">
@@ -1113,16 +1130,16 @@ function GlobalSettingsTab() {
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Hooks</span>
+          <span className="manage-section-label">{t("global.hooks")}</span>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
             {hooksError && <span style={{ fontSize: "0.846rem", color: "var(--color-danger, #e55)" }}>{hooksError}</span>}
             {hooksDirty && (
-              <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveHooks}>Save</button>
+              <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveHooks}>{t("common:buttons.save")}</button>
             )}
           </div>
         </div>
         <div className="manage-section-hint">
-          Shell commands that run in response to Claude Code events. Saved to ~/.claude/settings.json and inherited by all profiles.
+          {t("global.hooksHint")}
         </div>
         <textarea
           className="manage-claudemd-editor"
@@ -1135,34 +1152,34 @@ function GlobalSettingsTab() {
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Launch Defaults</span>
+          <span className="manage-section-label">{t("global.launchDefaults")}</span>
           {defaultsDirty && (
             <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSaveDefaults}>
-              Save
+              {t("common:buttons.save")}
             </button>
           )}
         </div>
         <div className="manage-section-hint">
-          Default terminal and tmux settings used by the launch popover.
+          {t("global.launchDefaultsHint")}
         </div>
         <div className="manage-defaults-row">
           <div className="field">
-            <label>Terminal App</label>
+            <label>{t("global.terminalApp")}</label>
             <select value={terminalApp} onChange={(e) => { setTerminalApp(e.target.value); setDefaultsDirty(true); }}>
-              <option value="terminal">Terminal.app</option>
+              <option value="terminal">{t("plugin:dialog.terminal.terminal")}</option>
               <option value="iterm2">iTerm2</option>
             </select>
           </div>
           <div className="field">
-            <label>tmux Mode</label>
+            <label>{t("global.tmuxMode")}</label>
             {tmuxInstalled ? (
               <select value={tmuxMode} onChange={(e) => { setTmuxMode(e.target.value); setDefaultsDirty(true); }}>
                 <option value="cc">-CC (iTerm integration)</option>
-                <option value="plain">Plain tmux</option>
-                <option value="none">No tmux</option>
+                <option value="plain">{t("plugin:dialog.terminal.plain")}</option>
+                <option value="none">{t("plugin:dialog.terminal.none")}</option>
               </select>
             ) : (
-              <div className="field-hint" style={{ margin: 0 }}>tmux not installed — defaulting to no tmux</div>
+              <div className="field-hint" style={{ margin: 0 }}>{t("global.tmuxNotInstalled")}</div>
             )}
           </div>
         </div>
@@ -1174,6 +1191,7 @@ function GlobalSettingsTab() {
 // ─── Health tab ─────────────────────────────────────────────────────────────
 
 function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: PluginWithItems[] }) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [credStatus, setCredStatus] = useState<{ global: boolean; profiles: Array<{ name: string; useDefaultAuth: boolean; hasCredentials: boolean }> } | null>(null);
   const [profileHealth, setProfileHealth] = useState<Record<string, string[]>>({});
   const [diagnostics, setDiagnostics] = useState<{ version: string; configDir: string; claudeHome: string; profileCount: number; teamCount: number; issues: string[] } | null>(null);
@@ -1225,30 +1243,30 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
     <div className="manage-global-settings">
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Credentials</span>
+          <span className="manage-section-label">{t("health.credentials")}</span>
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {doneFlash === "creds" && <span className="health-done-flash">Updated</span>}
+            {doneFlash === "creds" && <span className="health-done-flash">{t("common:status.updated")}</span>}
             <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={refreshCreds} disabled={refreshing === "creds"}>
-              {refreshing === "creds" ? "Refreshing..." : "Refresh"}
+              {refreshing === "creds" ? t("common:status.refreshing") : t("common:buttons.refresh")}
             </button>
           </span>
         </div>
         {credStatus ? (
           <div className="modal-fields" style={{ marginTop: "8px" }}>
             <div className="field">
-              <label>Global Credentials</label>
+              <label>{t("health.globalCredentials")}</label>
               <div className="field-hint" style={{ margin: 0 }}>
                 <span style={{ color: credStatus.global ? "var(--color-skill)" : "var(--color-danger)" }}>
-                  {credStatus.global ? "Active" : "Not found"}
+                  {credStatus.global ? t("health.active") : t("health.notFound")}
                 </span>
-                {" "}— stored in macOS Keychain as "Claude Code-credentials"
+                {" "}— {t("health.storedInKeychain")}
               </div>
             </div>
             {credStatus.profiles.length > 0 && (
               <>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Profile Credentials</label>
+                  <label>{t("health.profileCredentials")}</label>
                 </div>
                 {credStatus.profiles.map((p) => (
                   <div className="field" key={p.name}>
@@ -1267,13 +1285,13 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             )}
           </div>
         ) : (
-          <div className="manage-section-hint">Loading credential status...</div>
+          <div className="manage-section-hint">{t("health.loadingCredentialStatus")}</div>
         )}
       </div>
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">Profile Issues</span>
+          <span className="manage-section-label">{t("health.profileIssues")}</span>
         </div>
         {healthEntries.length > 0 ? (
           <div className="health-issue-list">
@@ -1285,12 +1303,12 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
             ))}
           </div>
         ) : (
-          <div className="health-ok-state">No missing plugins detected</div>
+          <div className="health-ok-state">{t("health.noMissingPlugins")}</div>
         )}
         {staleProfiles.length > 0 && (
           <>
             <div className="manage-section-header" style={{ marginTop: "12px" }}>
-              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>Stale Profiles (30+ days)</span>
+              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>{t("health.staleProfiles")}</span>
             </div>
             <div className="health-issue-list">
               {staleProfiles.map((p) => (
@@ -1305,7 +1323,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
         {neverLaunched.length > 0 && (
           <>
             <div className="manage-section-header" style={{ marginTop: "12px" }}>
-              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>Never Launched</span>
+              <span className="manage-section-label" style={{ fontSize: "0.846rem", color: "var(--text-muted)" }}>{t("health.neverLaunched")}</span>
             </div>
             <div className={`health-issue-list${neverLaunched.length > 10 ? " two-col" : ""}`}>
               {neverLaunched.map((p) => (
@@ -1322,10 +1340,10 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
       {unusedPlugins.length > 0 && (
         <div className="manage-section">
           <div className="manage-section-header">
-            <span className="manage-section-label">Unused Plugins</span>
+            <span className="manage-section-label">{t("health.unusedPlugins")}</span>
           </div>
           <div className="manage-section-hint">
-            Installed plugins not used by any profile.
+            {t("health.unusedPluginsHint")}
           </div>
           <div className={`health-issue-list${unusedPlugins.length > 10 ? " two-col" : ""}`}>
             {unusedPlugins.map((name) => (
@@ -1340,37 +1358,37 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
 
       <div className="manage-section">
         <div className="manage-section-header">
-          <span className="manage-section-label">System Diagnostics</span>
+          <span className="manage-section-label">{t("health.systemDiagnostics")}</span>
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {doneFlash === "diag" && <span className="health-done-flash">Updated</span>}
+            {doneFlash === "diag" && <span className="health-done-flash">{t("common:status.updated")}</span>}
             <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={refreshDiagnostics} disabled={refreshing === "diag"}>
-              {refreshing === "diag" ? "Scanning..." : "Re-scan"}
+              {refreshing === "diag" ? t("common:status.scanning") : t("common:buttons.reScan")}
             </button>
           </span>
         </div>
         {diagnostics ? (
           <div className="modal-fields" style={{ marginTop: "8px" }}>
             <div className="field">
-              <label>Version</label>
+              <label>{t("health.version")}</label>
               <div className="field-hint" style={{ margin: 0 }}>{diagnostics.version}</div>
             </div>
             <div className="field">
-              <label>Config Dir</label>
+              <label>{t("health.configDir")}</label>
               <div className="field-hint" style={{ margin: 0 }}>{diagnostics.configDir}</div>
             </div>
             <div className="field">
-              <label>Claude Home</label>
+              <label>{t("health.claudeHome")}</label>
               <div className="field-hint" style={{ margin: 0 }}>{diagnostics.claudeHome}</div>
             </div>
             <div className="field">
-              <label>Profiles / Teams</label>
+              <label>{t("health.profilesTeams")}</label>
               <div className="field-hint" style={{ margin: 0 }}>{diagnostics.profileCount} profiles, {diagnostics.teamCount} teams</div>
             </div>
             {diagnostics.issues.length > 0 ? (
               <>
                 <div className="field-divider" />
                 <div className="field">
-                  <label>Issues ({diagnostics.issues.length})</label>
+                  <label>{t("health.issues", { count: diagnostics.issues.length })}</label>
                 </div>
                 {diagnostics.issues.map((issue, i) => (
                   <div key={i} className="health-issue-item">
@@ -1383,13 +1401,13 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
               <>
                 <div className="field-divider" />
                 <div className="field">
-                  <div className="health-ok-state">No issues detected</div>
+                  <div className="health-ok-state">{t("health.noIssuesDetected")}</div>
                 </div>
               </>
             )}
           </div>
         ) : (
-          <div className="manage-section-hint">Running diagnostics...</div>
+          <div className="manage-section-hint">{t("health.runningDiagnostics")}</div>
         )}
       </div>
     </div>
@@ -1399,6 +1417,7 @@ function HealthTab({ profiles, plugins }: { profiles: Profile[]; plugins: Plugin
 // ─── Prompts tab ────────────────────────────────────────────────────────────
 
 function PromptsTab() {
+  const { t } = useTranslation(["plugin", "common"]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<Prompt | null>(null);
@@ -1494,14 +1513,14 @@ function PromptsTab() {
     <div className="manage-dialog-split">
       <div className="manage-dialog-sidebar">
         <div className="manage-projects-header">
-          <span className="manage-projects-title">Prompts</span>
+          <span className="manage-projects-title">{t("prompts.title")}</span>
           <div style={{ display: "flex", gap: "4px" }}>
-            <button className="btn-icon" onClick={handleImport} title="Import prompt" aria-label="Import prompt">
+            <button className="btn-icon" onClick={handleImport} title={t("prompts.importPrompt")} aria-label={t("prompts.importPrompt")}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <button className="btn-icon" onClick={handleNew} title="New prompt" aria-label="New prompt">
+            <button className="btn-icon" onClick={handleNew} title={t("prompts.newPrompt")} aria-label={t("prompts.newPrompt")}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
@@ -1512,7 +1531,7 @@ function PromptsTab() {
           <input
             type="text"
             className="pl-search-input"
-            placeholder="Search prompts..."
+            placeholder={t("prompts.searchPrompts")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -1520,7 +1539,7 @@ function PromptsTab() {
         <div className="manage-projects-list" role="listbox" aria-label="Saved prompts">
           {filtered.length === 0 ? (
             <div className="manage-projects-empty">
-              {prompts.length === 0 ? "No prompts yet. Click + to create one." : "No matches."}
+              {prompts.length === 0 ? t("prompts.noPromptsYet") : t("common:emptyStates.noMatches")}
             </div>
           ) : (
             filtered.map((p) => {
@@ -1540,8 +1559,8 @@ function PromptsTab() {
                     }
                   }}
                 >
-                  <div className="manage-project-name">{p.name || "Untitled"}</div>
-                  {p.description && <div className="manage-project-path">{p.description}</div>}
+                  <div className="manage-project-name">{p.name || t("prompts.untitled")}</div>
+                  {p.description && <div className="manage-project-path">{translateDescription(p.description, t)}</div>}
                   {p.tags.length > 0 && (
                     <div className="prompt-list-tags">
                       {p.tags.map((t) => <span key={t} className="bulk-tag-chip">{t}</span>)}
@@ -1558,27 +1577,27 @@ function PromptsTab() {
           <div className="manage-project-detail">
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">Prompt</span>
+                <span className="manage-section-label">{t("prompts.prompt")}</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   {statusMsg && <span style={{ fontSize: "0.846rem", color: "var(--color-skill)" }}>{statusMsg}</span>}
                   {dirty && (
-                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>Save</button>
+                    <button className="btn-primary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleSave}>{t("common:buttons.save")}</button>
                   )}
-                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={async () => { if (draft) { const p = await window.api.exportPrompt(draft); if (p) { setStatusMsg("Saved to Downloads"); setTimeout(() => setStatusMsg(""), 3000); } } }}>Export</button>
-                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>Delete</button>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={async () => { if (draft) { const p = await window.api.exportPrompt(draft); if (p) { setStatusMsg(t("common:status.savedToDownloads")); setTimeout(() => setStatusMsg(""), 3000); } } }}>{t("prompts.exportPrompt")}</button>
+                  <button className="btn-secondary" style={{ fontSize: "0.846rem", padding: "3px 10px" }} onClick={handleDelete}>{t("common:buttons.delete")}</button>
                 </div>
               </div>
               <div className="modal-fields" style={{ marginTop: "8px" }}>
                 <div className="field">
-                  <label>Name</label>
-                  <input type="text" value={draft.name} onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setDirty(true); }} placeholder="Prompt name..." autoFocus />
+                  <label>{t("prompts.namePlaceholder").replace("...", "")}</label>
+                  <input type="text" value={draft.name} onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setDirty(true); }} placeholder={t("prompts.namePlaceholder")} autoFocus />
                 </div>
                 <div className="field">
-                  <label>Description</label>
-                  <input type="text" value={draft.description} onChange={(e) => { setDraft({ ...draft, description: e.target.value }); setDirty(true); }} placeholder="What this prompt is for..." />
+                  <label>{t("prompts.descPlaceholder").replace("...", "")}</label>
+                  <input type="text" value={draft.description} onChange={(e) => { setDraft({ ...draft, description: e.target.value }); setDirty(true); }} placeholder={t("prompts.descPlaceholder")} />
                 </div>
                 <div className="field">
-                  <label>Tags</label>
+                  <label>{t("common:fields.tags")}</label>
                   <div className="prompt-tags-editor">
                     {draft.tags.map((t) => (
                       <span key={t} className="prompt-tag-chip">
@@ -1591,7 +1610,7 @@ function PromptsTab() {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleAddTag(); }}
-                      placeholder="Add tag..."
+                      placeholder={t("prompts.addTag")}
                       list="prompt-tag-suggestions"
                       className="prompt-tag-input"
                     />
@@ -1604,13 +1623,13 @@ function PromptsTab() {
             </div>
             <div className="manage-section">
               <div className="manage-section-header">
-                <span className="manage-section-label">Content</span>
+                <span className="manage-section-label">{t("prompts.content")}</span>
               </div>
               <textarea
                 className="manage-claudemd-editor"
                 value={draft.content}
                 onChange={(e) => { setDraft({ ...draft, content: e.target.value }); setDirty(true); }}
-                placeholder="Prompt content — this text gets inserted into CLAUDE.md editors..."
+                placeholder={t("prompts.contentPlaceholder")}
               />
             </div>
           </div>
@@ -1619,19 +1638,19 @@ function PromptsTab() {
             <div className="empty-state">
               <div className="empty-state-icon">&#9998;</div>
               <div className="empty-state-title">
-                {prompts.length === 0 ? "No prompts yet" : "Select a prompt"}
+                {prompts.length === 0 ? t("common:emptyStates.noPromptsYet") : t("prompts.selectPrompt")}
               </div>
               <div className="empty-state-body">
                 {prompts.length === 0
-                  ? "Reusable snippets you can drop into profile instructions or CLAUDE.md files."
-                  : "Pick one from the list to edit, or create a new prompt."}
+                  ? t("prompts.reusableSnippets")
+                  : t("prompts.pickOne")}
               </div>
               <button
                 className="btn-primary"
                 style={{ marginTop: "14px" }}
                 onClick={handleNew}
               >
-                + New prompt
+                {t("prompts.newPromptBtn")}
               </button>
             </div>
           </div>
@@ -1675,6 +1694,9 @@ export function ManageDialog({
   onPluginsChanged,
   curatedRefreshKey,
 }: Props) {
+  const { t } = useTranslation(["plugin", "common"]);
+  // Alias to avoid shadowing by map callback params named `t`
+  const _t = t;
   const [activeTab, setActiveTab] = useState<ManageTab>(initialTab ?? "plugins");
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -1744,7 +1766,7 @@ export function ManageDialog({
       setCuratedData(data);
       if (backend) setGithubBackend(backend);
     } catch (err: any) {
-      setCuratedError(err?.message ?? "Failed to load curated plugins");
+      setCuratedError(err?.message ?? t("plugin:errors.failedToLoadCurated"));
     } finally {
       setCuratedLoading(false);
     }
@@ -1761,7 +1783,7 @@ export function ManageDialog({
       setCuratedData(data);
       setCuratedIndex(idx);
     } catch (err: any) {
-      setCuratedError(err?.message ?? "Failed to refresh curated plugins");
+      setCuratedError(err?.message ?? t("plugin:errors.failedToRefreshCurated"));
     } finally {
       setCuratedLoading(false);
     }
@@ -2028,7 +2050,7 @@ export function ManageDialog({
   const filteredCurated = useMemo(() => {
     let result = allCuratedEntries;
     if (curatedCollection) {
-      result = result.filter((t) => t.entry.collections.includes(curatedCollection));
+      result = result.filter((e) => e.entry.collections.includes(curatedCollection));
     }
     const q = curatedSearch.toLowerCase().trim();
     if (q) {
@@ -2043,7 +2065,7 @@ export function ManageDialog({
   }, [allCuratedEntries, curatedCollection, curatedSearch]);
 
   const featuredCurated = useMemo(() => {
-    return allCuratedEntries.filter((t) => t.entry.featured);
+    return allCuratedEntries.filter((e) => e.entry.featured);
   }, [allCuratedEntries]);
 
   // Global search across the full pre-built index (marketplaces + plugins +
@@ -2179,7 +2201,7 @@ export function ManageDialog({
       await loadMarketplaces();
       onPluginsChanged?.();
     } catch (err: any) {
-      setMarketplaceError(err?.message ?? "Failed to add marketplace");
+      setMarketplaceError(err?.message ?? t("plugin:errors.failedToAddMarketplace"));
     } finally {
       setMarketplaceLoading(false);
     }
@@ -2192,7 +2214,7 @@ export function ManageDialog({
       await loadMarketplaces();
       onPluginsChanged?.();
     } catch (err: any) {
-      setMarketplaceError(err?.message ?? "Failed to remove marketplace");
+      setMarketplaceError(err?.message ?? t("plugin:errors.failedToRemoveMarketplace"));
     } finally {
       setMarketplaceLoading(false);
     }
@@ -2208,7 +2230,7 @@ export function ManageDialog({
       loadAvailablePlugins();
       window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
     } catch (err: any) {
-      setMarketplaceError(err?.message ?? "Failed to refresh marketplace");
+      setMarketplaceError(err?.message ?? t("plugin:errors.failedToRefreshMarketplace"));
     } finally {
       setRefreshingSource(null);
     }
@@ -2224,7 +2246,7 @@ export function ManageDialog({
       loadAvailablePlugins();
       window.api.checkPluginUpdates().then(setPluginUpdates).catch(() => {});
     } catch (err: any) {
-      setMarketplaceError(err?.message ?? "Failed to update marketplaces");
+      setMarketplaceError(err?.message ?? t("plugin:errors.failedToUpdateMarketplaces"));
     } finally {
       setRefreshingAll(false);
     }
@@ -2245,7 +2267,7 @@ export function ManageDialog({
       setAvailablePlugins(data.available);
       setDiscoverLoaded(true);
     } catch (err: any) {
-      setDiscoverError(err?.message ?? "Failed to load available plugins");
+      setDiscoverError(err?.message ?? t("plugin:errors.failedToLoadPlugins"));
     } finally {
       setDiscoverLoading(false);
     }
@@ -2270,7 +2292,7 @@ export function ManageDialog({
       setManualInstallInput("");
       onPluginsChanged?.();
     } catch (err: any) {
-      setManualInstallError(err?.message ?? "Failed to install plugin");
+      setManualInstallError(err?.message ?? t("plugin:errors.failedToInstallPlugin"));
     } finally {
       setManualInstallLoading(false);
     }
@@ -2321,12 +2343,12 @@ export function ManageDialog({
             }}
           >
             {([
-              { id: "plugins" as const, label: "Plugins" },
-              { id: "projects" as const, label: "Projects" },
-              { id: "prompts" as const, label: "Prompts" },
-              { id: "global" as const, label: "Global" },
-              { id: "statusbar" as const, label: "Status Bar" },
-              { id: "health" as const, label: "Health" },
+              { id: "plugins" as const, label: t("dialog.tabs.plugins") },
+              { id: "projects" as const, label: t("dialog.tabs.projects") },
+              { id: "prompts" as const, label: t("dialog.tabs.prompts") },
+              { id: "global" as const, label: t("dialog.tabs.global") },
+              { id: "statusbar" as const, label: t("dialog.tabs.statusbar") },
+              { id: "health" as const, label: t("dialog.tabs.health") },
             ]).map((tab) => {
               const selected = activeTab === tab.id;
               return (
@@ -2365,7 +2387,7 @@ export function ManageDialog({
                   className={`discover-toggle-btn${pluginSubTab === "installed" ? " active" : ""}`}
                   onClick={() => setPluginSubTab("installed")}
                 >
-                  Installed
+                  {t("dialog.installed")}
                 </button>
                 <button
                   className={`discover-toggle-btn${pluginSubTab === "browse" ? " active" : ""}`}
@@ -2378,7 +2400,7 @@ export function ManageDialog({
                     loadMarketplaces();
                   }}
                 >
-                  Browse
+                  {t("dialog.browse")}
                 </button>
                 <button
                   className={`discover-toggle-btn${pluginSubTab === "sources" ? " active" : ""}`}
@@ -2387,7 +2409,7 @@ export function ManageDialog({
                     loadMarketplaces();
                   }}
                 >
-                  Sources
+                  {t("dialog.sources")}
                 </button>
               </div>
               {pluginSubTab === "installed" ? (
@@ -2395,10 +2417,12 @@ export function ManageDialog({
                   {!hasDefaultProfile && (
                     <div className="manage-default-nudge">
                       <div className="manage-default-nudge-text">
-                        <strong>No default profile.</strong> Running <code>claude</code> loads all {plugins.length} installed plugin{plugins.length !== 1 ? "s" : ""}.
+                        <Trans i18nKey="dialog.defaultNudge" ns="plugin" values={{ count: plugins.length }}>
+                          {t("plugin:dialog.noDefaultNudge", { count: plugins.length })}
+                        </Trans>
                       </div>
                       <button className="btn-primary" onClick={onCreateDefault}>
-                        Create Default Profile
+                        {t("dialog.createDefaultProfile")}
                       </button>
                     </div>
                   )}
@@ -2427,12 +2451,12 @@ export function ManageDialog({
                 <div className="curated-tab">
                   {githubBackend?.kind === "fetch-anon" && (
                     <div className="curated-backend-banner">
-                      <strong>Anonymous GitHub access — {githubBackend.rateLimit} rate limit.</strong>
+                      <strong>{t("dialog.anonymousAccess", { rateLimit: githubBackend.rateLimit })}</strong>
                       {githubBackend.upgradeHint && <span className="curated-backend-banner-hint"> {githubBackend.upgradeHint}</span>}
                     </div>
                   )}
                   {curatedLoading ? (
-                    <div className="discover-loading">Loading curated plugins...</div>
+                    <div className="discover-loading">{t("common:status.loadingCurated")}</div>
                   ) : curatedError ? (
                     <div className="discover-error">
                       <span>{curatedError}</span>
@@ -2442,13 +2466,13 @@ export function ManageDialog({
                     <>
                       {/* Hero search — the one obvious entry into Browse */}
                       <div className="curated-hero">
-                        <div className="curated-hero-title">Browse Curated Marketplaces</div>
-                        <div className="curated-hero-sub">Search curated marketplaces, plugins, skills, agents, and commands.</div>
+                        <div className="curated-hero-title">{t("dialog.browseCurated")}</div>
+                        <div className="curated-hero-sub">{t("dialog.searchCuratedSub")}</div>
                         <div className="curated-toolbar curated-toolbar-hero">
                           <input
                             type="text"
                             className="curated-search"
-                            placeholder="Search plugins, skills, agents, commands…"
+                            placeholder={t("dialog.searchPluginsPlaceholder")}
                             value={curatedSearch}
                             onChange={(e) => setCuratedSearch(e.target.value)}
                           />
@@ -2456,7 +2480,7 @@ export function ManageDialog({
                             className="btn-secondary curated-refresh-btn"
                             onClick={refreshCurated}
                             disabled={curatedLoading}
-                            title="Refresh curated list"
+                            title={t("dialog.refreshCurated")}
                           >
                             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                               <path d="M14 8A6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2466,38 +2490,38 @@ export function ManageDialog({
                         </div>
                       </div>
 
-                      {/* Featured row */}
-                      {featuredCurated.length > 0 && (
+                      {/* Featured row — use _t alias because map param shadows t */}
+                      {_t && featuredCurated.length > 0 && (
                         <div className="curated-featured">
-                          <div className="curated-section-title">Featured</div>
+                          <div className="curated-section-title">{_t("dialog.featured")}</div>
                           <div className="curated-featured-row">
-                            {featuredCurated.map((t) => {
-                              const key = t.kind === "marketplace" ? `mkt:${t.entry.id}` : t.entry.pluginId;
-                              const isInstalled = t.kind === "plugin" && installedPluginIds.has(t.entry.pluginId);
+                            {featuredCurated.map((curated) => {
+                              const key = curated.kind === "marketplace" ? `mkt:${curated.entry.id}` : curated.entry.pluginId;
+                              const isInstalled = curated.kind === "plugin" && installedPluginIds.has(curated.entry.pluginId);
                               const isInstalling = curatedInstalling === key;
                               return (
                                 <div
                                   key={key}
                                   className="curated-featured-card clickable"
-                                  onClick={() => setCuratedDetail(t)}
+                                  onClick={() => setCuratedDetail(curated)}
                                   role="button"
                                   tabIndex={0}
                                 >
                                   <div className="curated-featured-card-header">
-                                    <span className="curated-featured-name">{t.entry.displayName}</span>
+                                    <span className="curated-featured-name">{curated.entry.displayName}</span>
                                     <span className="curated-kind-tag">
-                                      {t.kind === "marketplace"
-                                        ? `marketplace · ${t.entry.pluginCount} plugins`
+                                      {curated.kind === "marketplace"
+                                        ? `marketplace · ${curated.entry.pluginCount} plugins`
                                         : "plugin"}
                                     </span>
-                                    {t.entry.collections.includes("bundle") && (
-                                      <span className="curated-bundle-badge">Bundle</span>
+                                    {curated.entry.collections.includes("bundle") && (
+                                      <span className="curated-bundle-badge">{_t("dialog.bundle")}</span>
                                     )}
                                   </div>
-                                  <div className="curated-featured-desc">{t.entry.description}</div>
+                                  <div className="curated-featured-desc">{curated.entry.description}</div>
                                   <div className="curated-featured-footer">
                                     <div className="curated-collection-tags">
-                                      {t.entry.collections.slice(0, 2).map((c) => {
+                                      {curated.entry.collections.slice(0, 2).map((c) => {
                                         const col = curatedData.collections.find((x) => x.id === c);
                                         if (!col) return null;
                                         return (
@@ -2508,14 +2532,14 @@ export function ManageDialog({
                                         );
                                       })}
                                     </div>
-                                    {t.kind === "marketplace" ? (
-                                      registeredMarketplaceNames.has(t.entry.id) ? (
+                                    {curated.kind === "marketplace" ? (
+                                      registeredMarketplaceNames.has(curated.entry.id) ? (
                                         <div className="curated-added-group">
                                           <span className="curated-installed-label">Added</span>
                                           <button
                                             className="btn-danger-small"
-                                            onClick={(e) => { e.stopPropagation(); requestRemoveMarketplace(t.entry.id, t.entry.displayName); }}
-                                            title="Remove marketplace"
+                                            onClick={(e) => { e.stopPropagation(); requestRemoveMarketplace(curated.entry.id, curated.entry.displayName); }}
+                                            title={t("plugin:dialog.removeMarketplace")}
                                           >
                                             Remove
                                           </button>
@@ -2523,7 +2547,7 @@ export function ManageDialog({
                                       ) : (
                                         <button
                                           className="btn-primary curated-install-btn"
-                                          onClick={(e) => { e.stopPropagation(); handleCuratedMarketplaceAdd(t.entry.id); }}
+                                          onClick={(e) => { e.stopPropagation(); handleCuratedMarketplaceAdd(curated.entry.id); }}
                                           disabled={isInstalling}
                                         >
                                           {isInstalling ? "..." : "Add"}
@@ -2534,7 +2558,7 @@ export function ManageDialog({
                                     ) : (
                                       <button
                                         className="btn-primary curated-install-btn"
-                                        onClick={(e) => { e.stopPropagation(); handleCuratedInstall(t.entry.pluginId); }}
+                                        onClick={(e) => { e.stopPropagation(); handleCuratedInstall(curated.entry.pluginId); }}
                                         disabled={isInstalling}
                                       >
                                         {isInstalling ? "..." : "Install"}
@@ -2733,35 +2757,35 @@ export function ManageDialog({
                             {curatedSearch || curatedCollection ? "No matching entries" : "No curated marketplaces or plugins available"}
                           </div>
                         ) : (
-                          filteredCurated.map((t) => {
-                            const key = t.kind === "marketplace" ? `mkt:${t.entry.id}` : t.entry.pluginId;
-                            const isInstalled = t.kind === "plugin" && installedPluginIds.has(t.entry.pluginId);
+                          filteredCurated.map((curated) => {
+                            const key = curated.kind === "marketplace" ? `mkt:${curated.entry.id}` : curated.entry.pluginId;
+                            const isInstalled = curated.kind === "plugin" && installedPluginIds.has(curated.entry.pluginId);
                             const isInstalling = curatedInstalling === key;
-                            const sourceLabel = t.kind === "marketplace"
-                              ? `marketplace · ${t.entry.pluginCount} plugins`
-                              : t.entry.marketplace;
+                            const sourceLabel = curated.kind === "marketplace"
+                              ? `marketplace · ${curated.entry.pluginCount} plugins`
+                              : curated.entry.marketplace;
                             return (
                               <div
                                 key={key}
                                 className="curated-plugin-row clickable"
-                                onClick={() => setCuratedDetail(t)}
+                                onClick={() => setCuratedDetail(curated)}
                                 role="button"
                                 tabIndex={0}
                               >
                                 <div className="curated-plugin-info">
                                   <div className="curated-plugin-name-row">
-                                    <span className="curated-plugin-name">{t.entry.displayName}</span>
+                                    <span className="curated-plugin-name">{curated.entry.displayName}</span>
                                     <span className="curated-kind-tag">
-                                      {t.kind === "marketplace" ? "marketplace" : "plugin"}
+                                      {curated.kind === "marketplace" ? "marketplace" : "plugin"}
                                     </span>
-                                    {t.entry.collections.includes("bundle") && (
+                                    {curated.entry.collections.includes("bundle") && (
                                       <span className="curated-bundle-badge">Bundle</span>
                                     )}
                                   </div>
-                                  <div className="curated-plugin-desc">{t.entry.description}</div>
+                                  <div className="curated-plugin-desc">{curated.entry.description}</div>
                                   <div className="curated-plugin-meta">
                                     <span className="curated-plugin-source">{sourceLabel}</span>
-                                    {t.entry.collections.map((c) => {
+                                    {curated.entry.collections.map((c) => {
                                       const col = curatedData.collections.find((x) => x.id === c);
                                       if (!col) return null;
                                       return (
@@ -2781,14 +2805,14 @@ export function ManageDialog({
                                   </div>
                                 </div>
                                 <div className="curated-plugin-action" onClick={(e) => e.stopPropagation()}>
-                                  {t.kind === "marketplace" ? (
-                                    registeredMarketplaceNames.has(t.entry.id) ? (
+                                  {curated.kind === "marketplace" ? (
+                                    registeredMarketplaceNames.has(curated.entry.id) ? (
                                       <div className="curated-added-group">
                                         <span className="curated-installed-label">Added</span>
                                         <button
                                           className="btn-danger-small"
-                                          onClick={() => requestRemoveMarketplace(t.entry.id, t.entry.displayName)}
-                                          title="Remove marketplace"
+                                          onClick={() => requestRemoveMarketplace(curated.entry.id, curated.entry.displayName)}
+                                          title={t("plugin:dialog.removeMarketplace")}
                                         >
                                           Remove
                                         </button>
@@ -2796,10 +2820,10 @@ export function ManageDialog({
                                     ) : (
                                       <button
                                         className="btn-primary curated-install-btn"
-                                        onClick={() => handleCuratedMarketplaceAdd(t.entry.id)}
+                                        onClick={() => handleCuratedMarketplaceAdd(curated.entry.id)}
                                         disabled={isInstalling}
                                       >
-                                        {isInstalling ? "Adding..." : "Add"}
+                                        {isInstalling ? t("plugin:dialog.adding") : t("plugin:dialog.add")}
                                       </button>
                                     )
                                   ) : isInstalled ? (
@@ -2807,10 +2831,10 @@ export function ManageDialog({
                                   ) : (
                                     <button
                                       className="btn-primary curated-install-btn"
-                                      onClick={() => handleCuratedInstall(t.entry.pluginId)}
+                                      onClick={() => handleCuratedInstall(curated.entry.pluginId)}
                                       disabled={isInstalling}
                                     >
-                                      {isInstalling ? "Installing..." : "Install"}
+                                      {isInstalling ? t("plugin:dialog.installing") : t("plugin:dialog.install")}
                                     </button>
                                   )}
                                   {curatedErrors[key] && (

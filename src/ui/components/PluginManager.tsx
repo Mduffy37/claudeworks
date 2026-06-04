@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { PluginWithItems, Profile } from "../../electron/types";
 import { ConfirmDialog } from "./shared/ConfirmDialog";
 
@@ -51,6 +52,7 @@ export function PluginManager({
   onUninstall,
   onNavigateToProfile,
 }: Props) {
+  const { t } = useTranslation(["plugin", "common"]);
   const [updating, setUpdating] = useState(false);
   const [uninstalling, setUninstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export function PluginManager({
     return (
       <div className="pm-empty">
         <div className="empty-state">
-          <div className="empty-state-title">Select a plugin to view details</div>
+          <div className="empty-state-title">{t("plugin:manager.selectPlugin")}</div>
         </div>
       </div>
     );
@@ -123,7 +125,7 @@ export function PluginManager({
               onClick={handleUpdate}
               disabled={updating}
             >
-              {updating ? "Updating..." : `Update to v${availableUpdate}`}
+              {updating ? t("plugin:manager.updating") : t("plugin:manager.updateTo", { version: availableUpdate })}
             </button>
           )}
           <button
@@ -131,7 +133,7 @@ export function PluginManager({
             onClick={() => setShowConfirm(true)}
             disabled={uninstalling}
           >
-            {uninstalling ? "Removing..." : "Uninstall"}
+            {uninstalling ? t("plugin:manager.removing") : t("plugin:manager.uninstall")}
           </button>
         </div>
       </div>
@@ -168,7 +170,7 @@ export function PluginManager({
       {/* Used by */}
       {usedByProfiles.length > 0 && (
         <div className="pm-used-by">
-          <div className="pm-label">Used by</div>
+          <div className="pm-label">{t("plugin:manager.usedBy")}</div>
           <div className="pm-profile-chips">
             {usedByProfiles.map((p) => (
               <button
@@ -185,9 +187,9 @@ export function PluginManager({
 
       {/* Contents */}
       <div className="pm-contents">
-        <div className="pm-label">Contents</div>
+        <div className="pm-label">{t("plugin:manager.contents")}</div>
 
-        <CollapsibleSection label="Skills" count={skills.length} color="var(--color-skill)">
+        <CollapsibleSection label={t("plugin:manager.skills")} count={skills.length} color="var(--color-skill)">
           {skills.map((item) => (
             <div key={item.name} className="pm-item">
               <span className="pm-item-name">{item.name}</span>

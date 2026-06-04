@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   tags: string[];
@@ -31,6 +32,7 @@ export function TagsProjectsEditor({
   focusTagsSignal,
   focusProjectsSignal,
 }: Props) {
+  const { t } = useTranslation(["profile", "common"]);
   const [tagInput, setTagInput] = useState("");
   const [addingTag, setAddingTag] = useState(false);
   const [addingProject, setAddingProject] = useState(false);
@@ -104,7 +106,7 @@ export function TagsProjectsEditor({
   return (
     <div className="pe-tp-editor">
       <div className="pe-tp-row">
-        <span className="pe-tp-label">Tags</span>
+        <span className="pe-tp-label">{t("profile:editor.tags")}</span>
         <div className="pe-tp-chips">
           {tags.map((t) => (
             <span key={t} className="pe-tp-chip">
@@ -136,7 +138,7 @@ export function TagsProjectsEditor({
                 }
               }}
               list="pe-tp-tag-suggestions"
-              placeholder="Tag name"
+              placeholder={t("common:fields.tags")}
             />
           ) : (
             <button
@@ -144,7 +146,7 @@ export function TagsProjectsEditor({
               className="pe-tp-add-btn"
               onClick={() => setAddingTag(true)}
             >
-              + Tag
+              {t("profile:list.addTag")}
             </button>
           )}
           <datalist id="pe-tp-tag-suggestions">
@@ -158,7 +160,7 @@ export function TagsProjectsEditor({
       </div>
 
       <div className="pe-tp-row">
-        <span className="pe-tp-label">Projects</span>
+        <span className="pe-tp-label">{t("profile:editor.projects")}</span>
         <div className="pe-tp-chips">
           {projects.map((p) => (
             <span key={p} className="pe-tp-chip pe-tp-chip-project" title={p}>
@@ -186,7 +188,7 @@ export function TagsProjectsEditor({
               }}
               onBlur={() => setAddingProject(false)}
             >
-              <option value="">Pick project…</option>
+              <option value="">{t("profile:list.pickProject")}</option>
               {availableProjects.map((p) => (
                 <option key={p} value={p}>{shortPath(p)}</option>
               ))}
@@ -196,9 +198,9 @@ export function TagsProjectsEditor({
               type="button"
               className="pe-tp-add-btn"
               onClick={handleAddProjectClick}
-              title={importedProjects.length === 0 ? "Import projects first" : undefined}
+              title={importedProjects.length === 0 ? t("common:buttons.import") : undefined}
             >
-              + Project
+              {t("profile:list.addProject")}
             </button>
           )}
         </div>
